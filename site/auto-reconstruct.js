@@ -222,7 +222,7 @@ function reconstruct(rgba,w,h,plan,opts={}){
    if(isMarking&&Math.hypot(rgba[j]-swatch[0],rgba[j+1]-swatch[1],rgba[j+2]-swatch[2])>48)continue;
    mask[k]=1;signal++;
   }
-  if(candidate<40||signal<25||signal/candidate<(isMarking?.03:.15)){
+  if(candidate<40||signal<25||signal/candidate<(isMarking ? 0.03 : 0.15)){
    rejected.push({id:r.id,reason:isMarking?"marking_colour_not_supported_by_pixels":"fill_not_supported_by_pixels"});continue;
   }
   const cc=largestComponent(mask,w,h);
