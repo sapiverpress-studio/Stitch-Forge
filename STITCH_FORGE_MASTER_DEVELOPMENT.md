@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-1.4 |
+| Document version | MD-1.5 |
 | Last updated | 2026-10-28 (Europe/London) |
-| Last independently checked source | Local standalone prototype v0.3 + test logs, 2026-10-28 |
+| Last independently checked source | Local v0.3 browser tests plus release-asset CI selector tests, 2026-10-28 |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -421,6 +421,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-015 | 2026-10-28 | Local v0.2 saved Stitch Forge project JSON (not committed as fixture) | Convert two actual existing browser paths into a trusted 78.0 × 75.6 mm vector document | LOCAL PASS | Browser JSON schema lacks versioning and explicit per-region colour / underlay parameters |
 | E-016 | 2026-10-28 | Local `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -v` | Browser/export, mock adapter, trusted SVG and JSON bridge | 15 LOCAL TESTS PASS | Does not include pyembroidery tests or real engine (no local packages); no GitHub-hosted run returned |
 
+| E-017 | 2026-10-28 | `services/digitiser/release_asset.py`, `tests/test_release_asset.py`, and revised `.github/workflows/real-engine-smoke.yml` | Official Ink/Stitch Linux v3.3.0 asset selection, wrong-architecture rejection, traversal/symlink safety and archive limit tests | 5 UNIT TESTS PASS LOCALLY; YAML parsed | Upstream release metadata and actual archive not downloaded here; GitHub Actions has returned no runs |
+| E-018 | 2026-10-28 | Local `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -p 'test_*.py' -v` | Re-ran full locally available test suite including mobile UI, export, SVG path bridge, CLI adapter mock and asset selector | **20/20 LOCAL TESTS PASS** | Does not include independent pyembroidery tests or the real Ink/Stitch binary; those are NOT VERIFIED |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -532,6 +534,19 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Known limitations:** Browser project format is experimental and unversioned; no automatic multi-colour segmentation or satin/underlay; no machine-verified ZIP; source reference raster remains a reference rather than a stitch model.
 - **Next:** Obtain a successful GitHub CI run (or fix CI based on logs); add actual canonical region schema, multi-colour planning and satin-rail representation before interface overhaul.
 - **Deployment:** None; no public release.
+
+### 2026-10-28 — Correct real-engine CI release asset selection
+
+- **Scope / tasks:** SF-007, SF-013, SF-014, SF-019, SF-030; evidence E-017 and E-018.
+- **Branch / PR:** `develop/stitch-engine-foundation`; draft [PR #1](https://github.com/sapiverpress-studio/Stitch-Forge/pull/1).
+- **Root cause found:** Prior CI release selector required the name of a Linux `.tar.xz` release file to contain `x86_64` or `amd64`; the official installation documentation instead shows an `inkstitch-3.3.0-linux.tar.xz` x86_64 archive. The existing selector could reject a valid release before Ink/Stitch runs. This failure mode was confirmed from code inspection and official docs, **not from a failed CI log**.
+- **Changes:** Add `release_asset.py` and `test_release_asset.py` to accept only documented versioned Linux x64 file names and official GitHub HTTPS download URLs. Reject wrong-architecture/draft/prerelease metadata, archive traversal, symlinks and excessive expansion. Revised `real-engine-smoke.yml` to invoke the selector, install pyembroidery 1.5.1, execute its actual independent test suite, and optionally verify a SHA256 digest published in upstream metadata before running the engine.
+- **Commits:** selector `cd4638be`, tests `338c89ef`, workflow `8b6f0791`.
+- **Tests RUN:** `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -p 'test_*.py' -v` — **20 PASS**, including five new release archive/security cases. CI YAML parsed locally.
+- **Tests NOT run:** actual Ink/Stitch runtime, real GitHub-hosted workflow or third-party pyembroidery read-back, because this local environment cannot fetch the binaries and no GitHub Actions runs/statuses were returned for new commits. No physical machine test.
+- **Risk:** executable digest is not yet fixed to an independently verified SHA256; the workflow records observed digest and validates an upstream-provided digest when available. Upstream tar contents could contain legitimate symlinks, in which case strict extraction will fail closed; investigate from actual CI logs.
+- **Next:** Confirm GitHub Actions is enabled and inspect run logs after the workflow triggers; fix any real runtime failures. Pin exact upstream SHA256 once measured. Only then integrate verified engine output into the editor.
+- **Deployment:** none.
 
 ### Entry template — REQUIRED on every meaningful development update
 
