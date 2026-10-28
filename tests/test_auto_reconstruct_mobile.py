@@ -32,7 +32,9 @@ def page_source():
            "name":"Synthetic Moth","width":"78","stitch":"2","hoop":"150",
            "reference":synthetic_image(),
            "bounds":{"x":120,"y":180,"w":360,"h":220}}
-    return source.replace(anchor,"let saved="+json.dumps(saved,separators=(",",":"))+";")
+    return source.replace(anchor,"let saved="+json.dumps(saved,separators=(",",":"))+";").replace(
+        "window.StitchForgeAIContext=Object.freeze(",
+        "rasterSource="+json.dumps(synthetic_image())+";window.StitchForgeAIContext=Object.freeze(")
 def geometry():
     def one(id,cx,color):
         vertices=[(-.95,-.2),(-.75,-.75),(0,-1),(.75,-.75),(.98,0),(.7,.85),(0,1),(-.8,.7)]
