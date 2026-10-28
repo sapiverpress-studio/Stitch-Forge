@@ -18,6 +18,31 @@ DRW implementation reference: `sapiverpress-studio/Sapiver-draw-dxf/tools/analys
 6. **Experimental local worker module now implemented, NOT integrated into the editor:** `services/digitiser/detail_guides.py` detects approximate internal edge contours with OpenCV, optionally restricted by an AI-proposed region box. Three local tests passed, including the full-detail user moth (source kept off GitHub). **Still needed:** accurate pixel masks/centrelines, scale-aware pruning, editable region review, merging/splitting, holes, satin rails, underlay, size warnings and human approval before generating Ink/Stitch commands.
 7. Real Ink/Stitch execution, independent PES/DST readback, fabric stitch-out and evidence-based approval still required.
 
+## Draft stitch generation from an approved AI report (2026-10-28)
+
+The development preview now provides **Use saved AI report**, **Rebuild draft details** and **Apply draft to stitches**. This is a new, explicit draft-generation stage, not a professional-file exporter.
+
+1. The AI report identifies possible regions (bounding boxes, category and visual colour). A downloaded `Stitch-Forge-region-proposal-NOT-DIGITISED.json` can be imported without another chargeable OpenAI call.
+2. `site/ai-guides.js` decodes the original artwork locally, detects local dark-vs-surrounding contrast inside *line-like* regions (wing markings, veins, antennae and legs), thins candidate pixel lines and builds connected running-stitch **guides**. It does **not** stitch the AI rectangles.
+3. Draft paths are shown as pink overlays separately from editable machine geometry. The old silhouette remains untouched until the owner selects **Apply draft to stitches**.
+4. Apply appends draft running paths in a single undoable operation, enforcing path and node limits. The existing browser stitch simulator recalculates using these paths, but its DST/PES outputs are still experimental **single-colour** machine files.
+5. `wing` and `body` fill candidates and `satin_candidate` antennae are intentionally not converted to fill/satin yet. True closed contours, accurate masks, thread-colour sequencing, underlay and fabric-tested stitches remain future work.
+
+**Original moth result:** using the user-supplied original 447×262 image and the 14-area JSON report, the first internal extractor produced multiple short line candidates from the image, mainly some forewing markings/veins and antennae. It did **not** faithfully recover all decorative details. An automatic replacement of the original contour would therefore be misleading. Draft review is mandatory.
+
+### Safety and acceptance
+
+- [x] Candidate guides computed from image pixels, restricted to AI-proposed search areas.
+- [x] Synthetic zero-line image returns zero draft paths (cannot turn rectangles into stitches).
+- [x] Image-derived running paths only, no auto-produced fill or satin.
+- [x] Explicit Apply action, with undo support and guarded insertion into editor paths.
+- [x] A saved AI report can be loaded without another API request.
+- [ ] Exact live mobile preview, append, undo and export re-readback tests.
+- [ ] High-detail line recovery, scale-aware simplification, overlap/jump optimisation.
+- [ ] Real Ink/Stitch PES/DST stitch sequence, colours and professional stitch-out.
+
+Do **not** sell files produced by this draft generator or label the prototype a production-grade digitiser.
+
 ## What the current feature does and does not do
 
 **Does:** Identify likely separate wing surfaces, veins, spots, thorax, abdomen, antennae and other visible features; provide a list and location boxes for manual review; permit a JSON export of the proposal; preserve existing editable paths and exports.
