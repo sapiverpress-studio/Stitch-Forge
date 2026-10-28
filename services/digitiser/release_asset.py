@@ -62,7 +62,7 @@ def extract_verified_release(archive: Path, destination: Path) -> None:
             p = Path(member.name)
             if (p.is_absolute() or '..' in p.parts or member.issym() or member.islnk()
                     or not (member.isfile() or member.isdir())):
-                raise ValueError('Unsafe archive path or entry type')
+                raise ValueError('Unsafe archive path or entry type: '+repr(member.name[:160])+' type='+repr(member.type))
             total += member.size
             if member.size > 400_000_000 or total > 1_000_000_000:
                 raise ValueError('Archive expands beyond limit')
