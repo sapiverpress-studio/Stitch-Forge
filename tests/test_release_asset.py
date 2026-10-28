@@ -54,6 +54,50 @@ class ReleaseAssetTests(unittest.TestCase):
                 extract_verified_release(archive, target)
             self.assertFalse(Path(tmp, 'secret').exists())
 
+    def test_safe_internal_library_symlink_extracts(self):
+        with TemporaryDirectory() as tmp:
+            archive, target = Path(tmp,'linked.tar.xz'), Path(tmp,'extracted')
+            with tarfile.open(archive,'w:xz') as out:
+                content=b'binary-placeholder'
+                regular=tarfile.TarInfo('inkstitch/bin/libexample.so.1')
+                regular.size=len(content)
+                out.addfile(regular, BytesIO(content))
+                link=tarfile.TarInfo('inkstitch/bin/libexample.so')
+                link.type=tarfile.SYMTYPE
+                link.linkname='libexample.so.1'
+                out.addfile(link)
+            extract_verified_release(archive,target)
+            self.assertEqual((target/'inkstitch/bin/libexample.so').read_bytes(),content)
+
+    def test_outside_and_absent_symlinks_refused(self):
+        for linkname in ['../../../escaped','/etc/passwd','missing.so']:
+            with self.subTest(linkname=linkname), TemporaryDirectory() as tmp:
+                archive, target = Path(tmp,'bad-link.tar.xz'), Path(tmp,'extracted')
+                with tarfile.open(archive,'w:xz') as out:
+                    entry=tarfile.TarInfo('inkstitch/bin/libexample.so')
+                    entry.type=tarfile.SYMTYPE
+                    entry.linkname=linkname
+                    out.addfile(entry)
+                with self.assertRaises(ValueError):
+                    extract_verified_release(archive,target)
+
+    def test_symlink_parent_and_cycle_refused(self):
+        with TemporaryDirectory() as tmp:
+            archive, target=Path(tmp,'bad-parent.tar.xz'),Path(tmp,'out')
+            with tarfile.open(archive,'w:xz') as out:
+                folder=tarfile.TarInfo('inkstitch/lib')
+                folder.type=tarfile.SYMTYPE
+                folder.linkname='bin'
+                out.addfile(folder)
+                directory=tarfile.TarInfo('inkstitch/bin')
+                directory.type=tarfile.DIRTYPE
+                out.addfile(directory)
+                file=tarfile.TarInfo('inkstitch/lib/a.so')
+                file.size=1
+                out.addfile(file,BytesIO(b'A'))
+            with self.assertRaises(ValueError):
+                extract_verified_release(archive,target)
+
     def test_legitimate_simple_archive_extracts(self):
         with TemporaryDirectory() as tmp:
             archive, target = Path(tmp, 'good.tar.xz'), Path(tmp, 'extracted')
