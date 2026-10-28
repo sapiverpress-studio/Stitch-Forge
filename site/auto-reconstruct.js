@@ -33,11 +33,14 @@ function foregroundMask(rgba,w,h){
   const mean=[0,1,2].map(c=>opaque.reduce((n,p)=>n+p[c],0)/opaque.length);
   const maxdist=Math.max(...opaque.map(p=>Math.hypot(p[0]-mean[0],p[1]-mean[1],p[2]-mean[2])));
   if(maxdist>45)throw Error("Background is complex; cannot safely isolate embroidery artwork automatically");
+  // A white background can contain nearly-white moth wings; a fixed 28 RGB
+  // threshold erased them. Increase tolerance only when the border is noisy.
+  const threshold=Math.min(55,Math.max(9,8+maxdist*1.25));
   const mask=new Uint8Array(w*h);
   for(let i=0;i<w*h;i++){
    const j=4*i;
    const difference=Math.hypot(rgba[j]-mean[0],rgba[j+1]-mean[1],rgba[j+2]-mean[2]);
-   mask[i]=rgba[j+3]>50&&difference>=28?1:0;
+   mask[i]=rgba[j+3]>50&&difference>=threshold?1:0;
   }
   return mask;
  }
@@ -105,6 +108,79 @@ function simplifyRing(points,maxVertices=115){
  const result=[];for(let j=0;j<maxVertices;j++)result.push(p[Math.floor(j*p.length/maxVertices)]);
  return result;
 }
+// Image-grounded running centreline: AI points are only a search corridor.
+// Every retained centreline segment must be supported by local cross-line contrast.
+// A generic foreground check incorrectly accepted invented lines across solid wings.
+function contrastCentreline(rgba,mask,w,h,points){
+ const luminance=(x,y)=>{
+  const xx=Math.round(x),yy=Math.round(y);
+  if(xx<0||yy<0||xx>=w||yy>=h)return null;
+  const j=(yy*w+xx)*4;
+  if(rgba[j+3]<50)return null;
+  return rgba[j]*.2126+rgba[j+1]*.7152+rgba[j+2]*.0722;
+ };
+ const samples=[];
+ for(let i=1;i<points.length;i++){
+  const a=points[i-1],b=points[i],dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy);
+  if(length<.2)continue;
+  const nx=-dy/length,ny=dx/length,steps=Math.ceil(length/1.7);
+  for(let t=(i===1?0:1);t<=steps;t++){
+   const px=a[0]+dx*t/steps,py=a[1]+dy*t/steps;
+   let strongest=null,bestScore=9;
+   for(let offset=-4;offset<=4;offset++){
+    const xx=Math.round(px+nx*offset),yy=Math.round(py+ny*offset);
+    if(xx<0||yy<0||xx>=w||yy>=h||!mask[yy*w+xx])continue;
+    const mid=luminance(xx,yy);
+    for(const radius of [3,5,7]){
+     const left=luminance(xx+nx*radius,yy+ny*radius);
+     const right=luminance(xx-nx*radius,yy-ny*radius);
+     if(left===null||right===null)continue;
+     const dark=Math.min(left-mid,right-mid);
+     const light=Math.min(mid-left,mid-right);
+     const score=Math.max(dark,light);
+     if(score>bestScore){bestScore=score;strongest=[xx,yy];}
+    }
+   }
+   samples.push(strongest);
+   if(samples.length>2000)break;
+  }
+  if(samples.length>2000)break;
+ }
+ if(samples.length<5)return null;
+ // Bridging no more than three unsampled positions avoids long false seams.
+ let runs=[],run=[],missing=0;
+ for(const s of samples){
+  if(s){if(missing>3){if(run.length)runs.push(run);run=[];}missing=0;run.push(s);}
+  else missing++;
+ }
+ if(run.length)runs.push(run);
+ runs.sort((a,b)=>b.length-a.length);
+ let best=runs[0]||[];
+ if(best.length<6||best.length/samples.length<.32)return null;
+ const compact=[];
+ for(const p of best)if(!compact.length||Math.hypot(p[0]-compact.at(-1)[0],p[1]-compact.at(-1)[1])>1.1)compact.push(p);
+ if(compact.length<2)return null;
+ // Distance-based simplification retains turns without the full pixel jitter.
+ const simplify=(seq,epsilon)=>{
+  const keep=new Uint8Array(seq.length);keep[0]=keep[seq.length-1]=1;
+  const stack=[[0,seq.length-1]];
+  while(stack.length){
+   const [i,j]=stack.pop(),a=seq[i],b=seq[j],dx=b[0]-a[0],dy=b[1]-a[1],den=dx*dx+dy*dy;
+   let k=-1,max=epsilon*epsilon;
+   for(let m=i+1;m<j;m++){
+    const p=seq[m],q=den?Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/den)):0;
+    const dist=(p[0]-a[0]-dx*q)**2+(p[1]-a[1]-dy*q)**2;
+    if(dist>max){max=dist;k=m;}
+   }
+   if(k>=0){keep[k]=1;stack.push([i,k],[k,j]);}
+  }
+  return seq.filter((p,i)=>keep[i]);
+ };
+ let out=simplify(compact,1.6);
+ if(out.length>100)out=Array.from({length:100},(_,i)=>out[Math.floor(i*(out.length-1)/99)]);
+ if(Math.hypot(out[0][0]-out.at(-1)[0],out[0][1]-out.at(-1)[1])<6)return null;
+ return{points:out,support:best.length/samples.length};
+}
 function checkedRegion(r){
  if(!r||typeof r.id!=="string"||r.id.length>60||typeof r.label!=="string"||
   !["fill","running"].includes(r.kind)||!/^#[0-9a-f]{6}$/i.test(r.color)||
@@ -125,16 +201,10 @@ function reconstruct(rgba,w,h,plan,opts={}){
   const points=r.points.map(p=>[p.x*w/1000,p.y*h/1000]),base={id:r.id,label:r.label,
    kind:r.kind,color:r.color,confidence:r.confidence,semantic:r.semantic,layer:r.layer};
   if(r.kind==="running"){
-   if(points.length>32)continue;
-   let supported=0;
-   for(const p of points){
-    const cx=Math.max(0,Math.min(w-1,Math.round(p[0]))),cy=Math.max(0,Math.min(h-1,Math.round(p[1])));
-    let found=false;for(let yy=Math.max(0,cy-3);yy<=Math.min(h-1,cy+3)&&!found;yy++)
-     for(let xx=Math.max(0,cx-3);xx<=Math.min(w-1,cx+3);xx++)if(foreground[yy*w+xx]){found=true;break;}
-    if(found)supported++;
-   }
-   if(supported/points.length<.65){rejected.push({id:r.id,reason:"line_off_artwork"});continue;}
-   regions.push({...base,points,sourceSupport:supported/points.length});continue;
+   const line=contrastCentreline(rgba,foreground,w,h,points);
+   if(!line){rejected.push({id:r.id,reason:"line_not_supported_by_image_contrast"});continue;}
+   regions.push({...base,points:line.points,sourceSupport:line.support,
+    geometrySource:"source_pixel_contrast_snapped_centreline"});continue;
   }
   if(invalidPolygon(points)){rejected.push({id:r.id,reason:"invalid_fill_outline"});continue;}
   const bb=boundsOf(points),x0=Math.max(0,Math.floor(bb.x0)),x1=Math.min(w-1,Math.ceil(bb.x1));
