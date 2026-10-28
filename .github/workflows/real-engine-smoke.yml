@@ -103,7 +103,7 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, 'services/digitiser')
           from machine_job import run_machine_job
-          p = {'width': 65, 'hoop': 100,
+          p = {'width': 65, 'hoop': 150,
                'paths': [
                  [[120,100],[260,100],[260,230],[120,230],[120,100]],
                  [[180,230],[180,320]]],
