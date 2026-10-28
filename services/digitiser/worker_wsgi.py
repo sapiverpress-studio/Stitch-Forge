@@ -65,7 +65,7 @@ def application(environ, start_response):
         return response('429 Too Many Requests','Engine busy; retry later')
     try:
         try:
-            result = run_machine_job(data, executable=Path(executable), timeout_seconds=90)
+            result = run_machine_job(data, executable=Path(executable), timeout_seconds=45)
         except (DigitiserError,ValueError):
             # Do not expose raw engine messages, paths, artwork or credentials.
             return response('422 Unprocessable Entity','Geometry or structural machine audit failed')
