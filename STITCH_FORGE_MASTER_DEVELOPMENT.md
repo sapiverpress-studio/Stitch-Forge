@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-1.3 |
+| Document version | MD-1.4 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local standalone prototype v0.3 + test logs, 2026-10-28 |
 | Default branch | `main` |
@@ -347,7 +347,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | --- | --- | --- | --- |
 | M0 — repository and truth ledger | README + this MD + update discipline + dev branch | DONE-VERIFIED | All files readable in GitHub; branch exists; log updated |
 | M1 — preserve prototype | Import v0.3 source and reproducible tests | IN-PROGRESS | Uploaded file hash matches local baseline; browser tests run from repo |
-| M2 — secure original-artwork import | PNG/JPG/SVG; separate editable regions | TODO | User moth importer safe; no silent loss; security tests |
+| M2 — secure original-artwork import | PNG/JPG/SVG; separate editable regions | IN-PROGRESS | User moth importer safe; no silent loss; security tests |
 | M3 — proper engine spike | working Ink/Stitch CLI for known SVG fixture | IN-PROGRESS | Pinned engine, command/output logs, reproducible CI/local recipe |
 | M4 — geometry and stitching | running, bean, satin and fill regions with routing | TODO | Unit fixtures, independent command plan; user-controlled stitch params |
 | M5 — validated machine exports | PES/DST and selected others | TODO | Independent decoder verification + capability matrix |
@@ -370,7 +370,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-005 | P0 | Import exact v0.3 HTML prototype | DONE-VERIFIED | File exists on dev branch; SHA-256 equals reference |
 | SF-006 | P0 | Recover/import browser tests and fixtures | IN-PROGRESS | Playwright test passing on source-controlled artifact |
 | SF-007 | P0 | Establish CI for browser, source lint and test evidence | IN-PROGRESS | Branch checks show green on documented commits |
-| SF-008 | P0 | Define versioned project schema | TODO | Schema, migrations and round-trip tests |
+| SF-008 | P0 | Define versioned project schema | IN-PROGRESS | Schema, migrations and round-trip tests |
 | SF-009 | P0 | Threat model uploaded SVG/raster and processing | IN-PROGRESS | Security tests + limits documented |
 | SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
 | SF-011 | P1 | Multi-contour region extraction / holes | TODO | Region fixtures and manual corrections verified |
@@ -416,6 +416,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-011 | 2026-10-28 | `services/digitiser/format_audit.py` + `tests/test_format_audit.py` | pyembroidery 1.5.1 reader, bounding-box and stitch-count comparison, corrupt-file rejection | SOURCE COMMITTED; REAL-LIBRARY TEST NOT RUN LOCALLY | Dependency unavailable locally; CI status not returned |
 | E-012 | 2026-10-28 | `real_engine_smoke.py` + `.github/workflows/real-engine-smoke.yml` | Official pinned Ink/Stitch 3.3.0 Linux release → generated SVG → PES/DST ZIP → independent audit | CI WORKFLOW COMMITTED; NOT EXECUTION-VERIFIED | GitHub workflow runs and statuses not returned; no physical stitch-out |
 | E-013 | 2026-10-28 | Local `python -m unittest discover -s tests -v` with `STITCH_FORGE_CHROMIUM=/usr/bin/chromium` | Existing 9 local regression tests + 2 SVG builder tests | 11 LOCAL TESTS PASS | Local suite does not include real pyembroidery or real Ink/Stitch; running without Chromium override fails due missing Playwright-bundled browser |
+
+| E-014 | 2026-10-28 | `services/digitiser/project_bridge.py` + `tests/test_project_bridge.py` | JSON paths → bounded physical-mm SVG; rejects unclosed fill, unsupported bean mode and non-finite or oversized coordinates | 4 LOCAL UNIT TESTS PASS | This does not yet generate stitches or preserve image detail |
+| E-015 | 2026-10-28 | Local v0.2 saved Stitch Forge project JSON (not committed as fixture) | Convert two actual existing browser paths into a trusted 78.0 × 75.6 mm vector document | LOCAL PASS | Browser JSON schema lacks versioning and explicit per-region colour / underlay parameters |
+| E-016 | 2026-10-28 | Local `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -v` | Browser/export, mock adapter, trusted SVG and JSON bridge | 15 LOCAL TESTS PASS | Does not include pyembroidery tests or real engine (no local packages); no GitHub-hosted run returned |
 
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
@@ -516,6 +520,18 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Current limitations:** simple fill/running region only, no satin, colour routing or fabric validation. New CI could fail on Linux packaging/asset discovery or library interpretation; fix based on actual logs, not assumptions.
 - **Next:** obtain passing GitHub Actions engine smoke and third-party reader tests, resolve any failures, add browser-region schema adapter and visual controls, and preserve all existing UI behaviour.
 - **Deployment:** no release or user-facing web deployment.
+
+### 2026-10-28 — Browser-to-digitiser project bridge
+
+- **Scope / task IDs:** SF-008 (initial adaptation), SF-009, E-014–E-016.
+- **Branch / PR:** `develop/stitch-engine-foundation`, draft PR #1.
+- **Changed files:** `services/digitiser/project_bridge.py` (commit `e7cbca4`) and `tests/test_project_bridge.py` (commit `316df65`).
+- **Behaviour:** Read existing browser project JSON, preserve manually defined paths, translate to physical millimetre region coordinates and reject unsupported bean-mode and unclosed tatami regions. Source reference images cannot become executable SVG markup through this bridge.
+- **Tests RUN:** On local source copy, 15 total regression tests pass with `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -v`. Also converted a real previously saved browser project JSON with two paths into a 78.0 × 75.6 mm SVG (2,054 bytes).
+- **Tests NOT run:** Full Ink/Stitch v3.3.0, pyembroidery independent readback in this environment, GitHub-hosted workflow, real machine/fabric. These are pending and not promoted to verified.
+- **Known limitations:** Browser project format is experimental and unversioned; no automatic multi-colour segmentation or satin/underlay; no machine-verified ZIP; source reference raster remains a reference rather than a stitch model.
+- **Next:** Obtain a successful GitHub CI run (or fix CI based on logs); add actual canonical region schema, multi-colour planning and satin-rail representation before interface overhaul.
+- **Deployment:** None; no public release.
 
 ### Entry template — REQUIRED on every meaningful development update
 
