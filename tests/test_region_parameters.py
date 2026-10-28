@@ -11,6 +11,9 @@ from trusted_svg import smoke_svg
 
 NS = '{http://inkstitch.org/namespace}'
 
+def stitch_elements(root):
+    return [el for el in root if el.tag.rsplit('}',1)[-1] in ('polygon', 'polyline')]
+
 
 def example():
     return {
@@ -33,13 +36,14 @@ class RegionParametersTests(unittest.TestCase):
     def test_two_colors_and_stitch_parameters(self):
         svg = convert_project(json.dumps(example()).encode())
         root = ET.fromstring(svg)
-        self.assertEqual(len(root), 2)
-        self.assertEqual(root[0].attrib['fill'], '#BD453A')
-        self.assertEqual(root[1].attrib['stroke'], '#257443')
-        self.assertEqual(root[0].attrib[NS + 'angle'], '30.00')
-        self.assertEqual(root[0].attrib[NS + 'row_spacing_mm'], '0.550')
-        self.assertEqual(root[0].attrib[NS + 'fill_underlay'], 'true')
-        self.assertEqual(root[1].attrib[NS + 'running_stitch_length_mm'], '2.500')
+        elements = stitch_elements(root)
+        self.assertEqual(len(elements), 2)
+        self.assertEqual(elements[0].attrib['fill'], '#BD453A')
+        self.assertEqual(elements[1].attrib['stroke'], '#257443')
+        self.assertEqual(elements[0].attrib[NS + 'angle'], '30.00')
+        self.assertEqual(elements[0].attrib[NS + 'row_spacing_mm'], '0.550')
+        self.assertEqual(elements[0].attrib[NS + 'fill_underlay'], 'true')
+        self.assertEqual(elements[1].attrib[NS + 'running_stitch_length_mm'], '2.500')
         self.assertNotIn(b'PRIVATE_DATA', svg)
 
     def test_existing_single_colour_projects_still_work(self):
@@ -66,8 +70,9 @@ class RegionParametersTests(unittest.TestCase):
 
     def test_two_colour_synthetic_engine_fixture(self):
         root = ET.fromstring(smoke_svg())
-        self.assertNotEqual(root[0].attrib['fill'], root[1].attrib['stroke'])
-        self.assertEqual(root[0].attrib[NS + 'fill_underlay'], 'true')
+        elements = stitch_elements(root)
+        self.assertNotEqual(elements[0].attrib['fill'], elements[1].attrib['stroke'])
+        self.assertEqual(elements[0].attrib[NS + 'fill_underlay'], 'true')
 
 
 if __name__ == '__main__':
