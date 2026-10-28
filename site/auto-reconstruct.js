@@ -71,16 +71,25 @@ function boundaryPixels(mask,w,h){
   if(y===h-1||!mask[k+w])add(x+1,y+1,x,y+1);
   if(x===0||!mask[k-1])add(x,y+1,x,y);
  }
- let best=[];
- for(const [key,targets] of edges){
+ let best=[],used=new Set();
+ const keyOf=(from,to)=>from+"->"+to[0]+","+to[1];
+ for(const [start,targets] of edges){
   for(const first of targets){
-   let pts=[key.split(",").map(Number)],at=first,seen=new Set([key]),limit=0;
+   if(used.has(keyOf(start,first)))continue;
+   let pts=[start.split(",").map(Number)],from=start,at=first,limit=0,closed=false;
    while(limit++<40000){
-    const now=at[0]+","+at[1];if(now===key)break;
-    if(seen.has(now)){pts=[];break;}seen.add(now);pts.push(at);
-    const next=edges.get(now);if(!next?.length){pts=[];break;}at=next[0];
+    const edgeKey=keyOf(from,at);if(used.has(edgeKey))break;
+    used.add(edgeKey);
+    const now=at[0]+","+at[1];
+    if(now===start){closed=true;break;}
+    pts.push(at);
+    const options=edges.get(now);
+    if(!options?.length)break;
+    const next=options.find(target=>!used.has(keyOf(now,target)));
+    if(!next)break;
+    from=now;at=next;
    }
-   if(pts.length>best.length)best=pts;
+   if(closed&&pts.length>best.length)best=pts;
   }
  }
  return best;
