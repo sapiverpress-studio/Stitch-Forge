@@ -1,0 +1,99 @@
+name: Real Ink-Stitch engine smoke (structural only)
+
+on:
+  pull_request:
+    paths:
+      - "services/digitiser/**"
+      - "tests/**"
+      - ".github/workflows/real-engine-smoke.yml"
+      - "STITCH_FORGE_MASTER_DEVELOPMENT.md"
+  push:
+    branches: ["develop/stitch-engine-foundation"]
+    paths:
+      - "services/digitiser/**"
+      - "tests/**"
+      - ".github/workflows/real-engine-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inkstitch-pyembroidery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Check out revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pyembroidery and Inkscape
+        run: |
+          python -m pip install pyembroidery==1.5.1
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2
+      - name: Run release selector and independent reader tests
+        env:
+          PYTHONPATH: services/digitiser
+        run: |
+          python -m unittest discover -s tests -p 'test_release_asset.py' -v
+          python -m unittest discover -s tests -p 'test_format_audit.py' -v
+      - name: Resolve exact official x86_64 archive
+        env:
+          PYTHONPATH: services/digitiser
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 2 'https://api.github.com/repos/inkstitch/inkstitch/releases/tags/v3.3.0' > "$RUNNER_TEMP/inkstitch-release.json"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from release_asset import select_linux_x64_asset
+          r = Path(os.environ['RUNNER_TEMP'])
+          name, url, digest = select_linux_x64_asset((r / 'inkstitch-release.json').read_bytes())
+          (r / 'asset-url').write_text(url)
+          (r / 'expected-digest').write_text(digest or '')
+          print('Official upstream file:', name)
+          print('Upstream SHA-256 metadata:', 'present' if digest else 'missing — record observed hash only')
+          PY
+      - name: Download and safely extract official engine
+        env:
+          PYTHONPATH: services/digitiser
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 2 --max-time 360 "$(cat "$RUNNER_TEMP/asset-url")" -o "$RUNNER_TEMP/inkstitch.tar.xz"
+          sha256sum "$RUNNER_TEMP/inkstitch.tar.xz"
+          python - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          from release_asset import extract_verified_release
+          root = Path(os.environ['RUNNER_TEMP'])
+          archive = root / 'inkstitch.tar.xz'
+          actual = hashlib.sha256(archive.read_bytes()).hexdigest()
+          expected = (root / 'expected-digest').read_text().strip()
+          if expected and expected != actual:
+              raise SystemExit('Upstream digest verification FAILED')
+          if not expected:
+              print('WARNING: no upstream digest; release tag pinned, asset digest not yet pinned')
+          extract_verified_release(archive, root / 'inkstitch-unpacked')
+          PY
+          find "$RUNNER_TEMP/inkstitch-unpacked" -name inkstitch -type f -perm /111 -print > "$RUNNER_TEMP/inkstitch-executables"
+          cat "$RUNNER_TEMP/inkstitch-executables"
+          test "$(wc -l < "$RUNNER_TEMP/inkstitch-executables")" -eq 1
+          echo "ENGINE_PATH=$(cat "$RUNNER_TEMP/inkstitch-executables")" >> "$GITHUB_ENV"
+      - name: Generate PES/DST from actual Ink/Stitch and read back independently
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          set -euo pipefail
+          python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --output "$RUNNER_TEMP/engine-smoke.zip"
+          unzip -t "$RUNNER_TEMP/engine-smoke.zip"
+          python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --project tests/fixtures/browser_project_v03.json --output "$RUNNER_TEMP/browser-project-smoke.zip"
+          unzip -t "$RUNNER_TEMP/browser-project-smoke.zip"
+          echo 'BOTH ENGINE FIXTURES ARE STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
