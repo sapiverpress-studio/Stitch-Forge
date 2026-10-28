@@ -229,7 +229,7 @@ $('#importFile').onchange=async ev=>{let f=ev.target.files?.[0];if(!f)return;
 function syncRegionUI(){let el=$('#regionSelect');if(!el)return;let current=String(activeRegion),signature=paths.length;if(el.options.length!==signature){el.replaceChildren();paths.forEach((p,i)=>{let opt=document.createElement('option');opt.value=String(i);opt.textContent='Region '+(i+1)+' · '+p.length+' nodes';el.appendChild(opt)})}else paths.forEach((p,i)=>{let t='Region '+(i+1)+' · '+p.length+' nodes';if(el.options[i].textContent!==t)el.options[i].textContent=t});if(paths.length){activeRegion=clamp(activeRegion,0,paths.length-1);el.value=String(activeRegion)}else{activeRegion=0}
  $('#stitchMode').value=pathStyles[activeRegion]||'running';$('#fillSettings').classList.toggle('hidden',$('#stitchMode').value!=='tatami')}
 $('#regionSelect').addEventListener('change',()=>{activeRegion=Number($('#regionSelect').value)||0;selected=null;render()});
-function changed(save=true){stop();planKey='';render();if(save)persist()}
+function changed(save=true){stop();planKey='';render();if(save)persist();window.dispatchEvent(new Event('stitchforge:design-changed'))}
 function settings(){let width=Number($('#designWidth').value),sp=Number($('#stitchLength').value),hoop=Number($('#hoop').value);if(!Number.isFinite(width)||width<10||width>250)throw Error('Set a design width between 10 and 250 mm.');if(!Number.isFinite(sp)||sp<1||sp>4)throw Error('Use stitch length 1–4 mm.');if(!Number.isFinite(hoop)||hoop<40||hoop>300)throw Error('Use a hoop between 40 and 300 mm.');return {width,sp,hoop}}
 function generate(){
  const {width,sp,hoop}=settings();
@@ -338,7 +338,7 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
   let dropped=0;
   const converted=draft.regions.map(region=>{
    if(!region||!['fill','running'].includes(region.kind)||!/^#[0-9a-f]{6}$/i.test(region.color)||
-     !Array.isArray(region.points)||region.points.length>(region.kind==='fill'?115:32))
+     !Array.isArray(region.points)||region.points.length>(region.kind==='fill'?115:100))
     throw Error('Invalid region or colour');
    const pts=region.points.map(p=>{
     if(!Array.isArray(p)||p.length!==2||!p.every(Number.isFinite))throw Error('Invalid geometry point');
@@ -363,16 +363,8 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
    if(pts.length<2)throw Error('Incomplete running path');
    return{points:pts,style:'running',color:region.color};
   });
-  // Keep only an existing strong outside perimeter. Old short AI fragments are replaced.
-  const area=p=>Math.abs(p.reduce((sum,a,i)=>{let b=p[(i+1)%p.length];return sum+a[0]*b[1]-b[0]*a[1]},0))/2;
-  const outlines=paths.map((p,i)=>({p,i,style:pathStyles[i]||'running'}))
-   .filter(v=>v.style==='running'&&v.p.length>=4&&
-     Math.hypot(v.p[0][0]-v.p.at(-1)[0],v.p[0][1]-v.p.at(-1)[1])<3)
-   .sort((a,b)=>area(b.p)-area(a.p));
-  if(outlines.length&&area(outlines[0].p)>rasterBounds.w*rasterBounds.h*.30){
-    const p=deep(outlines[0].p);
-    converted.push({points:p,style:'running',color:'#153e46'});
-  }
+  // The reconstruction replaces old contours; preserving a legacy silhouette here
+  // duplicates running stitches and adds an unrequested thread colour.
   const kept=converted.filter(Boolean);
   if(kept.filter(r=>r.style==='tatami').length<2)
     throw Error('Not enough machine-scale fill regions survived validation; old design unchanged');
