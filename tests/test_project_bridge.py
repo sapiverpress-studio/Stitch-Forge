@@ -66,7 +66,7 @@ class ProjectBridgeTests(unittest.TestCase):
              'pathStyles': ['running','running'], 'width': '78', 'hoop': '100'}
         svg = convert_project(json.dumps(p).encode())
         root = ET.fromstring(svg)
-        self.assertEqual(len(root), 2)
+        self.assertEqual(len([el for el in root if el.tag.rsplit('}',1)[-1] in ('polygon', 'polyline')]), 2)
         self.assertEqual(root.attrib['width'], '82.000mm')
         self.assertNotIn(b'NaN', svg)
 
