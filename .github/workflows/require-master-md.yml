@@ -1,0 +1,36 @@
+name: Require living development document update
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-master-md:
+    name: Development document accompanies code changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out pull request with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify required master document update
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > changed_paths.txt
+          cat changed_paths.txt
+
+          if grep -Eq '^(prototypes/|apps/|services/|packages/|tests/|scripts/|src/|\.github/workflows/|package\.json$|pnpm-lock\.yaml$|requirements.*\.txt$|pyproject\.toml$|Dockerfile$)' changed_paths.txt; then
+            if ! grep -Fxq 'STITCH_FORGE_MASTER_DEVELOPMENT.md' changed_paths.txt; then
+              echo "::error::Update STITCH_FORGE_MASTER_DEVELOPMENT.md in the same pull request as source, test, dependency or workflow changes."
+              exit 1
+            fi
+          fi
+          echo "Documentation update rule passed."
