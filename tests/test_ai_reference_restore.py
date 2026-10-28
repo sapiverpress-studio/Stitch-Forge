@@ -110,7 +110,7 @@ class AIReferenceRestoreTests(unittest.TestCase):
             }""")
             page.locator("#sfAiToken").fill("test-token-not-a-real-secret")
             page.locator("#sfAiAnalyse").click()
-            page.wait_for_function("document.querySelector('#sfAiStatus').textContent.includes('Identified 1')")
+            page.wait_for_function("document.querySelector('#sfAiStatus').textContent.includes('AI found 1')")
             result=page.evaluate("window.__capturedAnalysis")
             self.assertEqual(result["url"],"/api/analyse-embroidery")
             self.assertTrue(result["image"].startswith("data:image/jpeg;base64,"))
