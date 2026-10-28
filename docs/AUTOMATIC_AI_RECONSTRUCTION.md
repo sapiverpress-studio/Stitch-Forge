@@ -16,11 +16,13 @@ The original 14-region OpenAI analysis produced only rectangles. These are insuf
 
 ### 2 — Automatic reconstruction using real source pixels
 
-`site/auto-reconstruct.js` checks for a sufficiently uniform or genuinely transparent background, extracts an original foreground mask, intersects AI *polygon outlines* with actual image pixels, keeps the largest connected region and traces/simplifies closed boundaries. This prevents AI bounding boxes from turning into rectangular stitched patches. Running-centreline proposals are required to have image-supporting pixels nearby. Unsupported or fragmented regions are rejected. If fewer than two supported fills remain, **nothing is changed**. The current foreground test is **not semantic segmentation**: it can confirm visible subject pixels but cannot reliably distinguish two pale overlapping wing areas or all details. Complex backgrounds deliberately fail closed.
+`site/auto-reconstruct.js` checks for a sufficiently uniform or genuinely transparent background, extracts an original foreground mask, intersects AI *polygon outlines* with actual image pixels, keeps the largest connected region and traces/simplifies closed boundaries. This prevents AI bounding boxes from turning into rectangular stitched patches. Running-centreline proposals are snapped toward nearby pixel-derived cross-line contrast and rejected if the longest supported fragment is too short. This remains an approximation: branching fine lines and pale textures can be missed. Unsupported or fragmented regions are rejected. If fewer than two supported fills remain, **nothing is changed**. The current foreground test is **not semantic segmentation**: it can confirm visible subject pixels but cannot reliably distinguish two pale overlapping wing areas or all details. Complex backgrounds deliberately fail closed.
+
+Restored projects may retain only a reduced tracing reference rather than the original full-colour source. Automatic reconstruction now **requires the originally uploaded artwork in the current session**; a restored preview is rejected before a paid request, preventing false detail reconstruction. Re-upload the source image when needed.
 
 ### 3 — Automatic, undoable editor rebuild
 
-`site/auto-reconstruct-ui.js` adds **Reconstruct embroidery automatically**, gives request/validation status, then calls `StitchForgeAIContext.replaceWithAutomaticReconstruction`. The editor checks actual closed-fill polygons through `fill-geometry.js` after simplifying overly dense contours, removes previous fragments, retains a dominant original outline where appropriate, and saves the entire earlier design in Undo. It stores per-path colours alongside styles in browser persistence and JSON, and produces a coloured SVG with physical dimensions. The original detailed image remains the source reference.
+`site/auto-reconstruct-ui.js` adds **Reconstruct embroidery automatically**, gives request/validation status, then calls `StitchForgeAIContext.replaceWithAutomaticReconstruction`. The editor checks actual closed-fill polygons through `fill-geometry.js` after simplifying overly dense contours, replaces previous fragments without duplicating the old silhouette, and saves the entire earlier design in Undo. It stores per-path colours alongside styles in browser persistence and JSON, and produces a coloured SVG with physical dimensions. The original detailed image remains the source reference.
 
 **Machine-file safety:** the browser's experimental PES/DST generator currently supports only one colour. When the reconstructed regions have different colours, PES/DST/ZIP machine exports are **blocked** rather than silently generating a false one-colour file. The editable colour SVG is available for the real Ink/Stitch pipeline once that engine has independently passed tests. No automatic commercial machine files are claimed.
 
@@ -44,3 +46,11 @@ The original 14-region OpenAI analysis produced only rectangles. These are insuf
 **Official implementation references:** [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [OpenAI vision limitations](https://developers.openai.com/api/docs/guides/images-vision), [Ink/Stitch workflow](https://inkstitch.org/docs/workflow/), [Ink/Stitch satin](https://inkstitch.org/docs/stitches/satin-column/).
 
 **Release boundary:** Development PR #1 only. Do not merge experimental engine into `main` or claim machine-tested outputs without results.
+
+## 2026-10-28 — CI-verified stabilisation
+
+- Rebuild no longer carries forward the extra legacy silhouette; editor design-change events invalidate the transient AI overlay.
+- Pale foreground uses an adaptive rather than fixed RGB contrast threshold; centreline paths must be supported by image contrast instead of merely any foreground.
+- Tests include low-contrast wings, a dark supported vein and an unsupported invented line; these tests are synthetic and are not evidence of full moth reconstruction.
+- GitHub Actions head `db47e431`: AI region checks **success** (run 40716378480) and full digitiser regression **success** (run 40716378496). Real Ink/Stitch integration smoke still **fails**, at secure upstream archive extraction (run 40716378413).
+- Physical stitch-out, real moth semantic masks, calibrated colour sequence, production-grade satin/tatami and final multi-colour PES/DST remain unverified. Never label exported machine files production-ready.
