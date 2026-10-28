@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.12 |
+| Document version | MD-2.13 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -477,6 +477,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-055 | 2026-10-28 | `site/index.html` `5e9ff76`, `4b1b799`, `0e7a024`, `5372cef`, `site/auto-reconstruct-ui.js` `05eb91e` | One button requests model geometry, auto-generates region paths, validates, atomically replaces old traces, preserves per-path colour+Undo, downloads physical-dimension colour SVG; legacy manual fill UI removed from primary workflow. Multi-colour browser PES/DST blocked to prevent false one-colour exports. | SOURCE COMMITTED; EDITOR JS SYNTAX PASS | Mobile end-to-end test committed but no independently confirmed CI/Android result; professional machine file still unavailable |
 | E-056 | 2026-10-28 | Synthetic 240×160 two-wing fixture evaluated in isolated V8 with latest `auto-reconstruct.js` and `fill-geometry.js` | Both image-grounded fill regions reconstructed at 115 contour nodes each; 79% pixel support; after edit-space thinning each validated as a 57-point closed fill; source geometry remained synthetic | **2/2 SYNTHETIC FILLS VALIDATED AND SCRIPT EXECUTED** | No actual moth model prediction, independent PES/DST or fabric stitch test |
 | E-057 | 2026-10-28 | `tests/test_auto_reconstruct.cjs`, `tests/test_auto_ai_endpoint.mjs`, `tests/test_auto_reconstruct_mobile.py`, Netlify build and PR workflows | Tests cover no-artwork hallucination rejection, complex background refusal, token/no-store, 390×844 mobile mocked AI reconstruction, colour SVG, blocked DST and Undo. Netlify PR deploy-preview status success for `22b75ff` head. | TESTS COMMITTED; NETLIFY PREVIEW CHECK SUCCESS | Individual `node --test`/Playwright execution logs not exposed, so test result not claimed; no actual owner API call |
+| E-058 | 2026-10-28 | `netlify/functions/reconstruct-embroidery.mjs` commit `604fb46` + Netlify deploy `6ae1f91fab29f44ae9fd9a03` | Removed an invalid experimental default model identifier and incompatible speculative image parameter; restored documented `gpt-4.1` + image detail `high` default (environment override supported). Development Preview #1 confirmed `ready` at exact commit with **2 functions deployed**. | **SOURCE FIX + DEPLOY READY VERIFIED** | Actual authenticated API call using user's account, model entitlement, real moth reconstruction and final machine output still untested. |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -776,6 +777,15 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Known limitation:** Closed fills are still basic experimental tatami, not machine-tested multi-colour. AI spatial coordinates can be inaccurate even with structured output. Professional standard requires semantic masks, artwork-level quality scoring, satin columns/rungs, proper density/underlay/trim order and real Ink/Stitch/pyembroidery and fabric verification.
 - **Next concrete action:** owner runs one controlled OpenAI reconstruction on the original moth in private preview; collect safe error/result and compare wing/background boundaries against real artwork. Improve geometry based on actual failures before advancing to machine file export.
 - **Release:** Development draft PR #1 only; no production engine promotion. See `docs/AUTOMATIC_AI_RECONSTRUCTION.md`.
+
+### 2026-10-28 — Automatic AI preview build and model compatibility correction
+
+- **User requirement confirmed:** fully automatic reconstruction from original artwork; no requirement to trace each wing manually. Preview offers a single `Reconstruct embroidery automatically` action, with private token needed for authenticated OpenAI usage.
+- **Model compatibility fix:** `netlify/functions/reconstruct-embroidery.mjs` commit `604fb46` replaces an unverified model default and `detail:original` setting with `gpt-4.1` and `detail:high`. Model can be overridden by an explicitly configured `STITCH_FORGE_RECONSTRUCTION_MODEL` Netlify environment variable.
+- **Deployment evidence:** Netlify deploy preview `6ae1f91fab29f44ae9fd9a03`, source commit `604fb466527ea24d35cc7fb4a2b8b15fbe7e06b8`, state `ready`, **2 protected functions**. No production promotion.
+- **Local smoke checks:** Synthetic 240×160 two-wing image yields two distinct contour fills at 115 vertices with ~79% pixel support. Empty artwork and complex backgrounds fail without creating fake fills. Updated HTML inline editor JS parses. Tests remain synthetic, not full mobile or real OpenAI success.
+- **Known limitations:** Image foreground clipping is not accurate semantic segmentation of pale wing layers, AI-proposed centreline geometry is unproven on the real moth, browser-generated PES/DST lacks verified multi-colour, satin, underlay, travel trims, pull compensation and machine QA. Colour SVG is editable only.
+- **Next gate:** One authorised real-moth AI reconstruction in preview, inspect saved colour SVG versus image for each wing/body detail; then integrate verified Ink/Stitch engine, independent stitch-file reader and fabric tests. Do not market files as professional yet.
 
 ### Entry template — REQUIRED on every meaningful development update
 
