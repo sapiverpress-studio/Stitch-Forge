@@ -35,7 +35,7 @@ jobs:
         run: |
           python -m pip install pyembroidery==1.5.1
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth x11-utils
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth x11-utils imagemagick
       - name: Run release selector and independent reader tests
         env:
           PYTHONPATH: services/digitiser
@@ -96,11 +96,15 @@ jobs:
           # Synthetic fixture ONLY: observe window titles to identify a modal
           # dialogue rather than silently extending the process timeout.
           xvfb-run -a -s "-screen 0 1280x800x24" bash -c '
-            python services/digitiser/real_engine_smoke.py --inkstitch "$1" --output "$2" &
+            timeout --signal=TERM --kill-after=3s 50s python services/digitiser/real_engine_smoke.py --inkstitch "$1" --output "$2" &
             pid=$!
             sleep 16
             echo "===== Synthetic-only X11 window diagnostics ====="
             xwininfo -root -tree | head -n 60 || true
+            echo "===== Synthetic-only Ink/Stitch dialog PNG (base64, 600x230 crop) BEGIN ====="
+            import -window root -crop 600x230+0+0 +repage png:- 2>/dev/null | base64 -w0 || true
+            echo
+            echo "===== Synthetic-only dialog PNG END ====="
             wait "$pid"
           ' -- "$ENGINE_PATH" "$RUNNER_TEMP/engine-smoke.zip"
           unzip -t "$RUNNER_TEMP/engine-smoke.zip"
