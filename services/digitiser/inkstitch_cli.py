@@ -7,6 +7,7 @@ Ink/Stitch runtime is not bundled, configured or machine-validated here.
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path, PurePosixPath
+import os
 import stat
 import subprocess
 import zipfile
