@@ -35,7 +35,7 @@ jobs:
         run: |
           python -m pip install pyembroidery==1.5.1
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends inkscape libnsl2
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0
       - name: Run release selector and independent reader tests
         env:
           PYTHONPATH: services/digitiser
