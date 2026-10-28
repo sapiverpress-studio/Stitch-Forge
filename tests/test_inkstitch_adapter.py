@@ -27,6 +27,8 @@ class AdapterTests(TestCase):
             _inspect_zip(zip_bytes(('a.pes', b'test')))
         with self.assertRaises(DigitiserError):
             _inspect_zip(b'not-a-zip')
+        with self.assertRaises(DigitiserError):
+            _inspect_zip(zip_bytes(('large.dst', b'0' * 21_000_000), ('a.pes', b'x')))
         self.assertEqual(
             _inspect_zip(zip_bytes(('a.dst', b'x'), ('a.pes', b'x'), ('threadlist.txt', b'1'))),
             ('a.dst', 'a.pes', 'threadlist.txt'))
