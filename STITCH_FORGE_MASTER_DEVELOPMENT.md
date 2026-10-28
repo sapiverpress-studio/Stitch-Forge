@@ -895,6 +895,13 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Not tested / remaining limitations:** hosted HTTPS, actual Netlify preview→worker transaction, real OpenAI image accuracy, owner-device Android, Docker isolation until CI passes, satin rails, compound holes/gradients, physical fabric. Real-image quality is not established by synthetic anatomy or valid machine files. General rules apply across images but do not guarantee all images are supported.
 - **Next action:** verify container CI then deploy this package on an owner-approved private amd64 HTTPS host; set worker settings only in deploy-preview functions context, and exercise an authorised original-image request. Master document mirrored to main with documentation only and deployment-skip commit; application stays in draft PR.
 
+### 2026-10-28 — Container startup follow-up (MD-2.19)
+
+- Implementation is remote commit `08d78a8f42e17b29a80b1b3e1882cd828e0d1125`; docs-only main sync `eba102fac81a92ceffdc6d4d25d606183b741402`.
+- Fresh [Python CI 40747481869](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40747481869) and [AI/browser CI 40747482204](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40747482204) **SUCCESS**. Netlify development preview ready; both reconstruction JS files fetched and byte-matched to committed source; unauthenticated deployed machine request correctly returns 401. No paid model call.
+- [Native/container CI 40747481435](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40747481435): native fixture exports **PASS**, Docker image build **PASS**, container HTTP **FAIL** (connection reset after startup readiness retries). Existing xvfb-run redirected display diagnostics, so root cause was not yet established. Do not claim a deployable running container from build success.
+- Follow-up replaces silent xvfb-run startup with explicit container-local Unix-only Xvfb, visible error output and a bounded 10-second readiness test. Worker remains non-root, read-only and resource limited. CI now asserts readiness and records container state before cleanup. Retry pending; no security isolation removed and no live host configured.
+
 ### Entry template — REQUIRED on every meaningful development update
 
 ```md
