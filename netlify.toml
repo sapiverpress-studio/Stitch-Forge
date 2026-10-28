@@ -1,7 +1,9 @@
-# Static engineering preview: no build command, no backend, no Ink/Stitch runtime.
+# Experimental static editor + protected AI Function. No Ink/Stitch runtime.
+# Build fails closed if zero-cost mocked AI security/error tests fail.
 # Experimental machine files are not approved for retail or machine use.
 [build]
   publish = "site"
+  command = "node --test tests/test_ai_analysis.mjs"
 
 [[headers]]
   for = "/*"
