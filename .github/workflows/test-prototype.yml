@@ -1,0 +1,39 @@
+name: Experimental digitiser regression tests
+
+on:
+  pull_request:
+    paths:
+      - "prototypes/**"
+      - "tests/**"
+      - ".github/workflows/test-prototype.yml"
+      - "STITCH_FORGE_MASTER_DEVELOPMENT.md"
+  push:
+    branches: [ "develop/stitch-engine-foundation" ]
+    paths:
+      - "prototypes/**"
+      - "tests/**"
+      - ".github/workflows/test-prototype.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  browser-and-structure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/requirements.txt
+      - name: Install pinned browser test dependencies
+        run: python -m pip install -r tests/requirements.txt
+      - name: Install Playwright Chromium and required OS packages
+        run: python -m playwright install --with-deps chromium
+      - name: Run UI, safety and independent binary decoder checks
+        run: python -m unittest discover -s tests -v
