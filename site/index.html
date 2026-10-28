@@ -327,6 +327,51 @@ $('#stitchValue').textContent=Number($('#stitchLength').value).toFixed(2)+' mm';
 // Readiness diagnostic for automated browser checks. Not machine certification.
 window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterReference||null,getSourceStatus:()=>rasterSource?'original':rasterReference?'restored-preview':'none',getBounds:()=>rasterBounds?deep(rasterBounds):null,
  getWidthMm:()=>Number($('#designWidth').value),
+ exportEditableSvg:()=>makeSvg({settings:{width:Number($('#designWidth').value)}}),
+ replaceWithAutomaticReconstruction:(draft)=>{
+  if(!draft||draft.status!=='AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED'||
+     !Array.isArray(draft.regions)||draft.regions.length<2||draft.regions.length>16)
+    throw Error('No valid automatically reconstructed design');
+  if(!rasterBounds||!rasterReference)throw Error('Source artwork must be loaded');
+  const w=Number(draft.width),h=Number(draft.height);
+  if(!Number.isFinite(w)||!Number.isFinite(h)||w<48||h<48)throw Error('Missing source pixel size');
+  const converted=draft.regions.map(region=>{
+   if(!region||!['fill','running'].includes(region.kind)||!/^#[0-9a-f]{6}$/i.test(region.color)||
+     !Array.isArray(region.points)||region.points.length>(region.kind==='fill'?115:32))
+    throw Error('Invalid region or colour');
+   const pts=region.points.map(p=>{
+    if(!Array.isArray(p)||p.length!==2||!p.every(Number.isFinite))throw Error('Invalid geometry point');
+    const x=rasterBounds.x+p[0]/w*rasterBounds.w,y=rasterBounds.y+p[1]/h*rasterBounds.h;
+    if(x<0||x>600||y<0||y>600)throw Error('Region outside stitch canvas');
+    return [Math.round(x*100)/100,Math.round(y*100)/100];
+   });
+   if(region.kind==='fill'){
+    const checked=window.StitchForgeFillGeometry?.prepare(pts,rasterBounds);
+    if(!checked)throw Error('Missing closed-region validator');
+    return {points:checked.points,style:'tatami',color:region.color};
+   }
+   if(pts.length<2)throw Error('Incomplete running path');
+   return{points:pts,style:'running',color:region.color};
+  });
+  // Keep only an existing strong outside perimeter. Old short AI fragments are replaced.
+  const area=p=>Math.abs(p.reduce((sum,a,i)=>{let b=p[(i+1)%p.length];return sum+a[0]*b[1]-b[0]*a[1]},0))/2;
+  const outlines=paths.map((p,i)=>({p,i,style:pathStyles[i]||'running'}))
+   .filter(v=>v.style==='running'&&v.p.length>=4&&
+     Math.hypot(v.p[0][0]-v.p.at(-1)[0],v.p[0][1]-v.p.at(-1)[1])<3)
+   .sort((a,b)=>area(b.p)-area(a.p));
+  if(outlines.length&&area(outlines[0].p)>rasterBounds.w*rasterBounds.h*.30){
+    const p=deep(outlines[0].p);
+    converted.push({points:p,style:'running',color:'#153e46'});
+  }
+  const count=converted.reduce((a,r)=>a+r.points.length,0);
+  if(converted.length>128||count>5000)throw Error('Automatic reconstruction exceeds stitch-region safety limits');
+  snapshot();
+  paths=converted.map(r=>r.points);pathStyles=converted.map(r=>r.style);pathColors=converted.map(r=>r.color);
+  activeRegion=0;selected=null;drawingIndex=-1;runIndex=0;changeMode('edit');changed();
+  setStatus('Automatically reconstructed '+draft.regions.length+' image-based regions. The complete previous stitch plan is saved in Undo. Experimental colour SVG only; PES/DST multi-colour is NOT verified.','ok');
+  return{regions:draft.regions.length,totalPaths:paths.length,colors:new Set(pathColors).size};
+ },
+
  appendReviewedFillRegion:(input)=>{
   if(!window.StitchForgeFillGeometry)throw Error('Fill region validator unavailable');
   const validated=window.StitchForgeFillGeometry.prepare(input,rasterBounds);
@@ -358,6 +403,6 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
   return {count:converted.length,total:paths.length};
  }
 });
-window.__stitchforge_test={generate,makeDst,makePes,zip,exportSvg:()=>makeSvg(getPlan()),fox:()=>deep(fox),get paths(){return deep(paths)},setPaths(p){paths=deep(p);selected=null;planKey='';render()},report(){let p=getPlan();return{count:p.count,jumps:p.jumps,extent:[p.widthMm,p.heightMm],pesLength:makePes(p).length,dstLength:makeDst(p).length}}};
+window.__stitchforge_test={generate,makeDst,makePes,zip,exportSvg:()=>makeSvg(getPlan()),get pathColors(){return deep(pathColors)},fox:()=>deep(fox),get paths(){return deep(paths)},setPaths(p){paths=deep(p);selected=null;planKey='';render()},report(){let p=getPlan();return{count:p.count,jumps:p.jumps,extent:[p.widthMm,p.heightMm],pesLength:makePes(p).length,dstLength:makeDst(p).length}}};
 })();
-</script><script src="/fill-geometry.js" defer></script><script src="/ai-guides.js" defer></script><script src="/ai-details.js" defer></script><script src="/fill-boundary-ui.js" defer></script></body></html>
+</script><script src="/fill-geometry.js" defer></script><script src="/auto-reconstruct.js" defer></script><script src="/ai-guides.js" defer></script><script src="/ai-details.js" defer></script><script src="/fill-boundary-ui.js" defer></script></body></html>
