@@ -11,7 +11,7 @@ import re
 MAX_REGIONS = 128
 MAX_VERTICES = 2048
 MAX_SIZE_MM = 400
-_COLOR = re.compile(r"#[0-9a-fA-F]{6}\\Z")
+_COLOR = re.compile(r"#[0-9a-fA-F]{6}\Z")
 _INKSTITCH_NS = "http://inkstitch.org/namespace"
 ET.register_namespace("inkstitch", _INKSTITCH_NS)
 
