@@ -472,6 +472,18 @@ Do not create empty decorative folders or claim an implementation exists because
 
 **Files/PRs:** README `7e3e9cc`; master `4b58a386`; contributor `9e0d672`; PR template `8d82e22`; documentation gate `98d37a5`; prototype import `d7a319d`. No merges, deployments or listings.
 
+### 2026-10-28 — Development branch prototype preservation (PR candidate)
+
+- **Scope / task IDs:** SF-004 and SF-005; SF-006 remains TODO.
+- **Branch:** `develop/stitch-engine-foundation`.
+- **What changed:** added exact source `prototypes/stitch-forge-v0.3.html`. Source was preserved without changing experimental stitch algorithms.
+- **Provenance check:** GitHub blob `be29a022390194a3670fa0d29561b4bda78e20be` matches local `git hash-object` of the original v0.3 file; source byte length 61,967.
+- **Tests RUN this session:** baseline source/hash comparison; read-back of code file in connected GitHub.
+- **Tests NOT run in repository:** browser E2E, independent file reader in CI, physical machine stitch-out; these remain explicitly TODO/BLOCKED.
+- **Regression exposure:** None from refactoring (source unchanged). Existing quality and importer limitations remain.
+- **Deployment:** None; no live services or Etsy changes.
+- **Next:** commit synthetic browser tests and the user-moth-equivalent *non-copyright-sensitive* embedded-image fixture; run a development CI job; then integrate a pinned Ink/Stitch engine.
+
 ### Entry template — REQUIRED on every meaningful development update
 
 ```md
