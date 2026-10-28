@@ -96,4 +96,30 @@ jobs:
           unzip -t "$RUNNER_TEMP/engine-smoke.zip"
           xvfb-run -a -s "-screen 0 1280x800x24" python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --project tests/fixtures/browser_project_v03.json --output "$RUNNER_TEMP/browser-project-smoke.zip"
           unzip -t "$RUNNER_TEMP/browser-project-smoke.zip"
-          echo 'BOTH ENGINE FIXTURES ARE STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
+          # Exercise the exact JSON geometry -> trusted SVG -> real Ink/Stitch
+          # -> separately decoded PES/DST transaction that the worker invokes.
+          xvfb-run -a -s "-screen 0 1280x800x24" python - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'services/digitiser')
+          from machine_job import run_machine_job
+          p = {'width': 65, 'hoop': 100,
+               'paths': [
+                 [[120,100],[260,100],[260,230],[120,230],[120,100]],
+                 [[180,230],[180,320]]],
+               'pathStyles':['tatami','running'],
+               'pathColors':['#AA3344','#267C5C'],
+               'pathSettings':[{'fillAngleDeg':30,'rowSpacingMm':0.55,
+                                'fillUnderlay':True},
+                               {'runningLengthMm':2.0}]}
+          result = run_machine_job(json.dumps(p).encode(),
+                    executable=Path(os.environ['ENGINE_PATH']), timeout_seconds=90)
+          assert len(result.payload) >= 100
+          assert len(result.summary) == 2
+          assert {x['format'] for x in result.summary} == {'pes','dst'}
+          assert all(x['stitches'] > 10 and x['changes'] == 1 for x in result.summary)
+          print('REAL JSON-TO-INKSTITCH JOB: PASSED, BOTH FORMATS, 1 COLOUR CHANGE')
+          print('AUDITED MACHINE ZIP SHA256:',result.digest)
+          print('PHYSICAL STITCH-OUT: NOT TESTED')
+          PY
+          echo 'ALL THREE ENGINE FIXTURES ARE STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
