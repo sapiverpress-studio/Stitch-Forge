@@ -66,6 +66,12 @@ class AutoMothMobileTest(unittest.TestCase):
                 page.add_script_tag(content=(ROOT/"site"/script).read_text(encoding="utf8"))
             page.evaluate("""response => {
               window.fetch=async (url,init) => {
+                if(url==='/api/machine-embroidery'){
+                  const data=JSON.parse(init.body);
+                  if(data.reference||data.image||data.svg||data.paths.length!==2)throw Error('private source or incorrect geometry sent to native engine');
+                  if(!init.headers.Authorization.startsWith('Bearer '))throw Error('missing owner token');
+                  return {ok:false,status:503,json:async()=>({error:'Native worker not configured'})};
+                }
                 if(url!=='/api/reconstruct-embroidery')throw Error('unexpected URL');
                 if(!init.headers.Authorization.startsWith('Bearer '))throw Error('missing token');
                 const body=JSON.parse(init.body);if(!body.image.startsWith('data:image/jpeg;base64,'))throw Error('missing image');
@@ -74,7 +80,8 @@ class AutoMothMobileTest(unittest.TestCase):
             }""",geometry())
             page.locator("#sfAutoToken").fill("synthetic-test-token")
             page.locator("#sfAutoRun").click()
-            page.wait_for_function("document.querySelector('#sfAutoStatus').textContent.includes('Automatically rebuilt')",timeout=15000)
+            page.wait_for_function("document.querySelector('#sfAutoStatus').textContent.includes('Native worker not configured')",timeout=15000)
+            self.assertIn("Editable SVG and Undo remain available",page.locator("#sfAutoStatus").inner_text())
             self.assertEqual(page.evaluate("window.__stitchforge_test.paths.length"),2)
             colors=page.evaluate("window.__stitchforge_test.pathColors")
             self.assertEqual(colors,["#AABBDD","#EECCAA"])
