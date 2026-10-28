@@ -1,0 +1,11 @@
+{
+  "product": "Synthetic Stitch Forge engineering fixture",
+  "design": "Geometric Leaf",
+  "settings": {"width": 60, "sp": 2, "hoop": 100, "rowSpacing": 0.8, "fillAngle": 0, "underlay": false},
+  "paths": [
+    [[190,120],[280,155],[335,260],[280,365],[190,400],[100,365],[45,260],[100,155],[190,120]],
+    [[190,400],[190,520]]
+  ],
+  "pathStyles": ["tatami", "running"],
+  "reference": null
+}
