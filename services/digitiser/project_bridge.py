@@ -5,6 +5,7 @@ Both are accepted, but artwork references are NEVER passed to the engine.
 Generated SVG is an *input*, not a stitch-tested or approved embroidery file.
 """
 import json
+import re
 from math import hypot, isfinite
 from pathlib import Path
 from trusted_svg import Region, build_svg
@@ -70,6 +71,22 @@ def convert_project(data: bytes) -> bytes:
         styles = [obj.get('stitchMode', 'running')] * len(paths)
     if not isinstance(styles, list) or len(styles) != len(paths):
         raise ValueError('Region mode count mismatch')
+    colours = obj.get('pathColors')
+    if colours is None:
+        colours = [obj.get('threadColor', '#153e46')] * len(paths)
+    if not isinstance(colours, list) or len(colours) != len(paths):
+        raise ValueError('Region colour count mismatch')
+    properties = obj.get('pathSettings')
+    if properties is None:
+        properties = [{} for _ in paths]
+    if not isinstance(properties, list) or len(properties) != len(paths):
+        raise ValueError('Region parameter count mismatch')
+    allowed = {'fillAngleDeg', 'rowSpacingMm', 'fillUnderlay', 'runningLengthMm'}
+    for colour, props in zip(colours, properties):
+        if not isinstance(colour, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', colour):
+            raise ValueError('Invalid thread colour')
+        if not isinstance(props, dict) or not set(props).issubset(allowed):
+            raise ValueError('Unsupported region parameters')
     all_points = []
     for path in paths:
         if not isinstance(path, list) or not 2 <= len(path) <= MAX_POINTS:
@@ -89,7 +106,7 @@ def convert_project(data: bytes) -> bytes:
         raise ValueError('Degenerate design dimensions')
     w, h, hoop = _settings(obj, dw, dh)
     regions = []
-    for path, mode in zip(paths, styles):
+    for path, mode, colour, props in zip(paths, styles, colours, properties):
         if mode == 'bean':
             raise ValueError('Bean mode unsupported by Ink/Stitch bridge: requires explicit repeats')
         if mode not in ('running', 'tatami'):
@@ -101,7 +118,12 @@ def convert_project(data: bytes) -> bytes:
         scale = w / dw
         mm_points = tuple((round(MARGIN_MM + (x - min_x) * scale, 3),
                            round(MARGIN_MM + (y - min_y) * scale, 3)) for x, y in path)
-        regions.append(Region(mm_points, 'fill' if mode == 'tatami' else 'running'))
+        regions.append(Region(mm_points, 'fill' if mode == 'tatami' else 'running',
+                              thread_color=colour,
+                              fill_angle_deg=props.get('fillAngleDeg'),
+                              row_spacing_mm=props.get('rowSpacingMm'),
+                              fill_underlay=props.get('fillUnderlay'),
+                              running_length_mm=props.get('runningLengthMm')))
     return build_svg(w + 2 * MARGIN_MM, h + 2 * MARGIN_MM, tuple(regions))
 
 
