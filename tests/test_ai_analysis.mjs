@@ -88,3 +88,46 @@ test("authenticated request sends an image to OpenAI with store disabled",async(
   if(savedToken===undefined)delete process.env.STITCH_FORGE_ANALYSIS_TOKEN;else process.env.STITCH_FORGE_ANALYSIS_TOKEN=savedToken;
  }
 });
+
+test("identifies incomplete, invalid, rate-limited, and network OpenAI failures without leaking response bodies",async()=>{
+ const savedKey=process.env.OPENAI_API_KEY;
+ const savedToken=process.env.STITCH_FORGE_ANALYSIS_TOKEN;
+ const originalFetch=globalThis.fetch;
+ const originalError=console.error;
+ process.env.OPENAI_API_KEY="synthetic-test-api-key";
+ process.env.STITCH_FORGE_ANALYSIS_TOKEN="synthetic-test-access-token";
+ const png=Buffer.concat([Buffer.from("89504e470d0a1a0a","hex"),Buffer.alloc(120)]);
+ const requestBody=JSON.stringify({image:"data:image/png;base64,"+png.toString("base64")});
+ const outcomes=[
+  {upstream:{status:"incomplete",incomplete_details:{reason:"max_output_tokens"},output:[]},code:"RESPONSE_INCOMPLETE"},
+  {upstream:{status:"completed",output:[{type:"message",content:[{type:"output_text",
+    text:JSON.stringify({...example(),regions:[{...goodRegion(),suggested_color:"beige"}]})}]}]},code:"RESPONSE_INVALID_REGIONS"},
+  {status:400,code:"UPSTREAM_BAD_REQUEST"},
+  {status:429,code:"UPSTREAM_RATE_LIMIT"},
+  {network:true,code:"NETWORK_ERROR"}
+ ];
+ console.error=()=>{}; // tests do not print errors or user details
+ try{
+  for(const item of outcomes){
+   globalThis.fetch=async()=>{
+    if(item.network)throw Error("synthetic provider connection issue");
+    return new Response(JSON.stringify(item.upstream||{error:{message:"synthetic unsafe raw response"}}),{
+     status:item.status||200,headers:{"Content-Type":"application/json"}});
+   };
+   const response=await handler(new Request("https://test.invalid/api/analyse-embroidery",{
+    method:"POST",headers:{"Content-Type":"application/json",
+     "Authorization":"Bearer synthetic-test-access-token"},body:requestBody}));
+   assert.equal(response.status,502,item.code);
+   const data=await response.json();
+   assert.equal(data.code,item.code);
+   assert.ok(data.error.length>12);
+   assert.ok(!JSON.stringify(data).includes("unsafe raw response"));
+   assert.ok(!JSON.stringify(data).includes("synthetic-test-api-key"));
+  }
+ }finally{
+  globalThis.fetch=originalFetch;
+  console.error=originalError;
+  if(savedKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=savedKey;
+  if(savedToken===undefined)delete process.env.STITCH_FORGE_ANALYSIS_TOKEN;else process.env.STITCH_FORGE_ANALYSIS_TOKEN=savedToken;
+ }
+});
