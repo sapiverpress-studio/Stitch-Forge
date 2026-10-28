@@ -45,6 +45,13 @@ def build_svg(width_mm: float, height_mm: float, regions: tuple[Region, ...]) ->
         'width': f'{width_mm:.3f}mm', 'height': f'{height_mm:.3f}mm',
         'viewBox': f'0 0 {width_mm:.3f} {height_mm:.3f}',
     })
+    # Ink/Stitch v3.3.0 (lib/update.py) requires SVG schema version 4.
+    # Its updater opens a blocking GUI confirmation when namespaced stitch
+    # attributes appear on an unversioned SVG. These documents are freshly
+    # generated with current attributes, not historical files to migrate.
+    # This is explicit metadata, NOT a command to skip stitch validation.
+    meta = ET.SubElement(root, 'metadata')
+    ET.SubElement(meta, f'{{{_INKSTITCH_NS}}}inkstitch_svg_version').text = '4'
     for ix, region in enumerate(regions):
         if region.stitch_type not in {'running', 'fill'}:
             raise ValueError('Unsupported region type')
