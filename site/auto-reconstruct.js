@@ -12,8 +12,8 @@ function inside(px,py,poly){let yes=false;for(let i=0,j=poly.length-1;i<poly.len
 }return yes;}
 function boundsOf(points){let xx=points.map(p=>p[0]),yy=points.map(p=>p[1]);return{x0:Math.min(...xx),x1:Math.max(...xx),y0:Math.min(...yy),y1:Math.max(...yy)};}
 function cross(a,b,c){return(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);}
-function invalidPolygon(points){
- if(points.length<5||points.length>32)return true;
+function invalidPolygon(points,maxPoints=32){
+ if(points.length<5||points.length>maxPoints)return true;
  const p=points;
  for(let i=0;i<p.length;i++)for(let j=i+2;j<p.length;j++){
   if(i===0&&j===p.length-1)continue;
@@ -138,7 +138,7 @@ function reconstruct(rgba,w,h,plan,opts={}){
   const cc=largestComponent(mask,w,h);
   if(cc.size<25||cc.size/signal<.55){rejected.push({id:r.id,reason:"fragmented_fill"});continue;}
   const contour=simplifyRing(boundaryPixels(cc.mask,w,h));
-  if(contour.length<5||invalidPolygon(contour)){rejected.push({id:r.id,reason:"could_not_reconstruct_boundary"});continue;}
+  if(contour.length<5||invalidPolygon(contour,120)){rejected.push({id:r.id,reason:"could_not_reconstruct_boundary"});continue;}
   regions.push({...base,points:contour,sourceSupport:cc.size/candidate,
    pixelArea:cc.size,geometrySource:"ai_polygon_intersected_with_artwork_pixels"});
  }
