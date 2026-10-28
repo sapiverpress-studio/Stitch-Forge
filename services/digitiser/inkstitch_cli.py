@@ -93,7 +93,14 @@ def export_trusted_svg(svg: Path, *, executable: Path, timeout_seconds: int = 60
     except OSError as exc:
         raise DigitiserError('Ink/Stitch could not start') from exc
     if run.returncode != 0:
-        raise DigitiserError(f'Ink/Stitch failed with exit code {run.returncode}')
+        detail = ''
+        # Only the synthetic public GitHub test may expose bounded upstream
+        # diagnostics; never echo error text from uploaded customer artwork.
+        if os.environ.get('STITCH_FORGE_CI_DIAGNOSTICS') == 'synthetic-only':
+            detail = ' '.join(run.stderr.decode('utf-8', errors='replace')[-800:].split())
+            detail = ''.join(c for c in detail if c.isprintable())[:500]
+        raise DigitiserError(f'Ink/Stitch failed with exit code {run.returncode}'+
+                             (f' (synthetic CI diagnostic: {detail})' if detail else ''))
     filenames = _inspect_zip(run.stdout)
     return EngineResult(run.stdout, filenames,
                         run.stderr.decode('utf-8', errors='replace')[-2500:])
