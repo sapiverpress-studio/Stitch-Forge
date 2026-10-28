@@ -35,7 +35,7 @@ jobs:
         run: |
           python -m pip install pyembroidery==1.5.1
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
       - name: Run release selector and independent reader tests
         env:
           PYTHONPATH: services/digitiser
@@ -89,12 +89,12 @@ jobs:
       - name: Generate PES/DST from actual Ink/Stitch and read back independently
         shell: bash
         env:
-          QT_QPA_PLATFORM: offscreen
+          QT_QPA_PLATFORM: xcb
           STITCH_FORGE_CI_DIAGNOSTICS: synthetic-only
         run: |
           set -euo pipefail
-          python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --output "$RUNNER_TEMP/engine-smoke.zip"
+          xvfb-run -a -s "-screen 0 1280x800x24" python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --output "$RUNNER_TEMP/engine-smoke.zip"
           unzip -t "$RUNNER_TEMP/engine-smoke.zip"
-          python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --project tests/fixtures/browser_project_v03.json --output "$RUNNER_TEMP/browser-project-smoke.zip"
+          xvfb-run -a -s "-screen 0 1280x800x24" python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --project tests/fixtures/browser_project_v03.json --output "$RUNNER_TEMP/browser-project-smoke.zip"
           unzip -t "$RUNNER_TEMP/browser-project-smoke.zip"
           echo 'BOTH ENGINE FIXTURES ARE STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
