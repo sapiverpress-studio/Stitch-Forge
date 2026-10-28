@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-1.7 |
+| Document version | MD-2.1 |
 | Last updated | 2026-10-28 (Europe/London) |
-| Last independently checked source | Netlify production deployment ID `6ae1afd77358bb214f450d08` at Git commit `aba7495f`, 2026-10-28 |
+| Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -395,6 +395,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-030 | P0 | Add automated "MD updated with code" PR check | IN-PROGRESS | Test PR cannot modify production source without MD update |
 | SF-031 | P1 | Prepare static Netlify mobile editor preview | DONE-VERIFIED | Site files committed and fetched; Netlify production deploy ready for static editor; direct page check still needed |
 | SF-032 | P1 | Verify GitHub-connected Netlify deploy preview | IN-PROGRESS | User screenshot shows PR previews generated; browser rendering/interaction of preview remains unverified |
+| SF-033 | P0 | Align the live v0.3 saved/ZIP project JSON with the trusted backend bridge | PROTOTYPE-TESTED | Updated source and seven tests committed to dev; local test on real moth ZIP passed; not yet engine-tested |
+| SF-034 | P0 | Complete end-to-end source-project to independent-audit packaging pipeline | IN-PROGRESS | Browser-project smoke accepts v0.3 JSON, independent audit designed; real engine not run and complete packaging not committed |
+| SF-035 | P0 | Register actual Ink/Stitch workflow on GitHub default branch and confirm CI run | IN-PROGRESS | Workflow present on `main` commit `b3fb43d`; PR synchronization checked, no engine Actions run returned |
+| SF-036 | P1 | Specify secure per-region colour and Ink/Stitch fill/run parameters | PROTOTYPE-TESTED | `trusted_svg.py`, `project_bridge.py`, 4 regression tests committed on dev; real engine/fabric result still pending |
 
 **Next action order:** confirm public editor opens in Android browser after Netlify ready deployment; verify PR previews and CI; then prove Ink/Stitch engine and independent PES/DST validation before expanding stitch tooling. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
 
@@ -429,6 +433,15 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-020 | 2026-10-28 | Local `site/index.html` adaptation of v0.3 with inline Playwright `page.set_content` | 390×844 and 1365×800: loaded 207-stitch fox, played stitches, exported ZIP; mobile imported user's embedded-raster moth SVG as one silhouette with warning | LOCAL PASS: mobile/desktop UI and ZIP | Browser navigation to file and localhost blocked by environment policy; static HTML injected for tests; new website not yet Netlify-deployed |
 | E-021 | 2026-10-28 | `netlify.toml` parsed using Python `tomllib` | Static Netlify publish dir `site`, no build command; standard restrictive headers | CONFIG PARSE PASS | Netlify build log not available; actual publishing remains unverified |
 | E-022 | 2026-10-28 | GitHub and connected Netlify site/deploy read-back | Published `site/index.html` commit `b7fa07e3` and `netlify.toml` commit `aba7495f` to `main`; Netlify production deployment `6ae1afd77358bb214f450d08` ready at 08:18:37 UTC for commit `aba7495f`, with 1 header rule processed | **NETLIFY DEPLOY READY** | No direct page fetch/render test was possible in this environment; user's previous 404 screenshot predates this corrected deploy |
+| E-023 | 2026-10-28 | `services/digitiser/project_bridge.py` commit `22b0b4fd`; `tests/test_project_bridge.py` commit `b2a6d6d2` | Actual v0.3 storage JSON and ZIP export schema, requested design width, preserved aspect ratio, 2mm hoop margin, unsupported bean/unclosed-fill rejection | **7 TARGETED LOCAL TESTS PASS; 23 REPO-BASED LOCAL TESTS PASS** | Real Ink/Stitch and independent pyembroidery tests not run; bridge not yet exposed through live editor |
+| E-024 | 2026-10-28 | Local uncommitted `project_pipeline.py` + `test_project_pipeline.py` | Mock end-to-end fail-closed packaging with independent audit gate; negative tests | **3 LOCAL CONTRACT TESTS PASS; 26/26 LOCAL TESTS PASS** | GitHub write of pipeline blocked, so NOT DELIVERED to repo; mocks are not actual machine formats or real engine validation |
+| E-025 | 2026-10-28 | Previously generated user moth prototype ZIP (local only, not uploaded to public repo) | Read real `design_project.json` including settings.width=78 and 100mm hoop; convert image-referenced region geometry to safe SVG | **267,492-byte project JSON → 1,454-byte trusted SVG**, preserved 78 mm artwork width plus margins | This only converts the traced silhouette; original moth details not digitised; no stitch-out or file-format verification |
+| E-026 | 2026-10-28 | `real_engine_smoke.py` commit `6dfa91d9`, `tests/test_real_engine_input.py` commit `39933d56`, synthetic `tests/fixtures/browser_project_v03.json` commit `8ac1690c`, CI `4b26c3a0` | Smoke command accepts optional `--project`, converts real browser JSON through safe bridge, invokes official engine and insists on independent PES/DST audit; CI configured to exercise both synthetic petal and browser-project fixture | 3 NEW INPUT UNIT TESTS PASS; **26 COMMITTED TESTS PASS LOCALLY** | Real engine binary and pyembroidery not available locally; GitHub-hosted execution not yet evidenced |
+| E-027 | 2026-10-28 | Local end-to-end packaging proof-of-concept only | Mock exporter/auditor requires structural PES/DST verification before package; 3 local contract tests | **29/29 TOTAL LOCAL TESTS PASS** | Pipeline prototype remains UNCOMMITTED following connector write rejection, does not imply actual machine compatibility |
+| E-028 | 2026-10-28 | GitHub default branch inspection and local runtime | Found `.github/workflows/real-engine-smoke.yml` absent on `main` although present on dev, explaining missing PR-workflow discovery as probable root cause | **ROOT CAUSE HYPOTHESIS + DEFAULT WORKFLOW COMMITTED** `b3fb43d63443328fce42e65a517f245372df36c1` | Execution NOT verified; Actions could also be disabled/restricted. No successful actual Ink/Stitch run claimed. |
+| E-029 | 2026-10-28 | Local test run `PYTHONPATH=... STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s /mnt/data/stitchforge_repo/tests -p 'test_*.py' -v` | 29 tests: browser/ZIP, project bridge, project pipeline mocks, security/asset selector | **29 PASS** (2.917 seconds) | This suite excludes third-party pyembroidery tests because library is not installed; no physical stitch-out. |
+| E-030 | 2026-10-28 | `trusted_svg.py` + `project_bridge.py` on development branch, `tests/test_region_parameters.py` | Safe two-colour input, fill-angle, row-spacing, fill-underlay and running-stitch-length Ink/Stitch metadata; rejects out-of-range and incompatible region settings; retains legacy single-colour input | **4 NEW PARAMETER TESTS PASS LOCALLY; 33 TOTAL LOCAL TESTS PASS** | This verifies SVG serialization only, not actual machine colour-change commands, stitch density or professional fabric quality |
+| E-031 | 2026-10-28 | Connected GitHub workflow run and commit-status reads for dev PR synchronization | Default branch engine workflow is committed but PR commit only shows Netlify deploy-preview status | **No verified GitHub Actions engine job returned** | PR-only workflow lookup may not include push-triggered jobs; GitHub Actions could be disabled/restricted or undiscoverable by connector |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -576,6 +589,48 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Tests NOT run:** public-site HTTP response / Android rendered editor after new deployment; no verified real Ink/Stitch output or actual machine stitch-out.
 - **State:** Production static browser prototype **deployed by Netlify**; **page content needs user/device confirmation**. Do not market machine files as professional. PR #1 remains draft for the unverified engine.
 - **Next:** Test homepage and actual mobile SVG/PNG import and ZIP; investigate and fix if still 404. Then validate real engine via CI before advancing digitisation.
+### 2026-10-28 — Fix browser/backend schema mismatch and establish export contract
+
+- **Scope and tasks:** SF-033, SF-034, E-023–E-025; draft PR #1.
+- **Root cause:** Existing project bridge required `design_width_mm` and `design_height_mm`, while v0.3 browser local saves use `width` and ZIP exports use `settings.width` as the *requested* design width. Earlier bridge could distort aspect ratio by independently mapping width and height.
+- **Repository changes:** Updated `services/digitiser/project_bridge.py` (`22b0b4fd410a144d5adf220fa442e10a5c1a8a0c`) and seven tests in `tests/test_project_bridge.py` (`b2a6d6d2e51e6cdf6e8b0f5344ba0d41c6679e6f`). Now accepts the live project structures; uses uniform artwork scale, 2mm clearance around embroidery geometry, hoop constraints and strict checks for unsupported bean stitch/unfinished fill. Original embedded reference artwork is never passed to the engine.
+- **Tests RUN:** `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -p 'test_*.py' -v` — **23 passing tests** across the committed-source-compatible local suite. Real previously generated moth ZIP `design_project.json` of 267,492 bytes produced a 1,454-byte safe SVG at 82.000 × 51.526 mm including margins.
+- **Additional local work not committed:** A `project_pipeline.py` with three contract tests composes project conversion, a mocked Ink/Stitch export, mandatory independent audit, QA JSON, warnings and ZIP. 26 local tests passed; GitHub write was blocked, so this is *not* counted as delivered and not used by the website.
+- **Tests NOT run:** Real Ink/Stitch binary, pyembroidery, physical stitch-out, GitHub Actions evidence of a passing real-engine run.
+- **Risks:** Raster original detail is still not converted into separate stitch regions; the exporter must not silently substitute traced silhouette for finished embroidery. Open/no-color and experimental fill remain unsuited to professional claims.
+- **Next:** Land and verify the fail-closed end-to-end pipeline; run upstream Ink/Stitch and independent PES/DST decode in CI; then add actual multi-colour region model and proper satin columns.
+- **Deployment:** None for this change. Site still presents its existing experimental browser exporter.
+
+### 2026-10-28 — Connect actual browser projects to real-engine smoke workflow
+
+- **Scope:** SF-033 and SF-034, E-026/E-027. Draft PR #1, no production application change.
+- **Committed:** `services/digitiser/real_engine_smoke.py` (`6dfa91d9`) now accepts optional `--project` with a saved v0.3 JSON project; `tests/test_real_engine_input.py` (`39933d56`) tests fallback petal, saved project and rejection of unsupported inputs; `tests/fixtures/browser_project_v03.json` (`8ac1690c`) supplies public synthetic shapes; GitHub Actions real-engine workflow (`4b26c3a0`) now tries both the original fixture and browser project.
+- **Tests RUN locally:** **26 repo-covered tests passed** across UI, mocked engine adapter, converter, input security and release assets; separately three local uncommitted packaging tests passed (**29 total**).
+- **Tests NOT RUN:** actual Ink/Stitch runtime, real pyembroidery reader, real machine/fabric. GitHub connector reports a successful Netlify deploy-preview check for the PR head, but no confirmed real-engine Actions run.
+- **Design note:** This changes the *input and validation path* to the real engine; the live website remains its existing experimental single-colour browser exporter. It does not automatically provide satin, proper fills or colour changes.
+- **Known issue:** The local packaging prototype is not in GitHub (blocked write). Only committed source counts towards shipped capability.
+- **Next:** obtain real engine execution logs and validate both PES/DST formats; then implement editable embroidery region properties (colour, density, underlay) using the upstream engine's supported schema before changing the phone UI.
+- **Deployment:** None of these engine changes published.
+
+### 2026-10-28 — Promote engine smoke workflow into GitHub CI discovery
+
+- **Problem identified:** `real-engine-smoke.yml` was present under `develop/stitch-engine-foundation` but **missing from `main`**, which is the default branch GitHub uses to discover many pull-request workflows. This is a plausible blocker for collecting independent Ink/Stitch/pyembroidery test evidence.
+- **Change:** exact current engine workflow copied to `main`, commit `b3fb43d63443328fce42e65a517f245372df36c1`. This registers the test without merging unfinished editor/engine code into production.
+- **Local tests RUN:** `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s /mnt/data/stitchforge_repo/tests -p 'test_*.py' -v` — 29/29 pass.
+- **Tests NOT run:** Ink/Stitch executable is not installed in the local container; `pyembroidery` is not installed; runtime has no internet access for dependency downloads. GitHub Actions successful run not yet returned.
+- **Risk and scope:** Netlify production static editor unchanged; Ink/Stitch packaging, machine compatibility and fabric quality remain **UNVERIFIED**.
+- **Next:** Inspect a new PR synchronize run for actual engine execution; read failing job logs and fix based on observed failure, not assumptions. Confirm upstream release digest and compatibility. Only after this should additional satin/fill controls be promoted.
+- **Tasks:** SF-035 IN-PROGRESS, SF-013/014/019 remain IN-PROGRESS. No release-gate promotion.
+### 2026-10-28 — Per-region embroidery settings and colour control foundation
+
+- **Tasks:** SF-036; engine-gate SF-013/014/019 and SF-035 remain IN-PROGRESS.
+- **Code:** `services/digitiser/trusted_svg.py` (commits `3b462cd`, `7fc6afa`) now supports per-region hex thread colour, fill angle (−180 to 180°), row spacing (0.25–2.0 mm), optional fill underlay and running-stitch length (0.8–4.0 mm), using documented Ink/Stitch SVG namespace. `services/digitiser/project_bridge.py` (`bf807d9`) reads optional `pathColors` and `pathSettings` arrays; rejects unsupported or mismatched settings, retains original one-colour projects.
+- **Tests:** `tests/test_region_parameters.py` (`f75edee`) adds four tests, including actual XML attribute inspection, colour ordering, backwards compatibility and invalid-data rejection. `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -p 'test_*.py' -v` **33/33 locally passed**, using local source copy.
+- **Independent upstream references:** https://inkstitch.org/de/developers/inkstitch/namespace/ and https://inkstitch.org/docs/workflow/ document parameters and colour changes. This implementation only serializes such inputs; it has not established physically reliable stitch results.
+- **Unverified:** Actual Ink/Stitch ZIP export, PES/DST independent pyembroidery readback, per-colour stitch command round-trip, machine compatibility, stitch-out and colour accuracy. GitHub connector currently returns no real-engine Actions job for the PR head.
+- **Next:** Diagnose GitHub Actions execution settings or obtain the first actual runner logs; fix engine/API integration based on real results. Then add front-end region selection and colour tools only after the saved-project schema is versioned and migration-tested.
+- **Release:** Development branch only, no changes to the published experimental editor.
+
 ### Entry template — REQUIRED on every meaningful development update
 
 ```md
