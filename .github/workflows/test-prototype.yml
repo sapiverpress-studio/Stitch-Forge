@@ -5,6 +5,8 @@ on:
     paths:
       - "prototypes/**"
       - "tests/**"
+      - "services/**"
+      - "tools/**"
       - ".github/workflows/test-prototype.yml"
       - "STITCH_FORGE_MASTER_DEVELOPMENT.md"
   push:
@@ -12,6 +14,8 @@ on:
     paths:
       - "prototypes/**"
       - "tests/**"
+      - "services/**"
+      - "tools/**"
       - ".github/workflows/test-prototype.yml"
 
 permissions:
