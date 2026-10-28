@@ -8,14 +8,14 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-1.6 |
+| Document version | MD-1.7 |
 | Last updated | 2026-10-28 (Europe/London) |
-| Last independently checked source | Local Netlify static-preview browser tests and Netlify project/deploy read-back, 2026-10-28 |
+| Last independently checked source | Netlify production deployment ID `6ae1afd77358bb214f450d08` at Git commit `aba7495f`, 2026-10-28 |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Authorised deployment | **None of the development-branch preview files yet; existing public Netlify site was created independently by the project owner** |
+| Deployment | **Static v0.3 experimental editor committed to `main` and Netlify reports deployment ready; direct HTTP/browser rendering not independently verified** |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
 | External Ink/Stitch or pyembroidery integration | **NOT implemented** |
@@ -393,10 +393,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-028 | P3 | Upload presets and repeatable batch pipeline | DEFERRED | Only after design-level quality demonstrated |
 | SF-029 | P3 | Optional hosted collaborative/cloud application | DEFERRED | Demand, privacy, authentication, budgets approved |
 | SF-030 | P0 | Add automated "MD updated with code" PR check | IN-PROGRESS | Test PR cannot modify production source without MD update |
-| SF-031 | P1 | Prepare static Netlify mobile editor preview | PROTOTYPE-TESTED | `site/index.html`, `netlify.toml`, browser tests; actual Netlify preview deploy not verified |
-| SF-032 | P1 | Verify GitHub-connected Netlify deploy preview | BLOCKED | Site build status currently Stopped; user must activate Active builds in Netlify UI, then verify PR deploy URL |
+| SF-031 | P1 | Prepare static Netlify mobile editor preview | DONE-VERIFIED | Site files committed and fetched; Netlify production deploy ready for static editor; direct page check still needed |
+| SF-032 | P1 | Verify GitHub-connected Netlify deploy preview | IN-PROGRESS | User screenshot shows PR previews generated; browser rendering/interaction of preview remains unverified |
 
-**Next action order:** activate builds and verify SF-032 preview for public editor access → verify Actions for SF-007, SF-013/014 and SF-019 → SF-006/010 importer regression → SF-008/009 region schema and sanitisation → SF-015–018 → SF-021. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
+**Next action order:** confirm public editor opens in Android browser after Netlify ready deployment; verify PR previews and CI; then prove Ink/Stitch engine and independent PES/DST validation before expanding stitch tooling. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
 
 ---
 
@@ -428,6 +428,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-019 | 2026-10-28 | Netlify project and deploy read through connected account | Site `cec158af-c6ae-4bec-ad1f-2f7c54f156fe` has ready deploy `6ae1aca2d9126e163f1feead` at 08:05 UTC, `main` commit `fee944cc`, API deploy; user screenshot shows Stopped builds | SITE EXISTS; CURRENT DEPLOY READY | The ready deploy is not the new browser app and no automatic Github build is confirmed |
 | E-020 | 2026-10-28 | Local `site/index.html` adaptation of v0.3 with inline Playwright `page.set_content` | 390×844 and 1365×800: loaded 207-stitch fox, played stitches, exported ZIP; mobile imported user's embedded-raster moth SVG as one silhouette with warning | LOCAL PASS: mobile/desktop UI and ZIP | Browser navigation to file and localhost blocked by environment policy; static HTML injected for tests; new website not yet Netlify-deployed |
 | E-021 | 2026-10-28 | `netlify.toml` parsed using Python `tomllib` | Static Netlify publish dir `site`, no build command; standard restrictive headers | CONFIG PARSE PASS | Netlify build log not available; actual publishing remains unverified |
+| E-022 | 2026-10-28 | GitHub and connected Netlify site/deploy read-back | Published `site/index.html` commit `b7fa07e3` and `netlify.toml` commit `aba7495f` to `main`; Netlify production deployment `6ae1afd77358bb214f450d08` ready at 08:18:37 UTC for commit `aba7495f`, with 1 header rule processed | **NETLIFY DEPLOY READY** | No direct page fetch/render test was possible in this environment; user's previous 404 screenshot predates this corrected deploy |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -565,6 +566,16 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Next:** Validate the Netlify draft PR preview URL, document deploy SHA, confirm user can upload and download on Android, then work on the native Ink/Stitch engine integration and professional stitch types.
 - **Deployment:** No build or deployment triggered by this implementation session.
 
+### 2026-10-28 — Resolve public Netlify root 404
+
+- **Observed failure:** User's Android screenshot showed the Netlify 404 page at `https://sapiver-stitchforge.netlify.app/`, while the Netlify Deploys screen showed working *deploy-preview records* and a ready production build.
+- **Root cause, confirmed in GitHub:** production tracked `main` commit `fee944cc` which lacked `index.html`, `site/index.html` and `netlify.toml`. The static editor was only on `develop/stitch-engine-foundation`. A green deploy does not guarantee an HTTP 200 page.
+- **Changes on main:** Copied the tested experimental browser editor to `site/index.html` (commit `b7fa07e3f78af1390c9c8041856e3c0d274c4604`) and static publish config to `netlify.toml` (commit `aba7495f272f0dca851c18c6dad72c929d3e2c82`). This is a **static editor** only. No unverified Python digitising engine was merged.
+- **Netlify evidence:** Connected Netlify reports site `cec158af-c6ae-4bec-ad1f-2f7c54f156fe`, production deployment `6ae1afd77358bb214f450d08`, commit `aba7495f`, state `ready`, published at `2026-10-28T08:18:37.199Z`. One header rule processed; no functions deployed.
+- **Tests RUN this session:** GitHub confirmed presence of source HTML and Netlify publish config; Netlify confirmed deploy commit/status and configuration-processing summary. Previous local browser tests are preserved as historic E-020 evidence, not rerun here.
+- **Tests NOT run:** public-site HTTP response / Android rendered editor after new deployment; no verified real Ink/Stitch output or actual machine stitch-out.
+- **State:** Production static browser prototype **deployed by Netlify**; **page content needs user/device confirmation**. Do not market machine files as professional. PR #1 remains draft for the unverified engine.
+- **Next:** Test homepage and actual mobile SVG/PNG import and ZIP; investigate and fix if still 404. Then validate real engine via CI before advancing digitisation.
 ### Entry template — REQUIRED on every meaningful development update
 
 ```md
