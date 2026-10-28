@@ -158,6 +158,20 @@ class PrototypeRegression(unittest.TestCase):
         self.assertEqual(len(self.plan()["commands"]), 225)
         self.readback()
 
+    def test_pyembroidery_external_reader(self):
+        # A separate, maintained library must be able to read our machine-file headers.
+        # This checks binary readability, NOT physical stitch quality or compatibility.
+        import pyembroidery
+        data = self.page.evaluate("""() => {
+            const p=window.__stitchforge_test.generate(), t=window.__stitchforge_test;
+            return {dst:Array.from(t.makeDst(p)),pes:Array.from(t.makePes(p))}
+        }""")
+        for fmt in ("dst", "pes"):
+            reader = getattr(pyembroidery, "read_"+fmt)
+            result = reader(io.BytesIO(bytes(data[fmt])))
+            self.assertIsNotNone(result, fmt)
+            self.assertGreater(len(result.stitches), 100, fmt)
+
     def test_embedded_png_svg_tracing_fill_and_zip(self):
         png = synthetic_png()
         svg = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48">'
