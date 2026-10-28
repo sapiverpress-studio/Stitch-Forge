@@ -99,7 +99,7 @@ class AIReferenceRestoreTests(unittest.TestCase):
                 window.fetch=async (url,opts) => {
                     window.__capturedAnalysis={url,method:opts.method,image:JSON.parse(opts.body).image};
                     return {ok:true,json:async()=>({
-                      status:'REGION_PROPOSAL_NOT_DIGITISED',
+                      status:'REGION_PROPOSAL_NOT_DIGITISED',requires_human_review:true,
                       regions:[{id:'wing-vein',label:'Wing vein',category:'wing_vein',
                         bbox:{x_min:80,y_min:100,x_max:540,y_max:850},
                         suggested_color:'#775544',suggested_stitch:'running',
