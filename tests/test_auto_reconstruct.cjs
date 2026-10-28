@@ -46,3 +46,30 @@ test("rejects malformed AI shapes and too many regions",()=>{
  const huge=plan();huge.regions=Array(17).fill(region("same",64));
  assert.throws(()=>reconstruct(source(),w,h,huge),/Invalid AI geometry plan/);
 });
+
+test("retains pale low-contrast wing panels against a flat pale background",()=>{
+ const image=source();
+ for(let i=0;i<w*h;i++){const j=4*i;
+  const wing=image[j]===193;image[j]=image[j+1]=image[j+2]=wing?241:250;
+ }
+ const result=reconstruct(image,w,h,plan());
+ assert.equal(result.regions.filter(r=>r.kind==="fill").length,2);
+ assert.ok(result.regions.every(r=>r.pixelArea>100));
+});
+test("snaps running veins to dark original pixels; rejects invented lines across flat fills",()=>{
+ const image=source();
+ for(let y=40;y<=101;y++)for(let x=63;x<=65;x++){
+  const k=(y*w+x)*4;image[k]=image[k+1]=image[k+2]=17;
+ }
+ const line=(id,cx)=>({id,label:id,kind:"running",semantic:"wing_vein",color:"#342F31",
+  confidence:"medium",layer:1,points:[{x:Math.round(cx*1000/w),y:Math.round(42*1000/h)},
+   {x:Math.round(cx*1000/w),y:Math.round(98*1000/h)}]});
+ const accepted=plan();accepted.regions.push(line("real-vein",66),line("invented",174));
+ const result=reconstruct(image,w,h,accepted);
+ const real=result.regions.find(r=>r.id==="real-vein");
+ assert.ok(real,"image-grounded vein is retained");
+ assert.equal(real.geometrySource,"source_pixel_contrast_snapped_centreline");
+ assert.ok(real.points.length>=2);
+ assert.ok(real.points.every(p=>Math.abs(p[0]-64)<=5));
+ assert.ok(result.rejected.some(r=>r.id==="invented"&&r.reason==="line_not_supported_by_image_contrast"));
+});
