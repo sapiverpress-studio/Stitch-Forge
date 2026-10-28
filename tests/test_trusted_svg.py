@@ -14,7 +14,11 @@ class TrustedSVGTests(unittest.TestCase):
         payload = smoke_svg()
         root = ET.fromstring(payload)
         tags = {el.tag.split('}')[-1] for el in root.iter()}
-        self.assertEqual(tags, {'svg', 'polygon', 'polyline'})
+        self.assertEqual(tags, {'svg', 'metadata', 'inkstitch_svg_version', 'polygon', 'polyline'})
+        ns = 'http://inkstitch.org/namespace'
+        versions = root.findall(f'{{http://www.w3.org/2000/svg}}metadata/{{{ns}}}inkstitch_svg_version')
+        self.assertEqual(len(versions), 1, 'exactly one engine schema marker')
+        self.assertEqual(versions[0].text, '4', 'matches pinned Ink/Stitch 3.3.0 update.py')
         self.assertIn(b'width="80.000mm"', payload)
         self.assertNotIn(b'<image', payload)
         self.assertNotIn(b'href=', payload)
