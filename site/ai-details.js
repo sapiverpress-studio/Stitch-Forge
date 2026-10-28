@@ -24,6 +24,7 @@ div.innerHTML =
   '<button type="button" class="btn primary" id="sfAiApply" disabled>Apply draft to stitches</button></div>'+
   '<div id="sfAiDraftStatus" class="tiny">AI rectangles locate parts; only actual image lines can become draft stitches.</div>'+
   '<div id="sfAiStatus" role="status" class="tiny">The original image stays visible; machine-file exports remain experimental.</div>'+
+  '<label class="toggle"><input id="sfAiBoxes" type="checkbox"> Show AI search boxes (not stitches)</label>'+
   '<div id="sfAiResults" class="ai-detail-results"></div>';
 tracePanel.appendChild(div);
 
@@ -57,14 +58,18 @@ draftOverlay.setAttribute("id","sfAiDraftPaths");
 draftOverlay.setAttribute("pointer-events","none");
 get("#design").appendChild(draftOverlay);
 const status = text => { get("#sfAiStatus").textContent = text; };
+get("#sfAiBoxes").addEventListener("change",paint);
 function sourceMessage() { const origin = editor.getSourceStatus?.(); return origin === 'original' ? 'Artwork loaded and ready for analysis.' : origin === 'restored-preview' ? 'Saved moth reference restored and ready for analysis. Re-upload the original for the best detail if needed.' : 'Upload artwork first using Upload artwork / project above.'; }
 status(sourceMessage());
 function paint() {
  overlay.replaceChildren();
  if (!analysis) return;
+ const showAll=get("#sfAiBoxes").checked;
+ if(!showAll&&!selectedId)return;
  const bounds = editor.getBounds();
  if (!bounds) return;
  analysis.regions.forEach((r,i) => {
+   if(!showAll&&r.id!==selectedId)return;
    const b=r.bbox, x=bounds.x+b.x_min*bounds.w/1000, y=bounds.y+b.y_min*bounds.h/1000;
    const w=(b.x_max-b.x_min)*bounds.w/1000,h=(b.y_max-b.y_min)*bounds.h/1000;
    const rect=document.createElementNS("http://www.w3.org/2000/svg","rect");
