@@ -53,3 +53,38 @@ test("requires structured completed response",()=>{
  }]}).regions,[goodRegion()]);
  assert.throws(()=>extractOutput({status:"incomplete",output:[]}));
 });
+
+test("authenticated request sends an image to OpenAI with store disabled",async()=>{
+ const savedKey=process.env.OPENAI_API_KEY;
+ const savedToken=process.env.STITCH_FORGE_ANALYSIS_TOKEN;
+ const savedFetch=globalThis.fetch;
+ process.env.OPENAI_API_KEY="synthetic-test-api-key";
+ process.env.STITCH_FORGE_ANALYSIS_TOKEN="synthetic-test-access-token";
+ let called=false;
+ globalThis.fetch=async(url,opts)=>{
+  called=true;
+  assert.equal(url,"https://api.openai.com/v1/responses");
+  const request=JSON.parse(opts.body);
+  assert.equal(request.store,false);
+  assert.equal(request.input[0].content[1].type,"input_image");
+  assert.ok(request.text.format.strict);
+  return new Response(JSON.stringify({status:"completed",model:"synthetic-model",
+    output:[{type:"message",content:[{type:"output_text",text:JSON.stringify(example())}]}],
+    usage:{input_tokens:100,output_tokens:40}}),{status:200,headers:{"Content-Type":"application/json"}});
+ };
+ try{
+  const fake=Buffer.concat([Buffer.from("89504e470d0a1a0a","hex"),Buffer.alloc(120)]);
+  const response=await handler(new Request("https://test.invalid/api/analyse-embroidery",{
+   method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer synthetic-test-access-token"},
+   body:JSON.stringify({image:"data:image/png;base64,"+fake.toString("base64")})}));
+  assert.equal(response.status,200);
+  const result=await response.json();
+  assert.equal(result.status,"REGION_PROPOSAL_NOT_DIGITISED");
+  assert.equal(result.regions[0].label,"Left wing veins");
+  assert.ok(called);
+ }finally{
+  globalThis.fetch=savedFetch;
+  if(savedKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=savedKey;
+  if(savedToken===undefined)delete process.env.STITCH_FORGE_ANALYSIS_TOKEN;else process.env.STITCH_FORGE_ANALYSIS_TOKEN=savedToken;
+ }
+});
