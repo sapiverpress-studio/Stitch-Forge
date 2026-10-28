@@ -310,7 +310,7 @@ function makeSvg(d){
   return '<path id="region-'+(v.i+1)+'" data-stitch-mode="'+(v.style==='bean'?'bean':'running')+
     '" d="'+line+'" fill="none" stroke="#153e46" stroke-width="0.400"/>';
  }).join('');
- return '<?xml version="1.0" encoding="UTF-8"?>\\n<svg xmlns="http://www.w3.org/2000/svg" width="'+
+ return '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="'+
   canvasW.toFixed(3)+'mm" height="'+canvasH.toFixed(3)+'mm" viewBox="0 0 '+
   canvasW.toFixed(3)+' '+canvasH.toFixed(3)+'" data-source="Stitch Forge EXPERIMENTAL">'+
   items+'</svg>';
