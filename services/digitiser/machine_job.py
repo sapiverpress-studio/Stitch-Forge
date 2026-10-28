@@ -39,6 +39,11 @@ def run_machine_job(project: bytes, *, executable: Path, timeout_seconds: int = 
     changes = {a.format: a.changes for a in audits}
     if changes['pes'] != changes['dst']:
         raise DigitiserError('PES and DST disagree on colour-change count')
+    colours = json.loads(project).get('pathColors')
+    if colours:
+        expected_changes = sum(a != b for a, b in zip(colours, colours[1:]))
+        if changes['pes'] != expected_changes:
+            raise DigitiserError('Machine colour changes do not match ordered editable regions')
     return MachineJob(
         payload=engine.zip_bytes,
         summary=tuple({'format': a.format, 'stitches': a.needle_stitches,
