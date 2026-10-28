@@ -15,7 +15,7 @@ DRW implementation reference: `sapiverpress-studio/Sapiver-draw-dxf/tools/analys
 3. Netlify Function authenticates a private access token, then uses `OPENAI_API_KEY` from server-side Netlify environment variables. No key appears in the JavaScript bundle or source repo.
 4. OpenAI Responses API uses vision and strict JSON-schema output, with `store:false`. Returns visible parts, approximate bounding boxes, thread colours and suggested stitch treatment.
 5. The editor draws annotated boxes and shows a review list; **it does not automatically add any geometry to the machine export**.
-6. **Next engineering phase, NOT yet implemented:** pixel-level masks and internal contour extraction using the original image, seeded or guided by reviewed AI regions; region merging/splitting, holes, satin rails, underlay, scaled size warnings; manual approval before converting to Ink/Stitch stitches.
+6. **Experimental local worker module now implemented, NOT integrated into the editor:** `services/digitiser/detail_guides.py` detects approximate internal edge contours with OpenCV, optionally restricted by an AI-proposed region box. Three local tests passed, including the full-detail user moth (source kept off GitHub). **Still needed:** accurate pixel masks/centrelines, scale-aware pruning, editable region review, merging/splitting, holes, satin rails, underlay, size warnings and human approval before generating Ink/Stitch commands.
 7. Real Ink/Stitch execution, independent PES/DST readback, fabric stitch-out and evidence-based approval still required.
 
 ## What the current feature does and does not do
@@ -46,6 +46,8 @@ No OpenAI call was made or billed by these tests. No artwork uploaded to the Git
 - [x] Synthetic source-only tests validate model output structure, coordinate bounds, API access token requirements, and image magic numbers.
 - [ ] Actual OpenAI Responses request with budget-controlled test image succeeds using configured secret, producing correct response schema and visible moth parts.
 - [ ] Confirm real moth wing regions have useful boxes corresponding to original artwork; no invented/duplicated pieces.
+
+- [x] Experimental, review-only internal edge contour extraction from raster with optional ROI, locally tested on synthetic and moth data. This is not integrated into the editor or verified on fabric.
 - [ ] Implement actual pixel-derived internal segmentation masks (not AI bounding boxes alone).
 - [ ] Connect reviewed mask/path regions to Ink/Stitch satin/fill/underlay and independent machine output audit.
 - [ ] Perform physical stitch-out and refine.
