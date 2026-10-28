@@ -46,6 +46,8 @@ overlay.setAttribute("id", "sfAiOverlay");
 overlay.setAttribute("pointer-events", "none");
 get("#design").appendChild(overlay);
 const status = text => { get("#sfAiStatus").textContent = text; };
+function sourceMessage() { const origin = editor.getSourceStatus?.(); return origin === 'original' ? 'Artwork loaded and ready for analysis.' : origin === 'restored-preview' ? 'Saved moth reference restored and ready for analysis. Re-upload the original for the best detail if needed.' : 'Upload artwork first using Upload artwork / project above.'; }
+status(sourceMessage());
 function paint() {
  overlay.replaceChildren();
  if (!analysis) return;
@@ -108,7 +110,7 @@ async function imageForAnalysis(source) {
 }
 get("#sfAiAnalyse").onclick=async()=>{
  const source=editor.getImage();
- if(!source){status("Upload PNG/JPG or an SVG containing the detailed image first.");return;}
+ if(!source){status('No reference image is available. Use Upload artwork / project above.');return;}
  const token=get("#sfAiToken").value.trim();
  if(!token){status("Enter your configured private analysis access token.");return;}
  const btn=get("#sfAiAnalyse");btn.disabled=true;
@@ -139,6 +141,6 @@ get("#sfAiExport").onclick=()=>{
 window.addEventListener("stitchforge:image-imported",()=>{
  analysis=null;selectedId=null;get("#sfAiExport").disabled=true;
  get("#sfAiResults").replaceChildren();overlay.replaceChildren();
- status("New image loaded. Analyse artwork to suggest separate internal regions.");
+ status(sourceMessage());
 });
 })();
