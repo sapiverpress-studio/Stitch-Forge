@@ -908,6 +908,8 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Generic detail capacity:** AI schema, validator, browser reconstruction and editor now consistently accept up to 32 regions (previously 16). This accommodates the 19-region synthetic benchmark without subject-specific rules. Existing 12,000 output-token ceiling unchanged; no paid model call. Node suite now **38 passed**, including a 19-region botanical plan and rejection at 33. Earlier full local Python suite: **62 run, 3 skipped, remainder passed**; CI Python/browser passed on 08d78a8. The final full local repeat after the constant change also **passed: 62 tests, 3 skips**, taking 176.488 seconds under local load. Captured log updated. Final CI should be checked at its own SHA.
 - **Deployment status:** native container acceptance is verified; a persistent owner-approved HTTPS host and deploy-preview worker settings are still absent. No claim of hosted one-click success or universal image digitisation. Physical stitch-out remains NOT TESTED. Native runtime code is unchanged after the passing bd7ba8a container test.
 
+Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6a3e9` (generic 32-region capacity; final local 38 Node / 62 Python with 3 skips). Native container code verified at `bd7ba8a9a4c09656488cad89c466a7339e2e2b4c`; fresh CI on dbd9d46 may still be running. This final documentation sync does not alter application code.
+
 ### Entry template — REQUIRED on every meaningful development update
 
 ```md
