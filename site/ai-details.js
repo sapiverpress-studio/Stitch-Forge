@@ -121,8 +121,10 @@ get("#sfAiAnalyse").onclick=async()=>{
      method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
      body:JSON.stringify({image}),cache:"no-store"
    });
-   const result=await response.json();
-   if(!response.ok)throw Error(result.error||"Image analysis failed");
+   let result;
+   try{result=await response.json();}
+   catch{throw Error("Analysis service returned an unreadable response (HTTP "+response.status+").");}
+   if(!response.ok)throw Error((result.error||"Image analysis failed")+(result.code?" ["+result.code+"]":""));
    if(result.status!=="REGION_PROPOSAL_NOT_DIGITISED"||!Array.isArray(result.regions))
      throw Error("Invalid region map");
    analysis=result;selectedId=null;get("#sfAiExport").disabled=false;render();
