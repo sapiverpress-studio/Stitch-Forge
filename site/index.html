@@ -301,6 +301,20 @@ $('#stitchValue').textContent=Number($('#stitchLength').value).toFixed(2)+' mm';
 // Readiness diagnostic for automated browser checks. Not machine certification.
 window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterReference||null,getSourceStatus:()=>rasterSource?'original':rasterReference?'restored-preview':'none',getBounds:()=>rasterBounds?deep(rasterBounds):null,
  getWidthMm:()=>Number($('#designWidth').value),
+ appendReviewedFillRegion:(input)=>{
+  if(!window.StitchForgeFillGeometry)throw Error('Fill region validator unavailable');
+  const validated=window.StitchForgeFillGeometry.prepare(input,rasterBounds);
+  if(paths.length>=128)throw Error('Maximum 128 embroidery regions');
+  if(paths.reduce((total,p)=>total+p.length,0)+validated.points.length>5000)
+    throw Error('Maximum 5000 editing points');
+  if(validated.points.some(p=>p.some(n=>n<0||n>600)))
+    throw Error('Fill is outside the embroidery canvas');
+  snapshot();paths.push(validated.points);pathStyles.push('tatami');
+  selected=null;activeRegion=paths.length-1;runIndex=0;
+  changeMode('edit');changed();
+  setStatus('Manual closed fill added to region '+paths.length+'. Experimental single-colour tatami only; no satin, trims or physical stitch test.','ok');
+  return {index:activeRegion,areaCanvas:validated.areaCanvas};
+ },
  appendReviewedGuides:(candidates)=>{
   if(!Array.isArray(candidates)||candidates.length<1||candidates.length>80)throw Error('No valid internal paths');
   if(paths.length+candidates.length>128)throw Error('Too many regions for the digitising engine. Remove some paths first.');
@@ -320,4 +334,4 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
 });
 window.__stitchforge_test={generate,makeDst,makePes,zip,fox:()=>deep(fox),get paths(){return deep(paths)},setPaths(p){paths=deep(p);selected=null;planKey='';render()},report(){let p=getPlan();return{count:p.count,jumps:p.jumps,extent:[p.widthMm,p.heightMm],pesLength:makePes(p).length,dstLength:makeDst(p).length}}};
 })();
-</script><script src="/ai-guides.js" defer></script><script src="/ai-details.js" defer></script></body></html>
+</script><script src="/fill-geometry.js" defer></script><script src="/ai-guides.js" defer></script><script src="/ai-details.js" defer></script><script src="/fill-boundary-ui.js" defer></script></body></html>
