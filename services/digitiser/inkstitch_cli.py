@@ -89,7 +89,17 @@ def export_trusted_svg(svg: Path, *, executable: Path, timeout_seconds: int = 60
                              stderr=subprocess.PIPE, timeout=timeout_seconds,
                              check=False)
     except subprocess.TimeoutExpired as exc:
-        raise DigitiserError('Ink/Stitch exceeded configured processing timeout') from exc
+        # subprocess.run kills and reaps the direct child. A time-out must never
+        # result in a downloadable partially generated embroidery archive.
+        diagnostic = ''
+        if os.environ.get('STITCH_FORGE_CI_DIAGNOSTICS') == 'synthetic-only':
+            raw = exc.stderr or b''
+            if isinstance(raw, bytes):
+                raw = raw.decode('utf-8', errors='replace')
+            diagnostic = ''.join(ch for ch in ' '.join(raw[-3000:].split())
+                                 if ch.isprintable())[-1400:]
+        raise DigitiserError('Ink/Stitch exceeded configured processing timeout'+
+            (f' (synthetic CI stderr: {diagnostic})' if diagnostic else '')) from exc
     except OSError as exc:
         raise DigitiserError('Ink/Stitch could not start') from exc
     if run.returncode != 0:
