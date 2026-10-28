@@ -86,6 +86,7 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 - This document is being added as a **new project baseline**, not evidence of an implemented engine.
 - **Confirmed:** experimental v0.3 is preserved on development branch at `prototypes/stitch-forge-v0.3.html` (commit `d7a319d565a43632299a5e476584bbdbe33a7e8e`). Its Git blob SHA `be29a022390194a3670fa0d29561b4bda78e20be` matches `git hash-object` of the original local file. It has **not been merged into main**.
 - **Confirmed:** [draft PR #1](https://github.com/sapiverpress-studio/Stitch-Forge/pull/1) is open for this preserved prototype. It changes the experimental HTML and branch-specific MD only. No workflow runs or commit status checks were returned at the time inspected; therefore the documentation gate is implemented but **not yet execution-verified**.
+- **CI infrastructure update (2026-10-28):** `.github/workflows/test-prototype.yml` is installed on `main` (commit `568711b8d1e4d818250ac8390838ef200f868ddc`) as well as the development branch, so subsequent pull-request synchronisations can discover it from the default branch. A verified completed GitHub Actions run is **still missing**; do not mark the project CI-green.
 
 ### 2.2 Experimental application: v0.1 → v0.3
 
