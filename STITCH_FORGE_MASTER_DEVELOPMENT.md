@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.8 |
+| Document version | MD-2.9 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -459,6 +459,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-042 | 2026-10-28 | Netlify request logs and request detail for `01M613DCG01HA4Y1Z5YN261CX2` | User's 11:13 UTC request to `/api/analyse-embroidery` returned HTTP 502 after 13.05 sec, with one function invocation; no internal function log entries supplied. This is after authentication/input validation and **does not establish** which upstream/validation stage failed. | REQUEST FAILURE VERIFIED | Old catch collapsed incomplete output, JSON, region validation and network failure into the same generic message. No raw request image, bearer token, or API key accessed. |
 | E-043 | 2026-10-28 | `netlify/functions/analyse-embroidery.mjs` and `tests/test_ai_analysis.mjs` | Added safe error codes, schema-bounded colour/coordinates, increased response budget from 3200 to 4800 output tokens, bounded 8–16 requested visible regions, five synthetic error cases, `site/ai-details.js` displays codes. | SOURCE COMMITTED; JS SYNTAX PARSED; SYNTHETIC TESTS NOT YET CONFIRMED BY CI | Error category requires next real request to determine root cause. This does not prove OpenAI response accuracy or embroidery quality. |
 | E-044 | 2026-10-28 | `netlify.toml` dev commit `905671a` and Netlify preview deploy `6ae1da3793537e3cf0888ac4` | Configure zero-cost `node --test tests/test_ai_analysis.mjs` as the development build command. Netlify reports READY on matching commit and one Function deployed. | PREVIEW DEPLOY READY | Connector did not expose build log; do not claim the test command actually executed until its output is verified separately. |
+| E-045 | 2026-10-28 | User's completed `Stitch-Forge-region-proposal-NOT-DIGITISED.json` + original detailed moth PNG in working environment | OpenAI structured response succeeded with 14 labelled areas: left/right fore- and hindwings, spots, veins, central body, antennae and legs. Tested pixel-based internal guide extraction locally against actual 447×262 RGB moth artwork with report boxes. | **LIVE AI REPORT CONFIRMED; IMAGE-BASED GUIDE EXPERIMENT EXECUTED LOCALLY** | Boxes are not shape contours; current draft candidates miss a substantial portion of fine markings and do not add fills or satin |
+| E-046 | 2026-10-28 | Dev `site/ai-guides.js` `935f3f7`, editor bridge `site/index.html` `ee9f648`, AI UI `site/ai-details.js` `f376744`, synthetic tests `tests/test_ai_guides.cjs` `1d61ed1`, preview build config `4466503` | Pixel-based running-stitch guide candidates inside AI ROIs, review overlay, load previously saved report without API call, one-click add only after approval, undo/reversible preservation of existing paths. Unit tests assert no fabricated paths from empty image and no rectangles. | **3 SYNTHETIC EXTRACTOR TESTS PASSED IN LOCAL ENGINE MODEL; SOURCE AND CI COMMITTED; PREVIEW DEPLOY READY** | Full mobile end-to-end UI + physical machine compatibility still unverified. Exporter remains single-colour experimental, no filled/satin region conversion |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -714,6 +716,17 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Netlify result:** Deploy preview `6ae1da3793537e3cf0888ac4` at `905671aaca31e515524d45a054db9d483f082ee3` is READY and includes one function. The available connector does not expose build-step logs, so actual execution of `node --test` remains unverified. Syntax of production JavaScript and synthetic tests was separately parsed successfully.
 - **Next:** One real request with the owner's existing token from the preview. If it errors, record the safe `[CODE]` displayed in the interface and investigate Netlify logs; then correct the precise failing stage. Avoid speculative retries/billing. Do not treat region bounding boxes as embroidery stitches.
 - **Main site:** Unchanged static editor; only development preview includes the revised API.
+
+### 2026-10-28 — Bridge AI regions to reviewable internal running-stitch draft
+
+- **User expectation:** After a successful AI analysis of the moth, the visible embroidery should be rebuilt with internal details, rather than stopping at download of a `NOT-DIGITISED` JSON. AI gave 14 labelled areas but only approximate boxes, not polygons, centrelines, satin rails or needle commands.
+- **Engineering choice:** DO NOT turn rectangles directly into machine stitches and DO NOT silently overwrite the old outline. Added a deterministic local image-detail extractor that searches actual image pixels within reviewed line-like AI regions, builds thinned approximate running-line paths, and overlays them in pink for explicit acceptance. Excludes wing/body fill and satin candidates pending proper contour/satin algorithms.
+- **Files:** `site/ai-guides.js` (commit `935f3f7`), browser editor append/undo integration `site/index.html` (`ee9f648`), analysis UX incl. saved JSON report import, automatic draft after model success, preview and Apply buttons `site/ai-details.js` (`f376744`), regression `tests/test_ai_guides.cjs` (`1d61ed1`), Netlify build gate `netlify.toml` (`4466503`), design record `docs/AI_REGION_ANALYSIS.md` (`6f3a624`).
+- **Actual moth checks:** Original 447×262 full-colour embedded moth and downloaded 14-region JSON inspected locally. Candidate line extraction detects some forewing markings, veins and antennae but misses other detail; no external OpenAI request or charge made during this coding work.
+- **Tests:** 3 local Node tests passed with a synthetic image, verifying paths follow real image lines, blank image creates no paths and invalid limits are rejected. JS source syntax of editor + both external scripts verified. Netlify draft preview `6ae1dd6c90f1a03471d326e2` reached READY for commit `4466503`, with one protected Function included; build-step test output not independently captured.
+- **Limitations:** Draft paths are approximate and must be visually reviewed. After approval they join the existing experimental single-colour browser stitch simulator and ZIP export; professional Ink/Stitch machine generation, actual thread colours, stitch quality, pull compensation, underlay, trims and fabric tests remain unverified.
+- **Next:** Confirm mobile UI integration, editable-path insertion and Undo with real reference, then improve naturalistic details into high-quality region masks/satin rails. Verify real Ink/Stitch and independent PES/DST readback before sellable output.
+- **Release:** Only development preview; production main static editor not updated.
 
 ### Entry template — REQUIRED on every meaningful development update
 
