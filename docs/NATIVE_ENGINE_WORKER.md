@@ -127,3 +127,13 @@ verify context and scopes after any write. No secrets were changed this session.
 Local Gunicorn/native tests do not prove the Docker image or hosted HTTPS path.
 The real-engine CI now also builds/runs the container with the same isolation
 flags and calls the HTTP smoke; inspect its result before marking it verified.
+
+## Verified container acceptance
+
+[CI run 40748116743](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40748116743)
+passed at `bd7ba8a9a4c09656488cad89c466a7339e2e2b4c`, including the
+resource-limited Docker runtime and real HTTP/independent PES/DST matrix for
+all three synthetic subjects. Initial xvfb-run startup failed; explicit
+Unix-only Xvfb with bounded socket readiness passed. The native display has
+no TCP listener. Local logo/line-art fixtures avoid moth-only acceptance.
+This is a tested container package, not a deployed persistent HTTPS service.

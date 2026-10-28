@@ -336,7 +336,7 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
  exportEditableSvg:()=>makeSvg({settings:{width:Number($('#designWidth').value)}}),
  replaceWithAutomaticReconstruction:(draft)=>{
   if(!draft||draft.status!=='AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED'||
-     !Array.isArray(draft.regions)||draft.regions.length<1||draft.regions.length>16)
+     !Array.isArray(draft.regions)||draft.regions.length<1||draft.regions.length>32)
     throw Error('No valid automatically reconstructed design');
   if(!rasterBounds||!rasterReference)throw Error('Source artwork must be loaded');
   const w=Number(draft.width),h=Number(draft.height);

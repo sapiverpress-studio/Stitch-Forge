@@ -43,7 +43,7 @@ test("rejects nonuniform photo background rather than pretending to segment it",
 test("rejects malformed AI shapes and too many regions",()=>{
  const invalid=plan();invalid.regions[0].points[2].x=1400;
  assert.throws(()=>reconstruct(source(),w,h,invalid),/invalid region/i);
- const huge=plan();huge.regions=Array(17).fill(region("same",64));
+ const huge=plan();huge.regions=Array(33).fill(region("same",64));
  assert.throws(()=>reconstruct(source(),w,h,huge),/Invalid AI geometry plan/);
 });
 

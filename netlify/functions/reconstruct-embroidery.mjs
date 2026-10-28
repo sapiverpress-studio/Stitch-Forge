@@ -10,7 +10,7 @@ const SCHEMA={
  type:"object",additionalProperties:false,
  properties:{
   subject:{type:"string"},
-  regions:{type:"array",maxItems:16,items:{
+  regions:{type:"array",maxItems:32,items:{
    type:"object",additionalProperties:false,properties:{
     id:{type:"string"},label:{type:"string"},
     kind:{type:"string",enum:["fill","running"]},
@@ -38,7 +38,7 @@ const INSTRUCTIONS=[
  "A genuinely rectangular source shape may have a rectangular boundary. Use 6-24 successive points per fill, 2-16 for lines.",
  "All positions are NORMALIZED coordinates 0..1000 relative to the entire source image,",
  "x left-to-right, y top-to-bottom. Do not repeat the first point at the end.",
- "Return 1-16 visible regions as needed, not a fixed count. A single fill or line-only design is valid.",
+ "Return 1-32 visible regions as needed, not a fixed count. A single fill or line-only design is valid.",
  "Use generic semantic marking for coloured details, outline for borders, detail or other for general features.",
  "Use animal-specific semantics only for features actually visible in an animal image.",
  "Don't invent invisible details, microscopic textures or thread-manufacturer codes.",
@@ -67,7 +67,7 @@ function imageData(data){
  return data;
 }
 export function verifyGeometryPlan(value){
- if(!value||!Array.isArray(value.regions)||value.regions.length<1||value.regions.length>16||
+ if(!value||!Array.isArray(value.regions)||value.regions.length<1||value.regions.length>32||
  value.requires_machine_test!==true||!Array.isArray(value.warnings)||value.warnings.length>25)
  throw Error("invalid_plan");
  const ids=new Set();

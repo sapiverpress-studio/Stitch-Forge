@@ -62,6 +62,6 @@ test_token_auth_and_image_rejection (test_worker_wsgi.WorkerContractTests.test_t
 test_worker_engine_failure_does_not_leak_paths (test_worker_wsgi.WorkerContractTests.test_worker_engine_failure_does_not_leak_paths) ... ok
 
 ----------------------------------------------------------------------
-Ran 62 tests in 12.726s
+Ran 62 tests in 176.488s
 
 OK (skipped=3)

@@ -60,3 +60,11 @@ test("missing private token cannot invoke paid OpenAI",async()=>{
 test("incomplete AI output is explicitly rejected",()=>{
  assert.throws(()=>parseModelResponse({status:"incomplete",output:[]}),/INCOMPLETE_MODEL/);
 });
+
+test("supports detailed non-moth plans beyond the former sixteen-region ceiling",()=>{
+ const p=plan();p.subject="Synthetic botanical line drawing";
+ p.regions=Array.from({length:19},(_,i)=>({...region('detail-'+i,'running'),semantic:'detail'}));
+ assert.equal(verifyGeometryPlan(p).regions.length,19);
+ p.regions=Array.from({length:33},(_,i)=>({...region('detail-'+i,'running'),semantic:'detail'}));
+ assert.throws(()=>verifyGeometryPlan(p));
+});

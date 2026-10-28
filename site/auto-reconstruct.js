@@ -193,7 +193,7 @@ function checkedRegion(r){
 function reconstruct(rgba,w,h,plan,opts={}){
  if(!(rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||
  w<48||h<48||w*h>750000||rgba.length!==w*h*4)throw Error("Invalid source image");
- if(!plan||!Array.isArray(plan.regions)||plan.regions.length<1||plan.regions.length>16||
+ if(!plan||!Array.isArray(plan.regions)||plan.regions.length<1||plan.regions.length>32||
   plan.status!=="AI_GEOMETRY_PROPOSAL_NOT_STITCHED")throw Error("Invalid AI geometry plan");
  const foreground=foregroundMask(rgba,w,h),regions=[],rejected=[];
  const ordered=plan.regions.map(checkedRegion).sort((a,b)=>(a.layer||0)-(b.layer||0));
