@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-1.2 |
+| Document version | MD-1.3 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local standalone prototype v0.3 + test logs, 2026-10-28 |
 | Default branch | `main` |
@@ -348,7 +348,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | M0 — repository and truth ledger | README + this MD + update discipline + dev branch | DONE-VERIFIED | All files readable in GitHub; branch exists; log updated |
 | M1 — preserve prototype | Import v0.3 source and reproducible tests | IN-PROGRESS | Uploaded file hash matches local baseline; browser tests run from repo |
 | M2 — secure original-artwork import | PNG/JPG/SVG; separate editable regions | TODO | User moth importer safe; no silent loss; security tests |
-| M3 — proper engine spike | working Ink/Stitch CLI for known SVG fixture | TODO | Pinned engine, command/output logs, reproducible CI/local recipe |
+| M3 — proper engine spike | working Ink/Stitch CLI for known SVG fixture | IN-PROGRESS | Pinned engine, command/output logs, reproducible CI/local recipe |
 | M4 — geometry and stitching | running, bean, satin and fill regions with routing | TODO | Unit fixtures, independent command plan; user-controlled stitch params |
 | M5 — validated machine exports | PES/DST and selected others | TODO | Independent decoder verification + capability matrix |
 | M6 — real stitch proof | at least one real machine/hoop/fabric setup | BLOCKED | Approved physical stitch-out + documented iterations |
@@ -371,12 +371,12 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-006 | P0 | Recover/import browser tests and fixtures | IN-PROGRESS | Playwright test passing on source-controlled artifact |
 | SF-007 | P0 | Establish CI for browser, source lint and test evidence | IN-PROGRESS | Branch checks show green on documented commits |
 | SF-008 | P0 | Define versioned project schema | TODO | Schema, migrations and round-trip tests |
-| SF-009 | P0 | Threat model uploaded SVG/raster and processing | TODO | Security tests + limits documented |
+| SF-009 | P0 | Threat model uploaded SVG/raster and processing | IN-PROGRESS | Security tests + limits documented |
 | SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
 | SF-011 | P1 | Multi-contour region extraction / holes | TODO | Region fixtures and manual corrections verified |
 | SF-012 | P1 | Touch-friendly region layers and controls | TODO | Android portrait/landscape device test |
 | SF-013 | P1 | Pin and install Ink/Stitch runtime in isolated engine | IN-PROGRESS | Reproducible runner and version output |
-| SF-014 | P1 | Prove Ink/Stitch running stitch CLI | TODO | Known fixture, CLI log and output inspected |
+| SF-014 | P1 | Prove Ink/Stitch running stitch CLI | IN-PROGRESS | Known fixture, CLI log and output inspected |
 | SF-015 | P1 | Add robust satin column editing | TODO | Rails/rungs, underlay and stitch-path fixtures |
 | SF-016 | P1 | Replace naive scanline fill with professional region fill | TODO | Routing, holes, angle, density, underlay tests |
 | SF-017 | P1 | Explicit trims, tie-in/out, thread colour changes | TODO | Command-level and format round-trip tests |
@@ -394,7 +394,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-029 | P3 | Optional hosted collaborative/cloud application | DEFERRED | Demand, privacy, authentication, budgets approved |
 | SF-030 | P0 | Add automated "MD updated with code" PR check | IN-PROGRESS | Test PR cannot modify production source without MD update |
 
-**Next action order:** SF-006 → SF-010 → SF-008/009 → SF-013/014 → SF-019 → SF-015–018 → SF-021. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
+**Next action order:** verify Actions for SF-007, SF-013/014 and SF-019 → SF-006/010 importer regression → SF-008/009 region schema and sanitisation → SF-015–018 → SF-021. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
 
 ---
 
@@ -411,6 +411,11 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-007 | 2026-10-28 | tests/test_browser_exports.py (external decoder test) + tools/audit_embroidery.py | Reader API wired and dependency pinned to pyembroidery 1.5.1 | NOT RUN | Container cannot obtain PyPI package; cannot claim third-party read-back passed |
 | E-008 | TBD | Physical embroidery machine | Fabric, density, registration and quality | NOT RUN | Required before product use |
 | E-009 | 2026-10-28 | Isolated Ink/Stitch adapter `services/digitiser/inkstitch_cli.py` | Safe CLI argument construction, failure/timeout and ZIP structure validation | 3 MOCKED LOCAL TESTS PASS | No real Ink/Stitch executable, actual stitch plan or physical embroidery |
+
+| E-010 | 2026-10-28 | `services/digitiser/trusted_svg.py` + `tests/test_trusted_svg.py` | Bounded vector geometry; rejects unsupported modes, bad colours and out-of-hoop points | 2 LOCAL UNIT TESTS PASS | Does not produce stitches by itself; no real engine invoked |
+| E-011 | 2026-10-28 | `services/digitiser/format_audit.py` + `tests/test_format_audit.py` | pyembroidery 1.5.1 reader, bounding-box and stitch-count comparison, corrupt-file rejection | SOURCE COMMITTED; REAL-LIBRARY TEST NOT RUN LOCALLY | Dependency unavailable locally; CI status not returned |
+| E-012 | 2026-10-28 | `real_engine_smoke.py` + `.github/workflows/real-engine-smoke.yml` | Official pinned Ink/Stitch 3.3.0 Linux release → generated SVG → PES/DST ZIP → independent audit | CI WORKFLOW COMMITTED; NOT EXECUTION-VERIFIED | GitHub workflow runs and statuses not returned; no physical stitch-out |
+| E-013 | 2026-10-28 | Local `python -m unittest discover -s tests -v` with `STITCH_FORGE_CHROMIUM=/usr/bin/chromium` | Existing 9 local regression tests + 2 SVG builder tests | 11 LOCAL TESTS PASS | Local suite does not include real pyembroidery or real Ink/Stitch; running without Chromium override fails due missing Playwright-bundled browser |
 
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
@@ -499,6 +504,18 @@ Do not create empty decorative folders or claim an implementation exists because
 - **GitHub CI:** workflow committed; workflow-run and commit-status queries returned no run/check at the time of inspection. Do not mark CI green until a real completed run is observed.
 - **Known gaps/regressions:** no established physical stitching evidence; raster traced regions remain silhouette only; source project schema not modularised; actual worker sandbox/GUI connection not implemented.
 - **Deployment:** none. **Next:** run GitHub CI and resolve failures; install Ink/Stitch in isolated test runner and validate a known simple fixture with independent reader; then implement proper region-specific fill/satin edit model.
+
+### 2026-10-28 — Real-engine integration and independent-audit foundations
+
+- **Scope / task IDs:** SF-009, SF-013, SF-014, SF-019; E-010 to E-013.
+- **Branch / PR:** `develop/stitch-engine-foundation`, [draft PR #1](https://github.com/sapiverpress-studio/Stitch-Forge/pull/1).
+- **Code committed:** `trusted_svg.py` (commit `e9d1af1`) builds only numeric, bounded, manually approved vector regions; `format_audit.py` (`8f74a21`) validates decoded PES/DST geometry with pyembroidery 1.5.1; `real_engine_smoke.py` (`050829e`) composes the trusted builder, Ink/Stitch adapter and decoder; `test_trusted_svg.py` (`3baf2ca`) and `test_format_audit.py` (`279e8fa`) add validation cases; CI workflow `real-engine-smoke.yml` (`d050781`) attempts a pinned official Ink/Stitch v3.3.0 engine test on Ubuntu.
+- **Tests RUN:** `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -v` on the working local copy: **11 passed** (existing nine plus two builder tests). `python -m compileall` passed for new local source.
+- **Tests NOT run:** real Ink/Stitch binary, full pyembroidery library tests and machine stitch-out. Local runtime has neither Ink/Stitch binary nor pyembroidery installed, and outbound package download is not available. A GitHub-hosted workflow has been written but **no workflow-run record has been returned yet**.
+- **New safety boundary:** do not pass arbitrary uploaded SVG files to the engine. Source artwork is a reference; only region geometry validated into a fresh, trusted SVG may reach CLI execution. This is not yet connected to the browser editor.
+- **Current limitations:** simple fill/running region only, no satin, colour routing or fabric validation. New CI could fail on Linux packaging/asset discovery or library interpretation; fix based on actual logs, not assumptions.
+- **Next:** obtain passing GitHub Actions engine smoke and third-party reader tests, resolve any failures, add browser-region schema adapter and visual controls, and preserve all existing UI behaviour.
+- **Deployment:** no release or user-facing web deployment.
 
 ### Entry template — REQUIRED on every meaningful development update
 
