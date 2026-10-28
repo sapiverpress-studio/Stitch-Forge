@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.14 |
+| Document version | MD-2.15 |
 | Last updated | 2026-10-28 (Europe/London) |
-| Last independently checked source | GitHub Actions 2026-10-28: AI suite 23/23 pass (40716378480); full Python suite 44 run/3 skipped (40716378496); engine smoke failed (40716769894) |
+| Last independently checked source | GitHub Actions 2026-10-28: AI + full regression success (40718207482 / 40718207507); real Ink/Stitch smoke past archive and X11 troubleshooting, Xvfb job 40718290030 pending |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -18,7 +18,7 @@
 | Deployment | **Static v0.3 experimental editor committed to `main` and Netlify reports deployment ready; direct HTTP/browser rendering not independently verified** |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
-| External Ink/Stitch or pyembroidery integration | **NOT implemented** |
+| External Ink/Stitch or pyembroidery integration | **pyembroidery 1.5.1 reader verified by CI; Ink/Stitch CLI wrapper implemented but real-engine stitch export still NOT verified** |
 
 ## 0. How to read and maintain this MD
 
@@ -815,6 +815,16 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Licence/security:** OpenAI request stays protected and separately billable; no API keys committed. Official Ink/Stitch GPL obligations and runtime redistribution licensing need review; pyembroidery only provides machine-format IO, not digitisation.
 - **Next engineering gate:** 1) obtain green real-engine smoke or record exact new failure, 2) exercise original full-colour moth using approved private OpenAI request with manually countable region/vein fidelity and false-fill checks, 3) introduce semantic mask/refinement and per-region stitch structures, 4) verify round-trip multi-colour PES/DST, 5) physical test by machine/material/size. Acceptance: one-click builds all visually significant moth components as editable source-grounded regions without rectangular artefacts or false seams, source-preserving Undo and project re-open, and repeatable genuine engine readback. Production quality additionally requires physical evidence.
 - **Deploy:** Development branch changes only. Existing production main application untouched; staging deploy status after these commits not yet independently verified.
+
+
+### 2026-10-28 — Marking-colour reconstruction and actual Ink/Stitch runtime diagnostics (MD-2.15)
+
+- **Automatic source segmentation:** `site/auto-reconstruct.js` commits `df327747`, `93e9df56` now require source-image colour compatibility for `wing_marking` fill polygons instead of merely generic wing foreground. Unreal swatch/area combinations are rejected with `marking_colour_not_supported_by_pixels`, preserving source and original editor paths if major reconstruction fails. `tests/test_auto_reconstruct.cjs` commit `07754367` tests a dark wing spot and absence of a false spot, plus previous pale-wing, line-contrast and synthetic fill tests. **Model-proposed colour may be inaccurate and details may still be missed**; this is not multi-class semantic segmentation.
+- **Latest reconstruction CI:** [AI safety run 40718207482](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40718207482) **success** on `07754367`; [full regression run 40718207507](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40718207507) **success** on `07754367`. A browser-sized mobile test is not a physical Android device test. Three optional OpenCV tests were skipped in the previous 44-test full run; do not imply those exercised.
+- **Real-engine findings:** The initial Ink/Stitch v3.3.0 archive extraction failure was a legitimate in-archive ELF symlink. The hardened `release_asset.py` extractor `394c819a` and safety tests `6e91f79b` passed extraction in [GitHub run 40717042442](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40717042442). Next real CLI failure was a missing `libwayland-server.so.0` (bounded synthetic-only diagnostic `inkstitch_cli.py` `d38ff061`, `11c63100`, `88d0914`). Installed Ubuntu `libwayland-server0` `dd52e382`, revealing `Unable to access the X Display` in [run 40717981121](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40717981121). Workflow `260dbb2e` now runs the engine under `xvfb-run` with XCB and installed X11 test dependencies; as of entry creation, [run 40718290030](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40718290030) **in progress**, **not a proven engine pass**.
+- **Runtime and protection:** Independent PES/DST parsing through pinned `pyembroidery==1.5.1` has passed existing regression tests; this does not prove real-engine output. Upstream Linux binary SHA-256 was compared against release metadata, extraction refuses traversal/external symlinks, and non-synthetic customer jobs never display external stack traces.
+- **Deployment:** Netlify production deploy `6ae215f14154a1d720bd1b35` confirmed ready for the **main-only docs commit** `ba519dab`; it did not merge or publish development application code. Developer PR remains draft, no retail or physical-stitch approval.
+- **Current P0 priorities / acceptance:** Obtain real Ink/Stitch complete PES/DST ZIP with independent read-back on both trusted synthetic petal and browser-project fixtures; ensure no external-customer source artwork enters public tests. Next benchmark must compare all moth components (four wing panels, colour spots, veins, segmented abdomen, antennae), stitching angles, density, underlay, colour-change/tie-offs and real machine stitch-out. Reject false polygon fills. Persist high-resolution source safely or demand re-upload, preserving undo and edits. No machine-ready claims until fabric evidence exists.
 
 ### Entry template — REQUIRED on every meaningful development update
 
