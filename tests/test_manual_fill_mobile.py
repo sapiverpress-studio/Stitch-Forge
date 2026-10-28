@@ -82,6 +82,14 @@ class FillMobileTest(unittest.TestCase):
             self.assertEqual(len(new_paths),2)
             self.assertEqual(new_paths[-1][0],new_paths[-1][-1])
             self.assertEqual(page.locator("#stitchMode").input_value(),"tatami")
+            from xml.etree import ElementTree as ET
+            xml=page.evaluate("window.__stitchforge_test.exportSvg()")
+            root=ET.fromstring(xml)
+            fill=[node for node in root if node.attrib.get("data-stitch-mode")=="tatami"]
+            self.assertEqual(len(fill),1)
+            self.assertEqual(fill[0].attrib["fill"],"#153e46")
+            self.assertEqual(fill[0].attrib["stroke"],"none")
+            self.assertTrue(root.attrib["width"].endswith("mm"))
             self.assertIn("single-colour",page.locator("#sfFillNotice").inner_text().lower()+
                               page.locator("#status").inner_text().lower())
             page.locator("#undoBtn").click()
