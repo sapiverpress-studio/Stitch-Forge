@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.19 |
+| Document version | MD-2.20 |
 | Last updated | 2026-10-28 (Europe/London) |
-| Last independently checked source | 2026-10-28 local: 38 Node tests passed; 62 Python tests run, 3 optional skips, remainder passed; real Gunicorn HTTP + Ink/Stitch 3.3.0 + pyembroidery 1.5.1 passed moth/logo/line fixtures. Container/native HTTP CI 40748116743 SUCCESS at bd7ba8a; hosted worker NOT DEPLOYED; no paid OpenAI calls or physical stitch-out |
+| Last independently checked source | 2026-10-28: native Docker/moth-logo-line fixture CI SUCCESS (40748895024); regression CI 66 tests / 3 optional skipped SUCCESS incl Cloud Run safety guards (40767768413). Cloud Run staging package PREPARED only; no Google Cloud service or physical stitch-out |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -431,7 +431,9 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-053 | P0 | Machine-file source/revision consistency and fail-closed browser UX | **LOCAL REGRESSION VERIFIED** | Monotonic revision checks reject source/design changes during analysis and machine export, including edit/undo returning identical JSON. Incomplete proposals block machine request; lost machine-scale fills reject atomic replacement. |
 | SF-054 | P0 | Subject-independent reconstruction and engine regression matrix | **LOCAL SYNTHETIC VERIFIED / REAL IMAGE QA OPEN** | Generic AI instructions, single fills, rectangular source contours, line-only drafts; moth/logo/line native HTTP matrix. Unsupported holes and disconnected components fail closed; model fidelity remains unverified. |
 
-**Next action order (MD-2.19):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
+| SF-055 | P0 | Prepare non-Railway hosting alternative | **STAGING PACKAGE PREPARED / NOT DEPLOYED** | Cloud Run dry-run-by-default build/deploy scripts, explicit billing and exact-dev-SHA guard; private Artifact Registry, scale-zero, 2GiB/2vCPU. GCP billing/permissions and actual hosted HTTPS acceptance remain blocked |
+
+**Next action order (MD-2.20):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
@@ -513,6 +515,9 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-068 | 2026-10-28 | `http_smoke.py`, three synthetic fixtures, captured HTTP matrix | Real Gunicorn → Ink/Stitch → independently decoded PES/DST over loopback HTTP | **PASS:** moth 3010 stitches/5 changes/90×60.6 mm; logo 2071/0/60×40; line art 96/1/60×28; 9 rejection checks | Both formats agree on stitches/changes/bounds; jump record counts differ by format. No HTTPS deployment, model call or fabric test |
 | E-069 | 2026-10-28 | `test_engine_process.py` | Real child process timeout/descendant termination, bounded output, normal return | **3 PASS** | Container filesystem/CPU/RAM isolation needs CI/host verification |
 
+| E-067 | 2026-10-28 | [CI 40767768413](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40767768413), head `70b0db6f` | Dry-run, rejected malicious identifiers, refused unapproved spend and wrong branch, full regression | **SUCCESS: 66 tests, 3 skipped; four Cloud Run guard tests passed** | Deployment not executed; no live GCP evidence |
+| E-068 | 2026-10-28 | `services/digitiser/cloudbuild.staging.yaml`, `deploy-cloud-run-staging.sh`, [Cloud Run documentation](https://github.com/sapiverpress-studio/Stitch-Forge/blob/develop/stitch-engine-foundation/docs/CLOUD_RUN_STAGING.md) | Prepare alternative cloud container staging without Railway, preserve cost and privacy controls | **SOURCE COMMITTED / NO HOSTED WORKER** | Owner-controlled, billing-enabled GCP account is missing; public Cloud Run routing requires hardened authentication, rate controls and cost review |
+
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -554,6 +559,8 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | 2026-10-28 | D-012 | Build portable private amd64 container; do not provision paid/public hosting | Connected Netlify has no worker URL/token. Render/Railway available but not connected; no approved host credentials or proven free allocation. No purchases or env changes. |
 | 2026-10-28 | D-013 | Generalise every image path; never encode moth-specific feature requirements | User explicitly requires future-image applicability. No two-fill minimum or fixed wing/body prompt; diverse synthetic tests and incomplete-result blocking. |
+
+| 2026-10-28 | D-012 | Replace Railway proposal with guarded Cloud Run staging option | Existing 2GiB/2vCPU worker can scale to zero. No Google Cloud account, billing activation or provisioning without explicit authorisation. Public invoker route with worker-token protection alone is insufficient for release, and may incur charges under abuse. |
 
 ### Decision-record template
 
@@ -916,6 +923,15 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - User instructed to proceed with private staging. Rechecked plugin availability: Railway and Render remain unconnected. Requested Railway connection to inspect the account's actual resources/credits before provisioning; this is not a paid-plan approval or a claim that the account is connected.
 - Hosting fit: current official Render FAQ reports roughly one-minute free-service cold starts, exceeding the existing 55-second proxy deadline; Railway trial documentation caps memory at 1 GB, below the 2 GiB limit used in the verified container test. Neither free route is established as reliable yet. No host purchase, trial signup, deployment or Netlify secret change occurred.
 - Exact next dependency: connect an approved native-host account (Railway connection offered), inspect its capacity/cost, then deploy private staging only within the user's no-unapproved-spending constraint. Current hosted machine generation remains unavailable.
+
+### 2026-10-28 — Railway-free Cloud Run staging option; no spending (MD-2.20)
+
+- **Direction:** User rejected Railway and authorised progress via alternative. Google Cloud Run was selected as a *candidate*, not a deployed replacement, because it supports the already-tested amd64 Docker service, HTTPS and scale to zero. Official pricing and billing rules were reviewed; free allowances do NOT guarantee no charge.
+- **Files on development branch:** `services/digitiser/cloudbuild.staging.yaml` (`b1f02604`), `services/digitiser/deploy-cloud-run-staging.sh` (`99dfb4e2`), `tests/test_cloudrun_deploy.py` (`70b0db6f`), `docs/CLOUD_RUN_STAGING.md` (`3066a089`). The deployment helper defaults to DRY RUN and refuses --execute without a reviewed exact dev SHA and specific cost approval. No Netlify secret was modified.
+- **Configuration:** London `europe-west2`, `linux/amd64`, 2vCPU, 2GiB memory, concurrency 1, minimum instances 0, maximum 1, 60-second upstream request timeout; existing native worker `PORT=8080`, owner Bearer token and independent PES/DST audit remain unchanged.
+- **Security/cost warning:** The current experimental staging script explicitly uses public Cloud Run HTTPS routing protected at application level by a long worker token; arbitrary unauthenticated requests could still cause charges or denial of service. Production must add strong IAM/service-to-service auth, abuse controls and billing safeguards, not merely trust token checks.
+- **Tests:** [CI 40767768413](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40767768413) SUCCESS, 66 Python tests (3 optional skips), including all four new dry-run/approval/identifier guards. Native worker Docker CI had already passed [40748895024](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40748895024). No GCP Cloud Build, Cloud Run HTTPS, billing flow, Netlify preview integration, actual user moth or physical stitch-out was executed.
+- **Blocker:** A billing-enabled, owner-controlled Google Cloud project and authority to provision are unavailable through this session's connector. Do not connect an unrelated Google Drive account and claim it can deploy Cloud Run. No cloud spend approved; development PR #1 remains open and unmerged.
 
 ### Entry template — REQUIRED on every meaningful development update
 
