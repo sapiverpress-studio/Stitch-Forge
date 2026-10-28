@@ -16,6 +16,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 HTML = ROOT / "site/index.html"
 AI = ROOT / "site/ai-details.js"
+ROUTING = ROOT / "site/travel-routing.js"
 
 
 def image_data_url():
@@ -35,6 +36,8 @@ def image_data_url():
 
 def page_fixture():
     source = HTML.read_text(encoding="utf-8")
+    source = source.replace('<script src="/travel-routing.js"></script>',
+                            '<script>'+ROUTING.read_text(encoding="utf-8")+'</script>')
     saved = {
         "paths": [[[120,180],[480,180],[480,400],[120,400],[120,180]]],
         "pathStyles": ["running"],
@@ -112,6 +115,13 @@ class AIReferenceRestoreTests(unittest.TestCase):
             self.assertEqual(result["url"],"/api/analyse-embroidery")
             self.assertTrue(result["image"].startswith("data:image/jpeg;base64,"))
             self.assertEqual(page.locator(".ai-detail-item").count(),1)
+            self.assertFalse(page.locator("#sfAiBoxes").is_checked())
+            self.assertEqual(page.locator("#sfAiOverlay rect").count(),0)
+            page.locator("#sfAiBoxes").check()
+            self.assertEqual(page.locator("#sfAiOverlay rect").count(),1)
+            page.locator("#sfAiBoxes").uncheck()
+            self.assertEqual(page.locator("#sfAiOverlay rect").count(),0)
+            page.locator(".ai-detail-item").first.click()
             self.assertEqual(page.locator("#sfAiOverlay rect").count(),1)
         finally:page.close()
 
