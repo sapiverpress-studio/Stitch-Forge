@@ -77,6 +77,9 @@ async function modelImage(source){
 q("#sfAutoRun").onclick=async()=>{
  if(running)return;
  const source=context.getImage();if(!source){status("Upload the original detailed image first.");return;}
+ if(context.getSourceStatus()!=="original"){
+  status("Re-upload the original artwork to reconstruct. A restored project contains only a reduced trace reference, not the original colours and fine detail. Existing design unchanged.");return;
+ }
  const token=q("#sfAutoToken").value.trim()||q("#sfAiToken")?.value.trim();
  if(!token){status("Enter your private analysis token (not your OpenAI API key).");return;}
  if(!window.StitchForgeAutoReconstruct){status("Automatic reconstruction engine missing; no changes made.");return;}
@@ -125,6 +128,11 @@ q("#sfAutoUndo").onclick=()=>{
  btn.click();last=null;overlay.replaceChildren();q("#sfAutoDownload").disabled=true;
  q("#sfAutoUndo").disabled=true;status("Reconstruction undone. Previous editable design restored.");
 };
+window.addEventListener("stitchforge:design-changed",()=>{
+ if(!last)return;
+ last=null;overlay.replaceChildren();q("#sfAutoDownload").disabled=true;q("#sfAutoUndo").disabled=true;
+ status("Design changed. The previous AI overlay is no longer presented as current geometry; use normal Undo or reconstruct again.");
+});
 window.addEventListener("stitchforge:image-imported",()=>{
  last=null;overlay.replaceChildren();q("#sfAutoDownload").disabled=true;q("#sfAutoUndo").disabled=true;
  status("Artwork ready. Reconstruct automatically when you choose.");
