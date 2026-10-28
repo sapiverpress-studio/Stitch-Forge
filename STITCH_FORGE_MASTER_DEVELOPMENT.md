@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.3 |
+| Document version | MD-2.6 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -401,7 +401,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-036 | P1 | Specify secure per-region colour and Ink/Stitch fill/run parameters | PROTOTYPE-TESTED | `trusted_svg.py`, `project_bridge.py`, 4 regression tests committed on dev; real engine/fabric result still pending |
 | SF-037 | P1 | DRW-style OpenAI image analysis: propose visible internal embroidery regions | IN-PROGRESS | Protected Netlify Function, UI overlay and synthetic tests committed on dev; not deployed live, no API invocation proven |
 | SF-038 | P0 | Convert reviewed wing/vein/body proposals to precise pixel-derived editable region contours | IN-PROGRESS | Experimental OpenCV edge contour extraction staged with ROI support; proper pixel masks, editable precise paths and stitchability checks still absent |
-| SF-039 | P0 | Verify private API access, image privacy, budget safeguards and staged real moth analysis | BLOCKED | Requires configured owner-only Netlify secrets, test budget and verified function run; no public unrestricted endpoint |
+| SF-039 | P0 | Verify private API access, image privacy, budget safeguards and staged real moth analysis | IN-PROGRESS | Netlify secret variable names and deployment preview confirmed; real authorised AI call and accurate wing analysis not yet verified |
+| SF-040 | P0 | Fix AI analysis after browser project reload and expose edit-point toggle beside artwork | IN-PROGRESS | Browser logic and test fixture committed; JS parsing passed, fresh Netlify preview/browser tests pending |
 
 **Next action order:** confirm public editor opens in Android browser after Netlify ready deployment; verify PR previews and CI; then prove Ink/Stitch engine and independent PES/DST validation before expanding stitch tooling. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
 
@@ -451,6 +452,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-035 | 2026-10-28 | `services/digitiser/detail_guides.py` + `tests/test_detail_guides.py` | Optional OpenCV local extraction of internal raster edge contours, constrained by normalized AI-review boxes; three tests with synthetic and original moth detail image locally | **3 LOCAL TESTS PASS** (one using user moth source, kept off GitHub); engine module and synthetic tests committed | Contours are doubled/noisy and can overrepresent thread; not accurate centreline/satin rails; not joined to browser/Ink/Stitch and no stitch-out |
 | E-036 | 2026-10-28 | `services/digitiser/requirements-detail.txt` and `.github/workflows/detail-guides-tests.yml` | Pinned optional NumPy/OpenCV dependencies, synthetic-only PR test runner | WORKFLOW COMMITTED on development and main; CI execution NOT VERIFIED | Local test success is not GitHub CI or machine compatibility |
 | E-037 | 2026-10-28 | Netlify connected deploy readback | Deploy Preview #1 at commit `896511fb78ee9be123b09939797234abe6fb5c63` reached `ready`, with 1 protected Node function deployed | PREVIEW BUNDLE READY | Function invocation, secrets, actual OpenAI image analysis and region-to-stitch conversion remain unverified |
+| E-038 | 2026-10-28 | User screenshots at 10:57–11:01, GitHub `site/index.html` and `site/ai-details.js` | Root cause: localStorage restores `rasterReference` but leaves `rasterSource=null`; AI panel read `rasterSource` only, so visible saved image produced false "Upload image" error. Editing handles were controlled from settings below canvas and switched back on after reload | ROOT CAUSE CONFIRMED IN CODE | No OpenAI request had been initiated by this error, and token was not the failure |
+| E-039 | 2026-10-28 | Dev commits `9ec9ba7` / `69ee2abe`, `tests/test_ai_reference_restore.py` `c59fa03`, workflow `e12cc8a` | AI uses original source or saved reference fallback; quick editing-points toggle beside artwork; restored reference defaults to handles hidden; synthetic browser regression asserts image recovery, toggle, and mocked detail analysis | SOURCE COMMITTED; JS SYNTAX PARSED SUCCESSFULLY; TEST SCRIPT COMMITTED, NOT YET EXECUTION-VERIFIED | Fallback reference is a reduced transparency-masked image: for most accurate detailed analysis re-import full original |
+| E-040 | 2026-10-28 | Locally reconstructed v0.3 HTML with same reference restoration and quick-toggle patch; Chromium 390×844 | Synthetic saved PNG reference restored to AI getter after simulated page reload; edit nodes remain hidden, quick toggle shows/hides them, no page errors | **LOCAL MOBILE SMOKE PASS** | Based on reconstructed local baseline, NOT byte-for-byte rebuilt deploy. Full integrated AI request and GitHub CI still unverified |
+| E-041 | 2026-10-28 | Netlify deployment `6ae1d76b72e0a6f82ce330ad` | Draft PR #1 at commit `52134cbb9f31e94799c07ef0cbfecbea51071264` confirmed `ready`, with 1 Netlify function deployed and no build error | **DEVELOPMENT PREVIEW READY** | This does not verify runtime access token, OpenAI result, image recognition, precise stitch conversion or physical embroidery |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -662,6 +667,34 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Remaining defects:** Edge contours are noisy and often trace both sides of a visual marking; they are **not trustworthy stitch centrelines**. Need semantic region masks, manual approval and simplification, physical-size checks, satin rail construction and correct stitch sequencing. No API image-analysis call was made and no machine-file output was validated.
 - **Next:** Review AI region boxes against source; develop image-derived masks/centerlines, show editable per-region overlays, validate with synthetic and original references, then integrate reviewed regions with actual Ink/Stitch and independent file auditing.
 - **Deployment:** No new runtime or user artwork published.
+
+### 2026-10-28 — Netlify AI analysis variables saved; preview redeployment requested
+
+- **Scope/tasks:** SF-037, SF-039; operational configuration only, no API secrets included here.
+- **Evidence:** Netlify site `sapiver-stitchforge` reports environment variable names `OPENAI_API_KEY` and `STITCH_FORGE_ANALYSIS_TOKEN`, with `functions` in their configured scopes. User's Netlify screenshot confirms both saved as secret variables with two configured deployment contexts. Actual hidden values were not inspected or exported.
+- **Deployment baseline:** main Netlify deploy `6ae1cb96683a53fa3fae7429` is `ready` at `2026-10-28T10:17:02Z` and contains **zero functions**. Development PR #1 previously had a ready preview and included the protected AI endpoint.
+- **Action:** This documentation-only commit synchronises draft PR #1 to request a fresh Netlify deploy preview after secret configuration; deployment and function invocation must be checked independently.
+- **Tests NOT run:** live authenticated OpenAI request, cost/usage audit, true moth region proposal, machine-file conversion or stitch-out.
+- **Security gate:** Do not place access tokens, API keys or customer artwork in public repository or URL parameters. Do not promote experimental image-analysis code to main or offer open public analysis until authenticated and budget-limited.
+- **Next:** Confirm preview deploy ready and one function packaged. Test owner-only function using secret access token on the preview. Only then assess accuracy of moth region proposals.
+
+### 2026-10-28 — Fix false missing-image AI error after reload
+
+- **User report:** Moth visible faintly on canvas, with orange edit circles; after entering private analysis token and tapping the button, panel said "Upload PNG/JPG or an SVG containing the detailed image first." Checkbox to hide points was not near the visible artwork.
+- **Root cause:** v0.3 persists `rasterReference` and `rasterBounds` to browser localStorage but does **not** restore `rasterSource`. The separate AI script called `StitchForgeAIContext.getImage()`, which returned only `rasterSource`. So an apparently imported design could be missing its image from the AI panel despite a drawable saved reference. In the restored project branch the controls defaulted to show orange editing handles.
+- **Fix:** `site/index.html` commit `9ec9ba7` supplies original source when available, otherwise saved reference, adds `getSourceStatus`, moves a mirrored "Show orange edit points" switch beside the raster trace controls, resets edit handles to hidden when a reference is restored/imported and emits an import event for loaded JSON. `site/ai-details.js` `69ee2ab` shows reference readiness and accepts the fallback image.
+- **Tests:** New Playwright mobile regression `tests/test_ai_reference_restore.py` `c59fa03` covers restore/handle toggling and a fake AI endpoint without OpenAI charges. `ai-region-tests.yml` `e12cc8a` runs this test. Both updated JavaScript sources **parsed successfully** using the JS compiler in a sandbox; full browser regression execution and deployed request still need verification.
+- **Security and quality:** The private token and API key remain server-side for request validation; neither has been printed or logged. Saved reference is smaller than original and may omit some fine details; user can upload original for the most detailed analysis. No stitch-model change, no new production-ready machine output.
+- **Next:** Confirm Netlify preview deploy, run mobile regression in CI, then make one authenticated request to OpenAI for original moth after owner action and assess true wing-detail result. Do not claim machine embroidery completion.
+- **Release:** Development preview only; public main website unchanged.
+
+### 2026-10-28 — Verify restored image UI correction in mobile browser
+
+- **Fix committed:** AI getter now prefers full original source and falls back to the persisted reduced raster reference; nearby artwork toggle mirrors the hidden sidebar's edit point checkbox, and restored references default to handles hidden.
+- **Tests performed:** Local reconstructed-source Chromium at 390×844 rendered a synthetic saved reference, returned a valid image from the getter, hid orange nodes by default, showed/hid them with near-art toggle, and emitted no JS errors. Both committed JavaScript files also passed syntax parse. Repository `tests/test_ai_reference_restore.py` is committed for future CI on the exact source.
+- **Netlify:** Deploy Preview #1 `6ae1d76b72e0a6f82ce330ad` for head `52134cbb9f31e94799c07ef0cbfecbea51071264` returned READY with one deployed function. External browser runtime and authenticated AI response remain unverified.
+- **Next:** User reloads [development preview](https://deploy-preview-1--sapiver-stitchforge.netlify.app/), sees restored image ready and orange-node switch beside raster tracing, then tests authorised OpenAI analysis; capture API errors and result quality (no secrets). Continue mask-to-editable stitch regions.
+- **Production:** Existing main static editor unchanged. No retail-ready claim or machine test.
 
 ### Entry template — REQUIRED on every meaningful development update
 
