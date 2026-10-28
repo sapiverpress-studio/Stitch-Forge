@@ -90,6 +90,7 @@ jobs:
         shell: bash
         env:
           QT_QPA_PLATFORM: offscreen
+          STITCH_FORGE_CI_DIAGNOSTICS: synthetic-only
         run: |
           set -euo pipefail
           python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --output "$RUNNER_TEMP/engine-smoke.zip"
