@@ -1,0 +1,4 @@
+# Optional isolated digitiser/analysis worker dependencies; not for the static Netlify frontend.
+# Pin/review with full engine container build before production use.
+numpy==2.2.6
+opencv-python-headless==4.12.0.88
