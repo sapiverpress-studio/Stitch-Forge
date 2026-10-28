@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.2 |
+| Document version | MD-2.3 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -400,7 +400,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-035 | P0 | Register actual Ink/Stitch workflow on GitHub default branch and confirm CI run | IN-PROGRESS | Workflow present on `main` commit `b3fb43d`; PR synchronization checked, no engine Actions run returned |
 | SF-036 | P1 | Specify secure per-region colour and Ink/Stitch fill/run parameters | PROTOTYPE-TESTED | `trusted_svg.py`, `project_bridge.py`, 4 regression tests committed on dev; real engine/fabric result still pending |
 | SF-037 | P1 | DRW-style OpenAI image analysis: propose visible internal embroidery regions | IN-PROGRESS | Protected Netlify Function, UI overlay and synthetic tests committed on dev; not deployed live, no API invocation proven |
-| SF-038 | P0 | Convert reviewed wing/vein/body proposals to precise pixel-derived editable region contours | TODO | Segment masks on detailed embedded RGB image; preserve internal features; compare with original; never auto-approve stitches |
+| SF-038 | P0 | Convert reviewed wing/vein/body proposals to precise pixel-derived editable region contours | IN-PROGRESS | Experimental OpenCV edge contour extraction staged with ROI support; proper pixel masks, editable precise paths and stitchability checks still absent |
 | SF-039 | P0 | Verify private API access, image privacy, budget safeguards and staged real moth analysis | BLOCKED | Requires configured owner-only Netlify secrets, test budget and verified function run; no public unrestricted endpoint |
 
 **Next action order:** confirm public editor opens in Android browser after Netlify ready deployment; verify PR previews and CI; then prove Ink/Stitch engine and independent PES/DST validation before expanding stitch tooling. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
@@ -448,6 +448,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-032 | 2026-10-28 | Original user SVG `Tiles _20261028_062147_0000.svg`, examined locally without publishing source | Found TWO embedded 447×262 PNG images: a monochrome silhouette mask and a separate RGB moth with wing markings, veins, abdomen, antennae; importer currently uses a largest-image choice then flattens foreground to one contour | ROOT CAUSE CONFIRMED from source, not from model guess | Detailed stitching still requires segmentation and manual review |
 | E-033 | 2026-10-28 | `netlify/functions/analyse-embroidery.mjs`, `site/ai-details.js`, development `site/index.html`, `tests/test_ai_analysis.mjs` and `docs/AI_REGION_ANALYSIS.md` | Server-only OpenAI vision with strict JSON schema, short image size limits, access token, no AI outputs directly in machine-file exporter; mobile displays proposed bounding boxes and reports omissions | SOURCE COMMITTED, TESTS STAGED, NOT REAL API-VERIFIED | Requires OPENAI_API_KEY and STITCH_FORGE_ANALYSIS_TOKEN in Netlify; no image-to-mask/stitch conversion |
 | E-034 | 2026-10-28 | `.github/workflows/ai-region-tests.yml` | Node 22 zero-cost schema/auth syntax/synthetic-response test configured on PR and registered on main | WORKFLOW COMMITTED; EXECUTION STATUS UNVERIFIED | No real vision billing or actual moth results obtained |
+| E-035 | 2026-10-28 | `services/digitiser/detail_guides.py` + `tests/test_detail_guides.py` | Optional OpenCV local extraction of internal raster edge contours, constrained by normalized AI-review boxes; three tests with synthetic and original moth detail image locally | **3 LOCAL TESTS PASS** (one using user moth source, kept off GitHub); engine module and synthetic tests committed | Contours are doubled/noisy and can overrepresent thread; not accurate centreline/satin rails; not joined to browser/Ink/Stitch and no stitch-out |
+| E-036 | 2026-10-28 | `services/digitiser/requirements-detail.txt` and `.github/workflows/detail-guides-tests.yml` | Pinned optional NumPy/OpenCV dependencies, synthetic-only PR test runner | WORKFLOW COMMITTED on development and main; CI execution NOT VERIFIED | Local test success is not GitHub CI or machine compatibility |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -649,6 +651,16 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Blocker:** The site currently has no configured analysis secrets. Public deployment would require authentication/rate-budget controls and explicit acceptance of image transmission to OpenAI.
 - **Next:** Demonstrate model boxes on an authorised reference; implement constrained image mask segmentation for internal wing/body regions, edit/delete controls and precise SVG contours. Only after that connect upstream Ink/Stitch fills and satin rails and test real machine output.
 - **Deployment:** Development branch only; published prototype unchanged.
+
+### 2026-10-28 — First pixel-derived internal wing detail candidates
+
+- **Scope/tasks:** SF-038, evidence E-035/E-036. This is a controlled experimental worker, not a published feature.
+- **Implementation:** `services/digitiser/detail_guides.py` (commit `7c0b195`) takes decoded BGR raster, optionally human/AI-approved normalized regions, applies contrast enhancement and Canny inside the visible foreground, extracts candidate contour guides longer than an approximate minimum physical size, and returns explicit `REVIEW_GUIDES_NOT_EMBROIDERY` output. Caps image size, region count, guide count and complexity. It does not output embroidery machine commands.
+- **Quality evidence:** Three local tests passed in the development environment, including an inspection of internal edges from the **detailed RGB moth** embedded in the original SVG. The user artwork itself is intentionally **not committed** to the public repository. A synthetic-only version of the tests is committed to `tests/test_detail_guides.py` (`d27cb50`).
+- **Dependencies:** `requirements-detail.txt` (`9e74a67`) pins optional OpenCV/NumPy used only by the separate Python digitiser; CI workflow `detail-guides-tests.yml` is committed on development (`c0686ce`) and main (`d074699`). CI outcome is still unknown.
+- **Remaining defects:** Edge contours are noisy and often trace both sides of a visual marking; they are **not trustworthy stitch centrelines**. Need semantic region masks, manual approval and simplification, physical-size checks, satin rail construction and correct stitch sequencing. No API image-analysis call was made and no machine-file output was validated.
+- **Next:** Review AI region boxes against source; develop image-derived masks/centerlines, show editable per-region overlays, validate with synthetic and original references, then integrate reviewed regions with actual Ink/Stitch and independent file auditing.
+- **Deployment:** No new runtime or user artwork published.
 
 ### Entry template — REQUIRED on every meaningful development update
 
