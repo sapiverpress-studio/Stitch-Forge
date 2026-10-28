@@ -336,7 +336,7 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
  exportEditableSvg:()=>makeSvg({settings:{width:Number($('#designWidth').value)}}),
  replaceWithAutomaticReconstruction:(draft)=>{
   if(!draft||draft.status!=='AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED'||
-     !Array.isArray(draft.regions)||draft.regions.length<2||draft.regions.length>16)
+     !Array.isArray(draft.regions)||draft.regions.length<1||draft.regions.length>16)
     throw Error('No valid automatically reconstructed design');
   if(!rasterBounds||!rasterReference)throw Error('Source artwork must be loaded');
   const w=Number(draft.width),h=Number(draft.height);
@@ -372,8 +372,8 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
   // The reconstruction replaces old contours; preserving a legacy silhouette here
   // duplicates running stitches and adds an unrequested thread colour.
   const kept=converted.filter(Boolean);
-  if(kept.filter(r=>r.style==='tatami').length<2)
-    throw Error('Not enough machine-scale fill regions survived validation; old design unchanged');
+  if(!kept.length||dropped)
+    throw Error('Some regions failed machine-scale validation; incomplete reconstruction rejected, old design unchanged');
   const count=kept.reduce((a,r)=>a+r.points.length,0);
   if(kept.length>128||count>5000)throw Error('Automatic reconstruction exceeds stitch-region safety limits');
   snapshot();

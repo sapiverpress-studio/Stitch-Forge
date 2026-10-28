@@ -123,3 +123,22 @@ jobs:
           print('PHYSICAL STITCH-OUT: NOT TESTED')
           PY
           echo 'ALL THREE ENGINE FIXTURES ARE STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
+      - name: Build isolated staging container and prove real HTTP transaction
+        shell: bash
+        env:
+          STITCH_FORGE_WORKER_TOKEN: synthetic-ci-only-token-never-use-in-hosting
+        run: |
+          set -euo pipefail
+          docker build -f services/digitiser/Dockerfile -t stitch-forge-worker:test .
+          docker run -d --name stitch-worker --read-only --tmpfs /tmp:rw,size=256m,mode=1777 \
+            --memory 2g --cpus 2 --pids-limit 128 --cap-drop ALL \
+            --security-opt no-new-privileges:true -p 127.0.0.1:8080:8080 \
+            -e STITCH_FORGE_WORKER_TOKEN stitch-forge-worker:test
+          trap 'docker logs stitch-worker; docker rm -f stitch-worker' EXIT
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://127.0.0.1:8080/v1/digitise; then break; fi
+            sleep 1
+          done
+          for fixture in tests/fixtures/synthetic_*.json; do
+            python services/digitiser/http_smoke.py --project "$fixture"
+          done

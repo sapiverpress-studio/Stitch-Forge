@@ -80,3 +80,50 @@ single-click audited ZIP download through the actual deployed service,
 resource-limited handling of malformed geometry, multi-design QA and physical
 embroidery test. The UI must never silently fall back to unverified multicolour
 browser exporters.
+
+## MD-2.19 staging package (2026-10-28)
+
+`services/digitiser/Dockerfile` builds an amd64 Ubuntu 24.04 worker with
+Gunicorn 23.0.0, pyembroidery 1.5.1 and a SHA-256-pinned official Ink/Stitch
+3.3.0 archive. `install_engine.py` refuses a changed digest; upstream digest
+observed from GitHub release metadata is
+`162bc16bfb80f18e2343050ab03ddb1c3b39c654fbc868a4a742a28d42ff1c79`.
+Upstream files/notices remain in the image. Do not publish the image without
+completing redistribution/licence review. Ubuntu packages remain repository
+resolved, so this is not a fully bit-reproducible base image.
+
+Use the supplied `compose.staging.yml` on an **approved existing Linux amd64
+host**. It binds only to loopback, drops capabilities, runs UID 10001 with a
+read-only root, limits RAM to 2 GiB / CPU to 2 / PIDs to 128 and uses a 256 MiB
+volatile `/tmp`. Supply a dedicated random token (at least 32 characters) from
+the host secret manager; do not commit a `.env` file. No source images enter
+this service. Request contents and authorization headers are not access-logged.
+
+Exactly one Gunicorn process with two threads allows the in-process lock to
+reject overlap with 429 rather than queue another 45-second engine request.
+This supersedes the earlier recommendation for a synchronous worker. Do not
+scale replicas until shared concurrency/rate control is implemented.
+
+Before setting Netlify variables, run `http_smoke.py --url
+https://APPROVED-HOST/v1/digitise --project
+tests/fixtures/synthetic_four_panel_moth.json` with the token in the environment.
+This checks wrong credentials, source-data rejection, invalid geometry and
+independently decodes the real multicolour archive. The fixture is entirely
+synthetic: four panels, outlines/veins, two markings, segmented body and antennae.
+It is not the user's moth and does not demonstrate source-image reconstruction.
+
+Hosting blocker: connected Netlify has no `STITCH_FORGE_ENGINE_URL` or
+`STITCH_FORGE_WORKER_TOKEN`; Render/Railway plugins are available but not
+connected. No existing approved native host, credentials or verified free
+allocation was established. A paid plan/trial has not been purchased or opened.
+The simplest next step is an approved existing amd64 host with an HTTPS reverse
+proxy, request-size/rate limits and the supplied private container. If none is
+available, owner must choose/connect a host and approve its actual cost first.
+Only then configure the two variables in **deploy-preview** functions context,
+never `all` or production, and test the preview through that actual HTTPS route.
+The exposed connector does not enforce context-scoped updates to existing keys;
+verify context and scopes after any write. No secrets were changed this session.
+
+Local Gunicorn/native tests do not prove the Docker image or hosted HTTPS path.
+The real-engine CI now also builds/runs the container with the same isolation
+flags and calls the HTTP smoke; inspect its result before marking it verified.

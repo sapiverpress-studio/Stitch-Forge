@@ -41,12 +41,12 @@ class AdapterTests(TestCase):
             exe = root / 'inkstitch'
             exe.write_text('placeholder')
             payload = zip_bytes(('sample.dst', b'x'), ('sample.pes', b'x'))
-            with mock.patch('inkstitch_cli.subprocess.run',
+            with mock.patch('inkstitch_cli._run_engine',
                             return_value=subprocess.CompletedProcess([], 0, payload, b'')) as runner:
                 result = export_trusted_svg(svg, executable=exe)
             argv = runner.call_args.args[0]
             self.assertEqual(argv[-1], str(svg))
-            self.assertFalse(runner.call_args.kwargs['shell'])
+            self.assertEqual(runner.call_args.kwargs['timeout_seconds'],60)
             self.assertEqual(result.filenames, ('sample.dst', 'sample.pes'))
 
     def test_timeout_diagnostics_only_in_synthetic_ci(self):
@@ -58,7 +58,7 @@ class AdapterTests(TestCase):
             exe.write_text('placeholder')
             timeout = subprocess.TimeoutExpired(
                 cmd='inkstitch', timeout=1, stderr=b'MODEL-DIAGNOSTIC: GUI waiting')
-            with mock.patch('inkstitch_cli.subprocess.run', side_effect=timeout):
+            with mock.patch('inkstitch_cli._run_engine', side_effect=timeout):
                 with mock.patch.dict('os.environ', {}, clear=True):
                     with self.assertRaises(DigitiserError) as ctx:
                         export_trusted_svg(svg, executable=exe)
@@ -79,11 +79,11 @@ class AdapterTests(TestCase):
             svg.write_text('<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L1 1"/></svg>')
             exe = root / 'inkstitch'
             exe.write_text('placeholder')
-            with mock.patch('inkstitch_cli.subprocess.run',
+            with mock.patch('inkstitch_cli._run_engine',
                             side_effect=subprocess.TimeoutExpired('inkstitch', 1)):
                 with self.assertRaisesRegex(DigitiserError, 'timeout'):
                     export_trusted_svg(svg, executable=exe)
-            with mock.patch('inkstitch_cli.subprocess.run',
+            with mock.patch('inkstitch_cli._run_engine',
                             return_value=subprocess.CompletedProcess([], 2, b'', b'oops')):
                 with self.assertRaisesRegex(DigitiserError, 'exit code 2'):
                     export_trusted_svg(svg, executable=exe)

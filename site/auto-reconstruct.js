@@ -12,8 +12,8 @@ function inside(px,py,poly){let yes=false;for(let i=0,j=poly.length-1;i<poly.len
 }return yes;}
 function boundsOf(points){let xx=points.map(p=>p[0]),yy=points.map(p=>p[1]);return{x0:Math.min(...xx),x1:Math.max(...xx),y0:Math.min(...yy),y1:Math.max(...yy)};}
 function cross(a,b,c){return(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);}
-function invalidPolygon(points,maxPoints=32){
- if(points.length<5||points.length>maxPoints)return true;
+function invalidPolygon(points,maxPoints=32,minPoints=5){
+ if(points.length<minPoints||points.length>maxPoints)return true;
  const p=points;
  for(let i=0;i<p.length;i++)for(let j=i+2;j<p.length;j++){
   if(i===0&&j===p.length-1)continue;
@@ -213,7 +213,7 @@ function reconstruct(rgba,w,h,plan,opts={}){
   // match the proposed colour in the original image, or the wing's underlying
   // foreground would incorrectly turn the whole AI search polygon into fill.
   // Never fill a rectangle merely because AI enclosed a coloured wing.
-  const isMarking=r.semantic==="wing_marking";
+  const isMarking=["wing_marking","marking"].includes(r.semantic);
   const swatch=isMarking?[1,3,5].map(i=>parseInt(r.color.slice(i,i+2),16)):null;
   const mask=new Uint8Array(w*h);let candidate=0,signal=0;
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(inside(x+.5,y+.5,points)){
@@ -226,14 +226,18 @@ function reconstruct(rgba,w,h,plan,opts={}){
    rejected.push({id:r.id,reason:isMarking?"marking_colour_not_supported_by_pixels":"fill_not_supported_by_pixels"});continue;
   }
   const cc=largestComponent(mask,w,h);
-  if(cc.size<25||cc.size/signal<.55){rejected.push({id:r.id,reason:"fragmented_fill"});continue;}
-  const contour=simplifyRing(boundaryPixels(cc.mask,w,h));
-  if(contour.length<5||invalidPolygon(contour,120)){rejected.push({id:r.id,reason:"could_not_reconstruct_boundary"});continue;}
+  if(cc.size<25||signal-cc.size>Math.max(16,signal*.02)){rejected.push({id:r.id,reason:"fragmented_fill"});continue;}
+  const boundary=boundaryPixels(cc.mask,w,h);
+  // This bridge has no compound paths. Never silently sew over a source hole.
+  if(polygonArea(boundary)-cc.size>Math.max(16,cc.size*.02)){
+   rejected.push({id:r.id,reason:"fill_holes_not_supported"});continue;
+  }
+  const contour=simplifyRing(boundary);
+  if(contour.length<4||invalidPolygon(contour,120,4)){rejected.push({id:r.id,reason:"could_not_reconstruct_boundary"});continue;}
   regions.push({...base,points:contour,sourceSupport:cc.size/candidate,
    pixelArea:cc.size,geometrySource:isMarking?"ai_polygon_intersected_with_colour_matched_artwork_pixels":"ai_polygon_intersected_with_artwork_pixels"});
  }
- const fills=regions.filter(r=>r.kind==="fill").length;
- if(fills<2)throw Error("AI reconstruction did not yield at least two supported fill regions; design unchanged");
+ if(!regions.length)throw Error("AI reconstruction did not yield any supported regions; design unchanged");
  if(regions.length>128)throw Error("Too many reconstruction regions");
  return {status:"AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED",regions,rejected,
   proposed:plan.regions.length,autoApplied:false,

@@ -1,0 +1,21 @@
+# Run from repository root: docker compose -f services/digitiser/compose.staging.yml up --build
+# Local/private staging only. Add an approved HTTPS reverse proxy before Netlify use.
+services:
+  digitiser:
+    build:
+      context: ../..
+      dockerfile: services/digitiser/Dockerfile
+    platform: linux/amd64
+    ports:
+      - '127.0.0.1:8080:8080'
+    environment:
+      STITCH_FORGE_WORKER_TOKEN: ${STITCH_FORGE_WORKER_TOKEN:?Set a dedicated random token of at least 32 characters}
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    mem_limit: 2g
+    cpus: 2
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    restart: 'no'

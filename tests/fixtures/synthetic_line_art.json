@@ -1,0 +1,54 @@
+{
+  "width": 60,
+  "hoop": 100,
+  "paths": [
+    [
+      [
+        100,
+        200
+      ],
+      [
+        200,
+        100
+      ],
+      [
+        300,
+        200
+      ],
+      [
+        400,
+        100
+      ]
+    ],
+    [
+      [
+        150,
+        240
+      ],
+      [
+        250,
+        140
+      ],
+      [
+        350,
+        240
+      ]
+    ]
+  ],
+  "pathStyles": [
+    "running",
+    "running"
+  ],
+  "pathColors": [
+    "#34302E",
+    "#8C554C"
+  ],
+  "pathSettings": [
+    {
+      "runningLengthMm": 1.8
+    },
+    {
+      "runningLengthMm": 2
+    }
+  ]
+}

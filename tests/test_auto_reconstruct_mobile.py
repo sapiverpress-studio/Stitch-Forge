@@ -132,4 +132,69 @@ class AutoMothMobileTest(unittest.TestCase):
             self.assertEqual(page.evaluate("window.__stitchforge_test.paths.length"),2)
         finally:
             page.close()
+    def test_single_region_and_partial_plan_export_gate(self):
+        for incomplete in (False,True):
+            with self.subTest(incomplete=incomplete):
+                page=self.browser.new_page(viewport={"width":390,"height":844})
+                try:
+                    page.set_content(page_source(),wait_until="load")
+                    for script in ["fill-geometry.js","auto-reconstruct.js","auto-reconstruct-ui.js"]:
+                        page.add_script_tag(content=(ROOT/"site"/script).read_text())
+                    plan=geometry();plan['regions']=plan['regions'][:1]
+                    if incomplete:
+                        plan['regions'].append({'id':'absent','label':'Absent feature','kind':'running',
+                            'semantic':'detail','color':'#333333','confidence':'high','layer':1,
+                            'points':[{'x':725,'y':300},{'x':725,'y':600}]})
+                    page.evaluate("""plan=>{
+                     window.machineCalls=0;
+                     window.fetch=async url=>{
+                      if(url==='/api/reconstruct-embroidery')return {ok:true,json:async()=>plan};
+                      window.machineCalls++;return {ok:false,status:503,json:async()=>({error:'synthetic unavailable'})};
+                     };
+                    }""",plan)
+                    page.locator('#sfAutoToken').fill('synthetic-test-token')
+                    page.locator('#sfAutoRun').click()
+                    page.wait_for_function("!document.querySelector('#sfAutoRun').disabled")
+                    self.assertEqual(page.evaluate('window.__stitchforge_test.paths.length'),1)
+                    self.assertEqual(page.evaluate('window.machineCalls'),0 if incomplete else 1)
+                    text=page.locator('#sfAutoStatus').inner_text()
+                    self.assertIn('Incomplete reconstruction' if incomplete else 'synthetic unavailable',text)
+                finally:
+                    page.close()
+
+    def test_changed_design_discards_pending_analysis_and_machine_result(self):
+        for stage in ('analysis','machine'):
+            with self.subTest(stage=stage):
+                page=self.browser.new_page(viewport={"width":390,"height":844},accept_downloads=True)
+                downloads=[]
+                page.on('download',lambda d:downloads.append(d))
+                try:
+                    page.set_content(page_source(),wait_until="load")
+                    for script in ["fill-geometry.js","auto-reconstruct.js","auto-reconstruct-ui.js"]:
+                        page.add_script_tag(content=(ROOT/"site"/script).read_text())
+                    page.evaluate("""({plan,stage})=>{
+                      window.fetch=async (url,init)=>{
+                        if(url==='/api/reconstruct-embroidery'){
+                          if(stage==='analysis')await new Promise(r=>window.releasePending=r);
+                          return {ok:true,json:async()=>plan};
+                        }
+                        await new Promise(r=>window.releasePending=r);
+                        const bytes=new Uint8Array(128);bytes.set([80,75,3,4]);
+                        return {ok:true,headers:{get:k=>({'x-stitch-forge-audit':
+                          'STRUCTURALLY_AUDITED_NOT_PHYSICALLY_STITCHED','content-type':'application/zip'})[k]},
+                          blob:async()=>new Blob([bytes])};
+                      };
+                    }""",{'plan':geometry(),'stage':stage})
+                    page.locator('#sfAutoToken').fill('synthetic-test-token')
+                    page.locator('#sfAutoRun').click()
+                    page.wait_for_function('typeof window.releasePending === "function"')
+                    # Even an edit followed by undo (same JSON) invalidates the pending job.
+                    page.evaluate("window.dispatchEvent(new Event('stitchforge:image-imported')); window.releasePending()")
+                    page.wait_for_function("!document.querySelector('#sfAutoRun').disabled")
+                    self.assertEqual(downloads,[])
+                    self.assertIn('stale',page.locator('#sfAutoStatus').inner_text())
+                    if stage=='analysis':
+                        self.assertEqual(page.evaluate('window.__stitchforge_test.paths.length'),1)
+                finally:
+                    page.close()
 if __name__=="__main__":unittest.main()

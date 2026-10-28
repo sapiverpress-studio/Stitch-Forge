@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.18 |
+| Document version | MD-2.19 |
 | Last updated | 2026-10-28 (Europe/London) |
-| Last independently checked source | GitHub Actions 2026-10-28: AI / machine proxy 27 Node tests SUCCESS plus two Android-sized mocked browser journeys (40736714789); Python 57 tests/3 optional skipped SUCCESS (40736714904); genuine Ink/Stitch two-colour JSON→PES/DST independent audit SUCCESS (40736714807). No deployed worker or physical stitch-out |
+| Last independently checked source | 2026-10-28 local: 37 Node tests passed; 62 Python tests run, 3 optional skips; real Gunicorn HTTP + Ink/Stitch 3.3.0 + pyembroidery 1.5.1 passed moth/logo/line fixtures. Container CI pending; hosted worker NOT DEPLOYED; no paid OpenAI calls or physical stitch-out |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -78,6 +78,18 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### 2.0 Current session supplement (MD-2.19; supersedes historical baseline limitations)
+
+The development code now has a deployable worker package, bounded whole-process-group
+engine execution and genuine local HTTP/native export tests across three synthetic
+subjects. The image pipeline no longer requires wings or two filled regions. It
+accepts supported single-region and line-only drafts, blocks automatic machine
+export after any rejected proposal, rejects unsupported holes/disconnected fills,
+and rejects stale responses following source/design changes. No guarantee of
+universal image fidelity follows: semantic omissions by AI, gradients, holes,
+satin, detail loss at low resolution and physical quality remain unresolved.
+No original moth was available in this checkout; all new fixtures are synthetic.
 
 ### 2.1 Repository state
 
@@ -415,10 +427,11 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-049 | P0 | Execute actual licensed Ink/Stitch engine with independent file validation | **PROTOTYPE-TESTED; CI VERIFIED** | Pinned Ink/Stitch v3.3.0 exports real PES/DST from two trusted SVG fixtures and pyembroidery reads both. Does not demonstrate one-click moth, fabric compatibility or production service |
 | SF-050 | P0 | Real moth semantic reconstruction acceptance | **BLOCKED/NOT VERIFIED** | Recognisable four wing panels, wing markings, veins, abdomen, antennae, appropriate thread-layer order; full source/reference comparison + stitch-out |
 | SF-051 | P0 | Geometry-only automatic engine handoff and independent native two-colour audit | **DONE-VERIFIED ON SYNTHETIC CI / NOT DEPLOYED** | Browser automatically POSTs current region geometry to owner-authenticated Netlify proxy; standalone WSGI worker converts to safe SVG, Ink/Stitch exports PES/DST, independent audit rejects bad colours/bounds; synthetic real-engine CI and mocked download tests green |
-| SF-052 | P0 | Host sandboxed, owner-only HTTPS Ink/Stitch worker with resources/physical export tests | **BLOCKED / NOT DEPLOYED** | Dedicated isolated Linux service not provisioned or cost-approved; end-to-end actual HTTP deployment, resource limits, malicious input tests and fabric stitch-outs required |
-| SF-053 | P0 | Machine-file source/revision consistency and fail-closed browser UX | **PROTOTYPE-TESTED** | Client rejects stale design after awaiting worker, rejects missing audit, preserves SVG/Undo on 503, never passes original raster to machine worker. Mocked mobile 390×844 checks pass; physical owner-device test pending |
+| SF-052 | P0 | Host sandboxed, owner-only HTTPS Ink/Stitch worker | **CONFIGURATION IMPLEMENTED / HOST BLOCKED** | Dockerfile, loopback-only resource-limited Compose, pinned engine installer, Gunicorn + HTTP smoke supplied. Local real HTTP verified; Docker CI pending; no authorised host/credentials/free allocation established. |
+| SF-053 | P0 | Machine-file source/revision consistency and fail-closed browser UX | **LOCAL REGRESSION VERIFIED** | Monotonic revision checks reject source/design changes during analysis and machine export, including edit/undo returning identical JSON. Incomplete proposals block machine request; lost machine-scale fills reject atomic replacement. |
+| SF-054 | P0 | Subject-independent reconstruction and engine regression matrix | **LOCAL SYNTHETIC VERIFIED / REAL IMAGE QA OPEN** | Generic AI instructions, single fills, rectangular source contours, line-only drafts; moth/logo/line native HTTP matrix. Unsupported holes and disconnected components fail closed; model fidelity remains unverified. |
 
-**Next action order:** confirm public editor opens in Android browser after Netlify ready deployment; verify PR previews and CI; then prove Ink/Stitch engine and independent PES/DST validation before expanding stitch tooling. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
+**Next action order (MD-2.19):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
@@ -496,6 +509,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-065 | 2026-10-28 | [Python regression 40736714904](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40736714904), head `f00914cb` | WSGI auth/input/busy/failure-sanitisation tests; job colour-change & stitch count checks; two mocked browser reconstruction pathways | **SUCCESS: 57 tests, 3 skipped** | Optional OpenCV coverage absent and actual owner artwork not evaluated |
 | E-066 | 2026-10-28 | [preview handoff source](https://github.com/sapiverpress-studio/Stitch-Forge/blob/develop/stitch-engine-foundation/docs/NATIVE_ENGINE_WORKER.md), commit `6e405503` | Inspect HTTPS worker configuration, deployment prerequisites and default-off behaviour | **SOURCE VERIFIED / WORKER NOT DEPLOYED** | Never claim owner-hosted end-to-end ZIP generation until actual private worker passes network test |
 
+| E-067 | 2026-10-28 | `docs/test-evidence/MD-2.19-*`, same PR commit | Local Node/browser/Python regression | **37 Node passed; 62 Python run, 3 skipped** | Playwright default download blocked; alternate Chrome for Testing 143.0.7499.4 used successfully; optional OpenCV skipped |
+| E-068 | 2026-10-28 | `http_smoke.py`, three synthetic fixtures, captured HTTP matrix | Real Gunicorn → Ink/Stitch → independently decoded PES/DST over loopback HTTP | **PASS:** moth 3010 stitches/5 changes/90×60.6 mm; logo 2071/0/60×40; line art 96/1/60×28; 9 rejection checks | Both formats agree on stitches/changes/bounds; jump record counts differ by format. No HTTPS deployment, model call or fabric test |
+| E-069 | 2026-10-28 | `test_engine_process.py` | Real child process timeout/descendant termination, bounded output, normal return | **3 PASS** | Container filesystem/CPU/RAM isolation needs CI/host verification |
+
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -534,6 +551,9 @@ Do not create empty decorative folders or claim an implementation exists because
 | 2026-10-28 | D-009 | Retain strict archive path protection while permitting only verified in-archive symbolic links | Pinned Ink/Stitch binary contains legitimate ELF symlinks; never remove traversal protections to make CI green. |
 | 2026-10-28 | D-010 | Use a separate native Linux HTTPS worker, not native engine inside the Netlify static site | Official Ink/Stitch requires a native executable/headless X display. Netlify private proxy remains disabled (503) until a dedicated sandboxed worker and secrets are actually configured |
 | 2026-10-28 | D-011 | After one-click AI rebuild, automatically attempt independently audited native machine ZIP, never fall back to browser-made multicolour files | Owner wants no manual intermediate step; preserve valid editable SVG and Undo if worker offline, malformed, unaudited or changed design; physical test not implied |
+
+| 2026-10-28 | D-012 | Build portable private amd64 container; do not provision paid/public hosting | Connected Netlify has no worker URL/token. Render/Railway available but not connected; no approved host credentials or proven free allocation. No purchases or env changes. |
+| 2026-10-28 | D-013 | Generalise every image path; never encode moth-specific feature requirements | User explicitly requires future-image applicability. No two-fill minimum or fixed wing/body prompt; diverse synthetic tests and incomplete-result blocking. |
 
 ### Decision-record template
 
@@ -863,6 +883,17 @@ Do not create empty decorative folders or claim an implementation exists because
 **Real CI:** The initial new JSON fixture failed hoop-boundary validation (width 65 mm scaled to more than 100 mm height); it was corrected to 150 mm in `70549db1` without bypassing the real geometry check. Verified [real engine 40736714807](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40736714807): **SUCCESS**, true two-colour JSON project → Ink/Stitch v3.3.0 → PES/DST independently decoded with exactly **one colour change**. Earlier [40736329733](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40736329733) also proved the same path. Full [Python regressions 40736714904](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40736714904): **57 tests, 3 skipped, all others passed**. [AI/Node/mobile 40736714789](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/40736714789): **27/27 JS passed**, both Android-sized synthetic browser journeys passed (503 fallback and an automatically downloaded **mocked** audited ZIP).
 
 **Not verified:** A separate worker deployment, genuine network-to-native browser request, real user moth model/image-reconstruction accuracy, professionally controlled satin routing, true thread brand matching, machine safety or fabric stitch-outs. No production merge, live worker token configuration, image publishing or charges authorised. `docs/NATIVE_ENGINE_WORKER.md` details required HTTPS isolation, per-job quotas, CI provenance and outstanding operational gates.
+
+### 2026-10-28 — Portable native worker, generic reconstruction and real HTTP matrix (MD-2.19)
+
+- **Scope:** SF-049, SF-051–054; FR-006/010/012/013/016/020/023/026. Existing development branch and draft PR #1, based on `b6b61660503eaba65880a3be767fe12931fcc375`. Commit containing this entry records the implementation; no experimental code merged into main.
+- **Deployment work:** added Dockerfile, Compose staging config, checksum-pinned build installer, worker dependencies/start script and real HTTP smoke. Exactly one Gunicorn process/two threads retains global per-instance lock/429 rejection; non-root, read-only root, 256 MiB tmpfs, 2 GiB RAM, 2 CPUs, 128 PIDs, dropped capabilities, loopback-only host port. Native wrapper kills all child processes on timeout and caps output. Docker absent locally; container build/run added to existing real-engine CI, not yet claimed passed.
+- **General functionality:** replaced moth-specific model instructions with subject-independent areas/lines; kept legacy semantics and added generic marking/outline/detail. Removed the two-fill requirement in reconstruction and editor. Legitimate rectangular contours now work. No fabricated borders or anatomy. Unsupported holes and significant disconnected components are rejected instead of silently filled/discarded. Any rejected proposal blocks automatic machine export; machine-scale region loss rejects the entire atomic editor replacement. Source/design revision counters prevent stale analysis and stale ZIPs even after edit/undo.
+- **Tests:** 37 Node tests passed. `STITCH_FORGE_CHROMIUM=<Chrome-for-Testing-143.0.7499.4> python -m unittest discover -s tests -v`: 62 tests, 3 optional OpenCV skips, all remaining passed. Includes mocked one-click success/503, stale analysis/stale native result, one-region support and incomplete-export suppression. Real process timeout/descendant tests pass. Initial default Playwright download failed (gateway); alternate official Chrome archive worked. Initial disconnected fixture accidentally retained a top pixel bridge; corrected the synthetic cut across full height, then passed. No failing final local tests.
+- **Real native evidence:** official archive SHA-256 `162bc16bfb80f18e2343050ab03ddb1c3b39c654fbc868a4a742a28d42ff1c79` verified against release metadata and hardcoded installer pin. Local petal produced 1278 stitches and 1 colour change in each format. Actual authenticated Gunicorn HTTP matrix: synthetic four-panel moth 3010 stitches/5 changes/90×60.6 mm; single logo 2071/0/60×40 mm; line art 96/1/60×28 mm. Both PES/DST independently decoded, ZIP digest/length checked, 401 bad token and 422 source-data/empty geometry checks passed for each. Exact output hashes and format-specific jump counts in `docs/test-evidence/MD-2.19-http-matrix.jsonl` (ZIP timestamps may change hashes across runs).
+- **Host investigation:** Stitch Forge Netlify site `cec158af-c6ae-4bec-ad1f-2f7c54f156fe` has existing analysis credentials but no engine URL/worker token. Other products untouched. Render/Railway discovered but not connected. Native host credentials, approved host allocation and cost remain the precise blocker. No API purchase/call, paid host, public native service, production merge or credential mutation. Current website cannot complete native exports.
+- **Not tested / remaining limitations:** hosted HTTPS, actual Netlify preview→worker transaction, real OpenAI image accuracy, owner-device Android, Docker isolation until CI passes, satin rails, compound holes/gradients, physical fabric. Real-image quality is not established by synthetic anatomy or valid machine files. General rules apply across images but do not guarantee all images are supported.
+- **Next action:** verify container CI then deploy this package on an owner-approved private amd64 HTTPS host; set worker settings only in deploy-preview functions context, and exercise an authorised original-image request. Master document mirrored to main with documentation only and deployment-skip commit; application stays in draft PR.
 
 ### Entry template — REQUIRED on every meaningful development update
 

@@ -32,7 +32,7 @@ test("automatically reconstructs two separate image-grounded wing fill contours"
 test("does not invent wing fills where no artwork exists",()=>{
  const empty=new Uint8ClampedArray(w*h*4);
  for(let i=0;i<w*h;i++)empty[i*4+3]=255;
- assert.throws(()=>reconstruct(empty,w,h,plan()),/at least two/);
+ assert.throws(()=>reconstruct(empty,w,h,plan()),/any supported regions/);
 });
 test("rejects nonuniform photo background rather than pretending to segment it",()=>{
  const image=source();
@@ -96,4 +96,49 @@ test("fills visible dark markings only, not an enclosing pale wing polygon",()=>
  const absent=reconstruct(source(),w,h,proposed);
  assert.ok(!absent.regions.some(r=>r.id==="left-mark"));
  assert.ok(absent.rejected.some(r=>r.id==="left-mark"&&r.reason==="marking_colour_not_supported_by_pixels"));
+});
+
+test("supports a single rectangular logo on opaque and transparent backgrounds",()=>{
+ for(const transparent of [false,true]){
+  const image=new Uint8ClampedArray(w*h*4);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const j=(y*w+x)*4,logo=x>=60&&x<180&&y>=40&&y<120;
+   image[j]=logo?35:255;image[j+1]=logo?100:255;image[j+2]=logo?160:255;
+   image[j+3]=logo||!transparent?255:0;
+  }
+  const points=[[50,30],[120,30],[190,30],[190,80],[190,130],[120,130],[50,130],[50,80]];
+  const p={status:plan().status,regions:[{id:'logo',label:'Synthetic rectangular logo',kind:'fill',
+   semantic:'other',color:'#2364A0',layer:0,confidence:'high',
+   points:points.map(([x,y])=>({x:Math.round(x*1000/w),y:Math.round(y*1000/h)}))}]};
+  const out=reconstruct(image,w,h,p);
+  assert.equal(out.regions.length,1);assert.equal(out.rejected.length,0);
+  assert.equal(out.regions[0].points.length,4);
+  assert.equal(out.regions[0].pixelArea,120*80);
+ }
+});
+test("supports line-only artwork without inventing fill regions",()=>{
+ const image=new Uint8ClampedArray(w*h*4);image.fill(255);
+ for(let y=35;y<125;y++)for(let x=98;x<=102;x++){
+  const j=(y*w+x)*4;image[j]=image[j+1]=image[j+2]=20;
+ }
+ const p={status:plan().status,regions:[{id:'line',label:'Synthetic line art',kind:'running',
+  semantic:'detail',color:'#141414',layer:0,confidence:'high',
+  points:[{x:417,y:250},{x:417,y:750}]}]};
+ const out=reconstruct(image,w,h,p);
+ assert.equal(out.regions.length,1);assert.equal(out.regions[0].kind,'running');
+ assert.equal(out.rejected.length,0);
+});
+
+test("does not silently fill holes or discard a disconnected logo component",()=>{
+ for(const hole of [true,false]){
+  const image=source();
+  for(let y=0;y<h;y++)for(let x=20;x<110;x++){
+   if(hole?((x-64)**2+(y-70)**2<12**2):(x>=60&&x<=68)){
+    const j=(y*w+x)*4;image[j]=image[j+1]=image[j+2]=0;
+   }
+  }
+  const out=reconstruct(image,w,h,plan());
+  assert.ok(out.rejected.some(r=>r.id==='left'&&r.reason===(hole?'fill_holes_not_supported':'fragmented_fill')));
+  assert.ok(!out.regions.some(r=>r.id==='left'));
+ }
 });

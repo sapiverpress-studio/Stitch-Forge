@@ -9,6 +9,7 @@ from io import BytesIO
 from pathlib import Path, PurePosixPath
 import os
 import stat
+import signal
 import subprocess
 import zipfile
 
@@ -66,6 +67,39 @@ def _inspect_zip(payload: bytes) -> tuple[str, ...]:
         raise DigitiserError('Could not inspect Ink/Stitch ZIP') from exc
 
 
+def _run_engine(argv, *, timeout_seconds):
+    """Bound output on disk and reap the entire engine session on every exit.
+
+    A child retaining stdout must not keep a timed-out request alive. Temporary
+    files avoid unbounded PIPE accumulation; deployment also caps /tmp via tmpfs.
+    """
+    from tempfile import TemporaryFile
+    import time
+    with TemporaryFile() as out, TemporaryFile() as err:
+        process = subprocess.Popen(argv, shell=False, stdout=out, stderr=err,
+                                   start_new_session=True)
+        deadline = time.monotonic() + timeout_seconds
+        try:
+            while process.poll() is None:
+                if out.tell() > MAX_ZIP or err.tell() > 1_000_000:
+                    raise DigitiserError('Ink/Stitch exceeded output budget')
+                if time.monotonic() >= deadline:
+                    err.seek(max(0, err.tell() - 3000))
+                    raise subprocess.TimeoutExpired(argv, timeout_seconds, stderr=err.read(3000))
+                time.sleep(.02)
+        finally:
+            # Kill lingering descendants even if the immediate process exited.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+        if out.tell() > MAX_ZIP or err.tell() > 1_000_000:
+            raise DigitiserError('Ink/Stitch exceeded output budget')
+        out.seek(0); err.seek(0)
+        return subprocess.CompletedProcess(argv, process.returncode, out.read(MAX_ZIP + 1), err.read(1_000_001))
+
+
 def export_trusted_svg(svg: Path, *, executable: Path, timeout_seconds: int = 60) -> EngineResult:
     """Export a *trusted generated* SVG using the official documented ZIP CLI.
 
@@ -85,12 +119,9 @@ def export_trusted_svg(svg: Path, *, executable: Path, timeout_seconds: int = 60
     argv = [str(executable), '--extension=zip', '--format-dst=True',
             '--format-pes=True', '--format-threadlist=True', str(svg)]
     try:
-        run = subprocess.run(argv, shell=False, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, timeout=timeout_seconds,
-                             check=False)
+        run = _run_engine(argv, timeout_seconds=timeout_seconds)
     except subprocess.TimeoutExpired as exc:
-        # subprocess.run kills and reaps the direct child. A time-out must never
-        # result in a downloadable partially generated embroidery archive.
+        # The whole engine process group has been killed and reaped.
         diagnostic = ''
         if os.environ.get('STITCH_FORGE_CI_DIAGNOSTICS') == 'synthetic-only':
             raw = exc.stderr or b''

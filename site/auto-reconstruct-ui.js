@@ -11,7 +11,7 @@ panel.className="ai-detail-panel";
 panel.id="sfAutoPanel";
 panel.innerHTML=[
  '<div class="ai-detail-head"><strong>Automatic AI embroidery reconstruction</strong><small>Experimental</small></div>',
- '<p class="tiny">Rebuild wings, body sections and visible internal lines from the original artwork. AI proposes the shapes; the program checks fill areas against image pixels. No boundary tracing required.</p>',
+ '<p class="tiny">Rebuild visible colour areas, outlines and fine lines from the original artwork. AI proposes the shapes; the program checks fill areas against image pixels. No boundary tracing required.</p>',
  '<label for="sfAutoToken" class="tiny">Private analysis access token (not saved)</label>',
  '<input id="sfAutoToken" type="password" autocomplete="off" placeholder="Your Stitch Forge analysis token">',
  '<div class="ai-actions"><button class="btn primary" id="sfAutoRun" type="button">Reconstruct embroidery automatically</button>',
@@ -31,7 +31,7 @@ const css=document.createElement("style");css.textContent=[
 const overlay=document.createElementNS("http://www.w3.org/2000/svg","g");
 overlay.setAttribute("id","sfAutoOverlay");
 overlay.setAttribute("pointer-events","none");canvasSvg.appendChild(overlay);
-let last=null,running=false;
+let last=null,running=false,revision=0;
 const status=s=>q("#sfAutoStatus").textContent=s;
 function paint(){
  overlay.replaceChildren();if(!last||!q("#sfAutoShow").checked)return;
@@ -83,8 +83,9 @@ q("#sfAutoRun").onclick=async()=>{
  const token=q("#sfAutoToken").value.trim()||q("#sfAiToken")?.value.trim();
  if(!token){status("Enter your private analysis token (not your OpenAI API key).");return;}
  if(!window.StitchForgeAutoReconstruct){status("Automatic reconstruction engine missing; no changes made.");return;}
+ const analysisRevision=revision;
  running=true;q("#sfAutoRun").disabled=true;
- status("OpenAI is proposing visible wing, body and marking shapes. The existing design remains unchanged until geometry passes validation.");
+ status("OpenAI is proposing visible colour areas and line details. The existing design remains unchanged until geometry passes validation.");
  try{
   const image=await modelImage(source);
   const response=await fetch("/api/reconstruct-embroidery",{
@@ -100,6 +101,8 @@ q("#sfAutoRun").onclick=async()=>{
      canvas.width,canvas.height,plan);
   // End-to-end validation finishes BEFORE mutating the editor.
   const proposed={...result,width:canvas.width,height:canvas.height};
+  if(revision!==analysisRevision||context.getImage()!==source)
+   throw Error("Artwork or design changed during analysis; stale reconstruction discarded");
   const summary=context.replaceWithAutomaticReconstruction(proposed);
   last=proposed;paint();
   q("#sfAutoDownload").disabled=false;q("#sfAutoUndo").disabled=false;
@@ -111,9 +114,10 @@ q("#sfAutoRun").onclick=async()=>{
   // leave the browser; no source raster, AI credentials or model proposals.
   // The endpoint returns a ZIP only after native Ink/Stitch + independent audit.
   const machineProject=context.exportMachineProject();
-  const machineRevision=JSON.stringify(machineProject);
+  const machineRevision=JSON.stringify(machineProject),machineGeneration=revision;
   status(summaryText+" Checking independently audited PES/DST engine...");
   try{
+   if(result.rejected.length)throw Error("Incomplete reconstruction: "+result.rejected.length+" proposed regions lacked source support; machine export blocked");
    const machine=await fetch("/api/machine-embroidery",{
     method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
     body:machineRevision,cache:"no-store"
@@ -128,7 +132,7 @@ q("#sfAutoRun").onclick=async()=>{
    const blob=await machine.blob();
    if(blob.size<100||blob.size>3000000)throw Error("Unexpected machine ZIP size");
    // Never silently supply an older file after the user edits the design.
-   if(JSON.stringify(context.exportMachineProject())!==machineRevision)
+   if(revision!==machineGeneration||JSON.stringify(context.exportMachineProject())!==machineRevision)
     throw Error("Design changed during engine run; stale machine ZIP discarded");
    const url=URL.createObjectURL(blob),link=document.createElement("a");
    link.href=url;link.download="stitch-forge-machine-files-UNTESTED.zip";
@@ -159,11 +163,13 @@ q("#sfAutoUndo").onclick=()=>{
  q("#sfAutoUndo").disabled=true;status("Reconstruction undone. Previous editable design restored.");
 };
 window.addEventListener("stitchforge:design-changed",()=>{
+ revision++;
  if(!last)return;
  last=null;overlay.replaceChildren();q("#sfAutoDownload").disabled=true;q("#sfAutoUndo").disabled=true;
  status("Design changed. The previous AI overlay is no longer presented as current geometry; use normal Undo or reconstruct again.");
 });
 window.addEventListener("stitchforge:image-imported",()=>{
+ revision++;
  last=null;overlay.replaceChildren();q("#sfAutoDownload").disabled=true;q("#sfAutoUndo").disabled=true;
  status("Artwork ready. Reconstruct automatically when you choose.");
 });

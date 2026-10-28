@@ -1,0 +1,41 @@
+{
+  "width": 60,
+  "hoop": 100,
+  "paths": [
+    [
+      [
+        100,
+        100
+      ],
+      [
+        400,
+        100
+      ],
+      [
+        400,
+        300
+      ],
+      [
+        100,
+        300
+      ],
+      [
+        100,
+        100
+      ]
+    ]
+  ],
+  "pathStyles": [
+    "tatami"
+  ],
+  "pathColors": [
+    "#2364A0"
+  ],
+  "pathSettings": [
+    {
+      "fillAngleDeg": 45,
+      "rowSpacingMm": 0.5,
+      "fillUnderlay": true
+    }
+  ]
+}
