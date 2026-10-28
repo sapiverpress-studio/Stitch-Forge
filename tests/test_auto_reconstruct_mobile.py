@@ -98,4 +98,38 @@ class AutoMothMobileTest(unittest.TestCase):
             self.assertEqual(errors,[])
         finally:
             page.close()
+    def test_one_click_downloads_only_audited_native_archive(self):
+        page=self.browser.new_page(viewport={"width":390,"height":844},is_mobile=True,
+                                   has_touch=True,accept_downloads=True)
+        try:
+            page.set_content(page_source(),wait_until="load")
+            for script in ["fill-geometry.js","auto-reconstruct.js","auto-reconstruct-ui.js"]:
+                page.add_script_tag(content=(ROOT/"site"/script).read_text(encoding="utf8"))
+            page.evaluate("""response => {
+              window.fetch=async (url,init) => {
+                if(url==='/api/reconstruct-embroidery')return {ok:true,json:async()=>response};
+                if(url==='/api/machine-embroidery'){
+                  const p=JSON.parse(init.body);
+                  if(p.reference||p.image||p.svg||p.paths.length!==2||
+                    p.pathColors[0]!=='#AABBDD'||p.pathColors[1]!=='#EECCAA')
+                    throw Error('unsafe worker request');
+                  const bytes=new Uint8Array(128);bytes.set([80,75,3,4]);
+                  return {ok:true,headers:{get:(key)=>({
+                    'x-stitch-forge-audit':'STRUCTURALLY_AUDITED_NOT_PHYSICALLY_STITCHED',
+                    'content-type':'application/zip'
+                  })[key]||null},blob:async()=>new Blob([bytes],{type:'application/zip'})};
+                }
+                throw Error('unexpected URL');
+              };
+            }""",geometry())
+            page.locator("#sfAutoToken").fill("synthetic-test-token")
+            with page.expect_download(timeout=20000) as item:
+                page.locator("#sfAutoRun").click()
+            download=item.value
+            self.assertEqual(download.suggested_filename,"stitch-forge-machine-files-UNTESTED.zip")
+            self.assertIn("ZIP downloaded automatically",page.locator("#sfAutoStatus").inner_text())
+            self.assertIn("NOT physically stitch-tested",page.locator("#sfAutoStatus").inner_text())
+            self.assertEqual(page.evaluate("window.__stitchforge_test.paths.length"),2)
+        finally:
+            page.close()
 if __name__=="__main__":unittest.main()
