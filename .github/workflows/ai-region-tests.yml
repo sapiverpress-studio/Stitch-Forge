@@ -42,6 +42,7 @@ on:
       - "site/index.html"
       - "tests/test_ai_analysis.mjs"
       - "tests/test_ai_reference_restore.py"
+      - ".github/workflows/ai-region-tests.yml"
   workflow_dispatch:
 
 permissions:
