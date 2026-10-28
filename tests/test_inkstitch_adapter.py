@@ -49,6 +49,29 @@ class AdapterTests(TestCase):
             self.assertFalse(runner.call_args.kwargs['shell'])
             self.assertEqual(result.filenames, ('sample.dst', 'sample.pes'))
 
+    def test_timeout_diagnostics_only_in_synthetic_ci(self):
+        with TemporaryDirectory() as d:
+            root = Path(d)
+            svg = root / 'private.svg'
+            svg.write_text('<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L1 1"/></svg>')
+            exe = root / 'inkstitch'
+            exe.write_text('placeholder')
+            timeout = subprocess.TimeoutExpired(
+                cmd='inkstitch', timeout=1, stderr=b'MODEL-DIAGNOSTIC: GUI waiting')
+            with mock.patch('inkstitch_cli.subprocess.run', side_effect=timeout):
+                with mock.patch.dict('os.environ', {}, clear=True):
+                    with self.assertRaises(DigitiserError) as ctx:
+                        export_trusted_svg(svg, executable=exe)
+                    self.assertNotIn('MODEL-DIAGNOSTIC', str(ctx.exception))
+                with mock.patch.dict('os.environ', {'STITCH_FORGE_CI_DIAGNOSTICS':'synthetic-only'}):
+                    with self.assertRaises(DigitiserError) as ctx:
+                        export_trusted_svg(svg, executable=exe)
+                    self.assertIn('GUI waiting', str(ctx.exception))
+                with mock.patch.dict('os.environ', {'STITCH_FORGE_CI_DIAGNOSTICS':'other'}):
+                    with self.assertRaises(DigitiserError) as ctx:
+                        export_trusted_svg(svg, executable=exe)
+                    self.assertNotIn('MODEL-DIAGNOSTIC', str(ctx.exception))
+
     def test_timeout_and_nonzero_exit_are_reported(self):
         with TemporaryDirectory() as d:
             root = Path(d)
