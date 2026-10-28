@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.6 |
+| Document version | MD-2.7 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -456,6 +456,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-039 | 2026-10-28 | Dev commits `9ec9ba7` / `69ee2abe`, `tests/test_ai_reference_restore.py` `c59fa03`, workflow `e12cc8a` | AI uses original source or saved reference fallback; quick editing-points toggle beside artwork; restored reference defaults to handles hidden; synthetic browser regression asserts image recovery, toggle, and mocked detail analysis | SOURCE COMMITTED; JS SYNTAX PARSED SUCCESSFULLY; TEST SCRIPT COMMITTED, NOT YET EXECUTION-VERIFIED | Fallback reference is a reduced transparency-masked image: for most accurate detailed analysis re-import full original |
 | E-040 | 2026-10-28 | Locally reconstructed v0.3 HTML with same reference restoration and quick-toggle patch; Chromium 390×844 | Synthetic saved PNG reference restored to AI getter after simulated page reload; edit nodes remain hidden, quick toggle shows/hides them, no page errors | **LOCAL MOBILE SMOKE PASS** | Based on reconstructed local baseline, NOT byte-for-byte rebuilt deploy. Full integrated AI request and GitHub CI still unverified |
 | E-041 | 2026-10-28 | Netlify deployment `6ae1d76b72e0a6f82ce330ad` | Draft PR #1 at commit `52134cbb9f31e94799c07ef0cbfecbea51071264` confirmed `ready`, with 1 Netlify function deployed and no build error | **DEVELOPMENT PREVIEW READY** | This does not verify runtime access token, OpenAI result, image recognition, precise stitch conversion or physical embroidery |
+| E-042 | 2026-10-28 | Netlify request logs and request detail for `01M613DCG01HA4Y1Z5YN261CX2` | User's 11:13 UTC request to `/api/analyse-embroidery` returned HTTP 502 after 13.05 sec, with one function invocation; no internal function log entries supplied. This is after authentication/input validation and **does not establish** which upstream/validation stage failed. | REQUEST FAILURE VERIFIED | Old catch collapsed incomplete output, JSON, region validation and network failure into the same generic message. No raw request image, bearer token, or API key accessed. |
+| E-043 | 2026-10-28 | `netlify/functions/analyse-embroidery.mjs` and `tests/test_ai_analysis.mjs` | Added safe error codes, schema-bounded colour/coordinates, increased response budget from 3200 to 4800 output tokens, bounded 8–16 requested visible regions, five synthetic error cases, `site/ai-details.js` displays codes. | SOURCE COMMITTED; JS SYNTAX PARSED; SYNTHETIC TESTS NOT YET CONFIRMED BY CI | Error category requires next real request to determine root cause. This does not prove OpenAI response accuracy or embroidery quality. |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -695,6 +697,15 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Netlify:** Deploy Preview #1 `6ae1d76b72e0a6f82ce330ad` for head `52134cbb9f31e94799c07ef0cbfecbea51071264` returned READY with one deployed function. External browser runtime and authenticated AI response remain unverified.
 - **Next:** User reloads [development preview](https://deploy-preview-1--sapiver-stitchforge.netlify.app/), sees restored image ready and orange-node switch beside raster tracing, then tests authorised OpenAI analysis; capture API errors and result quality (no secrets). Continue mask-to-editable stitch regions.
 - **Production:** Existing main static editor unchanged. No retail-ready claim or machine test.
+
+### 2026-10-28 — Diagnose live 502 from AI image analysis and improve fault isolation
+
+- **Observed incident:** User reported `Analysis failed or timed out; artwork unchanged` while the moth and perimeter trace were visible in development preview. Netlify request log returned HTTP 502 on an authenticated POST to `/api/analyse-embroidery` at 11:13:05 UTC; function execution approximately 12.52 seconds. Netlify's request log contained no internal thrown-error text.
+- **Diagnosis:** Request reached the function and produced the catch-all error. Code inspection confirmed that `extractOutput` and `verifyProposal` exceptions, network errors, invalid response JSON and provider noncompletion all collapsed to the same catch message. **Exact cause of the live 502 has not yet been established.** There is no evidence that changing the token, re-uploading artwork, or rebuilding the canvas will fix it.
+- **Repair:** `analyse-embroidery.mjs` commit `b801864` adds safe machine-readable failure classes for provider HTTP status, response incomplete/empty/invalid, validation errors and network timeout, plus restrictive colour and bounded coordinate schema. Region request targeted to 8–16 visible regions, output token budget raised to 4800. Diagnostic codes are logged without secrets, image bytes or provider response bodies. `site/ai-details.js` commit `6bace8c` displays the code with an actionable message.
+- **Regression:** `tests/test_ai_analysis.mjs` commit `cf3c374` added synthetic upstream/incomplete/invalid/429/network tests with no real OpenAI calls. Both modified JavaScript production sources and regression source passed static JavaScript syntax checks. GitHub-hosted integration execution not yet independently confirmed.
+- **Next:** Confirm new Netlify development preview reaches READY. Run **one** owner-authorised image analysis and inspect returned safe code/log category if failure recurs. Fix based on that actual code; avoid repeated chargeable speculative attempts. Verify region map before integrating stitch geometry.
+- **Release:** Draft PR development preview only. No changes to production website or approved embroidery exports.
 
 ### Entry template — REQUIRED on every meaningful development update
 
