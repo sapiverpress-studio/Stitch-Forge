@@ -244,6 +244,9 @@ get("#sfAiExport").onclick=()=>{
  link.href=url;link.download="Stitch-Forge-region-proposal-NOT-DIGITISED.json";link.click();
  setTimeout(()=>URL.revokeObjectURL(url),3000);
 };
+window.StitchForgeAIRegions=Object.freeze({
+ selectedRegion:()=>analysis?.regions.find(r=>r.id===selectedId)||null
+});
 window.addEventListener("stitchforge:image-imported",()=>{
  analysis=null;selectedId=null;get("#sfAiExport").disabled=true;
  clearDraft();get("#sfAiResults").replaceChildren();overlay.replaceChildren();
