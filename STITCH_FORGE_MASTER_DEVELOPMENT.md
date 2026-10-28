@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-1.1 |
+| Document version | MD-1.2 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local standalone prototype v0.3 + test logs, 2026-10-28 |
 | Default branch | `main` |
@@ -103,8 +103,8 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 | Underlay option | PROTOTYPE-TESTED | Basic algorithm flag, NOT fabric-validated |
 | PES / DST binary writing | PROTOTYPE-TESTED | Independent decoding against planned commands, local |
 | ZIP with PES, DST, source SVG, project JSON, warnings | PROTOTYPE-TESTED | ZIP integrity and local test export |
-| Ink/Stitch processing integration | TODO | Not present |
-| pyembroidery as integrated output validator | TODO | Not installed/integrated in current local runtime |
+| Ink/Stitch processing integration | IN-PROGRESS | Restricted CLI adapter and mocked tests committed; actual engine runtime NOT installed or executed |
+| pyembroidery as integrated output validator | IN-PROGRESS | Pinned 1.5.1 and external reader tests staged; real library not available in local test environment; no GitHub CI run verified |
 | Colour-separated artwork + correct colour change commands | TODO | Not present |
 | Professional satin columns, densities, tie-ins/out, trims | TODO | Not present |
 | Real-machine compatibility / physical stitch-out | BLOCKED | No stitch-out evidence or machine/service attached |
@@ -367,20 +367,20 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-003 | P0 | Contributor rules and PR template | DONE-VERIFIED | Both committed; checklist points to this document |
 | SF-004 | P0 | Create isolated development branch | DONE-VERIFIED | Branch appears in GitHub |
 | SF-005 | P0 | Import exact v0.3 HTML prototype | DONE-VERIFIED | File exists on dev branch; SHA-256 equals reference |
-| SF-006 | P0 | Recover/import browser tests and fixtures | TODO | Playwright test passing on source-controlled artifact |
-| SF-007 | P0 | Establish CI for browser, source lint and test evidence | TODO | Branch checks show green on documented commits |
+| SF-006 | P0 | Recover/import browser tests and fixtures | IN-PROGRESS | Playwright test passing on source-controlled artifact |
+| SF-007 | P0 | Establish CI for browser, source lint and test evidence | IN-PROGRESS | Branch checks show green on documented commits |
 | SF-008 | P0 | Define versioned project schema | TODO | Schema, migrations and round-trip tests |
 | SF-009 | P0 | Threat model uploaded SVG/raster and processing | TODO | Security tests + limits documented |
-| SF-010 | P0 | Prototype user moth case as permanent regression | TODO | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
+| SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
 | SF-011 | P1 | Multi-contour region extraction / holes | TODO | Region fixtures and manual corrections verified |
 | SF-012 | P1 | Touch-friendly region layers and controls | TODO | Android portrait/landscape device test |
-| SF-013 | P1 | Pin and install Ink/Stitch runtime in isolated engine | TODO | Reproducible runner and version output |
+| SF-013 | P1 | Pin and install Ink/Stitch runtime in isolated engine | IN-PROGRESS | Reproducible runner and version output |
 | SF-014 | P1 | Prove Ink/Stitch running stitch CLI | TODO | Known fixture, CLI log and output inspected |
 | SF-015 | P1 | Add robust satin column editing | TODO | Rails/rungs, underlay and stitch-path fixtures |
 | SF-016 | P1 | Replace naive scanline fill with professional region fill | TODO | Routing, holes, angle, density, underlay tests |
 | SF-017 | P1 | Explicit trims, tie-in/out, thread colour changes | TODO | Command-level and format round-trip tests |
 | SF-018 | P1 | Pull compensation, stitch diagnostics, hoop profiles | TODO | Parameter safeguards and human-checkable warnings |
-| SF-019 | P1 | Independent PES/DST decoding via pinned pyembroidery | TODO | CI logs compare commands and extents |
+| SF-019 | P1 | Independent PES/DST decoding via pinned pyembroidery | IN-PROGRESS | CI logs compare commands and extents |
 | SF-020 | P1 | Build machine format capability matrix | TODO | PES/DST initially; specify machine versions and test status |
 | SF-021 | P1 | External physical embroidery tester | BLOCKED | Written test plan, sample and returned test results |
 | SF-022 | P1 | Versioned test report and genuine sample photos | BLOCKED | Physical test records linked to source hash |
@@ -406,9 +406,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-003 | 2026-10-28 | local v0.3 `v03_test_log.txt` | 2,082-stitch fill, 143 jumps; ZIP read-back | REPORTED PASS | No physically acceptable fill established |
 | E-004 | 2026-10-28 | local v0.3 binary verification utilities | PES/DST independent command decoding | REPORTED PASS | Independent decoder is not a real embroidery machine |
 | E-005 | 2026-10-28 | Local SHA-256 and Git blob comparison | Baseline v0.3 61,967-byte HTML; local Git hash equals remote blob `be29a022390194a3670fa0d29561b4bda78e20be` | VERIFIED | File is in development branch, not main |
-| E-006 | TBD | Repository CI | Browser, importer, stitch and export regressions | NOT RUN | No CI configured yet |
-| E-007 | TBD | Independent pyembroidery read-back | Core commands across formats | NOT RUN | Dependency not integrated |
+| E-006 | 2026-10-28 | Local Playwright tests on v0.3 and mocked Ink/Stitch adapter; GitHub CI configured on development branch | 9 local tests (6 browser/export and 3 adapter) | LOCAL PASS; GITHUB CI UNVERIFIED | GitHub Actions run/check not yet returned; third-party pyembroidery test not run locally |
+| E-007 | 2026-10-28 | tests/test_browser_exports.py (external decoder test) + tools/audit_embroidery.py | Reader API wired and dependency pinned to pyembroidery 1.5.1 | NOT RUN | Container cannot obtain PyPI package; cannot claim third-party read-back passed |
 | E-008 | TBD | Physical embroidery machine | Fabric, density, registration and quality | NOT RUN | Required before product use |
+| E-009 | 2026-10-28 | Isolated Ink/Stitch adapter `services/digitiser/inkstitch_cli.py` | Safe CLI argument construction, failure/timeout and ZIP structure validation | 3 MOCKED LOCAL TESTS PASS | No real Ink/Stitch executable, actual stitch plan or physical embroidery |
 
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
@@ -467,9 +468,9 @@ Do not create empty decorative folders or claim an implementation exists because
 
 **Existing experimental evidence:** UI and export tests from the standalone HTML v0.3, particularly user-supplied moth raster-in-SVG case. The prototype's raster output is a silhouette only. PES/DST decoding and ZIP checks are evidence of structure, *not* fabric/machine performance.
 
-**Completed on development branch:** exact v0.3 prototype source imported and Git hash verified (commit `d7a319d565a43632299a5e476584bbdbe33a7e8e`). **Not done:** source-controlled browser test suite; modular application; Ink/Stitch backend; pyembroidery integration; proper satin/fill control; CI smoke tests; physical testing; any deployment.
+**Completed on development branch:** exact v0.3 prototype source imported and Git hash verified (commit `d7a319d565a43632299a5e476584bbdbe33a7e8e`). **Additional development in draft PR:** source-controlled browser/format tests; CI workflow; pinned Playwright/pyembroidery requirements; restricted, mocked Ink/Stitch CLI adapter; structural audit CLI. **Not done:** running GitHub-hosted CI; installing/running real Ink/Stitch; completing pyembroidery read-back; professional satin/fill controls; physical testing; deployment.
 
-**Next:** Add synthetic fixtures and browser tests to dev branch, run them against committed prototype, verify the MD enforcement on its draft PR, then spike a pinned Ink/Stitch CLI.
+**Next:** Confirm GitHub CI executes against the development PR and investigate any failures; install/pin Ink/Stitch v3.3.0 in an isolated runtime, validate one known SVG through its real CLI, run third-party pyembroidery read-back, then safely implement editable region conversion.
 
 **Files/PRs:** README `7e3e9cc`; master `4b58a386`; contributor `9e0d672`; PR template `8d82e22`; documentation gate `98d37a5`; prototype import `d7a319d`. No merges, deployments or listings.
 
@@ -484,6 +485,19 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Regression exposure:** None from refactoring (source unchanged). Existing quality and importer limitations remain.
 - **Deployment:** None; no live services or Etsy changes.
 - **Next:** commit synthetic browser tests and the user-moth-equivalent *non-copyright-sensitive* embedded-image fixture; run a development CI job; then integrate a pinned Ink/Stitch engine.
+
+### 2026-10-28 — Repeatable tests and restricted engine adapter
+
+- **Scope:** SF-006, SF-007, SF-010, SF-013, SF-019; preparation toward M1–M5.
+- **Development branch:** `develop/stitch-engine-foundation`, draft PR #1. Changes include `tests/test_browser_exports.py`, `tests/test_inkstitch_adapter.py`, `tests/requirements.txt`, `.github/workflows/test-prototype.yml`, `tools/audit_embroidery.py`, `services/digitiser/inkstitch_cli.py`.
+- **Verified local tests:** 9 tests passed on Linux Chromium using `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s tests -v` (6 Playwright UI/import/export/handwritten-format-decoder checks; 3 mocked Ink/Stitch adapter checks). The local test source matched these scenarios; upstream pyembroidery assertion is **not** included in this local pass.
+- **Embedded-raster safety fixture:** synthetic 64×48 PNG embedded into SVG, preserving the user's moth failure pattern without publishing the original image.
+- **Binary checks:** handwritten independent DST/PEC decoders compared exported machine instructions to the prototype stitch plan. This proves limited binary consistency only.
+- **Third-party reader status:** pinned `pyembroidery==1.5.1`, external-reader smoke test and `tools/audit_embroidery.py` added, but NOT EXECUTED against real module; local PyPI download failed due unavailable network.
+- **Ink/Stitch status:** documented CLI ZIP command encapsulated in safe argument-vector adapter; 3 mocked tests cover no shell execution, nonzero/timeout and malformed ZIP rejection (including expanded-size check). **Real Ink/Stitch CLI has NOT run**; no supported embroidery plan has been generated from that engine.
+- **GitHub CI:** workflow committed; workflow-run and commit-status queries returned no run/check at the time of inspection. Do not mark CI green until a real completed run is observed.
+- **Known gaps/regressions:** no established physical stitching evidence; raster traced regions remain silhouette only; source project schema not modularised; actual worker sandbox/GUI connection not implemented.
+- **Deployment:** none. **Next:** run GitHub CI and resolve failures; install Ink/Stitch in isolated test runner and validate a known simple fixture with independent reader; then implement proper region-specific fill/satin edit model.
 
 ### Entry template — REQUIRED on every meaningful development update
 
