@@ -1,7 +1,8 @@
-"""Opt-in bridge from Stitch Forge browser JSON to reviewed, bounded SVG regions.
+"""Convert actual Stitch Forge 0.3 project JSON to bounded Ink/Stitch SVG geometry.
 
-Only explicit path geometry and stitch types are consumed. Embedded raster reference
-artwork is never passed to Ink/Stitch, and photograph detail is not digitised.
+The browser's ZIP design_project.json and local saved-project structure differ.
+Both are accepted, but artwork references are NEVER passed to the engine.
+Generated SVG is an *input*, not a stitch-tested or approved embroidery file.
 """
 import json
 from math import hypot, isfinite
@@ -11,6 +12,45 @@ from trusted_svg import Region, build_svg
 MAX_PROJECT_BYTES = 2_000_000
 MAX_PATHS = 128
 MAX_POINTS = 2048
+MAX_TOTAL_POINTS = 5_000
+MARGIN_MM = 2.0
+
+
+def _number(value, label):
+    if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+        raise ValueError(f'Invalid {label}')
+    try:
+        number = float(value)
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f'Invalid {label}') from exc
+    if not isfinite(number):
+        raise ValueError(f'Invalid {label}')
+    return number
+
+
+def _settings(obj, geometry_width, geometry_height):
+    settings = obj.get('settings') or obj
+    if not isinstance(settings, dict):
+        raise ValueError('Invalid project settings')
+    # A ZIP report has measured design_width_mm too, but settings.width is
+    # the user's requested width. Do not confuse exported extents with intent.
+    requested = settings.get('width', obj.get('width'))
+    legacy_width = obj.get('design_width_mm')
+    if requested is None and legacy_width is not None:
+        requested = legacy_width
+    if requested is None:
+        raise ValueError('Missing requested width (settings.width or width)')
+    w = _number(requested, 'design width')
+    if not (10 <= w <= 250):
+        raise ValueError('Design width must be 10–250 mm')
+    h = w * geometry_height / geometry_width
+    # The editor stores square hoop size; do not infer machine profiles.
+    hoop = _number(settings.get('hoop', obj.get('hoop', 300)), 'hoop size')
+    if not (40 <= hoop <= 300):
+        raise ValueError('Hoop size must be 40–300 mm')
+    if max(w, h) > hoop - 2 * MARGIN_MM:
+        raise ValueError('Artwork exceeds 2 mm-per-side hoop margin')
+    return w, h, hoop
 
 
 def convert_project(data: bytes) -> bytes:
@@ -25,37 +65,44 @@ def convert_project(data: bytes) -> bytes:
     paths = obj.get('paths')
     if not isinstance(paths, list) or not 1 <= len(paths) <= MAX_PATHS:
         raise ValueError('Project has no supported regions')
-    styles = obj.get('pathStyles') or ['running'] * len(paths)
+    styles = obj.get('pathStyles')
+    if styles is None:
+        styles = [obj.get('stitchMode', 'running')] * len(paths)
     if not isinstance(styles, list) or len(styles) != len(paths):
         raise ValueError('Region mode count mismatch')
-    w, h = obj.get('design_width_mm'), obj.get('design_height_mm')
-    if not all(isinstance(v, (int, float)) and isfinite(v) and 1 <= v <= 400 for v in (w, h)):
-        raise ValueError('Physical width and height are required')
-    points = []
+    all_points = []
     for path in paths:
         if not isinstance(path, list) or not 2 <= len(path) <= MAX_POINTS:
             raise ValueError('Invalid region point count')
         for xy in path:
-            if (not isinstance(xy, list) or len(xy) != 2
-                    or not all(isinstance(n, (int, float)) and isfinite(n) and 0 <= n <= 600 for n in xy)):
+            if (not isinstance(xy, list) or len(xy) != 2 or
+                any(isinstance(n, bool) or not isinstance(n, (int, float)) or
+                    not isfinite(n) or not 0 <= n <= 600 for n in xy)):
                 raise ValueError('Invalid canvas coordinates')
-            points.append(xy)
-    min_x, max_x = min(p[0] for p in points), max(p[0] for p in points)
-    min_y, max_y = min(p[1] for p in points), max(p[1] for p in points)
-    if max_x - min_x <= 0.001 or max_y - min_y <= 0.001:
-        raise ValueError('Degenerate physical dimensions')
+            all_points.append(xy)
+    if len(all_points) > MAX_TOTAL_POINTS:
+        raise ValueError('Project exceeds 5,000 control points')
+    min_x, max_x = min(p[0] for p in all_points), max(p[0] for p in all_points)
+    min_y, max_y = min(p[1] for p in all_points), max(p[1] for p in all_points)
+    dw, dh = max_x - min_x, max_y - min_y
+    if dw <= 0.1 or dh <= 0.1:
+        raise ValueError('Degenerate design dimensions')
+    w, h, hoop = _settings(obj, dw, dh)
     regions = []
     for path, mode in zip(paths, styles):
         if mode == 'bean':
-            raise ValueError('Bean stitch requires explicit repeats; not supported by bridge yet')
-        if mode not in {'running', 'tatami'}:
-            raise ValueError('Unsupported stitch mode')
-        if mode == 'tatami' and (len(path) < 3 or hypot(path[0][0] - path[-1][0], path[0][1] - path[-1][1]) > 1):
+            raise ValueError('Bean mode unsupported by Ink/Stitch bridge: requires explicit repeats')
+        if mode not in ('running', 'tatami'):
+            raise ValueError('Unsupported region mode')
+        if mode == 'tatami' and (len(path) < 4 or
+                hypot(path[0][0] - path[-1][0], path[0][1] - path[-1][1]) > 0.01):
             raise ValueError('Fill region must be explicitly closed')
-        mm_points = tuple((round((x - min_x) * w / (max_x - min_x), 3),
-                           round((y - min_y) * h / (max_y - min_y), 3)) for x, y in path)
+        # One common scale for both axes; no non-uniform stretching.
+        scale = w / dw
+        mm_points = tuple((round(MARGIN_MM + (x - min_x) * scale, 3),
+                           round(MARGIN_MM + (y - min_y) * scale, 3)) for x, y in path)
         regions.append(Region(mm_points, 'fill' if mode == 'tatami' else 'running'))
-    return build_svg(w, h, tuple(regions))
+    return build_svg(w + 2 * MARGIN_MM, h + 2 * MARGIN_MM, tuple(regions))
 
 
 def main():
@@ -64,10 +111,10 @@ def main():
     parser.add_argument('--input', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     args = parser.parse_args()
-    svg = convert_project(args.input.read_bytes())
-    with args.output.open('xb') as file:
-        file.write(svg)
-    print('Trusted SVG created from explicit paths. NOT stitch-tested.')
+    payload = convert_project(args.input.read_bytes())
+    with args.output.open('xb') as out:
+        out.write(payload)
+    print('Trusted geometry exported. Ink/Stitch execution and machine testing NOT implied.')
 
 
 if __name__ == '__main__':
