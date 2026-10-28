@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.3 |
+| Document version | MD-2.4 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -662,6 +662,16 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Remaining defects:** Edge contours are noisy and often trace both sides of a visual marking; they are **not trustworthy stitch centrelines**. Need semantic region masks, manual approval and simplification, physical-size checks, satin rail construction and correct stitch sequencing. No API image-analysis call was made and no machine-file output was validated.
 - **Next:** Review AI region boxes against source; develop image-derived masks/centerlines, show editable per-region overlays, validate with synthetic and original references, then integrate reviewed regions with actual Ink/Stitch and independent file auditing.
 - **Deployment:** No new runtime or user artwork published.
+
+### 2026-10-28 — Netlify AI analysis variables saved; preview redeployment requested
+
+- **Scope/tasks:** SF-037, SF-039; operational configuration only, no API secrets included here.
+- **Evidence:** Netlify site `sapiver-stitchforge` reports environment variable names `OPENAI_API_KEY` and `STITCH_FORGE_ANALYSIS_TOKEN`, with `functions` in their configured scopes. User's Netlify screenshot confirms both saved as secret variables with two configured deployment contexts. Actual hidden values were not inspected or exported.
+- **Deployment baseline:** main Netlify deploy `6ae1cb96683a53fa3fae7429` is `ready` at `2026-10-28T10:17:02Z` and contains **zero functions**. Development PR #1 previously had a ready preview and included the protected AI endpoint.
+- **Action:** This documentation-only commit synchronises draft PR #1 to request a fresh Netlify deploy preview after secret configuration; deployment and function invocation must be checked independently.
+- **Tests NOT run:** live authenticated OpenAI request, cost/usage audit, true moth region proposal, machine-file conversion or stitch-out.
+- **Security gate:** Do not place access tokens, API keys or customer artwork in public repository or URL parameters. Do not promote experimental image-analysis code to main or offer open public analysis until authenticated and budget-limited.
+- **Next:** Confirm preview deploy ready and one function packaged. Test owner-only function using secret access token on the preview. Only then assess accuracy of moth region proposals.
 
 ### Entry template — REQUIRED on every meaningful development update
 
