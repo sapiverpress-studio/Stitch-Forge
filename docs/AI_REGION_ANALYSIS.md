@@ -43,6 +43,23 @@ The development preview now provides **Use saved AI report**, **Rebuild draft de
 
 Do **not** sell files produced by this draft generator or label the prototype a production-grade digitiser.
 
+## Manual closed-region fill milestone (development preview, 2026-10-28)
+
+**Engineering finding:** The user's 14 AI proposals are broad overlapping boxes, not wing boundaries. In the full-detail moth, the left and right upper-wing boxes contain about 91% and 99% foreground pixels, and the body box nearly 100%. Simply clipping the foreground to an AI box would yield nearly rectangular tatami fills covering other structures. This would be misleading and waste material.
+
+**Implemented controlled alternative:** `site/fill-geometry.js` checks non-self-intersecting closed polygons, finite in-artwork coordinates, minimum area and extent, point spacing and vertex limits. `site/fill-boundary-ui.js` lets the owner tap 4–120 points along the *actual* visible wing/body boundary in the SVG canvas, close it, inspect a green semi-transparent shape, and explicitly add a `tatami` region with one Undo step. No AI bounding rectangle enters the stitch list.
+
+The editor keeps its existing paths. The ZIP's editable `_source.svg` now carries physical `mm` dimensions and separate closed filled paths vs running strokes. **This is geometry for further editing in embroidery software, not evidence that Ink/Stitch or a machine will stitch it successfully.** Current PES/DST exports still produce only experimental single-colour basic fills and are not professional.
+
+**Test gates:** JS geometry checks passed in isolation, including crossing/duplicate rejection; Node tests and mobile Chromium test were committed and made CI requirements. Netlify development deployment ready does not alone prove that a fabric stitch-out succeeded. Before an accurate automatic fill solution, implement segmentation masks with interior cuts/holes, overlap review, stitch direction, underlay, colour sequencing and a validated Ink/Stitch export.
+
+- [x] Owner-controlled closed fill boundary and preview with protected undo
+- [x] Refuse self-intersection, outside-artwork points and degenerate fill shapes
+- [x] Editable SVG retains closed fill objects and physical design dimensions
+- [ ] Confirm exact mobile automation and physical SVG import in upstream Ink/Stitch
+- [ ] Create reliable *automatic* source-image wing/body masks rather than manual boundaries
+- [ ] Build satin rails for antennae and narrow elements, validated fabric compensation and thread-change routing
+
 ## What the current feature does and does not do
 
 **Does:** Identify likely separate wing surfaces, veins, spots, thorax, abdomen, antennae and other visible features; provide a list and location boxes for manual review; permit a JSON export of the proposal; preserve existing editable paths and exports.
