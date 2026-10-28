@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-1.9 |
+| Document version | MD-2.0 |
 | Last updated | 2026-10-28 (Europe/London) |
-| Last independently checked source | Netlify production deployment ID `6ae1afd77358bb214f450d08` at Git commit `aba7495f`, 2026-10-28 |
+| Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -396,7 +396,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-031 | P1 | Prepare static Netlify mobile editor preview | DONE-VERIFIED | Site files committed and fetched; Netlify production deploy ready for static editor; direct page check still needed |
 | SF-032 | P1 | Verify GitHub-connected Netlify deploy preview | IN-PROGRESS | User screenshot shows PR previews generated; browser rendering/interaction of preview remains unverified |
 | SF-033 | P0 | Align the live v0.3 saved/ZIP project JSON with the trusted backend bridge | PROTOTYPE-TESTED | Updated source and seven tests committed to dev; local test on real moth ZIP passed; not yet engine-tested |
-| SF-034 | P0 | Complete end-to-end source-project to independent-audit packaging pipeline | IN-PROGRESS | Real-engine smoke can now accept an actual v0.3 JSON project and invoke independent audit; complete packaging remains local only and uncommitted |
+| SF-034 | P0 | Complete end-to-end source-project to independent-audit packaging pipeline | IN-PROGRESS | Browser-project smoke accepts v0.3 JSON, independent audit designed; real engine not run and complete packaging not committed |
+| SF-035 | P0 | Register actual Ink/Stitch workflow on GitHub default branch and confirm CI run | IN-PROGRESS | Workflow now present on `main` commit `b3fb43d`; execution/result still unverified |
 
 **Next action order:** confirm public editor opens in Android browser after Netlify ready deployment; verify PR previews and CI; then prove Ink/Stitch engine and independent PES/DST validation before expanding stitch tooling. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
 
@@ -436,6 +437,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-025 | 2026-10-28 | Previously generated user moth prototype ZIP (local only, not uploaded to public repo) | Read real `design_project.json` including settings.width=78 and 100mm hoop; convert image-referenced region geometry to safe SVG | **267,492-byte project JSON → 1,454-byte trusted SVG**, preserved 78 mm artwork width plus margins | This only converts the traced silhouette; original moth details not digitised; no stitch-out or file-format verification |
 | E-026 | 2026-10-28 | `real_engine_smoke.py` commit `6dfa91d9`, `tests/test_real_engine_input.py` commit `39933d56`, synthetic `tests/fixtures/browser_project_v03.json` commit `8ac1690c`, CI `4b26c3a0` | Smoke command accepts optional `--project`, converts real browser JSON through safe bridge, invokes official engine and insists on independent PES/DST audit; CI configured to exercise both synthetic petal and browser-project fixture | 3 NEW INPUT UNIT TESTS PASS; **26 COMMITTED TESTS PASS LOCALLY** | Real engine binary and pyembroidery not available locally; GitHub-hosted execution not yet evidenced |
 | E-027 | 2026-10-28 | Local end-to-end packaging proof-of-concept only | Mock exporter/auditor requires structural PES/DST verification before package; 3 local contract tests | **29/29 TOTAL LOCAL TESTS PASS** | Pipeline prototype remains UNCOMMITTED following connector write rejection, does not imply actual machine compatibility |
+| E-028 | 2026-10-28 | GitHub default branch inspection and local runtime | Found `.github/workflows/real-engine-smoke.yml` absent on `main` although present on dev, explaining missing PR-workflow discovery as probable root cause | **ROOT CAUSE HYPOTHESIS + DEFAULT WORKFLOW COMMITTED** `b3fb43d63443328fce42e65a517f245372df36c1` | Execution NOT verified; Actions could also be disabled/restricted. No successful actual Ink/Stitch run claimed. |
+| E-029 | 2026-10-28 | Local test run `PYTHONPATH=... STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s /mnt/data/stitchforge_repo/tests -p 'test_*.py' -v` | 29 tests: browser/ZIP, project bridge, project pipeline mocks, security/asset selector | **29 PASS** (2.917 seconds) | This suite excludes third-party pyembroidery tests because library is not installed; no physical stitch-out. |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -606,6 +609,15 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Next:** obtain real engine execution logs and validate both PES/DST formats; then implement editable embroidery region properties (colour, density, underlay) using the upstream engine's supported schema before changing the phone UI.
 - **Deployment:** None of these engine changes published.
 
+### 2026-10-28 — Promote engine smoke workflow into GitHub CI discovery
+
+- **Problem identified:** `real-engine-smoke.yml` was present under `develop/stitch-engine-foundation` but **missing from `main`**, which is the default branch GitHub uses to discover many pull-request workflows. This is a plausible blocker for collecting independent Ink/Stitch/pyembroidery test evidence.
+- **Change:** exact current engine workflow copied to `main`, commit `b3fb43d63443328fce42e65a517f245372df36c1`. This registers the test without merging unfinished editor/engine code into production.
+- **Local tests RUN:** `STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s /mnt/data/stitchforge_repo/tests -p 'test_*.py' -v` — 29/29 pass.
+- **Tests NOT run:** Ink/Stitch executable is not installed in the local container; `pyembroidery` is not installed; runtime has no internet access for dependency downloads. GitHub Actions successful run not yet returned.
+- **Risk and scope:** Netlify production static editor unchanged; Ink/Stitch packaging, machine compatibility and fabric quality remain **UNVERIFIED**.
+- **Next:** Inspect a new PR synchronize run for actual engine execution; read failing job logs and fix based on observed failure, not assumptions. Confirm upstream release digest and compatibility. Only after this should additional satin/fill controls be promoted.
+- **Tasks:** SF-035 IN-PROGRESS, SF-013/014/019 remain IN-PROGRESS. No release-gate promotion.
 ### Entry template — REQUIRED on every meaningful development update
 
 ```md
