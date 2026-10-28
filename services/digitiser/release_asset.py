@@ -6,6 +6,7 @@ SHA-256 in a future release-lock after the official asset has been fetched and a
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 import json
+import posixpath
 import re
 import tarfile
 
@@ -57,13 +58,51 @@ def extract_verified_release(archive: Path, destination: Path) -> None:
         entries = tar.getmembers()
         if len(entries) > 25_000 or not entries:
             raise ValueError('Unexpected archive entry count')
+        # Official binary releases include internal .so symlinks. Permit only
+        # links that resolve to another real entry within this verified archive;
+        # never extract external links, hardlinks, special files, or traversal.
+        names = {m.name.rstrip('/') for m in entries}
+        if len(names) != len(entries):
+            raise ValueError('Duplicate archive paths')
+        entry_map = {m.name.rstrip('/'): m for m in entries}
         total = 0
+        links = {}
         for member in entries:
-            p = Path(member.name)
-            if (p.is_absolute() or '..' in p.parts or member.issym() or member.islnk()
-                    or not (member.isfile() or member.isdir())):
-                raise ValueError('Unsafe archive path or entry type: '+repr(member.name[:160])+' type='+repr(member.type))
+            name = member.name.rstrip('/')
+            p = Path(name)
+            if (not name or p.is_absolute() or '..' in p.parts
+                    or name.startswith('./') or '\\' in name
+                    or not (member.isfile() or member.isdir() or member.issym())):
+                raise ValueError('Unsafe archive path or entry type: '+repr(name[:160])+' type='+repr(member.type))
+            if member.issym():
+                target = member.linkname
+                if (not target or target.startswith('/') or '\\' in target
+                        or len(target) > 512):
+                    raise ValueError('Unsafe symlink target')
+                resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), target))
+                if (resolved in ('.', '..') or resolved.startswith('../')
+                        or resolved not in entry_map):
+                    raise ValueError('Symlink escapes or references absent file')
+                links[name] = resolved
             total += member.size
             if member.size > 400_000_000 or total > 1_000_000_000:
                 raise ValueError('Archive expands beyond limit')
+        # A linked directory as an ancestor of an extracted path can redirect
+        # writes. Official release files do not require that behaviour.
+        for name in names:
+            parent = posixpath.dirname(name)
+            while parent not in ('', '.'):
+                if parent in links:
+                    raise ValueError('Archive path traverses symlink directory')
+                parent = posixpath.dirname(parent)
+        for name in links:
+            seen = set()
+            target = name
+            while target in links:
+                if target in seen:
+                    raise ValueError('Symlink cycle')
+                seen.add(target)
+                target = links[target]
+            if not (entry_map[target].isfile() or entry_map[target].isdir()):
+                raise ValueError('Symlink resolves to special entry')
         tar.extractall(path=destination, filter='data')
