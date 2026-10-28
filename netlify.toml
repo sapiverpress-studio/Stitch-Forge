@@ -1,0 +1,13 @@
+# Static engineering preview: no build command, no backend, no Ink/Stitch runtime.
+# Experimental machine files are not approved for retail or machine use.
+[build]
+  publish = "site"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Cache-Control = "no-store"
