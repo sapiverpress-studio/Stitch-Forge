@@ -327,6 +327,12 @@ $('#stitchValue').textContent=Number($('#stitchLength').value).toFixed(2)+' mm';
 // Readiness diagnostic for automated browser checks. Not machine certification.
 window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterReference||null,getSourceStatus:()=>rasterSource?'original':rasterReference?'restored-preview':'none',getBounds:()=>rasterBounds?deep(rasterBounds):null,
  getWidthMm:()=>Number($('#designWidth').value),
+ // Explicit allowlist: never upload the full-colour original or lossy trace preview
+ // to the native worker. Its source of truth is the current editable vector plan.
+ exportMachineProject:()=>({
+  paths:deep(paths),pathStyles:deep(pathStyles),pathColors:deep(pathColors),
+  width:Number($('#designWidth').value),hoop:Number($('#hoop').value)
+ }),
  exportEditableSvg:()=>makeSvg({settings:{width:Number($('#designWidth').value)}}),
  replaceWithAutomaticReconstruction:(draft)=>{
   if(!draft||draft.status!=='AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED'||
