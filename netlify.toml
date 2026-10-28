@@ -3,7 +3,7 @@
 # Experimental machine files are not approved for retail or machine use.
 [build]
   publish = "site"
-  command = "node --test tests/test_ai_analysis.mjs tests/test_ai_guides.cjs tests/test_travel_routing.cjs"
+  command = "node --check site/fill-geometry.js && node --check site/fill-boundary-ui.js && node --test tests/test_ai_analysis.mjs tests/test_ai_guides.cjs tests/test_travel_routing.cjs tests/test_fill_geometry.cjs"
 
 [[headers]]
   for = "/*"
