@@ -209,17 +209,28 @@ function reconstruct(rgba,w,h,plan,opts={}){
   if(invalidPolygon(points)){rejected.push({id:r.id,reason:"invalid_fill_outline"});continue;}
   const bb=boundsOf(points),x0=Math.max(0,Math.floor(bb.x0)),x1=Math.min(w-1,Math.ceil(bb.x1));
   const y0=Math.max(0,Math.floor(bb.y0)),y1=Math.min(h-1,Math.ceil(bb.y1));
+  // Body/wing base polygons use the foreground. Markings must additionally
+  // match the proposed colour in the original image, or the wing's underlying
+  // foreground would incorrectly turn the whole AI search polygon into fill.
+  // Never fill a rectangle merely because AI enclosed a coloured wing.
+  const isMarking=r.semantic==="wing_marking";
+  const swatch=isMarking?[1,3,5].map(i=>parseInt(r.color.slice(i,i+2),16)):null;
   const mask=new Uint8Array(w*h);let candidate=0,signal=0;
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(inside(x+.5,y+.5,points)){
-   candidate++;if(foreground[y*w+x]){mask[y*w+x]=1;signal++;}
+   candidate++;const k=y*w+x,j=k*4;
+   if(!foreground[k])continue;
+   if(isMarking&&Math.hypot(rgba[j]-swatch[0],rgba[j+1]-swatch[1],rgba[j+2]-swatch[2])>48)continue;
+   mask[k]=1;signal++;
   }
-  if(candidate<40||signal<25||signal/candidate<.15){rejected.push({id:r.id,reason:"fill_not_supported_by_pixels"});continue;}
+  if(candidate<40||signal<25||signal/candidate<(isMarking?.03:.15)){
+   rejected.push({id:r.id,reason:isMarking?"marking_colour_not_supported_by_pixels":"fill_not_supported_by_pixels"});continue;
+  }
   const cc=largestComponent(mask,w,h);
   if(cc.size<25||cc.size/signal<.55){rejected.push({id:r.id,reason:"fragmented_fill"});continue;}
   const contour=simplifyRing(boundaryPixels(cc.mask,w,h));
   if(contour.length<5||invalidPolygon(contour,120)){rejected.push({id:r.id,reason:"could_not_reconstruct_boundary"});continue;}
   regions.push({...base,points:contour,sourceSupport:cc.size/candidate,
-   pixelArea:cc.size,geometrySource:"ai_polygon_intersected_with_artwork_pixels"});
+   pixelArea:cc.size,geometrySource:isMarking?"ai_polygon_intersected_with_colour_matched_artwork_pixels":"ai_polygon_intersected_with_artwork_pixels"});
  }
  const fills=regions.filter(r=>r.kind==="fill").length;
  if(fills<2)throw Error("AI reconstruction did not yield at least two supported fill regions; design unchanged");
