@@ -94,4 +94,6 @@ jobs:
           set -euo pipefail
           python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --output "$RUNNER_TEMP/engine-smoke.zip"
           unzip -t "$RUNNER_TEMP/engine-smoke.zip"
-          echo 'STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
+          python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --project tests/fixtures/browser_project_v03.json --output "$RUNNER_TEMP/browser-project-smoke.zip"
+          unzip -t "$RUNNER_TEMP/browser-project-smoke.zip"
+          echo 'BOTH ENGINE FIXTURES ARE STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
