@@ -19,7 +19,7 @@ panel.innerHTML=[
  '<button class="btn" type="button" id="sfAutoUndo" disabled>Undo reconstruction</button></div>',
  '<label class="toggle"><input id="sfAutoShow" type="checkbox" checked> Show reconstructed coloured regions</label>',
  '<p class="tiny" role="status" id="sfAutoStatus">Upload the original detailed artwork, then press Reconstruct. One analysis request may use OpenAI API credits.</p>',
- '<p class="tiny">The generated design is still a prototype. Coloured PES/DST, satin, underlay, trims and machine stitch-out are not yet validated; the browser will not export false multi-colour machine files.</p>'
+ '<p class="tiny">After reconstruction, a separately hosted Ink/Stitch worker can automatically create an independently audited PES/DST ZIP when configured. Until then only the editable colour SVG is available. No generated file has been physically stitch-tested or approved for sale.</p>'
 ].join("");
 host.prepend(panel);
 const css=document.createElement("style");css.textContent=[
@@ -103,11 +103,41 @@ q("#sfAutoRun").onclick=async()=>{
   const summary=context.replaceWithAutomaticReconstruction(proposed);
   last=proposed;paint();
   q("#sfAutoDownload").disabled=false;q("#sfAutoUndo").disabled=false;
-  status("Automatically rebuilt "+summary.regions+" image-grounded regions ("+
+  const summaryText="Automatically rebuilt "+summary.regions+" image-grounded regions ("+
     result.regions.filter(r=>r.kind==="fill").length+" fills, "+
     result.regions.filter(r=>r.kind==="running").length+" lines; "+
-    result.rejected.length+" rejected). "+summary.colors+
-    " proposed colours. Previous design is available using Undo. Export editable SVG; multi-colour machine files are not yet verified.");
+    result.rejected.length+" rejected). "+summary.colors+" proposed colours.";
+  // The second stage is automatic. Only editable geometric paths and colours
+  // leave the browser; no source raster, AI credentials or model proposals.
+  // The endpoint returns a ZIP only after native Ink/Stitch + independent audit.
+  const machineProject=context.exportMachineProject();
+  const machineRevision=JSON.stringify(machineProject);
+  status(summaryText+" Checking independently audited PES/DST engine...");
+  try{
+   const machine=await fetch("/api/machine-embroidery",{
+    method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body:machineRevision,cache:"no-store"
+   });
+   if(!machine.ok){
+    let detail;try{detail=await machine.json();}catch{}
+    throw Error(detail?.error||"Native engine unavailable (HTTP "+machine.status+")");
+   }
+   if(machine.headers.get("x-stitch-forge-audit")!=="STRUCTURALLY_AUDITED_NOT_PHYSICALLY_STITCHED"||
+      !machine.headers.get("content-type")?.startsWith("application/zip"))
+    throw Error("Independent stitch-file audit missing");
+   const blob=await machine.blob();
+   if(blob.size<100||blob.size>3000000)throw Error("Unexpected machine ZIP size");
+   // Never silently supply an older file after the user edits the design.
+   if(JSON.stringify(context.exportMachineProject())!==machineRevision)
+    throw Error("Design changed during engine run; stale machine ZIP discarded");
+   const url=URL.createObjectURL(blob),link=document.createElement("a");
+   link.href=url;link.download="stitch-forge-machine-files-UNTESTED.zip";
+   document.body.appendChild(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),10000);
+   status(summaryText+" Native Ink/Stitch generated independently decoded PES/DST. ZIP downloaded automatically. These files are NOT physically stitch-tested; inspect and test on fabric before machine use.");
+  }catch(engineError){
+   status(summaryText+" Editable SVG and Undo remain available. Native PES/DST not generated: "+String(engineError?.message||engineError)+". No substitute machine files were produced.");
+  }
  }catch(error){
   status("Reconstruction not applied: "+String(error?.message||error)+". Existing design is unchanged.");
  }finally{running=false;q("#sfAutoRun").disabled=false;}
