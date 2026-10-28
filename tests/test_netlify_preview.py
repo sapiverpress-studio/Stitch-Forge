@@ -36,7 +36,7 @@ class NetlifyPreviewTests(unittest.TestCase):
         try:
             failures = []
             page.on("pageerror", lambda err: failures.append(str(err)))
-            page.set_content(HTML.read_text(), wait_until="load")
+            page.set_content(HTML.read_text().replace('<script src="/travel-routing.js"></script>', '<script>'+(ROOT/"site/travel-routing.js").read_text()+"</script>"), wait_until="load")
             self.assertEqual(page.locator("#stitchCount").inner_text(), "207")
             page.locator("#restartBtn").click()
             page.locator("#playBtn").click()
@@ -49,7 +49,7 @@ class NetlifyPreviewTests(unittest.TestCase):
     def test_mobile_export_zip(self):
         page = self.browser.new_page(viewport={"width": 390, "height": 844}, accept_downloads=True)
         try:
-            page.set_content(HTML.read_text(), wait_until="load")
+            page.set_content(HTML.read_text().replace('<script src="/travel-routing.js"></script>', '<script>'+(ROOT/"site/travel-routing.js").read_text()+"</script>"), wait_until="load")
             with page.expect_download(timeout=10000) as pending:
                 page.locator("#zipBtn").click()
             self.assertTrue(pending.value.suggested_filename.endswith("_prototype.zip"))
