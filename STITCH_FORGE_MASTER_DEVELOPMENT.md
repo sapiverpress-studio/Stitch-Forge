@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.10 |
+| Document version | MD-2.11 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -404,7 +404,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-039 | P0 | Verify private API access, image privacy, budget safeguards and staged real moth analysis | IN-PROGRESS | Netlify secret variable names and deployment preview confirmed; real authorised AI call and accurate wing analysis not yet verified |
 | SF-040 | P0 | Fix AI analysis after browser project reload and expose edit-point toggle beside artwork | IN-PROGRESS | Browser logic and test fixture committed; JS parsing passed, fresh Netlify preview/browser tests pending |
 | SF-041 | P0 | Reduce unnecessary running-path travel and make AI box vs jump overlays unambiguous | PROTOTYPE-TESTED | Reversible routing option, actual travel-mm metric, travel visibility switch, AI boxes hidden by default; deployment ready, machine validation pending |
-| SF-042 | P0 | Establish reliable multi-colour moth fill/satin digitising and stitching-quality gate | TODO | Image-derived closed region masks, fill/satin rails, underlay, actual colour changes and fabric stitch test |
+| SF-042 | P0 | Establish reliable multi-colour moth fill/satin digitising and stitching-quality gate | IN-PROGRESS | First guarded manual closed tatami regions and physically scaled editable SVG, but no reliable auto segmentation, satin, colours, or real Ink/Stitch fabric test |
+| SF-043 | P1 | Add reviewable manual wing/body fill tracing with robust polygon QA and non-destructive source export | PROTOTYPE-TESTED | Browser UI, strict geometry, undoable region append, meaningful SVG fill export and zero-cost tests committed; no physical stitch test |
 
 **Next action order:** confirm public editor opens in Android browser after Netlify ready deployment; verify PR previews and CI; then prove Ink/Stitch engine and independent PES/DST validation before expanding stitch tooling. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
 
@@ -467,6 +468,9 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-048 | 2026-10-28 | Geometry-only route model of actual 34-path moth (private local analysis) | Existing sequential geometry incurs ~310.24 mm travel; nearest-endpoint running stitch routing with dominant closed outside edge last, rotated to nearest closed-contour point, projects ~115.78 mm (62.7% reduction). | MATHEMATICAL TRAVEL ESTIMATE | Not measured by a new deployed browser ZIP, no automatic thread trims, and reduces travel but does not create missing wing stitches |
 | E-049 | 2026-10-28 | `site/travel-routing.js`, `tests/test_travel_routing.cjs`, updated `site/index.html`, `site/ai-details.js` | Single-colour running/bean optimization preserves source path points, skips mixed fill designs, adds travel mm metric, hides dashed travel by default without removing it from output. AI bounding boxes are separate overlay: hidden by default and reveal one selected region. | SOURCE COMMITTED; JS SYNTAX AND SYNTHETIC ROUTER RUNTIME PASSED | Full deployed UI interactions and actual third-party PES/DST verification remain unverified |
 | E-050 | 2026-10-28 | Netlify connected deployment `6ae1e3ecaf5b536b0bca9d1f` | Preview deploy for `ff9c8f90ad533ef19e0348ac232a6da38632afbd` reached READY with one function; Netlify test command configured to execute AI and travel regression tests on build. | READY DEPLOY VERIFIED | Connector does not expose individual test runner logs; do not claim exact test output |
+| E-051 | 2026-10-28 | Original 447×262 RGB moth + 14 AI region proposals (local analysis, not uploaded to repo) | Bounding rectangles cover 91% of left upper-wing crop and 99% of right upper-wing crop with foreground, body crop 100%; directly applying masks clipped to boxes would produce substantially rectangular fills, not wing contours. | ROOT CAUSE VERIFIED BY PIXEL COUNTS | Foreground threshold 37 on dark background. AI proposal coordinates are not segmentation masks. |
+| E-052 | 2026-10-28 | `site/fill-geometry.js` `4be42a2`, `site/fill-boundary-ui.js` `f3f5402`, editor `site/index.html` commits `f7df2a0`, `9710a39`, `455f849` | Tap-traced actual wing/body boundary, close/preview before apply, strict finite points + noncrossing + size checks, undoable append as tatami; SVG ZIP preserves actual closed fill vs line objects and estimated physical mm. | GEOMETRY MODULE SYNTAX + VALID/INVALID TESTS PASSED IN ISOLATED JS; SOURCE COMMITTED | Real mobile tap-through test and actual Ink/Stitch SVG stitch generation still need independent confirmation |
+| E-053 | 2026-10-28 | `tests/test_fill_geometry.cjs`, `tests/test_manual_fill_mobile.py`, `netlify.toml` `98f680d`, AI CI workflow `9b0cb66` | Node closed-region regression, Playwright mobile simulated taps/preview/add/Undo and SVG parse assertions; Netlify configured to fail build if Node checks fail | TESTS COMMITTED; NETLIFY GREEN PREVIEW FOR CODE COMMIT `b8b66fe`; individual CI log contents not independently retrieved | Browser/physical machine quality not certified |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -744,6 +748,17 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Deployment:** Netlify PR preview `6ae1e3ecaf5b536b0bca9d1f` reached READY for `ff9c8f9`. Production main editor unchanged.
 - **Not verified:** Netlify build-run test log output, direct Android UI smoke after these changes, pyembroidery readback, actual machine trim behaviour, physical stitched-out quality, and professional fill/satin rendering.
 - **Next:** Independently check new ZIP generated by preview on actual moth with and without travel optimization. Then develop actual wing-region fill masks and satin details, colour sequencing, lock/trim planning and real Ink/Stitch/pyembroidery and physical-machine QA. Do not sell experimental output.
+
+### 2026-10-28 — Moth wing/body fill boundary milestone; reject direct AI-box fills
+
+- **Customer-facing target:** Move from the moth's sparse outline/veins toward editable separate wing and body areas. User requested next professional digitising stage; existing 14 AI regions are approximate *boxes*, not mask geometry.
+- **Diagnosis from original source:** Among the full-colour RGB moth's region proposals, left upper-wing AI box is 91% foreground, right upper wing 99%, body box 100%. Converting box-cropped foreground directly into tatami would produce broad rectangular patches. Therefore do not infer closed fill boundaries from bounding boxes.
+- **Implemented:** New `site/fill-geometry.js` validates manually traced 4–120 point closed polygons: finite coordinates within the imported image, point spacing, area/extent and no self-intersections. `site/fill-boundary-ui.js` offers mobile start/tap/undo point/close+preview/apply/cancel, with real canvas coordinate transformation. `site/index.html` appends explicitly reviewed `tatami` as one Undo operation without changing existing paths. New ZIP editable SVG now preserves fill-vs-stroke semantics and physical millimetre dimensions; still not a verified machine file.
+- **Tests authored:** `tests/test_fill_geometry.cjs` covers successful wing and degenerate/self-crossing/duplicate/out-of-bounds rejections; `tests/test_manual_fill_mobile.py` exercises mobile Chromium tap-to-fill, SVG XML parsing, edit path presence and Undo. Netlify `netlify.toml` requires Node syntax and geometry tests. The AI-region GitHub workflow runs the mobile test when enabled.
+- **Checks performed:** Isolated JS compiler accepted editor, UI and geometry scripts; valid test polygon closed and area measured 16,430.5 canvas units squared; three invalid cases rejected with correct errors. Netlify preview for code/test head `b8b66fe` returned READY. A later documentation-only deploy should also be checked. Full GitHub Actions mobile job result not returned by connector.
+- **Honest limitations:** This is **guided manual tracing**, not automatic wing reconstruction. Still only one physical thread colour from the browser's experimental PES/DST; no reliable satin rail topology, palette sequencing, compensations, auto-underlay, trims, stitch-out, manufacturing validation or retail release.
+- **Next:** Compare a hand-traced closed wing SVG from updated browser in Ink/Stitch, independently decode machine files and physically test fill density. Develop accurate image-based masks with user edits, then multi-colour and true satin rail geometries. Preserve successful prior editor functions.
+- **Branch/release:** Development PR #1, no promotion of experimental source to production main.
 
 ### Entry template — REQUIRED on every meaningful development update
 
