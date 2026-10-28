@@ -33,8 +33,12 @@ def _inspect_zip(payload: bytes) -> tuple[str, ...]:
     try:
         with zipfile.ZipFile(BytesIO(payload)) as z:
             infos = z.infolist()
-            if not infos or len(infos) > MAX_FILES or z.testzip() is not None:
-                raise DigitiserError('Ink/Stitch ZIP failed integrity or file-count check')
+            if not infos or len(infos) > MAX_FILES:
+                raise DigitiserError('Ink/Stitch ZIP file-count check failed')
+            if sum(info.file_size for info in infos) > MAX_ZIP:
+                raise DigitiserError('Ink/Stitch ZIP exceeds uncompressed size limit')
+            if z.testzip() is not None:
+                raise DigitiserError('Ink/Stitch ZIP failed integrity check')
             names = []
             types = set()
             for entry in infos:
