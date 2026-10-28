@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.7 |
+| Document version | MD-2.8 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -458,6 +458,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-041 | 2026-10-28 | Netlify deployment `6ae1d76b72e0a6f82ce330ad` | Draft PR #1 at commit `52134cbb9f31e94799c07ef0cbfecbea51071264` confirmed `ready`, with 1 Netlify function deployed and no build error | **DEVELOPMENT PREVIEW READY** | This does not verify runtime access token, OpenAI result, image recognition, precise stitch conversion or physical embroidery |
 | E-042 | 2026-10-28 | Netlify request logs and request detail for `01M613DCG01HA4Y1Z5YN261CX2` | User's 11:13 UTC request to `/api/analyse-embroidery` returned HTTP 502 after 13.05 sec, with one function invocation; no internal function log entries supplied. This is after authentication/input validation and **does not establish** which upstream/validation stage failed. | REQUEST FAILURE VERIFIED | Old catch collapsed incomplete output, JSON, region validation and network failure into the same generic message. No raw request image, bearer token, or API key accessed. |
 | E-043 | 2026-10-28 | `netlify/functions/analyse-embroidery.mjs` and `tests/test_ai_analysis.mjs` | Added safe error codes, schema-bounded colour/coordinates, increased response budget from 3200 to 4800 output tokens, bounded 8–16 requested visible regions, five synthetic error cases, `site/ai-details.js` displays codes. | SOURCE COMMITTED; JS SYNTAX PARSED; SYNTHETIC TESTS NOT YET CONFIRMED BY CI | Error category requires next real request to determine root cause. This does not prove OpenAI response accuracy or embroidery quality. |
+| E-044 | 2026-10-28 | `netlify.toml` dev commit `905671a` and Netlify preview deploy `6ae1da3793537e3cf0888ac4` | Configure zero-cost `node --test tests/test_ai_analysis.mjs` as the development build command. Netlify reports READY on matching commit and one Function deployed. | PREVIEW DEPLOY READY | Connector did not expose build log; do not claim the test command actually executed until its output is verified separately. |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -706,6 +707,13 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Regression:** `tests/test_ai_analysis.mjs` commit `cf3c374` added synthetic upstream/incomplete/invalid/429/network tests with no real OpenAI calls. Both modified JavaScript production sources and regression source passed static JavaScript syntax checks. GitHub-hosted integration execution not yet independently confirmed.
 - **Next:** Confirm new Netlify development preview reaches READY. Run **one** owner-authorised image analysis and inspect returned safe code/log category if failure recurs. Fix based on that actual code; avoid repeated chargeable speculative attempts. Verify region map before integrating stitch geometry.
 - **Release:** Draft PR development preview only. No changes to production website or approved embroidery exports.
+
+### 2026-10-28 — AI error-gate preview published
+
+- **Netlify configuration:** Development-branch `netlify.toml` now requests a Node zero-cost API test command before publishing the static editor (`905671a`). This is *not* an authenticated paid OpenAI request; tests simulate upstream HTTP errors and model output and assert errors redact keys/artwork.
+- **Netlify result:** Deploy preview `6ae1da3793537e3cf0888ac4` at `905671aaca31e515524d45a054db9d483f082ee3` is READY and includes one function. The available connector does not expose build-step logs, so actual execution of `node --test` remains unverified. Syntax of production JavaScript and synthetic tests was separately parsed successfully.
+- **Next:** One real request with the owner's existing token from the preview. If it errors, record the safe `[CODE]` displayed in the interface and investigate Netlify logs; then correct the precise failing stage. Avoid speculative retries/billing. Do not treat region bounding boxes as embroidery stitches.
+- **Main site:** Unchanged static editor; only development preview includes the revised API.
 
 ### Entry template — REQUIRED on every meaningful development update
 
