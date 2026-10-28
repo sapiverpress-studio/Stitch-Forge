@@ -8,11 +8,11 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-1.0 |
+| Document version | MD-1.1 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local standalone prototype v0.3 + test logs, 2026-10-28 |
 | Default branch | `main` |
-| Development branch | `develop/stitch-engine-foundation` (create as part of foundation work; confirm separately) |
+| Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
 | Authorised deployment | **None** |
@@ -84,7 +84,7 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 - **Confirmed:** repository `sapiverpress-studio/Stitch-Forge` exists, was initially empty, and is publicly visible with default branch `main`.
 - **Confirmed:** initial README committed as `7e3e9cc230acf0248f2808e36d131b984993aafa`.
 - This document is being added as a **new project baseline**, not evidence of an implemented engine.
-- Source-control entry for experimental v0.3 must be explicitly recorded in the work log when the file is imported. Until then, it is an **off-repository reference artifact**.
+- **Confirmed:** experimental v0.3 is preserved on development branch at `prototypes/stitch-forge-v0.3.html` (commit `d7a319d565a43632299a5e476584bbdbe33a7e8e`). Its Git blob SHA `be29a022390194a3670fa0d29561b4bda78e20be` matches `git hash-object` of the original local file. It has **not been merged into main**.
 
 ### 2.2 Experimental application: v0.1 → v0.3
 
@@ -114,7 +114,7 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 - User moth embedded-raster SVG: silhouette traced from a **447 × 262 px** raster, **187** needle stitches and **3** jumps in outline mode; **2,082** needle stitches and **143** travel jump records in experimental tatami mode (settings vary).
 - Raster reference imports **do not** preserve or digitise internal feather, wing and colour regions. The source moth SVG is an example of why full-artwork support remains incomplete.
 - v0.3 sample ZIP held five files and passed `zipfile.testzip()` in the local test.
-- v0.3 standalone file provenance (local): SHA-256 `dd67aee3292ccc6ca770e79ecfb78738ca8965197c94301c24bc5f6a5d81d886`, 61,967 bytes. This is **not** a repository path/commit until separately imported.
+- v0.3 standalone file provenance (locally verified; matched against Git blob on development branch): SHA-256 `dd67aee3292ccc6ca770e79ecfb78738ca8965197c94301c24bc5f6a5d81d886`, 61,967 bytes. This is **not** a repository path/commit until separately imported.
 - Independent binary decoding was reported in previous prototype testing. This is **not** equivalent to a successful physical machine test.
 
 ### 2.3 Confirmed limitations and defects
@@ -343,8 +343,8 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | Milestone | Deliverable | Status | Exit conditions |
 | --- | --- | --- | --- |
-| M0 — repository and truth ledger | README + this MD + update discipline + dev branch | IN-PROGRESS | All files readable in GitHub; branch exists; log updated |
-| M1 — preserve prototype | Import v0.3 source and reproducible tests | TODO | Uploaded file hash matches local baseline; browser tests run from repo |
+| M0 — repository and truth ledger | README + this MD + update discipline + dev branch | DONE-VERIFIED | All files readable in GitHub; branch exists; log updated |
+| M1 — preserve prototype | Import v0.3 source and reproducible tests | IN-PROGRESS | Uploaded file hash matches local baseline; browser tests run from repo |
 | M2 — secure original-artwork import | PNG/JPG/SVG; separate editable regions | TODO | User moth importer safe; no silent loss; security tests |
 | M3 — proper engine spike | working Ink/Stitch CLI for known SVG fixture | TODO | Pinned engine, command/output logs, reproducible CI/local recipe |
 | M4 — geometry and stitching | running, bean, satin and fill regions with routing | TODO | Unit fixtures, independent command plan; user-controlled stitch params |
@@ -362,10 +362,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | ID | Priority | Work item | Status | Definition of done / evidence |
 | --- | --- | --- | --- | --- |
 | SF-001 | P0 | Initialise GitHub repo with README | DONE-VERIFIED | README committed to main, SHA in Section 2 |
-| SF-002 | P0 | Commit full living master MD and update policy | IN-PROGRESS | GitHub file link fetch succeeds; document reviewed |
-| SF-003 | P0 | Contributor rules and PR template | TODO | Both committed; checklist points to this document |
-| SF-004 | P0 | Create isolated development branch | TODO | Branch appears in GitHub |
-| SF-005 | P0 | Import exact v0.3 HTML prototype | TODO | File exists on dev branch; SHA-256 equals reference |
+| SF-002 | P0 | Commit full living master MD and update policy | DONE-VERIFIED | GitHub file link fetch succeeds; document reviewed |
+| SF-003 | P0 | Contributor rules and PR template | DONE-VERIFIED | Both committed; checklist points to this document |
+| SF-004 | P0 | Create isolated development branch | DONE-VERIFIED | Branch appears in GitHub |
+| SF-005 | P0 | Import exact v0.3 HTML prototype | DONE-VERIFIED | File exists on dev branch; SHA-256 equals reference |
 | SF-006 | P0 | Recover/import browser tests and fixtures | TODO | Playwright test passing on source-controlled artifact |
 | SF-007 | P0 | Establish CI for browser, source lint and test evidence | TODO | Branch checks show green on documented commits |
 | SF-008 | P0 | Define versioned project schema | TODO | Schema, migrations and round-trip tests |
@@ -390,9 +390,9 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-027 | P2 | Licensing/SBOM/commercial distribution analysis | TODO | Explicit obligations and deployment approach reviewed |
 | SF-028 | P3 | Upload presets and repeatable batch pipeline | DEFERRED | Only after design-level quality demonstrated |
 | SF-029 | P3 | Optional hosted collaborative/cloud application | DEFERRED | Demand, privacy, authentication, budgets approved |
-| SF-030 | P0 | Add automated "MD updated with code" PR check | TODO | Test PR cannot modify production source without MD update |
+| SF-030 | P0 | Add automated "MD updated with code" PR check | IN-PROGRESS | Test PR cannot modify production source without MD update |
 
-**Next action order:** SF-002 → SF-003 → SF-004 → SF-005 → SF-006 → SF-010 → SF-008/009 → SF-013/014 → SF-019 → SF-015–018 → SF-021. The order can change if evidence changes; record the decision.
+**Next action order:** SF-006 → SF-010 → SF-008/009 → SF-013/014 → SF-019 → SF-015–018 → SF-021. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
 
 ---
 
@@ -404,7 +404,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-002 | 2026-10-28 | local v0.3 `test_v03.py` | Embedded-PNG moth SVG, PNG, vector SVG, basic fill mode | REPORTED PASS | Outline only; interior not digitised |
 | E-003 | 2026-10-28 | local v0.3 `v03_test_log.txt` | 2,082-stitch fill, 143 jumps; ZIP read-back | REPORTED PASS | No physically acceptable fill established |
 | E-004 | 2026-10-28 | local v0.3 binary verification utilities | PES/DST independent command decoding | REPORTED PASS | Independent decoder is not a real embroidery machine |
-| E-005 | 2026-10-28 | Local SHA-256 computation | Baseline v0.3 61,967-byte HTML digest | VERIFIED LOCALLY | File not imported into GitHub yet |
+| E-005 | 2026-10-28 | Local SHA-256 and Git blob comparison | Baseline v0.3 61,967-byte HTML; local Git hash equals remote blob `be29a022390194a3670fa0d29561b4bda78e20be` | VERIFIED | File is in development branch, not main |
 | E-006 | TBD | Repository CI | Browser, importer, stitch and export regressions | NOT RUN | No CI configured yet |
 | E-007 | TBD | Independent pyembroidery read-back | Core commands across formats | NOT RUN | Dependency not integrated |
 | E-008 | TBD | Physical embroidery machine | Fabric, density, registration and quality | NOT RUN | Required before product use |
@@ -462,15 +462,15 @@ Do not create empty decorative folders or claim an implementation exists because
 
 **Done (verified):** GitHub repository identified and confirmed empty at project start; bootstrap README created on `main` (commit `7e3e9cc230acf0248f2808e36d131b984993aafa`). Examined available local v0.3 prototype source, sample files and test logs; recorded constraints and exact SHA-256 reference.
 
-**In progress:** Commit this master document, contributor policy, PR template and create development branch.
+**Completed after initial commit:** Master MD committed (`4b58a386cc8a09440d086eb9916f62b84290b7e2`); contributor rules (`9e0d672efc4ed5f788ed6d81dc1a9cf15128669e`); PR template (`8d82e22f520cfba3609fa87089fba55d6eb0cbe6`); development branch created; MD-update workflow added (`98d37a538517378234753be6e866377977b00e85`, **its required-PR check has not yet run**).
 
 **Existing experimental evidence:** UI and export tests from the standalone HTML v0.3, particularly user-supplied moth raster-in-SVG case. The prototype's raster output is a silhouette only. PES/DST decoding and ZIP checks are evidence of structure, *not* fabric/machine performance.
 
-**Not done:** v0.3 source import; modular application; Ink/Stitch backend; pyembroidery integration; proper satin/fill control; CI; physical testing; real deployment.
+**Completed on development branch:** exact v0.3 prototype source imported and Git hash verified (commit `d7a319d565a43632299a5e476584bbdbe33a7e8e`). **Not done:** source-controlled browser test suite; modular application; Ink/Stitch backend; pyembroidery integration; proper satin/fill control; CI smoke tests; physical testing; any deployment.
 
-**Next:** Finish documentation baseline, commit prototype separately to dev branch, bring in browser and file fixtures, run CI, then spike a pinned Ink/Stitch CLI.
+**Next:** Add synthetic fixtures and browser tests to dev branch, run them against committed prototype, verify the MD enforcement on its draft PR, then spike a pinned Ink/Stitch CLI.
 
-**Files/PRs:** README at initial commit; master document and subsequent foundation files to be recorded by follow-up log amendment after connector verification.
+**Files/PRs:** README `7e3e9cc`; master `4b58a386`; contributor `9e0d672`; PR template `8d82e22`; documentation gate `98d37a5`; prototype import `d7a319d`. No merges, deployments or listings.
 
 ### Entry template — REQUIRED on every meaningful development update
 
