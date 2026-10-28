@@ -73,3 +73,27 @@ test("snaps running veins to dark original pixels; rejects invented lines across
  assert.ok(real.points.every(p=>Math.abs(p[0]-64)<=5));
  assert.ok(result.rejected.some(r=>r.id==="invented"&&r.reason==="line_not_supported_by_image_contrast"));
 });
+
+test("fills visible dark markings only, not an enclosing pale wing polygon",()=>{
+ const image=source();
+ for(let y=50;y<92;y++)for(let x=43;x<89;x++){
+  if(((x-65)/10)**2+((y-70)/12)**2<1){
+   const j=(y*w+x)*4;image[j]=image[j+1]=image[j+2]=25;
+  }
+ }
+ const marker={id:"left-mark",label:"Real left wing spot",kind:"fill",
+  semantic:"wing_marking",color:"#191919",layer:1,confidence:"high",
+  points:[[42,43],[85,45],[92,70],[85,95],[42,96],[38,70]]
+   .map(([x,y])=>({x:Math.round(x*1000/w),y:Math.round(y*1000/h)}))};
+ const proposed=plan();proposed.regions.push(marker);
+ const out=reconstruct(image,w,h,proposed);
+ const found=out.regions.find(r=>r.id==="left-mark");
+ assert.ok(found,"actual marking should be extracted automatically");
+ assert.equal(found.geometrySource,"ai_polygon_intersected_with_colour_matched_artwork_pixels");
+ assert.ok(found.pixelArea>200&&found.pixelArea<450);
+ assert.ok(found.sourceSupport<.5,"marking did not become a filled AI search polygon");
+ assert.equal(found.color,"#191919");
+ const absent=reconstruct(source(),w,h,proposed);
+ assert.ok(!absent.regions.some(r=>r.id==="left-mark"));
+ assert.ok(absent.rejected.some(r=>r.id==="left-mark"&&r.reason==="marking_colour_not_supported_by_pixels"));
+});
