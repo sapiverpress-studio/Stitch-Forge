@@ -128,11 +128,10 @@ export default async(request)=>{
   const response=await fetch("https://api.openai.com/v1/responses",{
    method:"POST",signal:abort.signal,headers:{Authorization:"Bearer "+process.env.OPENAI_API_KEY,
      "Content-Type":"application/json"},
-   body:JSON.stringify({model:process.env.STITCH_FORGE_RECONSTRUCTION_MODEL||"gpt-5.6-terra",
-    reasoning:{effort:"low"},
+   body:JSON.stringify({model:process.env.STITCH_FORGE_RECONSTRUCTION_MODEL||"gpt-4.1",
     store:false,max_output_tokens:12000,
     input:[{role:"user",content:[{type:"input_text",text:INSTRUCTIONS},
-      {type:"input_image",image_url:image,detail:"original"}]}],
+      {type:"input_image",image_url:image,detail:"high"}]}],
     text:{format:{type:"json_schema",name:"embroidery_geometry_plan_v1",strict:true,schema:SCHEMA}}})
   });
   if(!response.ok){
