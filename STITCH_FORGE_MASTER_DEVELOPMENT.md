@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.1 |
+| Document version | MD-2.2 |
 | Last updated | 2026-10-28 (Europe/London) |
 | Last independently checked source | Local 29-test regression pass, repo CI workflow placement, 2026-10-28 |
 | Default branch | `main` |
@@ -399,6 +399,9 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-034 | P0 | Complete end-to-end source-project to independent-audit packaging pipeline | IN-PROGRESS | Browser-project smoke accepts v0.3 JSON, independent audit designed; real engine not run and complete packaging not committed |
 | SF-035 | P0 | Register actual Ink/Stitch workflow on GitHub default branch and confirm CI run | IN-PROGRESS | Workflow present on `main` commit `b3fb43d`; PR synchronization checked, no engine Actions run returned |
 | SF-036 | P1 | Specify secure per-region colour and Ink/Stitch fill/run parameters | PROTOTYPE-TESTED | `trusted_svg.py`, `project_bridge.py`, 4 regression tests committed on dev; real engine/fabric result still pending |
+| SF-037 | P1 | DRW-style OpenAI image analysis: propose visible internal embroidery regions | IN-PROGRESS | Protected Netlify Function, UI overlay and synthetic tests committed on dev; not deployed live, no API invocation proven |
+| SF-038 | P0 | Convert reviewed wing/vein/body proposals to precise pixel-derived editable region contours | TODO | Segment masks on detailed embedded RGB image; preserve internal features; compare with original; never auto-approve stitches |
+| SF-039 | P0 | Verify private API access, image privacy, budget safeguards and staged real moth analysis | BLOCKED | Requires configured owner-only Netlify secrets, test budget and verified function run; no public unrestricted endpoint |
 
 **Next action order:** confirm public editor opens in Android browser after Netlify ready deployment; verify PR previews and CI; then prove Ink/Stitch engine and independent PES/DST validation before expanding stitch tooling. SF-030 requires an actual PR run before status can be promoted. The order can change if evidence changes; record the decision.
 
@@ -442,6 +445,9 @@ Do not create empty decorative folders or claim an implementation exists because
 | E-029 | 2026-10-28 | Local test run `PYTHONPATH=... STITCH_FORGE_CHROMIUM=/usr/bin/chromium python -m unittest discover -s /mnt/data/stitchforge_repo/tests -p 'test_*.py' -v` | 29 tests: browser/ZIP, project bridge, project pipeline mocks, security/asset selector | **29 PASS** (2.917 seconds) | This suite excludes third-party pyembroidery tests because library is not installed; no physical stitch-out. |
 | E-030 | 2026-10-28 | `trusted_svg.py` + `project_bridge.py` on development branch, `tests/test_region_parameters.py` | Safe two-colour input, fill-angle, row-spacing, fill-underlay and running-stitch-length Ink/Stitch metadata; rejects out-of-range and incompatible region settings; retains legacy single-colour input | **4 NEW PARAMETER TESTS PASS LOCALLY; 33 TOTAL LOCAL TESTS PASS** | This verifies SVG serialization only, not actual machine colour-change commands, stitch density or professional fabric quality |
 | E-031 | 2026-10-28 | Connected GitHub workflow run and commit-status reads for dev PR synchronization | Default branch engine workflow is committed but PR commit only shows Netlify deploy-preview status | **No verified GitHub Actions engine job returned** | PR-only workflow lookup may not include push-triggered jobs; GitHub Actions could be disabled/restricted or undiscoverable by connector |
+| E-032 | 2026-10-28 | Original user SVG `Tiles _20261028_062147_0000.svg`, examined locally without publishing source | Found TWO embedded 447×262 PNG images: a monochrome silhouette mask and a separate RGB moth with wing markings, veins, abdomen, antennae; importer currently uses a largest-image choice then flattens foreground to one contour | ROOT CAUSE CONFIRMED from source, not from model guess | Detailed stitching still requires segmentation and manual review |
+| E-033 | 2026-10-28 | `netlify/functions/analyse-embroidery.mjs`, `site/ai-details.js`, development `site/index.html`, `tests/test_ai_analysis.mjs` and `docs/AI_REGION_ANALYSIS.md` | Server-only OpenAI vision with strict JSON schema, short image size limits, access token, no AI outputs directly in machine-file exporter; mobile displays proposed bounding boxes and reports omissions | SOURCE COMMITTED, TESTS STAGED, NOT REAL API-VERIFIED | Requires OPENAI_API_KEY and STITCH_FORGE_ANALYSIS_TOKEN in Netlify; no image-to-mask/stitch conversion |
+| E-034 | 2026-10-28 | `.github/workflows/ai-region-tests.yml` | Node 22 zero-cost schema/auth syntax/synthetic-response test configured on PR and registered on main | WORKFLOW COMMITTED; EXECUTION STATUS UNVERIFIED | No real vision billing or actual moth results obtained |
 **Repeatable tests and actual captured logs must be committed in `tests/` or `docs/test-evidence/` before promotion to DONE-VERIFIED.** A local test report alone is not durable evidence in the repo.
 
 ---
@@ -630,6 +636,19 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Unverified:** Actual Ink/Stitch ZIP export, PES/DST independent pyembroidery readback, per-colour stitch command round-trip, machine compatibility, stitch-out and colour accuracy. GitHub connector currently returns no real-engine Actions job for the PR head.
 - **Next:** Diagnose GitHub Actions execution settings or obtain the first actual runner logs; fix engine/API integration based on real results. Then add front-end region selection and colour tools only after the saved-project schema is versioned and migration-tested.
 - **Release:** Development branch only, no changes to the published experimental editor.
+
+### 2026-10-28 — Diagnose lost moth details and stage DRW-style AI region analysis
+
+- **User-observed defect:** Moth input yields only outer silhouette; wing patterns, veins and abdomen disappear from stitch paths. This is a critical failure for detailed embroidery.
+- **Actual source inspected:** The uploaded SVG has two embedded PNG images at 447×262 pixels, one silhouette mask (grayscale), one RGB detailed moth. Wing/body detail exists in source, but v0.3 `traceImage` only creates a foreground mask and exterior contour. Raising DPI or simply tracing the outline again cannot restore the details.
+- **Architecture adapted from DRW:** Use OpenAI Responses API vision with strict schema to identify **proposed** visible body/wing/marking/vein areas. Keep OpenAI inference separate from deterministic pixel-derived geometry and human-verified stitch selection.
+- **Committed on dev:** `netlify/functions/analyse-embroidery.mjs` (`dc7ec53`), `tests/test_ai_analysis.mjs` (`a8b9534` and `cca0a0a`), `site/ai-details.js` (`5261abf`), editor integration `site/index.html` (`235f7d2`), `docs/AI_REGION_ANALYSIS.md` (`37849d9`), workflow `ai-region-tests.yml` (`cbdda39`). A workflow-only copy on main (`f72a953`) enables PR test discovery without promoting experimental site code.
+- **Client behaviour:** Explicit analysis button and transient password field; original detailed image used for request; resulting annotations and downloadable JSON are **review proposals, not stitch paths**. Existing editor exports are unchanged.
+- **Security:** Uses separate server-side OPENAI_API_KEY and STITCH_FORGE_ANALYSIS_TOKEN, same-origin Netlify Function, request limits, `store:false`, strict output checks and no direct untrusted SVG markup execution. No secrets are in the public repository. Missing keys on Netlify mean feature is unavailable, not silently open.
+- **Tests/run status:** Source and synthetic tests committed; no confirmed GitHub-hosted AI test result, OpenAI API call, model billing, physical stitch test or full region mask pass. Not production-ready.
+- **Blocker:** The site currently has no configured analysis secrets. Public deployment would require authentication/rate-budget controls and explicit acceptance of image transmission to OpenAI.
+- **Next:** Demonstrate model boxes on an authorised reference; implement constrained image mask segmentation for internal wing/body regions, edit/delete controls and precise SVG contours. Only after that connect upstream Ink/Stitch fills and satin rails and test real machine output.
+- **Deployment:** Development branch only; published prototype unchanged.
 
 ### Entry template — REQUIRED on every meaningful development update
 
