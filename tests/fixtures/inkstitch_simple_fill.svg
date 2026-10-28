@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="80mm" height="80mm" viewBox="0 0 80 80">
+  <title>Ink/Stitch engine smoke test: synthetic simple filled geometry</title>
+  <path id="filled-petal" d="M 40,10 C 58,10 66,26 60,42 C 54,58 40,67 40,67 C 40,67 26,58 20,42 C 14,26 22,10 40,10 Z" fill="#167a65" stroke="none"/>
+</svg>
