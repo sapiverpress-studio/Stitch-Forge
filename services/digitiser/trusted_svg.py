@@ -11,7 +11,16 @@ import re
 MAX_REGIONS = 128
 MAX_VERTICES = 2048
 MAX_SIZE_MM = 400
-_COLOR = re.compile(r"#[0-9a-fA-F]{6}\Z")
+_COLOR = re.compile(r"#[0-9a-fA-F]{6}\\Z")
+_INKSTITCH_NS = "http://inkstitch.org/namespace"
+ET.register_namespace("inkstitch", _INKSTITCH_NS)
+
+
+def _bounded(value, label, minimum, maximum):
+    if (isinstance(value, bool) or not isinstance(value, (int, float))
+            or not isfinite(value) or not minimum <= value <= maximum):
+        raise ValueError(f"Invalid {label}: expected {minimum} to {maximum}")
+    return value
 
 
 @dataclass(frozen=True)
@@ -19,12 +28,16 @@ class Region:
     points: tuple[tuple[float, float], ...]
     stitch_type: str  # running or fill; satin requires a separate rail model
     thread_color: str = '#153e46'
+    fill_angle_deg: float | None = None
+    row_spacing_mm: float | None = None
+    fill_underlay: bool | None = None
+    running_length_mm: float | None = None
 
 
 def build_svg(width_mm: float, height_mm: float, regions: tuple[Region, ...]) -> bytes:
     """Serialise bounded numeric geometry, not user-provided SVG markup."""
-    if not all(isfinite(x) and 1 <= x <= MAX_SIZE_MM for x in (width_mm, height_mm)):
-        raise ValueError('Invalid design dimensions')
+    _bounded(width_mm, 'design width', 1, MAX_SIZE_MM)
+    _bounded(height_mm, 'design height', 1, MAX_SIZE_MM)
     if not regions or len(regions) > MAX_REGIONS:
         raise ValueError('Invalid region count')
     root = ET.Element('svg', {
@@ -46,12 +59,27 @@ def build_svg(width_mm: float, height_mm: float, regions: tuple[Region, ...]) ->
                 raise ValueError('Vertex outside design bounds')
         coords = ' '.join(f'{x:.3f},{y:.3f}' for x, y in pts)
         if region.stitch_type == 'fill':
-            ET.SubElement(root, 'polygon', {'id': f'region-{ix}', 'points': coords,
-                                            'fill': region.thread_color, 'stroke': 'none'})
+            if region.running_length_mm is not None:
+                raise ValueError('Running length not applicable to fill')
+            attrs = {'id': f'region-{ix}', 'points': coords,
+                     'fill': region.thread_color, 'stroke': 'none'}
+            if region.fill_angle_deg is not None:
+                attrs[f'{{{_INKSTITCH_NS}}}angle'] = f'{_bounded(region.fill_angle_deg, "fill angle", -180, 180):.2f}'
+            if region.row_spacing_mm is not None:
+                attrs[f'{{{_INKSTITCH_NS}}}row_spacing_mm'] = f'{_bounded(region.row_spacing_mm, "row spacing", 0.25, 2.0):.3f}'
+            if region.fill_underlay is not None:
+                if not isinstance(region.fill_underlay, bool):
+                    raise ValueError('Underlay must be boolean')
+                attrs[f'{{{_INKSTITCH_NS}}}fill_underlay'] = 'true' if region.fill_underlay else 'false'
+            ET.SubElement(root, 'polygon', attrs)
         else:
-            ET.SubElement(root, 'polyline', {'id': f'region-{ix}', 'points': coords,
-                                             'fill': 'none', 'stroke': region.thread_color,
-                                             'stroke-width': '0.4'})
+            if any(v is not None for v in (region.fill_angle_deg, region.row_spacing_mm, region.fill_underlay)):
+                raise ValueError('Fill parameters not applicable to running stitch')
+            attrs = {'id': f'region-{ix}', 'points': coords,
+                     'fill': 'none', 'stroke': region.thread_color, 'stroke-width': '0.4'}
+            if region.running_length_mm is not None:
+                attrs[f'{{{_INKSTITCH_NS}}}running_stitch_length_mm'] = f'{_bounded(region.running_length_mm, "running stitch length", 0.8, 4.0):.3f}'
+            ET.SubElement(root, 'polyline', attrs)
     return ET.tostring(root, encoding='utf-8', xml_declaration=True)
 
 
@@ -59,6 +87,7 @@ def smoke_svg() -> bytes:
     """Synthetic petal with stem; not a customer or copyrighted artwork."""
     return build_svg(80, 80, (
         Region(((40, 12), (53, 17), (60, 31), (56, 48), (40, 66),
-                (24, 48), (20, 31), (27, 17)), 'fill', '#27886a'),
-        Region(((40, 65), (40, 76)), 'running', '#27886a'),
+                (24, 48), (20, 31), (27, 17)), 'fill', '#D05957',
+               fill_angle_deg=30, row_spacing_mm=0.5, fill_underlay=True),
+        Region(((40, 65), (40, 76)), 'running', '#27886a', running_length_mm=2.0),
     ))
