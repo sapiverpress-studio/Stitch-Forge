@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.28 (isolated feature branch only) |
+| Document version | MD-2.29 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | 2026-10-29 isolated branch: 55 Node / 77 Python tests passed; 48 vectorisation rows × 3 traces; browser WASM and 256/512/768px reconstruction measured. Fresh native engine rerun blocked by local Xvfb Unix-socket restriction; prior engine evidence remains historical. |
+| Last independently checked source | 2026-10-29 isolated branch: new compound-contour module 6/6 local Python stdlib tests passed; MD-2.28 Work-session 55 Node/77 Python pass is historical and not rerun here; real Ink/Stitch fixture rerun still blocked by local Xvfb AF_UNIX restriction. |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -452,11 +452,15 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-058 | P0 | Backend topology, physical-size and independent output extent integrity | LOCAL TEST VERIFIED / NATIVE RERUN BLOCKED | Invalid ring/tiny fill rejection; equal-but-wrong PES/DST bounds rejected; finite coordinate checks; real engine needs unrestricted local X display or separately authorised zero-cost CI |
 | SF-059 | P1 | Geometry-driven stitch planning diagnostics | PROTOTYPE-TESTED | Local CLI, source-order colours, dimensions, narrow/tiny-fill alerts, fill settings and endpoint-travel proxy; satin/fabric planning incomplete |
 
+| SF-060 | P0 | Validate real compound fill topology before lossless browser/engine integration | **GEOMETRY FOUNDATION LOCAL TEST VERIFIED / ENGINE NOT CONNECTED** | Pure Python closed contour + up to 16 interior holes; intersection, nesting, export-precision and limits tested, 6 local passes. Not yet persisted, edited or sewn. Native output remains blocked for holes. |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
 ## 10. Test evidence register
+
+- **E-074 (2026-10-29, MD-2.29):** `python -m unittest discover -s /mnt/data/stitchforge_stage/tests -v` in isolated local container: **6 new compound-geometry tests passed** (0 skips/failures), stdlib only. Reproducible subset from repository root: `python -m unittest discover -s tests -p 'test_compound_geometry.py' -v`. `docs/test-evidence/MD-2.29-compound-topology.txt` contains exact output. No existing full-suite rerun, actual native engine run, device test or fabric validation. 0 OpenAI/hosted calls.
 
 - **E-071 (2026-10-29, MD-2.28):** `node --test tests/*.cjs tests/*.mjs`: **55 pass**, zero failures/skips. `python -m unittest discover -s tests -v`: **77 pass**, zero failures/skips. Exact logs `docs/test-evidence/MD-2.28-node.txt` / `MD-2.28-python.txt`. Real pyembroidery reader tests included; browser/model/native HTTP tests use mocks and synthetic artwork.
 - **E-072:** `node tools/bench_reconstruction.cjs`: 256/512/768px ellipses accepted, 99.87%/99.94%/99.95% pixel coverage; exact false/missing counts and timing in `MD-2.28-reconstruction.json`. Not real wildlife or Android evidence.
@@ -593,6 +597,8 @@ Do not create empty decorative folders or claim an implementation exists because
 
 - **2026-10-29 D-015:** Adapt Draw DXF integrity principles (read `core/analysis-integrity.js` at `ff9018c29bc6d06683ce3130db8e599e3eee3558`) as pixel ownership, omission gates and explicit unknowns. Do not copy CAD requirements for mathematically exact organic curves. Retain original layer order; do not group colours across overlaps or invent hidden anatomy.
 - **2026-10-29 D-016:** Reconstruction audit thresholds (3% omitted foreground, 0.5% false foreground with small absolute budgets; significant missing colour bins) are conservative engineering heuristics, not professional acceptance limits. Tiny physical fills require review before native execution. Physical validation remains mandatory.
+
+- **2026-10-29 D-017:** Compound contours are validated as geometry-only. Even-odd SVG preview paths must **not** be forwarded to the native embroidery engine until actual Ink/Stitch produces proven unsewn holes; topology success is not proof of stitch omission. No external dependency or deployment introduced.
 
 ### Decision-record template
 
@@ -1035,6 +1041,17 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - Fixed baseline deploy-guard test failure by checking branch/SHA before checking for gcloud. All guard tests remain dry-run/refusal tests; no deployment command reaches gcloud.
 - Local native engine obtained and SHA verified but Xvfb cannot bind Unix sockets in this environment. Not counted as a successful native run; do not promote these backend changes before native fixtures pass. Hosted worker and physical machine untouched.
 - Remaining limitations and next priorities: `docs/ENGINEERING_HANDOVER_MD-2.28.md`. No claim of professional stitch quality, realistic wildlife acceptance or universal automatic segmentation.
+
+### 2026-10-29 — Compound-ring topology foundation, fail closed on unsupported sewing (MD-2.29)
+
+- Scope / task IDs: SF-060; supports upcoming compound-hole implementation without changing current machine output.
+- Branch: `feature/detailed-embroidery-analysis-no-deploy` (parent checkpoint `7ad44960ae95420e28ea5be223f96fc91133d714`; source and evidence committed together).
+- Added `services/digitiser/compound_geometry.py` and `tests/test_compound_geometry.py`, plus handover/evidence. Validates outer and hole rings independently, strict containment, disjointness, non-nesting, budgets, and 0.001mm precision; constructs safe even-odd *preview-only* path data.
+- Tests RUN: `python -m unittest discover -s /mnt/data/stitchforge_stage/tests -v`: **6 pass**, zero skipped/failed. Python standard library; exact evidence recorded under `docs/test-evidence/MD-2.29-compound-topology.txt`.
+- Tests NOT run: prior 55 Node/77 Python regression, real Ink/Stitch/PES/DST, browser UI, actual Android and fabric stitch-out. Native backend execution remains blocked by local Xvfb restrictions.
+- No existing user functionality changed. No new paid, hosted or copyleft dependency. No customer artwork/credentials included.
+- Deliberate safety gate: compound geometry is NOT wired into `trusted_svg` or machine worker. Current unsupported holes still fail closed; never silently fill a hole or represent it as a white top layer.
+- Next: complete versioned editable outer/holes representation and native engine acceptance on controlled fixtures, then machine readback and physical fabric tests. Deployment/PR/merge: **none**.
 
 ### Entry template — REQUIRED on every meaningful development update
 
