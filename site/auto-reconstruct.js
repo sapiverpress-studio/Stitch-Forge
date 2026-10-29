@@ -12,7 +12,7 @@ function inside(px,py,poly){let yes=false;for(let i=0,j=poly.length-1;i<poly.len
 }return yes;}
 function boundsOf(points){let xx=points.map(p=>p[0]),yy=points.map(p=>p[1]);return{x0:Math.min(...xx),x1:Math.max(...xx),y0:Math.min(...yy),y1:Math.max(...yy)};}
 function cross(a,b,c){return(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);}
-function invalidPolygon(points,maxPoints=32,minPoints=4){
+function invalidPolygon(points,maxPoints=32,minPoints=4,minArea=35){
  if(points.length<minPoints||points.length>maxPoints)return true;
  const p=points;
  for(let i=0;i<p.length;i++)for(let j=i+2;j<p.length;j++){
@@ -21,7 +21,7 @@ function invalidPolygon(points,maxPoints=32,minPoints=4){
   const c1=cross(a,b,c),c2=cross(a,b,d),c3=cross(c,d,a),c4=cross(c,d,b);
   if(c1*c2<0&&c3*c4<0)return true;
  }
- return polygonArea(points)<35;
+ return polygonArea(points)<minArea;
 }
 function foregroundMask(rgba,w,h){
  const sample=[];
@@ -181,6 +181,48 @@ function paintPolygon(points,w,h,visit){
   for(let i=0;i+1<cuts.length;i+=2)for(let x=Math.max(0,Math.ceil(cuts[i]-.5));x<Math.min(w,Math.ceil(cuts[i+1]-.5));x++)visit(y*w+x);
  }
 }
+// Catch coherent high-contrast details that are too small for palette totals.
+// This detects missing detail only; it does not invent stitches or geometry.
+function fineDetailOmissions(rgba,w,h,foreground,owner,colours){
+ const mask=new Uint8Array(w*h);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const k=y*w+x,region=owner[k];if(region<0||!foreground[k])continue;
+  const j=k*4,c=colours[region],r=rgba[j],g=rgba[j+1],b=rgba[j+2];
+  if(Math.hypot(r-c[0],g-c[1],b-c[2])<100)continue;
+  let supportedNeighbour=false;
+  for(let dy=-2;dy<=2&&!supportedNeighbour;dy++)for(let dx=-2;dx<=2;dx++){
+   if(!dx&&!dy)continue;
+   const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h)continue;
+   const n=yy*w+xx;if(owner[n]!==region||!foreground[n])continue;
+   const q=n*4,nr=rgba[q],ng=rgba[q+1],nb=rgba[q+2];
+   if(Math.hypot(nr-c[0],ng-c[1],nb-c[2])<=55&&
+      Math.hypot(nr-r,ng-g,nb-b)>=95){supportedNeighbour=true;break;}
+  }
+  if(supportedNeighbour)mask[k]=1;
+ }
+ let details=0,detailPixels=0;
+ for(let k=0;k<mask.length;k++){
+  if(mask[k]!==1)continue;
+  const queue=[k];mask[k]=2;let head=0,minX=w,maxX=0,minY=h,maxY=0;
+  while(head<queue.length){
+   const at=queue[head++],x=at%w,y=Math.floor(at/w);
+   minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+   minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    if(!dx&&!dy)continue;
+    const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=w||ny>=h)continue;
+    const next=ny*w+nx;if(mask[next]===1){mask[next]=2;queue.push(next);}
+   }
+  }
+  const spanX=maxX-minX+1,spanY=maxY-minY+1;
+  if(queue.length>=12&&(Math.max(spanX,spanY)>=8||
+     (queue.length>=16&&Math.min(spanX,spanY)>=3))){
+   details++;detailPixels+=queue.length;
+  }
+ }
+ return {count:details,pixels:detailPixels};
+}
+
 function auditReconstruction(rgba,w,h,foreground,regions){
  const owner=new Int16Array(w*h);owner.fill(-1);
  let overlapPixels=0;
@@ -209,13 +251,16 @@ function auditReconstruction(rgba,w,h,foreground,regions){
   const bin=bins.get(key)||{pixels:0,unrepresented:0};bin.pixels++;if(mismatch)bin.unrepresented++;bins.set(key,bin);
  }
  const missingColourGroups=[...bins.values()].filter(b=>b.pixels>=Math.max(25,foregroundPixels*.004)&&b.unrepresented/b.pixels>.25).length;
+ const fineDetails=fineDetailOmissions(rgba,w,h,foreground,owner,colours);
  const blockers=[];
+ if(fineDetails.count)blockers.push('unrepresented_fine_details');
  if(regions.some(r=>r.confidence==='low'))blockers.push('low_confidence_regions');
  if(regions.some(r=>r.kind==='running'&&r.sourceSupport<.9))blockers.push('partial_running_centreline');
  if(missingPixels>Math.max(16,foregroundPixels*.03))blockers.push('uncovered_source_artwork');
  if(falseFillPixels>Math.max(4,foregroundPixels*.005))blockers.push('false_filled_background');
  if(missingColourGroups)blockers.push('unrepresented_source_colours');
  return {foregroundPixels,missingPixels,falseFillPixels,colourMismatchPixels,missingColourGroups,overlapPixels,
+  unrepresentedFineDetails:fineDetails.count,unrepresentedFineDetailPixels:fineDetails.pixels,
   coverage:Number((1-missingPixels/Math.max(1,foregroundPixels)).toFixed(4)),blockers,
   machineEligible:blockers.length===0,scope:'pixel_fidelity_only_not_semantic_or_stitch_validation'};
 }
@@ -359,7 +404,7 @@ function reconstruct(rgba,w,h,plan,opts={}){
    // contract can preserve them. Even a one-pixel hole must not disappear.
    if(Math.abs(polygonArea(boundary)-pixels.length)>.25){failures.push('fill_holes_not_supported');continue;}
    const contour=simplifyRing(boundary);
-   if(contour.length<4||invalidPolygon(contour,512,4)){failures.push('could_not_reconstruct_boundary');continue;}
+   if(contour.length<4||invalidPolygon(contour,512,4,12)){failures.push('could_not_reconstruct_boundary');continue;}
    let matched=0,extra=0;
    paintPolygon(contour,w,h,k=>{if(partMask[k])matched++;else extra++;});
    if(extra>Math.max(2,pixels.length*.005)||pixels.length-matched>Math.max(2,pixels.length*.02)){

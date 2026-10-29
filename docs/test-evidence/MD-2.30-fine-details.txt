@@ -1,0 +1,9 @@
+MD-2.30 — V8 local source execution (2026-10-29 UTC)
+Branch: feature/detailed-embroidery-analysis-no-deploy
+Source base: 5354a2957602ecadd1355dfe9a14626f2fd5d0ff
+Method: GitHub fetch_file of site/auto-reconstruct.js and tests/test_auto_reconstruct.cjs; apply source/test edits in memory; evaluate CommonJS via V8 Function with isolated node:test/assert subset equivalent (equal/deepEqual/notDeepEqual/ok/throws).
+Result: 25 / 25 test callbacks passed, 0 failures.
+Existing tests: 20; added tests: 5.
+Cases added: 2px narrow missing mark; 5x5 missing eye; 5x5 correctly proposed eye retained; isolated dark pixel ignored; low contrast texture ignored.
+No node:test executable invoked; no full Node/browser suite, native Ink/Stitch rerun, actual Android, real AI image, PES/DST or fabric test.
+No Netlify deploy, PR, Cloud Run invocation, external service or paid model call.

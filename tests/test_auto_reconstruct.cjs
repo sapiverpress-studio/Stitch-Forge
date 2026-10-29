@@ -231,3 +231,58 @@ test('low-confidence geometry remains editable but cannot trigger automatic mach
  assert.equal(out.regions.length,2);
  assert.ok(out.quality.blockers.includes('low_confidence_regions'));
 });
+
+
+test("tiny high-contrast feather-like stroke triggers missing-detail block below broad palette threshold",()=>{
+ const image=source();
+ for(let x=48;x<65;x++)for(let y=62;y<64;y++){
+  const j=(y*w+x)*4;image[j]=image[j+1]=image[j+2]=15;
+ }
+ const result=reconstruct(image,w,h,plan());
+ assert.equal(result.quality.missingColourGroups,0);
+ assert.ok(result.quality.unrepresentedFineDetails>=1);
+ assert.ok(result.quality.unrepresentedFineDetailPixels>=12);
+ assert.ok(result.quality.blockers.includes("unrepresented_fine_details"));
+ assert.equal(result.quality.machineEligible,false);
+});
+test("missing small eye prevents export rather than disappearing into the wing",()=>{
+ const image=source();
+ for(let y=65;y<70;y++)for(let x=59;x<64;x++){
+  const j=(y*w+x)*4;image[j]=image[j+1]=image[j+2]=12;
+ }
+ const output=reconstruct(image,w,h,plan());
+ assert.ok(output.quality.unrepresentedFineDetails>=1);
+ assert.ok(output.quality.blockers.includes("unrepresented_fine_details"));
+});
+test("the same small eye is recovered when the single AI plan includes its marking",()=>{
+ const image=source();
+ for(let y=65;y<70;y++)for(let x=59;x<64;x++){
+  const j=(y*w+x)*4;image[j]=image[j+1]=image[j+2]=12;
+ }
+ const detail={id:"eye",label:"Tiny eye",kind:"fill",semantic:"wing_marking",
+   color:"#0C0C0C",layer:1,confidence:"high",
+   points:[[55,61],[68,61],[68,74],[55,74]].map(([x,y])=>({
+     x:Math.round(x*1000/w),y:Math.round(y*1000/h)}))};
+ const p=plan();p.regions.push(detail);
+ const output=reconstruct(image,w,h,p);
+ const eye=output.regions.find(r=>r.id==="eye");
+ assert.ok(eye,"small source-backed feature must not be deleted by 35 px contour filter");
+ assert.equal(eye.pixelArea,25);
+ assert.deepEqual(output.rejected,[]);
+ assert.equal(output.quality.unrepresentedFineDetails,0);
+ assert.equal(output.quality.machineEligible,true);
+});
+test("one unsupported dark pixel is below the coherent feature threshold",()=>{
+ const image=source(),j=(70*w+64)*4;
+ image[j]=image[j+1]=image[j+2]=10;
+ const output=reconstruct(image,w,h,plan());
+ assert.equal(output.quality.unrepresentedFineDetails,0);
+});
+test("low contrast feather texture does not trigger the high contrast sentinel",()=>{
+ const image=source();
+ for(let x=48;x<65;x++)for(let y=62;y<64;y++){
+  const j=(y*w+x)*4;image[j]=image[j+1]=image[j+2]=158;
+ }
+ const output=reconstruct(image,w,h,plan());
+ assert.equal(output.quality.unrepresentedFineDetails,0);
+});
