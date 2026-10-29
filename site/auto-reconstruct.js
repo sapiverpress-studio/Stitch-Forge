@@ -49,6 +49,49 @@ function foregroundMask(rgba,w,h){
  }
  throw Error("Cannot confidently separate artwork from its background");
 }
+// Deterministic, on-device artwork examination. This performs no API calls,
+// sends no pixels to a server and does not claim to be semantic segmentation.
+function analyseArtwork(rgba,w,h){
+ if(!(rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||
+    w<48||h<48||w*h>750000||rgba.length!==w*h*4)
+  throw Error("Invalid source image");
+ const mask=foregroundMask(rgba,w,h),bins=new Map(),tileEdges=new Uint32Array(16);
+ let foregroundPixels=0,edgePixels=0,alphaPixels=0;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const i=y*w+x,j=4*i;
+  if(rgba[j+3]<245)alphaPixels++;
+  if(!mask[i])continue;
+  foregroundPixels++;
+  const r=rgba[j],g=rgba[j+1],b=rgba[j+2];
+  const key=((r>>5)<<10)|((g>>5)<<5)|(b>>5);
+  const bin=bins.get(key)||{count:0,r:0,g:0,b:0};
+  bin.count++;bin.r+=r;bin.g+=g;bin.b+=b;bins.set(key,bin);
+  const neighbour=x<w-1?i+1:y<h-1?i+w:-1;
+  if(neighbour>=0){
+   const k=4*neighbour;
+   const contrast=mask[neighbour]?
+    Math.hypot(r-rgba[k],g-rgba[k+1],b-rgba[k+2]):55;
+   if(contrast>35){
+    edgePixels++;
+    const tile=Math.min(3,Math.floor(4*y/h))*4+Math.min(3,Math.floor(4*x/w));
+    tileEdges[tile]++;
+   }
+  }
+ }
+ if(foregroundPixels<25)throw Error("Artwork has too little distinguishable foreground");
+ const palette=[...bins.values()].filter(bin=>bin.count>=Math.max(8,foregroundPixels*.004))
+  .sort((a,b)=>b.count-a.count).slice(0,12)
+  .map(bin=>({color:"#"+[bin.r,bin.g,bin.b].map(v=>Math.round(v/bin.count).toString(16).padStart(2,"0")).join("").toUpperCase(),
+    percent:Number((100*bin.count/foregroundPixels).toFixed(1))}));
+ const density=edgePixels/foregroundPixels;
+ const detailLevel=density>.22?"high":density>.09?"medium":"low";
+ const hotspot=[...tileEdges].map((count,index)=>({column:index%4,row:Math.floor(index/4),edgeCount:count}))
+  .sort((a,b)=>b.edgeCount-a.edgeCount).slice(0,4);
+ return {width:w,height:h,foregroundPixels,palette,
+  distinctColourBins:bins.size,edgeDensity:Number(density.toFixed(3)),
+  detailLevel,transparentBackground:alphaPixels>w*h*.1,hotspot,
+  source:"local_pixel_scan",requiresMachineTest:true};
+}
 function largestComponent(mask,w,h){
  const visited=new Uint8Array(mask.length);let best=[];
  for(let start=0;start<mask.length;start++){
@@ -214,14 +257,24 @@ function reconstruct(rgba,w,h,plan,opts={}){
   // foreground would incorrectly turn the whole AI search polygon into fill.
   // Never fill a rectangle merely because AI enclosed a coloured wing.
   const isMarking=["wing_marking","marking"].includes(r.semantic);
-  const swatch=isMarking?[1,3,5].map(i=>parseInt(r.color.slice(i,i+2),16)):null;
-  const mask=new Uint8Array(w*h);let candidate=0,signal=0;
+  const baseMask=new Uint8Array(w*h),colourMask=new Uint8Array(w*h);
+  const colour=[1,3,5].map(i=>parseInt(r.color.slice(i,i+2),16));
+  let candidate=0,baseSignal=0,colourSignal=0;
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(inside(x+.5,y+.5,points)){
    candidate++;const k=y*w+x,j=k*4;
    if(!foreground[k])continue;
-   if(isMarking&&Math.hypot(rgba[j]-swatch[0],rgba[j+1]-swatch[1],rgba[j+2]-swatch[2])>48)continue;
-   mask[k]=1;signal++;
+   baseMask[k]=1;baseSignal++;
+   const distance=Math.hypot(rgba[j]-colour[0],rgba[j+1]-colour[1],rgba[j+2]-colour[2]);
+   if(distance<=(isMarking?48:60)){colourMask[k]=1;colourSignal++;}
   }
+  // If the AI names a colour which is clearly present in a mixed-colour
+  // polygon, keep only those source pixels. Never pretend one colour region
+  // includes another. In monochrome art or an unreliable colour swatch, use
+  // the validated foreground outline instead, as the older path did.
+  const selectColour=isMarking||
+   (baseSignal>0&&colourSignal/baseSignal>=.22&&colourSignal/baseSignal<.96);
+  const mask=selectColour?colourMask:baseMask;
+  const signal=selectColour?colourSignal:baseSignal;
   if(candidate<40||signal<25||signal/candidate<(isMarking ? 0.03 : 0.15)){
    rejected.push({id:r.id,reason:isMarking?"marking_colour_not_supported_by_pixels":"fill_not_supported_by_pixels"});continue;
   }
@@ -235,7 +288,8 @@ function reconstruct(rgba,w,h,plan,opts={}){
   const contour=simplifyRing(boundary);
   if(contour.length<4||invalidPolygon(contour,120,4)){rejected.push({id:r.id,reason:"could_not_reconstruct_boundary"});continue;}
   regions.push({...base,points:contour,sourceSupport:cc.size/candidate,
-   pixelArea:cc.size,geometrySource:isMarking?"ai_polygon_intersected_with_colour_matched_artwork_pixels":"ai_polygon_intersected_with_artwork_pixels"});
+   pixelArea:cc.size,colourEvidence:Number((colourSignal/Math.max(1,baseSignal)).toFixed(3)),
+   geometrySource:selectColour?"ai_polygon_intersected_with_colour_matched_artwork_pixels":"ai_polygon_intersected_with_artwork_pixels"});
  }
  if(!regions.length)throw Error("AI reconstruction did not yield any supported regions; design unchanged");
  if(regions.length>128)throw Error("Too many reconstruction regions");
@@ -245,6 +299,6 @@ function reconstruct(rgba,w,h,plan,opts={}){
    "Colours are approximate and PES/DST export is not multi-colour validated.",
    "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified."]};
 }
-root.StitchForgeAutoReconstruct=Object.freeze({reconstruct});
-if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct};
+root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork});
+if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork};
 })(typeof window==="undefined"?globalThis:window);
