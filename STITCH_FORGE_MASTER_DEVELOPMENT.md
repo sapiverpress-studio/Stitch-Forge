@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.26 (isolated feature branch only) |
+| Document version | MD-2.27 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
 | Last independently checked source | 2026-10-28: native Docker/moth-logo-line fixture CI SUCCESS (40748895024); regression CI 66 tests / 3 optional skipped SUCCESS incl Cloud Run safety guards (40767768413). Cloud Run staging package PREPARED only; no Google Cloud service or physical stitch-out |
 | Default branch | `main` |
@@ -78,6 +78,11 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Current isolated-branch supplement (MD-2.27)
+
+VTracer 1.0.0a4, OpenCV and scikit-image now have actual local comparison results: 48 candidate/fixture rows, three traces each, with topology, colour, boundary, timing and peak-RSS evidence. VTracer WASM executed in desktop Chromium; physical Android remains untested. No tracing library integrated into the application. See `docs/VECTORISATION_EVALUATION_2026-10-29.md`; historical unavailable-library statements below remain dated history.
+
 
 ### 2.0 Current session supplement (MD-2.19; supersedes historical baseline limitations)
 
@@ -433,11 +438,16 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-055 | P0 | Prepare non-Railway hosting alternative | **STAGING PACKAGE PREPARED / NOT DEPLOYED** | Cloud Run dry-run-by-default build/deploy scripts, explicit billing and exact-dev-SHA guard; private Artifact Registry, scale-zero, 2GiB/2vCPU. GCP billing/permissions and actual hosted HTTPS acceptance remain blocked |
 
-**Next action order (MD-2.20):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
+| SF-056 | P1 | Measured local vectorisation/WASM comparison | DONE-VERIFIED ON SYNTHETIC FIXTURES | 48 rows × 3 traces, 8 fixtures, optional pinned dependencies; actual browser WASM; Android/real-wildlife acceptance still open |
+
+**Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
 ## 10. Test evidence register
+
+- **E-070 (2026-10-29, MD-2.27):** Original VTracer benchmark ran successfully. Extended 48-row matrix completed without errors; three repetitions per row; `docs/test-evidence/MD-2.27-vectorisation.json`. Browser WASM evidence `MD-2.27-wasm.json`. Synthetic pixel fidelity only, not machine/fabric evidence.
+
 
 | Evidence ID | Date | Source | Test performed | Result | Caveat |
 | --- | --- | --- | --- | --- | --- |
@@ -561,6 +571,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | 2026-10-28 | D-013 | Generalise every image path; never encode moth-specific feature requirements | User explicitly requires future-image applicability. No two-fill minimum or fixed wing/body prompt; diverse synthetic tests and incomplete-result blocking. |
 
 | 2026-10-28 | D-012 | Replace Railway proposal with guarded Cloud Run staging option | Existing 2GiB/2vCPU worker can scale to zero. No Google Cloud account, billing activation or provisioning without explicit authorisation. Public invoker route with worker-token protection alone is insufficient for release, and may incur charges under abuse. |
+
+- **2026-10-29 D-014:** Do not integrate a tracing library on availability alone. Retain current runtime; benchmark favours further investigation of quantised marching and tuned VTracer. WASM is technically feasible but real Android/worker profiling is still required. No cloud deployment or additional service.
 
 ### Decision-record template
 
@@ -985,6 +997,15 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - **VTracer was not installed or benchmarked**: package index DNS failed and attempted direct download of the published `vtracer-1.0.0a4` wheel failed. Do not report actual VTracer performance from this run. VTracer API/availability/licence researched using PyPI/GitHub docs. Its benchmark branch is ready to run without a paid model or hosted change when a trusted wheel is obtainable.
 - All results, limitations, reproducibility commands, safety and cost gates logged in `docs/VECTORISATION_BASELINE_2026-10-29.md`. No OpenAI/Cloud Run/Netlify chargeable requests made, no subscriptions, **no Netlify deployment or PR**, no modification to deploy-linked `develop/stitch-engine-foundation` or production `main`.
 - **Next decisions:** Benchmark VTracer truly on same synthetic inputs, then evaluate memory/cold-start and fine detail on Android before considering local WASM use. Even if vectorization is excellent, professional stitch planning and physical validation remain separate gates.
+
+### 2026-10-29 — Actual VTracer/scikit-image comparison and browser WASM (MD-2.27)
+
+- Branch: only `feature/detailed-embroidery-analysis-no-deploy`, starting at `463851176b3dd9f5c8183380e6cc8e09e8a54989`; no PR change.
+- Added extended benchmark, optional dependency pins, metric regression tests, reproducible WASM evaluation harness and raw JSON results. Original benchmark remains intact.
+- Actual VTracer installed from package registry; official upstream package references verified. OpenCV oracle, VTracer baseline/detail, scikit-image oracle, quantised marching and Felzenszwalb executed on eight synthetic fixtures. All 48 rows completed, 144 traces. No invented real-wildlife result.
+- Browser WASM module 668,378 bytes; desktop Chromium evaluation at four resolutions. Node-target loader adapted only inside test harness; not a production browser integration.
+- See `docs/VECTORISATION_EVALUATION_2026-10-29.md` for exact results, parameters, limitations and commands.
+- Deployment/charges: none. No hosted tests, new subscriptions or model calls. Feature branch has no open PR. Existing draft PR #1 still targets the integration branch and is not modified.
 
 ### Entry template — REQUIRED on every meaningful development update
 

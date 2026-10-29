@@ -1,0 +1,3782 @@
+{
+  "environment": {
+    "vtracer": "1.0.0a4",
+    "scikit-image": "0.26.0",
+    "opencv-python-headless": "5.0.0.93",
+    "numpy": "2.3.5",
+    "Pillow": "12.3.0",
+    "CairoSVG": "2.9.1"
+  },
+  "python": "3.12.14",
+  "warning": "Synthetic 256px fixtures only. Oracle methods receive exact palette. RSS includes imports, not browser memory. Shaded wildlife is a procedural proxy, not realistic wildlife acceptance.",
+  "rows": [
+    {
+      "output_sha256": [
+        "63b770e0f3f99225d4c895aaffbfdbb3ce19fa3d251423f0351b943bfefff5e9",
+        "63b770e0f3f99225d4c895aaffbfdbb3ce19fa3d251423f0351b943bfefff5e9",
+        "63b770e0f3f99225d4c895aaffbfdbb3ce19fa3d251423f0351b943bfefff5e9"
+      ],
+      "repeat_macro_iou_range": [
+        0.92646,
+        0.92646
+      ],
+      "fixture": "logo",
+      "engine": "opencv_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        11.871075000044584,
+        10.469046999901366,
+        9.762905999991744
+      ],
+      "median_trace_ms": 10.47,
+      "process_peak_rss_mib": 78.24,
+      "boundary_mean_px": 28.4616,
+      "boundary_p95_px": 72.0,
+      "macro_colour_iou": 0.92646,
+      "foreground_iou": 0.96944,
+      "false_foreground_pixels": 13,
+      "missing_foreground_pixels": 1073,
+      "rgb_mae": 3.023,
+      "per_colour": [
+        {
+          "colour": "navy",
+          "iou": 0.96155,
+          "missing_pixels": 723,
+          "false_pixels": 9,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.96518,
+          "missing_pixels": 352,
+          "false_pixels": 62,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 0.85942,
+          "missing_pixels": 198,
+          "false_pixels": 111,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            60,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.91969,
+          "missing_pixels": 93,
+          "false_pixels": 124,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            98,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 1658,
+      "paths": 6
+    },
+    {
+      "output_sha256": [
+        "f13d368cae6e587fb7163ea2e7b65b06af634aab6531478a1c770eb1ae126f44",
+        "f13d368cae6e587fb7163ea2e7b65b06af634aab6531478a1c770eb1ae126f44",
+        "f13d368cae6e587fb7163ea2e7b65b06af634aab6531478a1c770eb1ae126f44"
+      ],
+      "repeat_macro_iou_range": [
+        0.96628,
+        0.96628
+      ],
+      "fixture": "logo",
+      "engine": "vtracer_baseline",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        13.680504000035398,
+        11.392686000021968,
+        13.14491999994516
+      ],
+      "median_trace_ms": 13.14,
+      "process_peak_rss_mib": 66.94,
+      "boundary_mean_px": 0.3178,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.96628,
+      "foreground_iou": 0.99958,
+      "false_foreground_pixels": 9,
+      "missing_foreground_pixels": 6,
+      "rgb_mae": 0.616,
+      "per_colour": [
+        {
+          "colour": "navy",
+          "iou": 0.98939,
+          "missing_pixels": 199,
+          "false_pixels": 3,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.98967,
+          "missing_pixels": 46,
+          "false_pixels": 77,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 0.95236,
+          "missing_pixels": 28,
+          "false_pixels": 75,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            20,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.93368,
+          "missing_pixels": 30,
+          "false_pixels": 151,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            133,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 2181,
+      "paths": 7
+    },
+    {
+      "output_sha256": [
+        "f13d368cae6e587fb7163ea2e7b65b06af634aab6531478a1c770eb1ae126f44",
+        "f13d368cae6e587fb7163ea2e7b65b06af634aab6531478a1c770eb1ae126f44",
+        "f13d368cae6e587fb7163ea2e7b65b06af634aab6531478a1c770eb1ae126f44"
+      ],
+      "repeat_macro_iou_range": [
+        0.96628,
+        0.96628
+      ],
+      "fixture": "logo",
+      "engine": "vtracer_detail",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        13.843227000052138,
+        11.545164000040131,
+        12.311886000020422
+      ],
+      "median_trace_ms": 12.31,
+      "process_peak_rss_mib": 67.16,
+      "boundary_mean_px": 0.3178,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.96628,
+      "foreground_iou": 0.99958,
+      "false_foreground_pixels": 9,
+      "missing_foreground_pixels": 6,
+      "rgb_mae": 0.616,
+      "per_colour": [
+        {
+          "colour": "navy",
+          "iou": 0.98939,
+          "missing_pixels": 199,
+          "false_pixels": 3,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.98967,
+          "missing_pixels": 46,
+          "false_pixels": 77,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 0.95236,
+          "missing_pixels": 28,
+          "false_pixels": 75,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            20,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.93368,
+          "missing_pixels": 30,
+          "false_pixels": 151,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            133,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 2181,
+      "paths": 7
+    },
+    {
+      "output_sha256": [
+        "ca4da272b4dcf2f4b684489431d5898360c58475a7e59be74b51c632023de70f",
+        "ca4da272b4dcf2f4b684489431d5898360c58475a7e59be74b51c632023de70f",
+        "ca4da272b4dcf2f4b684489431d5898360c58475a7e59be74b51c632023de70f"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "logo",
+      "engine": "skimage_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        616.6636859999244,
+        67.47323900003721,
+        61.49030500000663
+      ],
+      "median_trace_ms": 67.47,
+      "process_peak_rss_mib": 125.73,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.321,
+      "per_colour": [
+        {
+          "colour": "navy",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 13709,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "ca4da272b4dcf2f4b684489431d5898360c58475a7e59be74b51c632023de70f",
+        "ca4da272b4dcf2f4b684489431d5898360c58475a7e59be74b51c632023de70f",
+        "ca4da272b4dcf2f4b684489431d5898360c58475a7e59be74b51c632023de70f"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "logo",
+      "engine": "quantized_marching",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        639.9766439999439,
+        59.92166900000484,
+        59.032401999957074
+      ],
+      "median_trace_ms": 59.92,
+      "process_peak_rss_mib": 121.47,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.321,
+      "per_colour": [
+        {
+          "colour": "navy",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 13709,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "40cffa0d9d67c4f0017ee124b379355c5ef04d1865ff5bf4b9118bd0976082ab",
+        "40cffa0d9d67c4f0017ee124b379355c5ef04d1865ff5bf4b9118bd0976082ab",
+        "40cffa0d9d67c4f0017ee124b379355c5ef04d1865ff5bf4b9118bd0976082ab"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "logo",
+      "engine": "skimage_felzenszwalb",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        742.8601609999532,
+        188.70162700000037,
+        204.11004699997193
+      ],
+      "median_trace_ms": 204.11,
+      "process_peak_rss_mib": 143.61,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.321,
+      "per_colour": [
+        {
+          "colour": "navy",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 13801,
+      "paths": 6
+    },
+    {
+      "output_sha256": [
+        "b3259b93455784cfcfc46765709845a176eaf905b458b5f7376974c898ab04a5",
+        "b3259b93455784cfcfc46765709845a176eaf905b458b5f7376974c898ab04a5",
+        "b3259b93455784cfcfc46765709845a176eaf905b458b5f7376974c898ab04a5"
+      ],
+      "repeat_macro_iou_range": [
+        0.91051,
+        0.91051
+      ],
+      "fixture": "botanical",
+      "engine": "opencv_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        12.6594280000063,
+        11.11302499998601,
+        10.139850999962619
+      ],
+      "median_trace_ms": 11.11,
+      "process_peak_rss_mib": 75.21,
+      "boundary_mean_px": 4.231,
+      "boundary_p95_px": 24.9845,
+      "macro_colour_iou": 0.91051,
+      "foreground_iou": 0.9618,
+      "false_foreground_pixels": 97,
+      "missing_foreground_pixels": 742,
+      "rgb_mae": 1.876,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.96708,
+          "missing_pixels": 496,
+          "false_pixels": 53,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 0.91804,
+          "missing_pixels": 131,
+          "false_pixels": 93,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            33,
+            9
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.90546,
+          "missing_pixels": 175,
+          "false_pixels": 50,
+          "source_topology": [
+            2,
+            0
+          ],
+          "output_topology": [
+            13,
+            0
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.85145,
+          "missing_pixels": 40,
+          "false_pixels": 1,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 1915,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "be567250d4293d77a43962a7863e7f995c475f6ef665fedd1f1093a3e3b0494f",
+        "be567250d4293d77a43962a7863e7f995c475f6ef665fedd1f1093a3e3b0494f",
+        "be567250d4293d77a43962a7863e7f995c475f6ef665fedd1f1093a3e3b0494f"
+      ],
+      "repeat_macro_iou_range": [
+        0.70702,
+        0.70702
+      ],
+      "fixture": "botanical",
+      "engine": "vtracer_baseline",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        12.68860200002564,
+        10.690648000036163,
+        10.949158000016723
+      ],
+      "median_trace_ms": 10.95,
+      "process_peak_rss_mib": 66.6,
+      "boundary_mean_px": 0.2053,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.70702,
+      "foreground_iou": 0.99285,
+      "false_foreground_pixels": 75,
+      "missing_foreground_pixels": 82,
+      "rgb_mae": 1.053,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.98867,
+          "missing_pixels": 137,
+          "false_pixels": 52,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 0.9676,
+          "missing_pixels": 12,
+          "false_pixels": 76,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            27,
+            1
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.87179,
+          "missing_pixels": 25,
+          "false_pixels": 314,
+          "source_topology": [
+            2,
+            0
+          ],
+          "output_topology": [
+            2,
+            0
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.0,
+          "missing_pixels": 275,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            0,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 2456,
+      "paths": 7
+    },
+    {
+      "output_sha256": [
+        "f5c64ab8513e0f1562eb9b9a7aa38f3f0564c4c4123dfd02f3817f7fac25ccdb",
+        "f5c64ab8513e0f1562eb9b9a7aa38f3f0564c4c4123dfd02f3817f7fac25ccdb",
+        "f5c64ab8513e0f1562eb9b9a7aa38f3f0564c4c4123dfd02f3817f7fac25ccdb"
+      ],
+      "repeat_macro_iou_range": [
+        0.96004,
+        0.96004
+      ],
+      "fixture": "botanical",
+      "engine": "vtracer_detail",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        11.167915999976685,
+        10.723557999995137,
+        10.330919000011818
+      ],
+      "median_trace_ms": 10.72,
+      "process_peak_rss_mib": 69.55,
+      "boundary_mean_px": 0.2099,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.96004,
+      "foreground_iou": 0.99262,
+      "false_foreground_pixels": 79,
+      "missing_foreground_pixels": 83,
+      "rgb_mae": 0.681,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.98825,
+          "missing_pixels": 136,
+          "false_pixels": 60,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            7,
+            1
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 0.96468,
+          "missing_pixels": 18,
+          "false_pixels": 78,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            32,
+            1
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.9636,
+          "missing_pixels": 27,
+          "false_pixels": 60,
+          "source_topology": [
+            2,
+            0
+          ],
+          "output_topology": [
+            16,
+            0
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.92364,
+          "missing_pixels": 21,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 2581,
+      "paths": 9
+    },
+    {
+      "output_sha256": [
+        "8ff23dbb8708b68c19794589823fc20a95e18ec61aa937754ded3ab76d930d79",
+        "8ff23dbb8708b68c19794589823fc20a95e18ec61aa937754ded3ab76d930d79",
+        "8ff23dbb8708b68c19794589823fc20a95e18ec61aa937754ded3ab76d930d79"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "botanical",
+      "engine": "skimage_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        612.3891739999863,
+        54.49412999996639,
+        51.24311400004444
+      ],
+      "median_trace_ms": 54.49,
+      "process_peak_rss_mib": 125.56,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.261,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            2,
+            0
+          ],
+          "output_topology": [
+            2,
+            0
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 11376,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "5dd3261ea97b21f7c084a256195ea6ea05dcfa2d66011e466739e762bb9cd508",
+        "5dd3261ea97b21f7c084a256195ea6ea05dcfa2d66011e466739e762bb9cd508",
+        "5dd3261ea97b21f7c084a256195ea6ea05dcfa2d66011e466739e762bb9cd508"
+      ],
+      "repeat_macro_iou_range": [
+        0.97462,
+        0.97462
+      ],
+      "fixture": "botanical",
+      "engine": "quantized_marching",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        616.4589600000454,
+        41.5895509999018,
+        42.249904000073
+      ],
+      "median_trace_ms": 42.25,
+      "process_peak_rss_mib": 118.95,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.97462,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.261,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.98938,
+          "missing_pixels": 0,
+          "false_pixels": 25,
+          "source_topology": [
+            2,
+            0
+          ],
+          "output_topology": [
+            14,
+            0
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.90909,
+          "missing_pixels": 25,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 11376,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "d92319320c212722abf77d6bf4c5741314336247bd8f78220e9f45241c27110c",
+        "d92319320c212722abf77d6bf4c5741314336247bd8f78220e9f45241c27110c",
+        "d92319320c212722abf77d6bf4c5741314336247bd8f78220e9f45241c27110c"
+      ],
+      "repeat_macro_iou_range": [
+        0.99956,
+        0.99956
+      ],
+      "fixture": "botanical",
+      "engine": "skimage_felzenszwalb",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        738.06407699999,
+        172.88111199991363,
+        168.62222099996416
+      ],
+      "median_trace_ms": 172.88,
+      "process_peak_rss_mib": 143.45,
+      "boundary_mean_px": 0.0606,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.99956,
+      "foreground_iou": 0.99991,
+      "false_foreground_pixels": 2,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.264,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.99988,
+          "missing_pixels": 0,
+          "false_pixels": 2,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 0.99924,
+          "missing_pixels": 0,
+          "false_pixels": 2,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.99914,
+          "missing_pixels": 2,
+          "false_pixels": 0,
+          "source_topology": [
+            2,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 11342,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "03a60e31f0ed246ebd7c61e6d23c90d321f58067399e74cb9f7999d9805c7f69",
+        "03a60e31f0ed246ebd7c61e6d23c90d321f58067399e74cb9f7999d9805c7f69",
+        "03a60e31f0ed246ebd7c61e6d23c90d321f58067399e74cb9f7999d9805c7f69"
+      ],
+      "repeat_macro_iou_range": [
+        0.6989,
+        0.6989
+      ],
+      "fixture": "bird",
+      "engine": "opencv_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        13.970948000064709,
+        12.745147000032375,
+        11.769018999984837
+      ],
+      "median_trace_ms": 12.75,
+      "process_peak_rss_mib": 79.9,
+      "boundary_mean_px": 6.4454,
+      "boundary_p95_px": 29.2632,
+      "macro_colour_iou": 0.6989,
+      "foreground_iou": 0.94128,
+      "false_foreground_pixels": 75,
+      "missing_foreground_pixels": 1068,
+      "rgb_mae": 3.338,
+      "per_colour": [
+        {
+          "colour": "orange",
+          "iou": 0.96179,
+          "missing_pixels": 291,
+          "false_pixels": 25,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 0.94906,
+          "missing_pixels": 311,
+          "false_pixels": 8,
+          "source_topology": [
+            2,
+            1
+          ],
+          "output_topology": [
+            2,
+            1
+          ]
+        },
+        {
+          "colour": "teal",
+          "iou": 0.80688,
+          "missing_pixels": 151,
+          "false_pixels": 304,
+          "source_topology": [
+            1,
+            50
+          ],
+          "output_topology": [
+            115,
+            34
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.0,
+          "missing_pixels": 130,
+          "false_pixels": 158,
+          "source_topology": [
+            5,
+            0
+          ],
+          "output_topology": [
+            45,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.77675,
+          "missing_pixels": 605,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 3877,
+      "paths": 7
+    },
+    {
+      "output_sha256": [
+        "cc3e9009899f328eed478dfd1c85c4dba4302838fdadbdc1edb68395f2235af1",
+        "cc3e9009899f328eed478dfd1c85c4dba4302838fdadbdc1edb68395f2235af1",
+        "cc3e9009899f328eed478dfd1c85c4dba4302838fdadbdc1edb68395f2235af1"
+      ],
+      "repeat_macro_iou_range": [
+        0.34581,
+        0.34581
+      ],
+      "fixture": "bird",
+      "engine": "vtracer_baseline",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        13.223290000041743,
+        11.160252999957265,
+        11.033068000074309
+      ],
+      "median_trace_ms": 11.16,
+      "process_peak_rss_mib": 66.74,
+      "boundary_mean_px": 0.1089,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.34581,
+      "foreground_iou": 0.99219,
+      "false_foreground_pixels": 64,
+      "missing_foreground_pixels": 88,
+      "rgb_mae": 3.341,
+      "per_colour": [
+        {
+          "colour": "orange",
+          "iou": 0.98664,
+          "missing_pixels": 49,
+          "false_pixels": 62,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 0.73264,
+          "missing_pixels": 102,
+          "false_pixels": 2143,
+          "source_topology": [
+            2,
+            1
+          ],
+          "output_topology": [
+            2,
+            2
+          ]
+        },
+        {
+          "colour": "teal",
+          "iou": 0.00976,
+          "missing_pixels": 2030,
+          "false_pixels": 203,
+          "source_topology": [
+            1,
+            50
+          ],
+          "output_topology": [
+            158,
+            0
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.0,
+          "missing_pixels": 130,
+          "false_pixels": 2589,
+          "source_topology": [
+            5,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.0,
+          "missing_pixels": 2710,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            0,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 2700,
+      "paths": 9
+    },
+    {
+      "output_sha256": [
+        "f72f768265353486b348ac59ebe475e5c6a743c1cd232d4d3aaabed0a22c0616",
+        "f72f768265353486b348ac59ebe475e5c6a743c1cd232d4d3aaabed0a22c0616",
+        "f72f768265353486b348ac59ebe475e5c6a743c1cd232d4d3aaabed0a22c0616"
+      ],
+      "repeat_macro_iou_range": [
+        0.7578,
+        0.7578
+      ],
+      "fixture": "bird",
+      "engine": "vtracer_detail",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        11.859154000035232,
+        10.987573999955202,
+        11.886810999953923
+      ],
+      "median_trace_ms": 11.86,
+      "process_peak_rss_mib": 69.64,
+      "boundary_mean_px": 0.1097,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.7578,
+      "foreground_iou": 0.99214,
+      "false_foreground_pixels": 71,
+      "missing_foreground_pixels": 82,
+      "rgb_mae": 0.929,
+      "per_colour": [
+        {
+          "colour": "orange",
+          "iou": 0.98685,
+          "missing_pixels": 65,
+          "false_pixels": 44,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 0.97974,
+          "missing_pixels": 111,
+          "false_pixels": 16,
+          "source_topology": [
+            2,
+            1
+          ],
+          "output_topology": [
+            2,
+            1
+          ]
+        },
+        {
+          "colour": "teal",
+          "iou": 0.87032,
+          "missing_pixels": 5,
+          "false_pixels": 300,
+          "source_topology": [
+            1,
+            50
+          ],
+          "output_topology": [
+            95,
+            0
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.0,
+          "missing_pixels": 130,
+          "false_pixels": 64,
+          "source_topology": [
+            5,
+            0
+          ],
+          "output_topology": [
+            53,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.95208,
+          "missing_pixels": 127,
+          "false_pixels": 3,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 3721,
+      "paths": 15
+    },
+    {
+      "output_sha256": [
+        "e49d91016f6d5a72074f0e4be9c6223263150f087afe92b4e497864976b97c91",
+        "e49d91016f6d5a72074f0e4be9c6223263150f087afe92b4e497864976b97c91",
+        "e49d91016f6d5a72074f0e4be9c6223263150f087afe92b4e497864976b97c91"
+      ],
+      "repeat_macro_iou_range": [
+        0.90738,
+        0.90738
+      ],
+      "fixture": "bird",
+      "engine": "skimage_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        620.1008440000351,
+        80.26747299993531,
+        79.37045499988926
+      ],
+      "median_trace_ms": 80.27,
+      "process_peak_rss_mib": 126.91,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.90738,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.376,
+      "per_colour": [
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            2,
+            1
+          ],
+          "output_topology": [
+            2,
+            1
+          ]
+        },
+        {
+          "colour": "teal",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            50
+          ],
+          "output_topology": [
+            1,
+            50
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.57269,
+          "missing_pixels": 0,
+          "false_pixels": 97,
+          "source_topology": [
+            5,
+            0
+          ],
+          "output_topology": [
+            81,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.96421,
+          "missing_pixels": 97,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 21946,
+      "paths": 5
+    },
+    {
+      "output_sha256": [
+        "24436ecc23aded4a519516e24d1a90c613f33d7c241328bd623bcaeeeac7e3f2",
+        "24436ecc23aded4a519516e24d1a90c613f33d7c241328bd623bcaeeeac7e3f2",
+        "24436ecc23aded4a519516e24d1a90c613f33d7c241328bd623bcaeeeac7e3f2"
+      ],
+      "repeat_macro_iou_range": [
+        0.91154,
+        0.91154
+      ],
+      "fixture": "bird",
+      "engine": "quantized_marching",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        639.2825579999908,
+        75.7427020000705,
+        79.39334999991843
+      ],
+      "median_trace_ms": 79.39,
+      "process_peak_rss_mib": 121.28,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.91154,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.379,
+      "per_colour": [
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            2,
+            1
+          ],
+          "output_topology": [
+            2,
+            1
+          ]
+        },
+        {
+          "colour": "teal",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            50
+          ],
+          "output_topology": [
+            1,
+            50
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.59091,
+          "missing_pixels": 0,
+          "false_pixels": 90,
+          "source_topology": [
+            5,
+            0
+          ],
+          "output_topology": [
+            78,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.96679,
+          "missing_pixels": 90,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 21946,
+      "paths": 5
+    },
+    {
+      "output_sha256": [
+        "4c9d44b6d7cfe6dce1699be47bc9d352af338fd750ecf1b869b7d76d9658ff35",
+        "4c9d44b6d7cfe6dce1699be47bc9d352af338fd750ecf1b869b7d76d9658ff35",
+        "4c9d44b6d7cfe6dce1699be47bc9d352af338fd750ecf1b869b7d76d9658ff35"
+      ],
+      "repeat_macro_iou_range": [
+        0.90738,
+        0.90738
+      ],
+      "fixture": "bird",
+      "engine": "skimage_felzenszwalb",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        742.946446000019,
+        165.38711199996214,
+        163.20701000006466
+      ],
+      "median_trace_ms": 165.39,
+      "process_peak_rss_mib": 141.3,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.90738,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.375,
+      "per_colour": [
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            2,
+            1
+          ],
+          "output_topology": [
+            2,
+            1
+          ]
+        },
+        {
+          "colour": "teal",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            50
+          ],
+          "output_topology": [
+            1,
+            50
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.57269,
+          "missing_pixels": 0,
+          "false_pixels": 97,
+          "source_topology": [
+            5,
+            0
+          ],
+          "output_topology": [
+            81,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.96421,
+          "missing_pixels": 97,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 22268,
+      "paths": 12
+    },
+    {
+      "output_sha256": [
+        "7ec22ca6e3278ad173e2932d13f23a67fa92211c618147cc668679ac00308d7e",
+        "7ec22ca6e3278ad173e2932d13f23a67fa92211c618147cc668679ac00308d7e",
+        "7ec22ca6e3278ad173e2932d13f23a67fa92211c618147cc668679ac00308d7e"
+      ],
+      "repeat_macro_iou_range": [
+        0.78092,
+        0.78092
+      ],
+      "fixture": "fine_detail",
+      "engine": "opencv_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        15.862965000110307,
+        12.767111999892222,
+        15.854753999974491
+      ],
+      "median_trace_ms": 15.85,
+      "process_peak_rss_mib": 79.61,
+      "boundary_mean_px": 30.9272,
+      "boundary_p95_px": 71.0,
+      "macro_colour_iou": 0.78092,
+      "foreground_iou": 0.86064,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 5433,
+      "rgb_mae": 10.994,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.89734,
+          "missing_pixels": 2883,
+          "false_pixels": 30,
+          "source_topology": [
+            1,
+            8
+          ],
+          "output_topology": [
+            1,
+            8
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 0.64842,
+          "missing_pixels": 1284,
+          "false_pixels": 65,
+          "source_topology": [
+            12,
+            0
+          ],
+          "output_topology": [
+            29,
+            0
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.64096,
+          "missing_pixels": 1192,
+          "false_pixels": 0,
+          "source_topology": [
+            10,
+            0
+          ],
+          "output_topology": [
+            10,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.95001,
+          "missing_pixels": 150,
+          "false_pixels": 20,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            2,
+            3
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.76786,
+          "missing_pixels": 39,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 3866,
+      "paths": 25
+    },
+    {
+      "output_sha256": [
+        "8fc14ac08b0fb4c1b8dc22e40a06f3126141e3f2bc1f58c3ccec90d3e929bf2a",
+        "8fc14ac08b0fb4c1b8dc22e40a06f3126141e3f2bc1f58c3ccec90d3e929bf2a",
+        "8fc14ac08b0fb4c1b8dc22e40a06f3126141e3f2bc1f58c3ccec90d3e929bf2a"
+      ],
+      "repeat_macro_iou_range": [
+        0.97275,
+        0.97275
+      ],
+      "fixture": "fine_detail",
+      "engine": "vtracer_baseline",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        15.583064999987073,
+        13.281306000067161,
+        13.756389000036506
+      ],
+      "median_trace_ms": 13.76,
+      "process_peak_rss_mib": 67.43,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.97275,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.949,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.99894,
+          "missing_pixels": 0,
+          "false_pixels": 30,
+          "source_topology": [
+            1,
+            8
+          ],
+          "output_topology": [
+            1,
+            8
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 0.99576,
+          "missing_pixels": 16,
+          "false_pixels": 0,
+          "source_topology": [
+            12,
+            0
+          ],
+          "output_topology": [
+            12,
+            0
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.99488,
+          "missing_pixels": 14,
+          "false_pixels": 3,
+          "source_topology": [
+            10,
+            0
+          ],
+          "output_topology": [
+            10,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.99324,
+          "missing_pixels": 3,
+          "false_pixels": 20,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.88095,
+          "missing_pixels": 20,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 2268,
+      "paths": 26
+    },
+    {
+      "output_sha256": [
+        "2ca4bdbf33162c1375cdfce2f008600f74a642e7d40986adf9808c1243ab0fba",
+        "2ca4bdbf33162c1375cdfce2f008600f74a642e7d40986adf9808c1243ab0fba",
+        "2ca4bdbf33162c1375cdfce2f008600f74a642e7d40986adf9808c1243ab0fba"
+      ],
+      "repeat_macro_iou_range": [
+        0.97275,
+        0.97275
+      ],
+      "fixture": "fine_detail",
+      "engine": "vtracer_detail",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        14.742255999976805,
+        17.90824199997587,
+        14.172629999961828
+      ],
+      "median_trace_ms": 14.74,
+      "process_peak_rss_mib": 67.56,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.97275,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.09,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.99894,
+          "missing_pixels": 0,
+          "false_pixels": 30,
+          "source_topology": [
+            1,
+            8
+          ],
+          "output_topology": [
+            1,
+            8
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 0.99576,
+          "missing_pixels": 16,
+          "false_pixels": 0,
+          "source_topology": [
+            12,
+            0
+          ],
+          "output_topology": [
+            12,
+            0
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.99488,
+          "missing_pixels": 14,
+          "false_pixels": 3,
+          "source_topology": [
+            10,
+            0
+          ],
+          "output_topology": [
+            10,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 0.99324,
+          "missing_pixels": 3,
+          "false_pixels": 20,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.88095,
+          "missing_pixels": 20,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 2268,
+      "paths": 26
+    },
+    {
+      "output_sha256": [
+        "f19cc9c5446604254979f20dc35b718a672b5b9087a11d3f779a3b9eada983df",
+        "f19cc9c5446604254979f20dc35b718a672b5b9087a11d3f779a3b9eada983df",
+        "f19cc9c5446604254979f20dc35b718a672b5b9087a11d3f779a3b9eada983df"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "fine_detail",
+      "engine": "skimage_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        589.6401219999916,
+        40.45646299994132,
+        38.766605999967396
+      ],
+      "median_trace_ms": 40.46,
+      "process_peak_rss_mib": 128.12,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.078,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            8
+          ],
+          "output_topology": [
+            1,
+            8
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            12,
+            0
+          ],
+          "output_topology": [
+            12,
+            0
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            10,
+            0
+          ],
+          "output_topology": [
+            10,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 6796,
+      "paths": 5
+    },
+    {
+      "output_sha256": [
+        "b5c903253ef214a5205ba4f96f1aeb2694ca9ff0bd1fba3546ada80156b57660",
+        "b5c903253ef214a5205ba4f96f1aeb2694ca9ff0bd1fba3546ada80156b57660",
+        "b5c903253ef214a5205ba4f96f1aeb2694ca9ff0bd1fba3546ada80156b57660"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "fine_detail",
+      "engine": "quantized_marching",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        598.998531999996,
+        29.185512000026392,
+        29.957752999962395
+      ],
+      "median_trace_ms": 29.96,
+      "process_peak_rss_mib": 120.34,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.085,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            8
+          ],
+          "output_topology": [
+            1,
+            8
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            12,
+            0
+          ],
+          "output_topology": [
+            12,
+            0
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            10,
+            0
+          ],
+          "output_topology": [
+            10,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 6796,
+      "paths": 5
+    },
+    {
+      "output_sha256": [
+        "99d832421d5f23d963ab869123775cc4f022db207441029a85b2d5c9c4c5f2ac",
+        "99d832421d5f23d963ab869123775cc4f022db207441029a85b2d5c9c4c5f2ac",
+        "99d832421d5f23d963ab869123775cc4f022db207441029a85b2d5c9c4c5f2ac"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "fine_detail",
+      "engine": "skimage_felzenszwalb",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        704.9917189999633,
+        142.04702100005306,
+        144.72753999996257
+      ],
+      "median_trace_ms": 144.73,
+      "process_peak_rss_mib": 144.56,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.078,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            8
+          ],
+          "output_topology": [
+            1,
+            8
+          ]
+        },
+        {
+          "colour": "yellow",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            12,
+            0
+          ],
+          "output_topology": [
+            12,
+            0
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            10,
+            0
+          ],
+          "output_topology": [
+            10,
+            0
+          ]
+        },
+        {
+          "colour": "green",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 7716,
+      "paths": 25
+    },
+    {
+      "output_sha256": [
+        "9524b17709aceda14b67b236be3d63b8ec9c59f99e4a22ce915b9babe370ded4",
+        "9524b17709aceda14b67b236be3d63b8ec9c59f99e4a22ce915b9babe370ded4",
+        "9524b17709aceda14b67b236be3d63b8ec9c59f99e4a22ce915b9babe370ded4"
+      ],
+      "repeat_macro_iou_range": [
+        0.9665,
+        0.9665
+      ],
+      "fixture": "complex_background",
+      "engine": "opencv_oracle",
+      "expected_background_safe": false,
+      "preflight_rejects": true,
+      "trace_ms": [
+        4.820484999982,
+        4.441887999973915,
+        4.770840999981374
+      ],
+      "median_trace_ms": 4.77,
+      "process_peak_rss_mib": 71.25,
+      "boundary_mean_px": 0.614,
+      "boundary_p95_px": 1.4,
+      "macro_colour_iou": 0.9665,
+      "foreground_iou": 0.9665,
+      "false_foreground_pixels": 157,
+      "missing_foreground_pixels": 1040,
+      "rgb_mae": 60.314,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.9665,
+          "missing_pixels": 1040,
+          "false_pixels": 157,
+          "source_topology": [
+            11,
+            15
+          ],
+          "output_topology": [
+            11,
+            13
+          ]
+        }
+      ],
+      "svg_bytes": 3170,
+      "paths": 11
+    },
+    {
+      "output_sha256": [
+        "e7b50565063d06457fac4969b2a6041f195a8d427e038e503279f13d2955134b",
+        "e7b50565063d06457fac4969b2a6041f195a8d427e038e503279f13d2955134b",
+        "e7b50565063d06457fac4969b2a6041f195a8d427e038e503279f13d2955134b"
+      ],
+      "repeat_macro_iou_range": [
+        0.84956,
+        0.84956
+      ],
+      "fixture": "complex_background",
+      "engine": "vtracer_baseline",
+      "expected_background_safe": false,
+      "preflight_rejects": true,
+      "trace_ms": [
+        28.034500999979173,
+        26.64937800000189,
+        26.600475000009283
+      ],
+      "median_trace_ms": 26.65,
+      "process_peak_rss_mib": 71.79,
+      "boundary_mean_px": 7.5706,
+      "boundary_p95_px": 34.1659,
+      "macro_colour_iou": 0.84956,
+      "foreground_iou": 0.84956,
+      "false_foreground_pixels": 1464,
+      "missing_foreground_pixels": 4108,
+      "rgb_mae": 31.438,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.84956,
+          "missing_pixels": 4108,
+          "false_pixels": 1464,
+          "source_topology": [
+            11,
+            15
+          ],
+          "output_topology": [
+            4,
+            13
+          ]
+        }
+      ],
+      "svg_bytes": 5370,
+      "paths": 23
+    },
+    {
+      "output_sha256": [
+        "41ebc0a479362da71d3b89be895d67a55bdcae29d3f21ffdc33c361a1d9f59ea",
+        "41ebc0a479362da71d3b89be895d67a55bdcae29d3f21ffdc33c361a1d9f59ea",
+        "41ebc0a479362da71d3b89be895d67a55bdcae29d3f21ffdc33c361a1d9f59ea"
+      ],
+      "repeat_macro_iou_range": [
+        0.58679,
+        0.58679
+      ],
+      "fixture": "complex_background",
+      "engine": "vtracer_detail",
+      "expected_background_safe": false,
+      "preflight_rejects": true,
+      "trace_ms": [
+        146.25538099994628,
+        144.06292099999973,
+        140.13660000000527
+      ],
+      "median_trace_ms": 144.06,
+      "process_peak_rss_mib": 84.82,
+      "boundary_mean_px": 13.616,
+      "boundary_p95_px": 45.9736,
+      "macro_colour_iou": 0.58679,
+      "foreground_iou": 0.58679,
+      "false_foreground_pixels": 1858,
+      "missing_foreground_pixels": 13609,
+      "rgb_mae": 23.629,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.58679,
+          "missing_pixels": 13609,
+          "false_pixels": 1858,
+          "source_topology": [
+            11,
+            15
+          ],
+          "output_topology": [
+            140,
+            466
+          ]
+        }
+      ],
+      "svg_bytes": 49533,
+      "paths": 709
+    },
+    {
+      "output_sha256": [
+        "b0ffda0afd965ca0d8ae6147a5ced859d751a7c2d7d23ca0925a401cae2a29e8",
+        "b0ffda0afd965ca0d8ae6147a5ced859d751a7c2d7d23ca0925a401cae2a29e8",
+        "b0ffda0afd965ca0d8ae6147a5ced859d751a7c2d7d23ca0925a401cae2a29e8"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "complex_background",
+      "engine": "skimage_oracle",
+      "expected_background_safe": false,
+      "preflight_rejects": true,
+      "trace_ms": [
+        657.16660399994,
+        54.10742300000493,
+        51.273443000013685
+      ],
+      "median_trace_ms": 54.11,
+      "process_peak_rss_mib": 122.27,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 60.244,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            11,
+            15
+          ],
+          "output_topology": [
+            11,
+            15
+          ]
+        }
+      ],
+      "svg_bytes": 13035,
+      "paths": 1
+    },
+    {
+      "output_sha256": [
+        "793a0b9c6630596bebd868b1600f3337c516bdbf8d126a5f418d85febf7de3ce",
+        "793a0b9c6630596bebd868b1600f3337c516bdbf8d126a5f418d85febf7de3ce",
+        "793a0b9c6630596bebd868b1600f3337c516bdbf8d126a5f418d85febf7de3ce"
+      ],
+      "repeat_macro_iou_range": [
+        0.76525,
+        0.76525
+      ],
+      "fixture": "complex_background",
+      "engine": "quantized_marching",
+      "expected_background_safe": false,
+      "preflight_rejects": true,
+      "trace_ms": [
+        1130.9793679999984,
+        611.6382239999893,
+        646.1724039999126
+      ],
+      "median_trace_ms": 646.17,
+      "process_peak_rss_mib": 121.77,
+      "boundary_mean_px": 10.496,
+      "boundary_p95_px": 44.1795,
+      "macro_colour_iou": 0.76525,
+      "foreground_iou": 0.76525,
+      "false_foreground_pixels": 4422,
+      "missing_foreground_pixels": 4967,
+      "rgb_mae": 14.029,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.76525,
+          "missing_pixels": 4967,
+          "false_pixels": 4422,
+          "source_topology": [
+            11,
+            15
+          ],
+          "output_topology": [
+            15,
+            581
+          ]
+        }
+      ],
+      "svg_bytes": 142989,
+      "paths": 16
+    },
+    {
+      "output_sha256": [
+        "53698549557ca9a838b98b38a1632fece4cd32e87d6e556ad4b301d40837e2e9",
+        "53698549557ca9a838b98b38a1632fece4cd32e87d6e556ad4b301d40837e2e9",
+        "53698549557ca9a838b98b38a1632fece4cd32e87d6e556ad4b301d40837e2e9"
+      ],
+      "repeat_macro_iou_range": [
+        0.87738,
+        0.87738
+      ],
+      "fixture": "complex_background",
+      "engine": "skimage_felzenszwalb",
+      "expected_background_safe": false,
+      "preflight_rejects": true,
+      "trace_ms": [
+        2145.4762880000544,
+        1489.1149750000068,
+        1402.3928819999583
+      ],
+      "median_trace_ms": 1489.11,
+      "process_peak_rss_mib": 142.24,
+      "boundary_mean_px": 5.4262,
+      "boundary_p95_px": 24.9791,
+      "macro_colour_iou": 0.87738,
+      "foreground_iou": 0.87738,
+      "false_foreground_pixels": 1778,
+      "missing_foreground_pixels": 2802,
+      "rgb_mae": 9.339,
+      "per_colour": [
+        {
+          "colour": "red",
+          "iou": 0.87738,
+          "missing_pixels": 2802,
+          "false_pixels": 1778,
+          "source_topology": [
+            11,
+            15
+          ],
+          "output_topology": [
+            5,
+            522
+          ]
+        }
+      ],
+      "svg_bytes": 260195,
+      "paths": 361
+    },
+    {
+      "output_sha256": [
+        "cc1c12a1f8b9d04aadb842b912c11e92964b502697376da752852ab41c22f169",
+        "cc1c12a1f8b9d04aadb842b912c11e92964b502697376da752852ab41c22f169",
+        "cc1c12a1f8b9d04aadb842b912c11e92964b502697376da752852ab41c22f169"
+      ],
+      "repeat_macro_iou_range": [
+        0.93226,
+        0.93226
+      ],
+      "fixture": "holes_islands",
+      "engine": "opencv_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        7.423327000083191,
+        6.885058999955618,
+        7.5681949999761855
+      ],
+      "median_trace_ms": 7.42,
+      "process_peak_rss_mib": 75.98,
+      "boundary_mean_px": 0.4853,
+      "boundary_p95_px": 1.4,
+      "macro_colour_iou": 0.93226,
+      "foreground_iou": 0.95443,
+      "false_foreground_pixels": 89,
+      "missing_foreground_pixels": 415,
+      "rgb_mae": 1.098,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.96165,
+          "missing_pixels": 319,
+          "false_pixels": 53,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.90287,
+          "missing_pixels": 96,
+          "false_pixels": 36,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 1238,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "2852831107e5bb9cdc8a807193279f652526bb7047764bb0677483d85d1e5e13",
+        "2852831107e5bb9cdc8a807193279f652526bb7047764bb0677483d85d1e5e13",
+        "2852831107e5bb9cdc8a807193279f652526bb7047764bb0677483d85d1e5e13"
+      ],
+      "repeat_macro_iou_range": [
+        0.43476,
+        0.43476
+      ],
+      "fixture": "holes_islands",
+      "engine": "vtracer_baseline",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        10.490917999959493,
+        10.294013000020641,
+        9.436672999981965
+      ],
+      "median_trace_ms": 10.29,
+      "process_peak_rss_mib": 69.59,
+      "boundary_mean_px": 0.1723,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.43476,
+      "foreground_iou": 0.98256,
+      "false_foreground_pixels": 39,
+      "missing_foreground_pixels": 153,
+      "rgb_mae": 4.318,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.86953,
+          "missing_pixels": 111,
+          "false_pixels": 1320,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            4,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.0,
+          "missing_pixels": 1323,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            0,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 1737,
+      "paths": 6
+    },
+    {
+      "output_sha256": [
+        "cd11da4139cb327aa216d89f06c47427e3a440797c5c80b32f00f8eb3aae9a5c",
+        "cd11da4139cb327aa216d89f06c47427e3a440797c5c80b32f00f8eb3aae9a5c",
+        "cd11da4139cb327aa216d89f06c47427e3a440797c5c80b32f00f8eb3aae9a5c"
+      ],
+      "repeat_macro_iou_range": [
+        0.97794,
+        0.97794
+      ],
+      "fixture": "holes_islands",
+      "engine": "vtracer_detail",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        10.759952000057638,
+        10.546201000011024,
+        9.882824000101209
+      ],
+      "median_trace_ms": 10.55,
+      "process_peak_rss_mib": 69.09,
+      "boundary_mean_px": 0.1461,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.97794,
+      "foreground_iou": 0.98512,
+      "false_foreground_pixels": 47,
+      "missing_foreground_pixels": 117,
+      "rgb_mae": 0.522,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.9874,
+          "missing_pixels": 84,
+          "false_pixels": 38,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.96847,
+          "missing_pixels": 33,
+          "false_pixels": 9,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 1737,
+      "paths": 6
+    },
+    {
+      "output_sha256": [
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698",
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698",
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "holes_islands",
+      "engine": "skimage_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        740.1681390000476,
+        35.351535000017975,
+        36.12741000006281
+      ],
+      "median_trace_ms": 36.13,
+      "process_peak_rss_mib": 125.45,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.186,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 6369,
+      "paths": 2
+    },
+    {
+      "output_sha256": [
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698",
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698",
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "holes_islands",
+      "engine": "quantized_marching",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        609.2728950000037,
+        23.836717999984103,
+        24.261024999987058
+      ],
+      "median_trace_ms": 24.26,
+      "process_peak_rss_mib": 118.97,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.186,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 6369,
+      "paths": 2
+    },
+    {
+      "output_sha256": [
+        "db014b382ba4f8fc2470023457fb01abfd365621d72602f0cd9270572ce77fbc",
+        "db014b382ba4f8fc2470023457fb01abfd365621d72602f0cd9270572ce77fbc",
+        "db014b382ba4f8fc2470023457fb01abfd365621d72602f0cd9270572ce77fbc"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "holes_islands",
+      "engine": "skimage_felzenszwalb",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        764.1201659999979,
+        144.9372530000801,
+        143.70877700002893
+      ],
+      "median_trace_ms": 144.94,
+      "process_peak_rss_mib": 142.41,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.186,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 6461,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "cc1c12a1f8b9d04aadb842b912c11e92964b502697376da752852ab41c22f169",
+        "cc1c12a1f8b9d04aadb842b912c11e92964b502697376da752852ab41c22f169",
+        "cc1c12a1f8b9d04aadb842b912c11e92964b502697376da752852ab41c22f169"
+      ],
+      "repeat_macro_iou_range": [
+        0.93226,
+        0.93226
+      ],
+      "fixture": "transparent_holes",
+      "engine": "opencv_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        8.035478000010698,
+        12.327018000064527,
+        8.483210000008512
+      ],
+      "median_trace_ms": 8.48,
+      "process_peak_rss_mib": 73.02,
+      "boundary_mean_px": 0.4853,
+      "boundary_p95_px": 1.4,
+      "macro_colour_iou": 0.93226,
+      "foreground_iou": 0.95443,
+      "false_foreground_pixels": 89,
+      "missing_foreground_pixels": 415,
+      "rgb_mae": 1.098,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.96165,
+          "missing_pixels": 319,
+          "false_pixels": 53,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.90287,
+          "missing_pixels": 96,
+          "false_pixels": 36,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 1238,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "2852831107e5bb9cdc8a807193279f652526bb7047764bb0677483d85d1e5e13",
+        "2852831107e5bb9cdc8a807193279f652526bb7047764bb0677483d85d1e5e13",
+        "2852831107e5bb9cdc8a807193279f652526bb7047764bb0677483d85d1e5e13"
+      ],
+      "repeat_macro_iou_range": [
+        0.43476,
+        0.43476
+      ],
+      "fixture": "transparent_holes",
+      "engine": "vtracer_baseline",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        12.16377199989438,
+        12.193937999995796,
+        13.633851999998114
+      ],
+      "median_trace_ms": 12.19,
+      "process_peak_rss_mib": 69.8,
+      "boundary_mean_px": 0.1723,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.43476,
+      "foreground_iou": 0.98256,
+      "false_foreground_pixels": 39,
+      "missing_foreground_pixels": 153,
+      "rgb_mae": 4.318,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.86953,
+          "missing_pixels": 111,
+          "false_pixels": 1320,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            4,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.0,
+          "missing_pixels": 1323,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            0,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 1737,
+      "paths": 6
+    },
+    {
+      "output_sha256": [
+        "73a86967fa3b280835bfd228f65fa6627057d8da8b325483e9f99ca15f245d6e",
+        "73a86967fa3b280835bfd228f65fa6627057d8da8b325483e9f99ca15f245d6e",
+        "73a86967fa3b280835bfd228f65fa6627057d8da8b325483e9f99ca15f245d6e"
+      ],
+      "repeat_macro_iou_range": [
+        0.97846,
+        0.97846
+      ],
+      "fixture": "transparent_holes",
+      "engine": "vtracer_detail",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        8.811454000010599,
+        7.872682999959579,
+        8.241466999947988
+      ],
+      "median_trace_ms": 8.24,
+      "process_peak_rss_mib": 69.51,
+      "boundary_mean_px": 0.1367,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.97846,
+      "foreground_iou": 0.98605,
+      "false_foreground_pixels": 67,
+      "missing_foreground_pixels": 87,
+      "rgb_mae": 0.519,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.98846,
+          "missing_pixels": 54,
+          "false_pixels": 58,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 0.96847,
+          "missing_pixels": 33,
+          "false_pixels": 9,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 973,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698",
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698",
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "transparent_holes",
+      "engine": "skimage_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        703.1774309999719,
+        34.367624999958934,
+        42.97823799993239
+      ],
+      "median_trace_ms": 42.98,
+      "process_peak_rss_mib": 123.34,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.186,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 6369,
+      "paths": 2
+    },
+    {
+      "output_sha256": [
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698",
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698",
+        "eaa7d108b20596680cc6114015583293afd6df8c05990792aa103404f4c75698"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "transparent_holes",
+      "engine": "quantized_marching",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        807.4466709999797,
+        30.3367699999626,
+        27.571864999913487
+      ],
+      "median_trace_ms": 30.34,
+      "process_peak_rss_mib": 124.91,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.186,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 6369,
+      "paths": 2
+    },
+    {
+      "output_sha256": [
+        "db014b382ba4f8fc2470023457fb01abfd365621d72602f0cd9270572ce77fbc",
+        "db014b382ba4f8fc2470023457fb01abfd365621d72602f0cd9270572ce77fbc",
+        "db014b382ba4f8fc2470023457fb01abfd365621d72602f0cd9270572ce77fbc"
+      ],
+      "repeat_macro_iou_range": [
+        1.0,
+        1.0
+      ],
+      "fixture": "transparent_holes",
+      "engine": "skimage_felzenszwalb",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        671.6163220000908,
+        121.98506200002157,
+        122.23935500003336
+      ],
+      "median_trace_ms": 122.24,
+      "process_peak_rss_mib": 143.19,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 1.0,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.186,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            1
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "orange",
+          "iou": 1.0,
+          "missing_pixels": 0,
+          "false_pixels": 0,
+          "source_topology": [
+            3,
+            0
+          ],
+          "output_topology": [
+            3,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 6461,
+      "paths": 4
+    },
+    {
+      "output_sha256": [
+        "8cf88e5deda57e8e1008122b8e0c53238cde078df28d484e7d9ff12ca7a25e57",
+        "8cf88e5deda57e8e1008122b8e0c53238cde078df28d484e7d9ff12ca7a25e57",
+        "8cf88e5deda57e8e1008122b8e0c53238cde078df28d484e7d9ff12ca7a25e57"
+      ],
+      "repeat_macro_iou_range": [
+        0.7566,
+        0.7566
+      ],
+      "fixture": "shaded_wildlife_proxy",
+      "engine": "opencv_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        10.85581799998181,
+        9.931639000001269,
+        8.971556000005876
+      ],
+      "median_trace_ms": 9.93,
+      "process_peak_rss_mib": 74.33,
+      "boundary_mean_px": 27.4488,
+      "boundary_p95_px": 66.5101,
+      "macro_colour_iou": 0.7566,
+      "foreground_iou": 0.9276,
+      "false_foreground_pixels": 53,
+      "missing_foreground_pixels": 1627,
+      "rgb_mae": 11.413,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.94212,
+          "missing_pixels": 723,
+          "false_pixels": 432,
+          "source_topology": [
+            1,
+            260
+          ],
+          "output_topology": [
+            29,
+            136
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.63631,
+          "missing_pixels": 1278,
+          "false_pixels": 20,
+          "source_topology": [
+            17,
+            0
+          ],
+          "output_topology": [
+            9,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.69136,
+          "missing_pixels": 25,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 11245,
+      "paths": 3
+    },
+    {
+      "output_sha256": [
+        "7289db378b6cce712a2b7036bd20bd6fdb8b1d38a8a0434e997f2e17c23ea19a",
+        "7289db378b6cce712a2b7036bd20bd6fdb8b1d38a8a0434e997f2e17c23ea19a",
+        "7289db378b6cce712a2b7036bd20bd6fdb8b1d38a8a0434e997f2e17c23ea19a"
+      ],
+      "repeat_macro_iou_range": [
+        0.55543,
+        0.55543
+      ],
+      "fixture": "shaded_wildlife_proxy",
+      "engine": "vtracer_baseline",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        10.834636000026876,
+        10.004127999991397,
+        11.196269000038228
+      ],
+      "median_trace_ms": 10.83,
+      "process_peak_rss_mib": 70.85,
+      "boundary_mean_px": 0.1098,
+      "boundary_p95_px": 1.0,
+      "macro_colour_iou": 0.55543,
+      "foreground_iou": 0.99677,
+      "false_foreground_pixels": 46,
+      "missing_foreground_pixels": 29,
+      "rgb_mae": 3.425,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.84412,
+          "missing_pixels": 28,
+          "false_pixels": 3572,
+          "source_topology": [
+            1,
+            260
+          ],
+          "output_topology": [
+            1,
+            1
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.00196,
+          "missing_pixels": 3542,
+          "false_pixels": 15,
+          "source_topology": [
+            17,
+            0
+          ],
+          "output_topology": [
+            10,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.82022,
+          "missing_pixels": 8,
+          "false_pixels": 8,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 1128,
+      "paths": 3
+    },
+    {
+      "output_sha256": [
+        "a34167d280e8e515464f299295c45e8ebe43d3e9dbab1eeb9d74aa2e1b73544e",
+        "a34167d280e8e515464f299295c45e8ebe43d3e9dbab1eeb9d74aa2e1b73544e",
+        "a34167d280e8e515464f299295c45e8ebe43d3e9dbab1eeb9d74aa2e1b73544e"
+      ],
+      "repeat_macro_iou_range": [
+        0.4567,
+        0.4567
+      ],
+      "fixture": "shaded_wildlife_proxy",
+      "engine": "vtracer_detail",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        12.29798600002141,
+        11.146534999966207,
+        11.47576999994726
+      ],
+      "median_trace_ms": 11.48,
+      "process_peak_rss_mib": 70.85,
+      "boundary_mean_px": 2.0064,
+      "boundary_p95_px": 14.7193,
+      "macro_colour_iou": 0.4567,
+      "foreground_iou": 0.99227,
+      "false_foreground_pixels": 144,
+      "missing_foreground_pixels": 36,
+      "rgb_mae": 3.159,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.83906,
+          "missing_pixels": 265,
+          "false_pixels": 3429,
+          "source_topology": [
+            1,
+            260
+          ],
+          "output_topology": [
+            31,
+            94
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.05453,
+          "missing_pixels": 3343,
+          "false_pixels": 229,
+          "source_topology": [
+            17,
+            0
+          ],
+          "output_topology": [
+            136,
+            4
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.47651,
+          "missing_pixels": 10,
+          "false_pixels": 68,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            6,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 7977,
+      "paths": 21
+    },
+    {
+      "output_sha256": [
+        "7593a9d3e0c4ceb24dc92df33a51caac19b15c70df32cacbad19cd154b78cc3a",
+        "7593a9d3e0c4ceb24dc92df33a51caac19b15c70df32cacbad19cd154b78cc3a",
+        "7593a9d3e0c4ceb24dc92df33a51caac19b15c70df32cacbad19cd154b78cc3a"
+      ],
+      "repeat_macro_iou_range": [
+        0.94938,
+        0.94938
+      ],
+      "fixture": "shaded_wildlife_proxy",
+      "engine": "skimage_oracle",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        798.0771769999819,
+        177.66471699997055,
+        173.5293819999697
+      ],
+      "median_trace_ms": 177.66,
+      "process_peak_rss_mib": 127.83,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.94938,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 7.083,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.99995,
+          "missing_pixels": 0,
+          "false_pixels": 1,
+          "source_topology": [
+            1,
+            260
+          ],
+          "output_topology": [
+            1,
+            260
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.99635,
+          "missing_pixels": 1,
+          "false_pixels": 12,
+          "source_topology": [
+            17,
+            0
+          ],
+          "output_topology": [
+            19,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.85185,
+          "missing_pixels": 12,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 51019,
+      "paths": 3
+    },
+    {
+      "output_sha256": [
+        "b38ac6dc8796d389c4685677ada1b76bc2d80d987b50615c1294e5c3187122c0",
+        "b38ac6dc8796d389c4685677ada1b76bc2d80d987b50615c1294e5c3187122c0",
+        "b38ac6dc8796d389c4685677ada1b76bc2d80d987b50615c1294e5c3187122c0"
+      ],
+      "repeat_macro_iou_range": [
+        0.9264,
+        0.9264
+      ],
+      "fixture": "shaded_wildlife_proxy",
+      "engine": "quantized_marching",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        765.320083000006,
+        194.45857099992736,
+        199.68298400010553
+      ],
+      "median_trace_ms": 199.68,
+      "process_peak_rss_mib": 120.22,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.9264,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 0.902,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.98941,
+          "missing_pixels": 0,
+          "false_pixels": 209,
+          "source_topology": [
+            1,
+            260
+          ],
+          "output_topology": [
+            31,
+            260
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.93794,
+          "missing_pixels": 209,
+          "false_pixels": 12,
+          "source_topology": [
+            17,
+            0
+          ],
+          "output_topology": [
+            33,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.85185,
+          "missing_pixels": 12,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 59830,
+      "paths": 15
+    },
+    {
+      "output_sha256": [
+        "d8cb7126f7de118bc78a31fae6e505a4940281f8ed28ef56a0a4a755bff32e91",
+        "d8cb7126f7de118bc78a31fae6e505a4940281f8ed28ef56a0a4a755bff32e91",
+        "d8cb7126f7de118bc78a31fae6e505a4940281f8ed28ef56a0a4a755bff32e91"
+      ],
+      "repeat_macro_iou_range": [
+        0.94363,
+        0.94363
+      ],
+      "fixture": "shaded_wildlife_proxy",
+      "engine": "skimage_felzenszwalb",
+      "expected_background_safe": true,
+      "preflight_rejects": false,
+      "trace_ms": [
+        1020.8603350000658,
+        461.53971500007174,
+        463.46188399991206
+      ],
+      "median_trace_ms": 463.46,
+      "process_peak_rss_mib": 141.34,
+      "boundary_mean_px": 0.0,
+      "boundary_p95_px": 0.0,
+      "macro_colour_iou": 0.94363,
+      "foreground_iou": 1.0,
+      "false_foreground_pixels": 0,
+      "missing_foreground_pixels": 0,
+      "rgb_mae": 1.077,
+      "per_colour": [
+        {
+          "colour": "blue",
+          "iou": 0.99729,
+          "missing_pixels": 0,
+          "false_pixels": 53,
+          "source_topology": [
+            1,
+            260
+          ],
+          "output_topology": [
+            31,
+            260
+          ]
+        },
+        {
+          "colour": "navy",
+          "iou": 0.98175,
+          "missing_pixels": 53,
+          "false_pixels": 12,
+          "source_topology": [
+            17,
+            0
+          ],
+          "output_topology": [
+            19,
+            0
+          ]
+        },
+        {
+          "colour": "dark",
+          "iou": 0.85185,
+          "missing_pixels": 12,
+          "false_pixels": 0,
+          "source_topology": [
+            1,
+            0
+          ],
+          "output_topology": [
+            1,
+            0
+          ]
+        }
+      ],
+      "svg_bytes": 101247,
+      "paths": 239
+    }
+  ]
+}
