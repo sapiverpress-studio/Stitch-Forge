@@ -6,9 +6,10 @@ Date: 2026-10-29 (Europe/London)
 
 - Repository: `sapiverpress-studio/Stitch-Forge`.
 - Active branch: `feature/detailed-embroidery-analysis-no-deploy`.
-- Starting HEAD: MD-2.36 local commit `8c2b856b15b7b700e5369b8b36b3244f51454fc5`; remote tracking head `e47dfddc6656cc4efde2346588af2c98dc7e947d`; branch was two local commits ahead at start.
-- This milestone does not push or deploy. No Netlify operation, Cloud Run/hosted worker call, GitHub Actions workflow, PR edit, merge, paid AI/model call, or infrastructure change occurred.
-- Do not push until feature-branch deploy-trigger behavior is independently verified. If a commit is made, include `[skip netlify]`. Do not touch PR #1, `main`, or `develop/stitch-engine-foundation`.
+- Starting HEAD: MD-2.36 local commit `8c2b856b15b7b700e5369b8b36b3244f51454fc5`; initial remote head `e47dfddc6656cc4efde2346588af2c98dc7e947d`.
+- Current remote feature-branch head: `a271f6ab76fc97dcaf3b3a3c6726be5c41619172`, message `feat: advance verified stitch engineering to MD-2.37 [skip netlify]`. The GitHub connector was used because local `git push` could not authenticate. The uploaded tree matched the local MD-2.37 source/evidence tree; the branch head and changed handover/source files were re-read from GitHub.
+- Push-trigger review: repository Actions push filters target only `develop/stitch-engine-foundation`; this feature-branch push did not run them. All commits include `[skip netlify]`, which prevents automatic Netlify Git deployment. Netlify project metadata showed production and `main` branch URLs; the available Netlify connector exposed no manual deploy operation. No Netlify deployment was made.
+- User authorized a feature-branch push and development preview, but only the push was technically available. Do not infer a preview URL or claim deployment. No hosted worker, Cloud Run, PR #1, merge, paid AI/model call, or infrastructure change occurred. Do not touch PR #1, `main`, or `develop/stitch-engine-foundation`.
 - The private real-art source and raw resized pixels were outside the repository. No source artwork or visual derivative was added to Git.
 
 ## Research conclusion: best next move
@@ -17,7 +18,7 @@ The next product blocker is automatic semantic region reconstruction on detailed
 
 The existing server function `netlify/functions/reconstruct-embroidery.mjs` uses `STITCH_FORGE_RECONSTRUCTION_MODEL` if configured, otherwise defaults to `gpt-4.1`; its request permits up to `max_output_tokens: 12000`. The deployed model override cannot be inferred from repository source and was not inspected. At the current official default gpt-4.1 rate of $8 per 1M output tokens, the output-token cap alone corresponds to $0.096, before prompt and image input. This is an upper bound only for the default model; it does not bound cost if the deployed model override differs. No request was made.
 
-The owner subsequently approved one reconstruction request on the private kingfisher image. Attempted to access the existing production route without sending any image; the published site still serves Prototype 0.3 and `/api/reconstruct-embroidery` returned the site's 404 page. Therefore the approved model request **was not made**. No production/development deploy is authorized by that approval, and no local private analysis credential/runtime is available here. Do not try alternate routes or deploy without separate explicit authorization.
+The owner approved one reconstruction request on the private kingfisher image and subsequently authorized the isolated feature-branch push/development preview. The existing production route was checked without sending any image; the published site still serves Prototype 0.3 and `/api/reconstruct-embroidery` returned the site's 404 page. The authorized branch push did not deploy because every commit has `[skip netlify]`; no manual deploy operation was available in the connected Netlify tools. Therefore the approved model request **was not made**. Do not retry the request unless the endpoint is verifiably available through an authorized preview or private local runtime. Do not deploy production.
 
 Two open-source candidates were reviewed against that gap:
 
@@ -69,7 +70,7 @@ This page is a developer inspection aid, not a digitiser and not a browser-teste
 ## Next task for continuation
 
 1. Prepare a small reusable acceptance set covering a detailed butterfly/moth, bird, and flower/overlapping illustration. Use artwork with clear rights; keep any private originals outside the public repository and record provenance/dimensions.
-2. Run the **existing automatic geometry reconstruction** against each without hand-authoring target polygons. One paid request was approved but blocked because its production endpoint is not present. To continue, first make the endpoint available through an expressly authorized route; do not infer deployment permission from model-call approval. Respect the 12,000 output-token cap and unknown deployed model override.
+2. Run the **existing automatic geometry reconstruction** against each without hand-authoring target polygons. One paid request was approved but remains blocked because the production endpoint is absent and an authorized branch preview has not been deployed. First obtain a verifiable feature-branch preview path; do not deploy production. Respect the 12,000 output-token cap and unknown deployed model override.
 3. For every image, record which expected visible features are represented, missing, merged, recovered, rejected or uncertain. Preserve source-pixel audit results and blocking reasons.
 4. Only after the real region output passes those checks, send it through the MD-2.36 local-only satin project-to-engine path. Add decoded per-region movement/color/density evidence, then seek physical sew-outs from appropriately equipped testers.
 5. Keep the standard app/export and worker satin schema blocked until the above evidence supports exposure. No development preview is justified by MD-2.37 alone.
