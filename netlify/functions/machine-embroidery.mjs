@@ -3,6 +3,7 @@
  * Original images, SVG markup and OpenAI output are NEVER forwarded.
  */
 import {timingSafeEqual} from "node:crypto";
+import {acquireCloudRunIdToken,cloudRunAudience} from "./lib/cloud-run-auth.mjs";
 const HEADERS={"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
 const json=(code,error)=>new Response(JSON.stringify({error}),{status:code,
  headers:{...HEADERS,"Content-Type":"application/json; charset=utf-8"}});
@@ -39,11 +40,29 @@ export default async function machineEmbroidery(request){
   if(raw.length>250000)return json(413,"Project too large");
   data=geometryPayload(JSON.parse(raw));
  }catch{return json(422,"Geometry-only project required");}
+ // Cloud Run is private by default. Google IAM validates the ID token,
+ // while our own worker separately validates its independent bearer secret.
+ // X-Serverless-Authorization is stripped by Cloud Run before the container.
+ let googleIdToken=null;
+ const workerHostname=new URL(worker).hostname;
+ if(workerHostname.endsWith(".run.app")){
+  if(!process.env.STITCH_FORGE_CLOUD_RUN_CALLER_JSON)
+   return json(503,"Private Cloud Run caller identity not configured");
+  try{
+   cloudRunAudience(worker); // require exact HTTPS run.app /v1/digitise path
+   googleIdToken=await acquireCloudRunIdToken(
+    worker,process.env.STITCH_FORGE_CLOUD_RUN_CALLER_JSON);
+  }catch{return json(502,"Cloud Run IAM identity unavailable");}
+ }else if(process.env.STITCH_FORGE_CLOUD_RUN_CALLER_JSON){
+  // A credential must never be exchanged for an unrelated host.
+  return json(503,"Cloud Run identity requires an approved run.app endpoint");
+ }
  const abort=new AbortController();
  const timer=setTimeout(()=>abort.abort(),55000);
  try{
   const upstream=await fetch(worker,{method:"POST",signal:abort.signal,
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+workerToken},
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+workerToken,
+      ...(googleIdToken?{"X-Serverless-Authorization":"Bearer "+googleIdToken}:{})},
     body:data,redirect:"error"});
   if(!upstream.ok)return json(upstream.status===429?429:502,
     upstream.status===429?"Engine busy":"Engine rejected project or is unavailable");
