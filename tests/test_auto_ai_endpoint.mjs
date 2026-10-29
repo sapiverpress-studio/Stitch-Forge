@@ -52,6 +52,46 @@ test("the private reconstruction endpoint sends image with store false and retur
   if(originalToken===undefined)delete process.env.STITCH_FORGE_ANALYSIS_TOKEN;else process.env.STITCH_FORGE_ANALYSIS_TOKEN=originalToken;
  }
 });
+test("model accepts exactly four corners and removes duplicate closing/adjacent vertices",()=>{
+ const p=plan();
+ p.regions=[{...region("square"),points:[
+  {x:100,y:100},{x:400,y:100},{x:400,y:100},{x:400,y:400},
+  {x:100,y:400},{x:100,y:100}]}];
+ const model={status:"completed",output:[{type:"message",content:[
+  {type:"output_text",text:JSON.stringify(p)}]}]};
+ const out=parseModelResponse(model);
+ assert.deepEqual(out.regions[0].points,[
+  {x:100,y:100},{x:400,y:100},{x:400,y:400},{x:100,y:400}]);
+ assert.equal(out.model_rejected_count,0);
+ assert.equal(out.regions.length,1);
+ assert.equal(verifyGeometryPlan({...p,regions:p.regions.map(r=>({...r,points:r.points.slice(0,4)}))}).regions.length,1);
+});
+
+test("rejects invalid regions individually but never claims incomplete plan is ready for machine",()=>{
+ const p=plan();
+ p.regions.push({...region("bad"),points:[{x:100,y:100},{x:120,y:120},{x:140,y:140}]});
+ const out=parseModelResponse({status:"completed",output:[{type:"message",content:[
+  {type:"output_text",text:JSON.stringify(p)}]}]});
+ assert.equal(out.regions.length,2);
+ assert.equal(out.model_rejected_count,1);
+ assert.deepEqual(out.model_rejected_reasons,["degenerate_outline"]);
+ assert.equal(out.requires_machine_test,true);
+ const invalid=plan();
+ invalid.regions=[{...region("out-of-bounds"),points:[
+  {x:-9,y:100},{x:200,y:100},{x:200,y:400},{x:100,y:400}]}];
+ assert.throws(()=>parseModelResponse({status:"completed",output:[{type:"message",content:[
+  {type:"output_text",text:JSON.stringify(invalid)}]}]}),/INVALID_MODEL_GEOMETRY/);
+});
+
+test("duplicate ids never silently produce multiple machine regions",()=>{
+ const p=plan();p.regions[1].id=p.regions[0].id;
+ const out=parseModelResponse({status:"completed",output:[{type:"message",content:[
+  {type:"output_text",text:JSON.stringify(p)}]}]});
+ assert.equal(out.regions.length,1);
+ assert.equal(out.model_rejected_count,1);
+ assert.deepEqual(out.model_rejected_reasons,["duplicate_id"]);
+});
+
 test("missing private token cannot invoke paid OpenAI",async()=>{
  const response=await handler(new Request("https://test.invalid/api/reconstruct-embroidery",{method:"POST",
  headers:{"Content-Type":"application/json"},body:"{}"}));
