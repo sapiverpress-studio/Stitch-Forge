@@ -113,6 +113,9 @@ q("#sfAutoRun").onclick=async()=>{
   status("AI returned "+plan.regions.length+" usable proposed regions"+(plan.model_rejected_count?" ("+plan.model_rejected_count+" unsupported proposals held out)":"")+modelRejectionDetails+" Checking artwork pixels and preparing closed fills...");
   const result=window.StitchForgeAutoReconstruct.reconstruct(ctx.getImageData(0,0,canvas.width,canvas.height).data,
      canvas.width,canvas.height,plan);
+  // Never replace the user's design with a tiny, partial AI result. The
+  // 97% floor matches the source-pixel audit's existing 3% missing-pixel limit.
+  window.StitchForgeAutoReconstruct.assertCompleteReconstruction(result,plan.model_rejected_count||0);
   // Proposed centreline and satin-rail geometry is not machine-ready.
   let candidateSummary="";
   if(result.quality.autoRecoveredDetails&&window.StitchForgeStitchClassifier){

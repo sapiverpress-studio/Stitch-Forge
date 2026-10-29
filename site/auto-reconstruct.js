@@ -43,6 +43,19 @@ function formatModelRejectionDiagnostics(diagnostics){
   "; "+diagnostics.additional_rejections+" more rejected":"";
  return " Rejected proposal checks: "+rows.join("; ")+extra+".";
 }
+function assertCompleteReconstruction(result,modelRejectedCount=0){
+ const coverage=Number.isFinite(result?.quality?.coverage)?result.quality.coverage:0;
+ const localRejected=Array.isArray(result?.rejected)?result.rejected.length:null;
+ const modelRejected=Number.isInteger(modelRejectedCount)&&modelRejectedCount>0?modelRejectedCount:0;
+ const reasons=[];
+ if(coverage<.97)reasons.push((coverage*100).toFixed(1)+"% source coverage; at least 97% is required");
+ if(localRejected===null)reasons.push("source-image rejection diagnostics are missing");
+ else if(localRejected)reasons.push(localRejected+" region(s) failed source-image validation");
+ if(modelRejected)reasons.push(modelRejected+" model outline(s) failed geometry validation");
+ if(reasons.length)throw Error("Incomplete reconstruction not applied: "+reasons.join("; ")+
+  ". Existing design is unchanged. No machine file was generated.");
+ return true;
+}
 function polygonArea(points){let a=0;for(let i=0;i<points.length;i++){let p=points[i],q=points[(i+1)%points.length];a+=p[0]*q[1]-q[0]*p[1];}return Math.abs(a)/2;}
 function inside(px,py,poly){let yes=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){
  const a=poly[i],b=poly[j];if((a[1]>py)!==(b[1]>py)&&px<(b[0]-a[0])*(py-a[1])/(b[1]-a[1])+a[0])yes=!yes;
@@ -543,6 +556,6 @@ function reconstruct(rgba,w,h,plan,opts={}){
    "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified.",
    "Locally recovered image details need stitch-type verification and cannot trigger machine export."]};
 }
-root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics});
-if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics};
+root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction});
+if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction};
 })(typeof window==="undefined"?globalThis:window);

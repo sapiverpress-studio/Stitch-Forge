@@ -1,5 +1,5 @@
 const test=require("node:test"),assert=require("node:assert/strict");
-const {reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics}=require("../site/auto-reconstruct.js");
+const {reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction}=require("../site/auto-reconstruct.js");
 const w=240,h=160;
 function source(){
  const rgba=new Uint8ClampedArray(w*h*4);
@@ -47,6 +47,18 @@ test("formats safe server model-geometry reasons for the reconstruction status",
  assert.equal(message," Rejected proposal checks: region 1: too few distinct points remained after duplicate removal [degenerate_outline]; region 2: two proposed regions used the same ID [duplicate_id]; whole plan: the geometry check failed [geometry_check_failed]; 3 more rejected.");
  assert.match(formatModelRejectionDiagnostics({rejected_regions:[{region:0,reason:"plan_shape_invalid"}]}),/the model response did not contain a regions list \[plan_shape_invalid\]/);
  assert.equal(formatModelRejectionDiagnostics(null),"");
+});
+test("blocks partial low-coverage reconstruction without mutating the draft",()=>{
+ const result={quality:{coverage:.01},rejected:Array.from({length:14},()=>({reason:"fill_not_supported_by_pixels"}))};
+ const before=structuredClone(result);
+ assert.throws(()=>assertCompleteReconstruction(result,3),/1\.0% source coverage; at least 97% is required; 14 region\(s\) failed source-image validation; 3 model outline\(s\) failed geometry validation/);
+ assert.deepEqual(result,before);
+});
+test("allows complete image-grounded geometry when only machine approval remains blocked",()=>{
+ assert.equal(assertCompleteReconstruction({quality:{coverage:.97,machineEligible:false,blockers:["unverified_auto_recovered_details"]},rejected:[]},0),true);
+});
+test("blocks coverage below the existing three-percent audit allowance",()=>{
+ assert.throws(()=>assertCompleteReconstruction({quality:{coverage:.969},rejected:[]},0),/96\.9% source coverage/);
 });
 test("automatically reconstructs two separate image-grounded wing fill contours",()=>{
  const result=reconstruct(source(),w,h,plan());

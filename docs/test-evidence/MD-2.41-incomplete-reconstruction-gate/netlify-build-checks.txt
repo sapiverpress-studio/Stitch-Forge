@@ -1,0 +1,16 @@
+Sapiver Stitch Forge MD-2.41 local release-candidate checks
+Date: 2026-10-29 Europe/London
+Base: main at 7a96c8c0b54a53bdd9a73218fa956ea92c9141e3
+
+Command:
+node --check site/auto-reconstruct.js && node --check site/auto-reconstruct-ui.js && node --check netlify/functions/reconstruct-embroidery.mjs && node --check netlify/functions/machine-embroidery.mjs && node --check netlify/functions/lib/cloud-run-auth.mjs && node --test tests/test_ai_analysis.mjs tests/test_ai_guides.cjs tests/test_travel_routing.cjs tests/test_fill_geometry.cjs tests/test_auto_reconstruct.cjs tests/test_auto_ai_endpoint.mjs tests/test_machine_endpoint.mjs tests/test_cloud_run_auth.mjs
+
+Final result: 5 syntax checks passed; 71 Node tests passed, 0 failed, 0 skipped.
+The first run exposed one new assertion expecting "1.0%" while Number formatting rendered "1%". The implementation was changed to preserve one decimal place; the full command above was rerun and passed.
+
+Coverage-specific tests:
+- A 1% / 14-local-rejection / 3-model-rejection result is refused without mutating its input.
+- A 97% complete image-grounded draft may remain editable even if stitch-only approval is blocked.
+- 96.9% coverage is refused at the existing 3% source-audit tolerance.
+
+Not run: browser/Android test, new OpenAI call, worker request, PES/DST generation, physical sew-out. Owner's request logs show the prior user attempt returned HTTP 200, but no model response body is retained.
