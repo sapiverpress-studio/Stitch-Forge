@@ -79,7 +79,7 @@ approving spending would a separately authorised operator run the
 
 Following any approved staging deployment:
 1. Run authenticated `http_smoke.py` against the Cloud Run HTTPS URL,
-   measuring real 401/422 behavior and AES? **No**, the current independent
+   measuring real 401/422 behaviour and performing the independent
    PES/DST ZIP audit.
 2. Confirm cold-start request latency fits the **Netlify 55-second** deadline.
    Scale-to-zero could make initial requests too slow; do not silently change
