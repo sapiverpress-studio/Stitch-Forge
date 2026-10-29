@@ -95,7 +95,7 @@ q("#sfAutoRun").onclick=async()=>{
   let plan;try{plan=await response.json();}catch{throw Error("Reconstruction service response unreadable (HTTP "+response.status+")");}
   if(!response.ok)throw Error((plan.error||"AI reconstruction failed")+(plan.code?" ["+plan.code+"]":""));
   if(plan.status!=="AI_GEOMETRY_PROPOSAL_NOT_STITCHED")throw Error("Invalid geometry response");
-  status("AI returned "+plan.regions.length+" proposed regions. Checking real artwork pixels and preparing closed fills...");
+  status("AI returned "+plan.regions.length+" usable proposed regions"+(plan.model_rejected_count?" ("+plan.model_rejected_count+" unsupported proposals held out)":"")+". Checking artwork pixels and preparing closed fills...");
   const {canvas,ctx}=await decoded(source,512);
   const result=window.StitchForgeAutoReconstruct.reconstruct(ctx.getImageData(0,0,canvas.width,canvas.height).data,
      canvas.width,canvas.height,plan);
@@ -117,7 +117,7 @@ q("#sfAutoRun").onclick=async()=>{
   const machineRevision=JSON.stringify(machineProject),machineGeneration=revision;
   status(summaryText+" Checking independently audited PES/DST engine...");
   try{
-   if(result.rejected.length)throw Error("Incomplete reconstruction: "+result.rejected.length+" proposed regions lacked source support; machine export blocked");
+   if(result.rejected.length||plan.model_rejected_count)throw Error("Incomplete reconstruction: "+(result.rejected.length+(plan.model_rejected_count||0))+" regions were not validated; automatic machine export blocked");
    const machine=await fetch("/api/machine-embroidery",{
     method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
     body:machineRevision,cache:"no-store"
