@@ -8,6 +8,7 @@ import json
 import os
 import urllib.request
 import urllib.error
+from urllib.parse import urlsplit
 from pathlib import Path
 from format_audit import audit_zip
 
@@ -16,13 +17,24 @@ def main():
     parser.add_argument('--url',default='http://127.0.0.1:8080/v1/digitise')
     parser.add_argument('--project',type=Path,required=True)
     args=parser.parse_args()
-    if not (args.url.startswith('https://') or args.url.startswith('http://127.0.0.1:')):
-        raise SystemExit('HTTPS required outside loopback')
+    u=urlsplit(args.url)
+    loopback=u.scheme=='http' and u.hostname=='127.0.0.1' and u.port is not None
+    remote=u.scheme=='https' and bool(u.hostname) and u.port is None
+    if (not (loopback or remote) or u.username or u.password or
+            u.path!='/v1/digitise' or u.query or u.fragment):
+        raise SystemExit('Only loopback or an exact HTTPS /v1/digitise endpoint allowed')
+    run_cloud=bool(u.hostname and u.hostname.endswith('.run.app'))
+    google_id=os.environ.get('STITCH_FORGE_GOOGLE_ID_TOKEN','')
+    if run_cloud and not google_id:
+        raise SystemExit('Private Cloud Run requires STITCH_FORGE_GOOGLE_ID_TOKEN')
+    if google_id and not run_cloud:
+        raise SystemExit('Google IAM token must only be sent to an approved run.app endpoint')
     token=os.environ['STITCH_FORGE_WORKER_TOKEN']
     project=json.loads(args.project.read_bytes())
     def request(body,credential=token):
         req=urllib.request.Request(args.url,data=json.dumps(body).encode(),headers={
-            'Content-Type':'application/json','Authorization':'Bearer '+credential})
+            'Content-Type':'application/json','Authorization':'Bearer '+credential,
+            **({'X-Serverless-Authorization':'Bearer '+google_id} if google_id else {})})
         try:
             with urllib.request.urlopen(req,timeout=55) as result:
                 return result.status,result.headers,result.read(3_000_001)
