@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.22 |
+| Document version | MD-2.23 |
 | Last updated | 2026-10-29 (Europe/London) |
 | Last independently checked source | 2026-10-28: native Docker/moth-logo-line fixture CI SUCCESS (40748895024); regression CI 66 tests / 3 optional skipped SUCCESS incl Cloud Run safety guards (40767768413). Cloud Run staging package PREPARED only; no Google Cloud service or physical stitch-out |
 | Default branch | `main` |
@@ -951,6 +951,14 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - **Cost:** Owner explicitly authorised experimental deployment after discussing an approximate £5 testing **target**, not a guaranteed hard cap. Cloud Run, Cloud Build, Artifact Registry, Secret Manager and logging may bill independently; check actual charges in Google Cloud. Scale-to-zero cold starts and the current Netlify ~55-second endpoint timeout still need live integrated latency verification.
 - **Next gate:** Verify new deploy-preview revision includes fresh environment context, perform a private, synthetic **browser → Netlify Function → Google IAM → real worker → audited PES/DST → automatic ZIP** test; verify failure cases without leaking any secret; then real owner-image quality review and physical stitch-out. Current production application status unchanged.
 
+### 2026-10-29 — Preview environment isolation regression fixed; Netlify deploy-preview ready (MD-2.23)
+
+- Owner confirms downloaded Google service-account JSON deleted from phone and clipboard cleared; managed Google IAM key and secret Netlify deploy-preview environment variable remain deliberately active (do not revoke without replacing).
+- User-saved `STITCH_FORGE_CLOUD_RUN_CALLER_JSON` plus existing Cloud Run URL/worker token are available only as **redacted, non-empty, secret-protected** Netlify deploy-preview variables. Secret contents have not been inspected and should never be logged or shown.
+- Pushing documentation-only source head `b472b3e34b5ad1ac8f71c3b2d5c8aa5dfa5889fa` triggered [Netlify preview build 6ae302e2536387331c63880d](https://app.netlify.com/projects/sapiver-stitchforge/deploys/6ae302e2536387331c63880d), **FAILED (build exit 2)**. Regression cause identified from code inspection: `tests/test_machine_endpoint.mjs`'s mocked `native.example.test` endpoint case retained the real preview Google caller credential, causing the production fail-closed host check to return 503 instead of expected 200. Build log itself was unavailable via connected tools; this is a source-backed diagnosis supported by the next passing build.
+- **Fixed only development tests** in `1161e3be09475ad7337f0970158faec639d2a2d7` by deleting any inherited Cloud Run caller secret before each synthetic endpoint test. No credentials were sent to tests or any third-party host. [Netlify preview build 6ae30373ccc40afa0b1729d6](https://app.netlify.com/projects/sapiver-stitchforge/deploys/6ae30373ccc40afa0b1729d6) **READY**, verified via Netlify deploy metadata on the exact fix SHA. Production site/app unchanged.
+- **Remaining acceptance:** A READY static preview is *not yet* real server-to-server Netlify → Google OAuth → IAM → Ink/Stitch evidence; must test from preview with authorised owner access, a synthetic image/geometry, real machine ZIP and independent decoding, without exposing any secrets. Google Cloud hosted engine real JSON/PES/DST tests already passed; avoid spending without necessity. Private Google credential long-lived; plan replacement with federation after end-to-end testing. No actual physical stitch-out performed.
+ 
 ### Entry template — REQUIRED on every meaningful development update
 
 ```md
