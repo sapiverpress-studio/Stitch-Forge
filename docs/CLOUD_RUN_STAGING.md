@@ -67,6 +67,7 @@ export GOOGLE_CLOUD_PROJECT=your-billing-approved-project
 export CLOUD_RUN_REGION=europe-west2
 export CLOUD_RUN_REPOSITORY=your-existing-private-registry
 export STITCH_FORGE_CLOUD_SECRET=your-existing-worker-token-secret-name
+export CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT=worker@your-project-id.iam.gserviceaccount.com
 export STITCH_FORGE_DEPLOY_COMMIT=full-40-character-reviewed-development-commit
 bash services/digitiser/deploy-cloud-run-staging.sh
 ```
