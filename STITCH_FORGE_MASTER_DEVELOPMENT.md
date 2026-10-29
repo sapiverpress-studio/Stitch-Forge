@@ -10,7 +10,7 @@
 | Maintainer | Sapiver Press |
 | Document version | MD-2.40 (plan-shape diagnostic fallback; source commit `b9eee11a6a3808a72d23488984de17e60234849a`; Netlify production verification recorded in this handover) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | GitHub `main`/Netlify production reports MD-2.39 commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52` deployed and ready at 17:02 UTC (deploy ID `6ae37c076fbb1f0a6438e9db`, `manual_deploy=false`, source `api`). The 17:06 screenshot still shows generic `INVALID_MODEL_GEOMETRY`. The user authorized pushing the tested plan-shape fallback and deploying production. Source commit `b9eee11a6a3808a72d23488984de17e60234849a` is prepared; GitHub main-ref and Netlify publish verification will be recorded after the release action. Trigger for the production deploy is unknown; the user's confirmation is that they did not deploy it manually. No AI/worker call, PES/DST output, browser run, or sew-out occurred in MD-2.40. |
+| Last independently checked source | GitHub `main`/Netlify production reports MD-2.39 commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52` deployed and ready at 17:02 UTC (deploy ID `6ae37c076fbb1f0a6438e9db`, `manual_deploy=false`, source `api`). The 17:06 screenshot still shows generic `INVALID_MODEL_GEOMETRY`. The user authorized pushing the tested plan-shape fallback and deploying production. Source fix commit `b9eee11a6a3808a72d23488984de17e60234849a` is on GitHub `main`; a documentation follow-up is current at `1e2ef8cccd6e5c6b3e07fa4a2e73bb9169e2b239`. Netlify production remains on MD-2.39 commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52` (deploy `6ae37c076fbb1f0a6438e9db`, ready, production, published 17:02:13Z). The authorized production deployment could not be triggered from this session: available Netlify connector actions are read-only and no local Netlify CLI/token is configured. Do not claim MD-2.40 is live. Trigger for the production deploy is unknown; the user's confirmation is that they did not deploy it manually. No AI/worker call, PES/DST output, browser run, or sew-out occurred in MD-2.40. |
 | Default branch | `main` |
 | Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -88,6 +88,14 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 **Local-only patch:** `normaliseModelPlan` now attaches a safe plan-level `plan_shape_invalid` reason if `regions` is missing or is not an array. `parseModelResponse` supplies a bounded `plan_validation_failed` fallback diagnostic for any other geometry error lacking details. Added a mocked parser assertion. No region is accepted and no model/worker call is made.
 
 **Test:** configured 5 syntax checks and eight Node test files: **68 pass, 0 fail, 0 skipped**. Full output: `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. The patch passed local tests; the user explicitly authorized publication. The deployment-trigger anomaly is recorded above, and the exact published commit must be verified after the update.
+
+### MD-2.40 — explain missing or invalid model region plans (2026-10-29)
+
+- Source commit `b9eee11a6a3808a72d23488984de17e60234849a` is on GitHub `main`; docs follow-up `1e2ef8cccd6e5c6b3e07fa4a2e73bb9169e2b239` records this deployment attempt. All commits include `[skip netlify]`.
+- Root cause of screenshot remains unproven: screenshot did not include the API response. Code adds bounded `plan_shape_invalid` diagnostics when `regions` is missing/non-array, a `plan_validation_failed` fallback, and safe human-readable status text. Validators remain fail-closed.
+- Tests executed locally: 5 syntax checks and 68 Node tests passed, 0 failed, 0 skipped; see `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. No browser, live model request, worker, PES/DST generation or sew-out.
+- Release status: source is on GitHub `main`, but Netlify production remains MD-2.39. Production deploy writing is unavailable in the connected tools and there is no local CLI/token. No production deployment occurred in this session. A fresh explicit deployment route is needed to publish MD-2.40.
+- Remaining scope: actual detailed-art reconstruction and machine-file quality are unverified; no claim of professional digitising or physical stitch quality.
 
 ### Current main-branch supplement (MD-2.39, 2026-10-29)
 

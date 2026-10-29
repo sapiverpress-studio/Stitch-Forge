@@ -27,7 +27,7 @@ The actual screenshot does not contain the API response body, so the precise sha
 - The UI renders only enumerated reason codes and region indices; no raw model response is returned.
 - No validator was weakened. No geometry is auto-corrected, accepted or sent to the worker by this patch.
 
-The user subsequently explicitly authorized pushing the tested fix and deploying it to Netlify production. Local `git push` could not authenticate, so the same source tree was published through the connected GitHub integration, which creates a distinct remote commit SHA. The final main and Netlify production state was checked after publication.
+The user subsequently explicitly authorized pushing the tested fix and deploying it to Netlify production. Local `git push` could not authenticate, so the same source tree was published through the connected GitHub integration, which creates a distinct remote commit SHA. GitHub `main` was updated successfully, but Netlify production was not updated. The final `main` head after the documentation commit is `1e2ef8cccd6e5c6b3e07fa4a2e73bb9169e2b239` (parent source fix `b9eee11a6a3808a72d23488984de17e60234849a`; both messages include `[skip netlify]`). Netlify still reports ready production deploy `6ae37c076fbb1f0a6438e9db` for older commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52`. The Netlify connector exposes read-only deploy inspection, and this workspace has neither Netlify CLI nor a Netlify token, so I could not initiate a production deploy.
 
 ## Verification
 
@@ -40,4 +40,4 @@ Configured check run after this local patch:
 
 ## Safety and next action
 
-No further Netlify or GitHub action was taken after discovering the production deploy. Before pushing, determine why the deploy was created and whether a Netlify integration/API or Git connection bypassed the skip marker. Netlify metadata alone does not identify the caller. A new deployment requires explicit user authorization under the project's standing restriction. Once authorized, publish the tested fallback, then use one user-approved reconstruction request only if the user accepts another API call. Keep the exact cause of the existing screenshot marked unknown unless safe diagnostics from a new attempt identify it.
+The user explicitly authorized pushing this fix to `main` and deploying it to production. The GitHub source/doc updates are complete, but the production deployment did not occur: available Netlify tools are read-only and no local CLI/token is present. The current production deployment is still MD-2.39 commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52`. Next action: use a Netlify account session or authenticated deploy mechanism to publish current `main` commit `1e2ef8cccd6e5c6b3e07fa4a2e73bb9169e2b239`, then verify production deploy ID/commit. Do not test a reconstruction until owner authorizes a model request/credit use. Keep exact cause of screenshot marked unknown unless safe diagnostics from a new attempt identify it.
