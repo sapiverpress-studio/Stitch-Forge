@@ -1,0 +1,7 @@
+# Optional local benchmarks only; NOT worker/Netlify runtime dependencies.
+vtracer==1.0.0a4
+scikit-image==0.26.0
+opencv-python-headless==5.0.0.93
+numpy==2.3.5
+Pillow==12.3.0
+CairoSVG==2.9.1

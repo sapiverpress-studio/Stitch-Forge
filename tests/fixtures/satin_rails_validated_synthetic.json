@@ -1,0 +1,116 @@
+{
+  "source": "Native Node.js output from site/stitch-classifier.js + site/satin-geometry.js; synthetic rectangle",
+  "candidate": "satin_candidate",
+  "mmPerPixel": 0.25,
+  "designBoundsMm": [
+    80,
+    60
+  ],
+  "geometry": {
+    "status": "SATIN_RAIL_RUNG_PREVIEW_NOT_INKSTITCH_VERIFIED",
+    "accepted": true,
+    "machineApproved": false,
+    "geometryOnly": true,
+    "rungs": [
+      {
+        "left": [
+          6,
+          0
+        ],
+        "right": [
+          6,
+          12
+        ],
+        "widthMm": 3
+      },
+      {
+        "left": [
+          12,
+          0
+        ],
+        "right": [
+          12,
+          12
+        ],
+        "widthMm": 3
+      },
+      {
+        "left": [
+          18,
+          0
+        ],
+        "right": [
+          18,
+          12
+        ],
+        "widthMm": 3
+      },
+      {
+        "left": [
+          24,
+          0
+        ],
+        "right": [
+          24,
+          12
+        ],
+        "widthMm": 3
+      },
+      {
+        "left": [
+          30,
+          0
+        ],
+        "right": [
+          30,
+          12
+        ],
+        "widthMm": 3
+      },
+      {
+        "left": [
+          36,
+          0
+        ],
+        "right": [
+          36,
+          12
+        ],
+        "widthMm": 3
+      },
+      {
+        "left": [
+          42,
+          0
+        ],
+        "right": [
+          42,
+          12
+        ],
+        "widthMm": 3
+      },
+      {
+        "left": [
+          48,
+          0
+        ],
+        "right": [
+          48,
+          12
+        ],
+        "widthMm": 3
+      },
+      {
+        "left": [
+          54,
+          0
+        ],
+        "right": [
+          54,
+          12
+        ],
+        "widthMm": 3
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+test_analysis_can_run_on_restored_reference_without_reupload (test_ai_reference_restore.AIReferenceRestoreTests.test_analysis_can_run_on_restored_reference_without_reupload) ... ok
+test_restored_image_available_and_edit_points_visible_in_tracing (test_ai_reference_restore.AIReferenceRestoreTests.test_restored_image_available_and_edit_points_visible_in_tracing) ... ok
+test_changed_design_discards_pending_analysis_and_machine_result (test_auto_reconstruct_mobile.AutoMothMobileTest.test_changed_design_discards_pending_analysis_and_machine_result) ... ok
+test_one_click_downloads_only_audited_native_archive (test_auto_reconstruct_mobile.AutoMothMobileTest.test_one_click_downloads_only_audited_native_archive) ... ok
+test_one_click_rebuild_colours_and_undo (test_auto_reconstruct_mobile.AutoMothMobileTest.test_one_click_rebuild_colours_and_undo) ... ok
+test_single_region_and_partial_plan_export_gate (test_auto_reconstruct_mobile.AutoMothMobileTest.test_single_region_and_partial_plan_export_gate) ... ok
+test_corrupt_png_rejected_without_data_loss (test_browser_exports.PrototypeRegression.test_corrupt_png_rejected_without_data_loss) ... ok
+test_embedded_png_svg_tracing_fill_and_zip (test_browser_exports.PrototypeRegression.test_embedded_png_svg_tracing_fill_and_zip) ... ok
+test_fox_pes_and_dst_roundtrip (test_browser_exports.PrototypeRegression.test_fox_pes_and_dst_roundtrip) ... ok
+test_hoop_bounds_block_export (test_browser_exports.PrototypeRegression.test_hoop_bounds_block_export) ... ok
+test_malicious_svg_rejected_without_data_loss (test_browser_exports.PrototypeRegression.test_malicious_svg_rejected_without_data_loss) ... ok
+test_mobile_playback_controls_and_restart (test_browser_exports.PrototypeRegression.test_mobile_playback_controls_and_restart) ... ok
+test_pyembroidery_external_reader (test_browser_exports.PrototypeRegression.test_pyembroidery_external_reader) ... ok
+test_invalid_ai_bbox_is_rejected (test_detail_guides.InternalDetailGuidesTests.test_invalid_ai_bbox_is_rejected) ... skipped 'Optional OpenCV/Numpy detail-guide dependencies are absent'
+test_region_restriction_and_caps (test_detail_guides.InternalDetailGuidesTests.test_region_restriction_and_caps) ... skipped 'Optional OpenCV/Numpy detail-guide dependencies are absent'
+test_synthetic_wing_lines_detected (test_detail_guides.InternalDetailGuidesTests.test_synthetic_wing_lines_detected) ... skipped 'Optional OpenCV/Numpy detail-guide dependencies are absent'
+test_large_output_fails_closed (test_engine_process.ProcessTests.test_large_output_fails_closed) ... ok
+test_success_returns_bytes (test_engine_process.ProcessTests.test_success_returns_bytes) ... ok
+test_timeout_kills_descendants (test_engine_process.ProcessTests.test_timeout_kills_descendants) ... ok
+test_malformed_machine_file_rejected (test_format_audit.IndependentFormatAuditTests.test_malformed_machine_file_rejected) ... ok
+test_missing_or_duplicate_format_rejected (test_format_audit.IndependentFormatAuditTests.test_missing_or_duplicate_format_rejected) ... ok
+test_real_pes_dst_readback (test_format_audit.IndependentFormatAuditTests.test_real_pes_dst_readback) ... ok
+test_rejects_invalid_zip_paths_and_missing_formats (test_inkstitch_adapter.AdapterTests.test_rejects_invalid_zip_paths_and_missing_formats) ... ok
+test_safe_argv_and_successful_zip_return (test_inkstitch_adapter.AdapterTests.test_safe_argv_and_successful_zip_return) ... ok
+test_timeout_and_nonzero_exit_are_reported (test_inkstitch_adapter.AdapterTests.test_timeout_and_nonzero_exit_are_reported) ... ok
+test_timeout_diagnostics_only_in_synthetic_ci (test_inkstitch_adapter.AdapterTests.test_timeout_diagnostics_only_in_synthetic_ci) ... ok
+test_generated_svg_contains_no_embedded_original_reference (test_machine_job.MachineJobTests.test_generated_svg_contains_no_embedded_original_reference) ... ok
+test_mismatched_machine_colors_and_stitches_rejected (test_machine_job.MachineJobTests.test_mismatched_machine_colors_and_stitches_rejected) ... ok
+test_no_archive_until_independent_reader_passes (test_machine_job.MachineJobTests.test_no_archive_until_independent_reader_passes) ... ok
+test_fill_boundary_is_closed_editable_undoable (test_manual_fill_mobile.FillMobileTest.test_fill_boundary_is_closed_editable_undoable) ... ok
+test_mobile_editor_and_stitch_playback (test_netlify_preview.NetlifyPreviewTests.test_mobile_editor_and_stitch_playback) ... ok
+test_mobile_export_zip (test_netlify_preview.NetlifyPreviewTests.test_mobile_export_zip) ... ok
+test_static_configuration_and_experimental_label (test_netlify_preview.NetlifyPreviewTests.test_static_configuration_and_experimental_label) ... ok
+test_actual_export_report_settings_have_priority (test_project_bridge.ProjectBridgeTests.test_actual_export_report_settings_have_priority) ... ok
+test_aspect_ratio_preserved_and_boundary (test_project_bridge.ProjectBridgeTests.test_aspect_ratio_preserved_and_boundary) ... ok
+test_bean_stitch_refused (test_project_bridge.ProjectBridgeTests.test_bean_stitch_refused) ... ok
+test_compact_realistic_fox_geometry (test_project_bridge.ProjectBridgeTests.test_compact_realistic_fox_geometry) ... ok
+test_real_browser_storage_format_and_no_embedded_image (test_project_bridge.ProjectBridgeTests.test_real_browser_storage_format_and_no_embedded_image) ... ok
+test_rejects_invalid_geometry_and_hoop (test_project_bridge.ProjectBridgeTests.test_rejects_invalid_geometry_and_hoop) ... ok
+test_unclosed_fill_refused (test_project_bridge.ProjectBridgeTests.test_unclosed_fill_refused) ... ok
+test_actual_v03_browser_schema_can_reach_real_engine_input (test_real_engine_input.RealEngineProjectInputTests.test_actual_v03_browser_schema_can_reach_real_engine_input) ... ok
+test_fails_closed_for_unsupported_bean_and_missing_file (test_real_engine_input.RealEngineProjectInputTests.test_fails_closed_for_unsupported_bean_and_missing_file) ... ok
+test_no_project_uses_synthetic_fixture (test_real_engine_input.RealEngineProjectInputTests.test_no_project_uses_synthetic_fixture) ... ok
+test_bad_colours_or_parameters_are_rejected (test_region_parameters.RegionParametersTests.test_bad_colours_or_parameters_are_rejected) ... ok
+test_existing_single_colour_projects_still_work (test_region_parameters.RegionParametersTests.test_existing_single_colour_projects_still_work) ... ok
+test_two_colors_and_stitch_parameters (test_region_parameters.RegionParametersTests.test_two_colors_and_stitch_parameters) ... ok
+test_two_colour_synthetic_engine_fixture (test_region_parameters.RegionParametersTests.test_two_colour_synthetic_engine_fixture) ... ok
+test_archive_path_traversal_refused (test_release_asset.ReleaseAssetTests.test_archive_path_traversal_refused) ... ok
+test_legitimate_simple_archive_extracts (test_release_asset.ReleaseAssetTests.test_legitimate_simple_archive_extracts) ... ok
+test_official_generic_linux_asset_selected (test_release_asset.ReleaseAssetTests.test_official_generic_linux_asset_selected) ... ok
+test_outside_and_absent_symlinks_refused (test_release_asset.ReleaseAssetTests.test_outside_and_absent_symlinks_refused) ... ok
+test_safe_internal_library_symlink_extracts (test_release_asset.ReleaseAssetTests.test_safe_internal_library_symlink_extracts) ... ok
+test_symlink_parent_and_cycle_refused (test_release_asset.ReleaseAssetTests.test_symlink_parent_and_cycle_refused) ... ok
+test_wrong_arch_or_ambiguous_asset_refused (test_release_asset.ReleaseAssetTests.test_wrong_arch_or_ambiguous_asset_refused) ... ok
+test_wrong_tag_or_host_refused (test_release_asset.ReleaseAssetTests.test_wrong_tag_or_host_refused) ... ok
+test_rejects_outside_geometry_and_unsupported_modes (test_trusted_svg.TrustedSVGTests.test_rejects_outside_geometry_and_unsupported_modes) ... ok
+test_synthetic_shapes_without_external_content (test_trusted_svg.TrustedSVGTests.test_synthetic_shapes_without_external_content) ... ok
+test_bounded_requests_and_missing_engine (test_worker_wsgi.WorkerContractTests.test_bounded_requests_and_missing_engine) ... ok
+test_busy_fails_closed (test_worker_wsgi.WorkerContractTests.test_busy_fails_closed) ... ok
+test_success_contract (test_worker_wsgi.WorkerContractTests.test_success_contract) ... ok
+test_token_auth_and_image_rejection (test_worker_wsgi.WorkerContractTests.test_token_auth_and_image_rejection) ... ok
+test_worker_engine_failure_does_not_leak_paths (test_worker_wsgi.WorkerContractTests.test_worker_engine_failure_does_not_leak_paths) ... ok
+
+----------------------------------------------------------------------
+Ran 62 tests in 176.488s
+
+OK (skipped=3)

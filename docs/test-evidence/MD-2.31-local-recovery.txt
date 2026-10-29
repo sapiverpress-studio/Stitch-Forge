@@ -1,0 +1,9 @@
+MD-2.31: Stitch Forge local candidate recovery
+2026-10-29 UTC. Isolated branch: feature/detailed-embroidery-analysis-no-deploy
+Source parent SHA: c65473dd150931cf7e635b26a712adadfc51181f
+Test method: Connected GitHub fetch_file for site/auto-reconstruct.js and tests/test_auto_reconstruct.cjs; apply edits in memory; evaluate actual patched module/test source with JavaScript V8 Function and a restricted CommonJS/node:test/assertion-function shim. No Node subprocess or browser runner was used.
+Results: 30/30 targeted test callbacks passed, 0 failed. Previous baseline 25 + 5 new.
+New cases: source 5x5 eye accepted as recoverable 25-pixel colour island, blocked from machine export; 2-pixel-high feather stripe extracted; AI-proposed eye never duplicated; background holes/noise/shading not recovered; candidate order/unique ID and machine block verified.
+Verification scope: synthetic-only. Original pre-recovery omission evidence retained. Follow-on UI status/dashed attribute edited by inspection only; not browser-integrated/tested.
+NOT run: complete Node suite, full Python suite, native Ink/Stitch, Android, realistic art/AI or physical sew-out.
+No Cloud Run/Netlify/model request, new infrastructure, PR or merge.

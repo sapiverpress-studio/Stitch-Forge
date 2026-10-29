@@ -1,0 +1,23 @@
+MD-2.29 compound-topology foundation
+Date: 2026-10-29 UTC
+Branch: feature/detailed-embroidery-analysis-no-deploy
+Python stdlib only; executed in local container, not hosted worker.
+
+Command:
+  python -m unittest discover -s /mnt/data/stitchforge_stage/tests -v
+
+Result:
+  test_donut_and_orientation_independence ... ok
+  test_hole_not_reinterpreted_as_white_thread ... ok
+  test_multiple_disjoint_holes ... ok
+  test_refuses_malformed_rings_and_loss_at_export_precision ... ok
+  test_refuses_unsafe_hole_topology ... ok
+  test_rejects_holes_budget_and_invalid_design_size ... ok
+
+Ran 6 tests in 0.002s
+OK
+
+Independent acceptance: NOT performed. This module is not yet wired into the
+browser, project format, Ink/Stitch builder or machine file path. No real
+engine invocation, physical fabric test, hosted API usage or deployment.
+No historical 55 Node / 77 Python Work-session results are claimed as rerun.

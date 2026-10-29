@@ -1,0 +1,9 @@
+MD-2.33 — satin rail/rung geometry — 2026-10-29
+Branch: feature/detailed-embroidery-analysis-no-deploy
+Parent: 2ccc27ee564a2066def1498b676d80949ea31fc5
+13/13 tests passed. Source `site/satin-geometry.js` and tests `tests/test_satin_geometry.cjs` executed together with prior classifier under V8 Function and CommonJS/node:test/strict-assert subset; not native Node --test.
+Fixtures: paired straight rails, classifier nine-rung model, rotated rails, curved rails, reversed/opposing rails, too-narrow/overwide width, invalid physical scale, missing rails, nonfinite coordinates, hairpin bends, taper, invalid sampling and crossing rails.
+Inspection: user-uploaded swan screenshot and 27.84s colour butterfly/moth embroidery video via local ffprobe/OpenCV, media not published to repo.
+Official satin anatomy: https://inkstitch.org/docs/stitches/satin-column/ .
+NOT tested: full JS/Python regression, Android/browser, actual Ink/Stitch 3.3.0 satin path export, PES/DST readback, sew-out, material and tension, customer-ready quality.
+No paid APIs, hosted worker, Netlify deployment, PR, main/develop change or merge.

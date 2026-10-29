@@ -1,0 +1,118 @@
+{
+  "status": "REAL_ENGINE_AND_INDEPENDENT_DECODE_SYNTHETIC_GEOMETRY_NOT_PHYSICAL_SEW_OUT",
+  "source": {
+    "kind": "hand-authored synthetic acceptance fixture",
+    "source_dimensions_px": [
+      80,
+      60
+    ],
+    "requested_artwork_width_mm": 20,
+    "requested_hoop_mm": 80,
+    "ordered_regions": [
+      {
+        "kind": "satin",
+        "source_color": "#ED171F",
+        "geometry": "9 paired validated rungs at 0.25 mm/px"
+      },
+      {
+        "kind": "tatami fill",
+        "source_color": "#112233",
+        "geometry": "closed rectangle"
+      }
+    ]
+  },
+  "automatic_reconstruction": "not exercised; no artwork input",
+  "planning": {
+    "status": "GEOMETRY_PLANNING_DIAGNOSTICS_NOT_STITCH_TESTED",
+    "regions": [
+      {
+        "id": "satin-0",
+        "kind": "satin",
+        "colour": "#ED171F",
+        "width_mm": 12.0,
+        "height_mm": 3.0,
+        "area_mm2": 0.0,
+        "thinness_indicator_mm": null,
+        "principal_axis_deg": 0.0,
+        "requested_angle_deg": null,
+        "row_spacing_mm": null,
+        "underlay": null,
+        "warnings": []
+      },
+      {
+        "id": "region-0",
+        "kind": "fill",
+        "colour": "#112233",
+        "width_mm": 20.0,
+        "height_mm": 15.0,
+        "area_mm2": 300.0,
+        "thinness_indicator_mm": 8.571,
+        "principal_axis_deg": 0.0,
+        "requested_angle_deg": null,
+        "row_spacing_mm": null,
+        "underlay": null,
+        "warnings": [
+          "fill_spacing_uses_engine_default_not_fabric_validated",
+          "underlay_uses_engine_default_not_fabric_validated"
+        ]
+      }
+    ],
+    "source_bounds_mm": [
+      20.0,
+      15.0
+    ],
+    "expected_colour_changes": 1,
+    "source_order_preserved": true,
+    "endpoint_travel_proxy_mm": 13.829,
+    "limitations": [
+      "Travel proxy is not Ink/Stitch routing or a trim count.",
+      "Principal axis describes geometry, not an approved fill angle.",
+      "No automatic satin conversion, fabric preset or pull compensation.",
+      "Layer order is preserved; overlapping colours are never grouped blindly."
+    ]
+  },
+  "engine": "Ink/Stitch 3.3.0 local official binary",
+  "independent_decoder": "pyembroidery 1.5.1",
+  "machine_job": {
+    "sha256": "120bb6de57a4f0812b1f50f12a1d3f56f4003cc297f5c51578d67cdad4079078",
+    "files": [
+      {
+        "format": "pes",
+        "stitches": 664,
+        "changes": 1,
+        "bounds_mm": [
+          20.0,
+          15.0
+        ],
+        "jumps": 3,
+        "trims": 1,
+        "stops": 0,
+        "max_needle_move_mm": 4.0,
+        "decoded_thread_colors": [
+          "#ed171f",
+          "#293133"
+        ]
+      },
+      {
+        "format": "dst",
+        "stitches": 664,
+        "changes": 1,
+        "bounds_mm": [
+          20.0,
+          15.0
+        ],
+        "jumps": 1,
+        "trims": 0,
+        "stops": 0,
+        "max_needle_move_mm": 4.0,
+        "decoded_thread_colors": []
+      }
+    ]
+  },
+  "limitations": [
+    "Synthetic, hand-authored geometry; no artwork reconstruction evidence.",
+    "PES palette maps the second requested color to the nearest engine palette entry.",
+    "DST color-change count is decoded but the DST format provides no color identity here.",
+    "Decoded instructions do not establish fabric or physical embroidery quality."
+  ]
+}

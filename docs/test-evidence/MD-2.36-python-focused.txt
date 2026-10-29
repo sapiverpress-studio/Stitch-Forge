@@ -1,0 +1,46 @@
+test_actual_export_report_settings_have_priority (tests.test_project_bridge.ProjectBridgeTests.test_actual_export_report_settings_have_priority) ... ok
+test_aspect_ratio_preserved_and_boundary (tests.test_project_bridge.ProjectBridgeTests.test_aspect_ratio_preserved_and_boundary) ... ok
+test_bean_stitch_refused (tests.test_project_bridge.ProjectBridgeTests.test_bean_stitch_refused) ... ok
+test_compact_realistic_fox_geometry (tests.test_project_bridge.ProjectBridgeTests.test_compact_realistic_fox_geometry) ... ok
+test_legacy_conversion_refuses_local_satin_schema (tests.test_project_bridge.ProjectBridgeTests.test_legacy_conversion_refuses_local_satin_schema) ... ok
+test_local_satin_order_must_be_complete_and_unique (tests.test_project_bridge.ProjectBridgeTests.test_local_satin_order_must_be_complete_and_unique) ... ok
+test_local_satin_project_preserves_explicit_mixed_layer_order (tests.test_project_bridge.ProjectBridgeTests.test_local_satin_project_preserves_explicit_mixed_layer_order) ... ok
+test_real_browser_storage_format_and_no_embedded_image (tests.test_project_bridge.ProjectBridgeTests.test_real_browser_storage_format_and_no_embedded_image) ... ok
+test_rejects_invalid_geometry_and_hoop (tests.test_project_bridge.ProjectBridgeTests.test_rejects_invalid_geometry_and_hoop) ... ok
+test_unclosed_fill_refused (tests.test_project_bridge.ProjectBridgeTests.test_unclosed_fill_refused) ... ok
+test_bad_rings_fail_before_engine (tests.test_stitch_planning.PlanningTests.test_bad_rings_fail_before_engine) ... ok
+test_case_only_colour_difference_is_not_a_thread_change (tests.test_stitch_planning.PlanningTests.test_case_only_colour_difference_is_not_a_thread_change) ... ok
+test_geometry_diagnostics_preserve_order_and_do_not_invent_satin (tests.test_stitch_planning.PlanningTests.test_geometry_diagnostics_preserve_order_and_do_not_invent_satin) ... ok
+test_normal_concave_and_closed_rings_work (tests.test_stitch_planning.PlanningTests.test_normal_concave_and_closed_rings_work) ... ok
+test_wrong_size_rejected_even_when_both_machine_formats_agree (tests.test_stitch_planning.PlanningTests.test_wrong_size_rejected_even_when_both_machine_formats_agree) ... ok
+test_submillimetre_fill_blocked_before_native_invocation (tests.test_stitch_planning.SmallFillGateTests.test_submillimetre_fill_blocked_before_native_invocation) ... ok
+test_diagnostics_report_actual_decoded_movements (tests.test_format_audit.CoordinateAuditTests.test_diagnostics_report_actual_decoded_movements) ... ok
+test_nan_coordinate_is_rejected_even_if_bounds_appear_valid (tests.test_format_audit.CoordinateAuditTests.test_nan_coordinate_is_rejected_even_if_bounds_appear_valid) ... ok
+test_malformed_machine_file_rejected (tests.test_format_audit.IndependentFormatAuditTests.test_malformed_machine_file_rejected) ... ok
+test_missing_or_duplicate_format_rejected (tests.test_format_audit.IndependentFormatAuditTests.test_missing_or_duplicate_format_rejected) ... ok
+test_real_pes_dst_readback (tests.test_format_audit.IndependentFormatAuditTests.test_real_pes_dst_readback) ... ok
+test_generated_svg_contains_no_embedded_original_reference (tests.test_machine_job.MachineJobTests.test_generated_svg_contains_no_embedded_original_reference) ... ok
+test_mismatched_machine_colors_and_stitches_rejected (tests.test_machine_job.MachineJobTests.test_mismatched_machine_colors_and_stitches_rejected) ... ok
+test_no_archive_until_independent_reader_passes (tests.test_machine_job.MachineJobTests.test_no_archive_until_independent_reader_passes) ... ok
+test_bounded_requests_and_missing_engine (tests.test_worker_wsgi.WorkerContractTests.test_bounded_requests_and_missing_engine) ... ok
+test_busy_fails_closed (tests.test_worker_wsgi.WorkerContractTests.test_busy_fails_closed) ... ok
+test_success_contract (tests.test_worker_wsgi.WorkerContractTests.test_success_contract) ... ok
+test_token_auth_and_image_rejection (tests.test_worker_wsgi.WorkerContractTests.test_token_auth_and_image_rejection) ... ok
+test_worker_engine_failure_does_not_leak_paths (tests.test_worker_wsgi.WorkerContractTests.test_worker_engine_failure_does_not_leak_paths) ... ok
+test_browser_validated_pixel_rungs_keep_physical_scale_and_colour (tests.test_satin_native.SatinNativeSvgTests.test_browser_validated_pixel_rungs_keep_physical_scale_and_colour) ... ok
+test_crossed_rails_fail_closed (tests.test_satin_native.SatinNativeSvgTests.test_crossed_rails_fail_closed) ... ok
+test_dangling_rung_fails_closed (tests.test_satin_native.SatinNativeSvgTests.test_dangling_rung_fails_closed) ... ok
+test_nonfinite_out_of_bounds_and_bad_colour_rejected (tests.test_satin_native.SatinNativeSvgTests.test_nonfinite_out_of_bounds_and_bad_colour_rejected) ... ok
+test_reversed_rails_fail_closed (tests.test_satin_native.SatinNativeSvgTests.test_reversed_rails_fail_closed) ... ok
+test_reversed_rung_endpoint_order_is_supported (tests.test_satin_native.SatinNativeSvgTests.test_reversed_rung_endpoint_order_is_supported) ... ok
+test_serializes_native_rails_rungs_and_controls (tests.test_satin_native.SatinNativeSvgTests.test_serializes_native_rails_rungs_and_controls) ... ok
+test_smooth_curved_column_geometry_passes (tests.test_satin_native.SatinNativeSvgTests.test_smooth_curved_column_geometry_passes) ... ok
+test_width_turn_length_bounds_are_enforced (tests.test_satin_native.SatinNativeSvgTests.test_width_turn_length_bounds_are_enforced) ... ok
+test_curved_rails_generate_real_pes_and_dst (tests.test_satin_engine_acceptance.RealSatinEngineAcceptanceTests.test_curved_rails_generate_real_pes_and_dst) ... ok
+test_local_mixed_project_order_to_real_machine_files (tests.test_satin_engine_acceptance.RealSatinEngineAcceptanceTests.test_local_mixed_project_order_to_real_machine_files) ... ok
+test_native_satin_export_and_independent_decode (tests.test_satin_engine_acceptance.RealSatinEngineAcceptanceTests.test_native_satin_export_and_independent_decode) ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 13.281s
+
+OK

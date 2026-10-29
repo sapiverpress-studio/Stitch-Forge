@@ -1,0 +1,46 @@
+✔ recognises internal wing detail as a region, not a stitched file (4.89182ms)
+✔ rejects hallucinated or malformed geometry and unsupported types (1.200375ms)
+✔ checks MIME signature and payload limits (0.973422ms)
+✔ requires access token, and never calls provider when absent (4.292325ms)
+✔ requires structured completed response (0.975708ms)
+✔ authenticated request sends an image to OpenAI with store disabled (3.594085ms)
+✔ identifies incomplete, invalid, rate-limited, and network OpenAI failures without leaking response bodies (14.119128ms)
+✔ detail paths follow source-image lines; AI rectangles and fills do not become stitches (50.367438ms)
+✔ no image details => no invented stitch paths (14.080702ms)
+✔ invalid bounds and excessive limits are rejected (18.535653ms)
+✔ accepts explicit proposed fill geometry, not rectangles alone (17.409647ms)
+✔ rejects unsafe geometry, missing fill points, colours, and duplicate ids (0.637876ms)
+✔ the private reconstruction endpoint sends image with store false and returns schema-checked geometry (53.566082ms)
+✔ missing private token cannot invoke paid OpenAI (11.244954ms)
+✔ incomplete AI output is explicitly rejected (3.035958ms)
+✔ supports detailed non-moth plans beyond the former sixteen-region ceiling (4.856387ms)
+✔ automatically reconstructs two separate image-grounded wing fill contours (117.310828ms)
+✔ does not invent wing fills where no artwork exists (7.291427ms)
+✔ rejects nonuniform photo background rather than pretending to segment it (3.285345ms)
+✔ rejects malformed AI shapes and too many regions (4.414633ms)
+✔ retains pale low-contrast wing panels against a flat pale background (47.036919ms)
+✔ snaps running veins to dark original pixels; rejects invented lines across flat fills (24.00187ms)
+✔ fills visible dark markings only, not an enclosing pale wing polygon (41.640807ms)
+✔ supports a single rectangular logo on opaque and transparent backgrounds (30.425716ms)
+✔ supports line-only artwork without inventing fill regions (10.008459ms)
+✔ does not silently fill holes or discard a disconnected logo component (22.607186ms)
+✔ closes a manually traced wing while preserving all source points (7.034746ms)
+✔ rejects rectangle submitted as if AI boxes were auto-segmentation when outside artwork (1.247084ms)
+✔ rejects self-crossing polygons and near-duplicate points (2.476568ms)
+✔ rejects incomplete, degenerate, giant or non-finite paths (0.349975ms)
+✔ prevents committing the same close point twice (0.402685ms)
+✔ disabled without worker, owner auth required (8.23854ms)
+✔ geometry allowlist refuses original raster or arbitrary SVG (1.660176ms)
+✔ real worker response requires audited checksum, ZIP signature and size (8.049231ms)
+✔ running-stitch travel optimized and dominant closed outline sewn last (1.91139ms)
+✔ source geometry is preserved by path reversal and cyclic outline rotation (0.568228ms)
+✔ mixed tatami/fills and deliberately disabled optimization preserve original order (0.369852ms)
+✔ routing is deterministic and fails closed on bad geometry (0.520884ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1042.423641

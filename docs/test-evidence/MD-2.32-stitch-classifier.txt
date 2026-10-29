@@ -1,0 +1,7 @@
+MD-2.32 - 2026-10-29
+Branch: feature/detailed-embroidery-analysis-no-deploy
+Parent: cad34b388e211d90a1f25ed4e23c2f01c867a689
+Tests: 12/12 targeted callbacks passed, 0 failures, using local JavaScript V8 Function evaluation of site/stitch-classifier.js and tests/test_stitch_classifier.cjs, with minimal CommonJS/node:test/strict-assert shim. This was NOT node --test.
+Coverage: running candidate, nine paired satin rail previews, rotation, reversed winding, broad fill, too-small eye, irregular notch, self-intersection, missing scale, invalid vertices, project mm sizing, invalid drafts.
+Not run: original reconstruction suite, browser/Android, full Node/Python suite, real images or AI, native Ink/Stitch, real PES/DST validation, physical sew-out.
+No paid model/worker, Netlify, external service, CI dispatch, PR change or merge.

@@ -1,0 +1,16 @@
+test_browser_validated_pixel_rungs_keep_physical_scale_and_colour (tests.test_satin_native.SatinNativeSvgTests.test_browser_validated_pixel_rungs_keep_physical_scale_and_colour) ... ok
+test_crossed_rails_fail_closed (tests.test_satin_native.SatinNativeSvgTests.test_crossed_rails_fail_closed) ... ok
+test_dangling_rung_fails_closed (tests.test_satin_native.SatinNativeSvgTests.test_dangling_rung_fails_closed) ... ok
+test_nonfinite_out_of_bounds_and_bad_colour_rejected (tests.test_satin_native.SatinNativeSvgTests.test_nonfinite_out_of_bounds_and_bad_colour_rejected) ... ok
+test_reversed_rails_fail_closed (tests.test_satin_native.SatinNativeSvgTests.test_reversed_rails_fail_closed) ... ok
+test_reversed_rung_endpoint_order_is_supported (tests.test_satin_native.SatinNativeSvgTests.test_reversed_rung_endpoint_order_is_supported) ... ok
+test_serializes_native_rails_rungs_and_controls (tests.test_satin_native.SatinNativeSvgTests.test_serializes_native_rails_rungs_and_controls) ... ok
+test_smooth_curved_column_geometry_passes (tests.test_satin_native.SatinNativeSvgTests.test_smooth_curved_column_geometry_passes) ... ok
+test_width_turn_length_bounds_are_enforced (tests.test_satin_native.SatinNativeSvgTests.test_width_turn_length_bounds_are_enforced) ... ok
+test_curved_rails_generate_real_pes_and_dst (tests.test_satin_engine_acceptance.RealSatinEngineAcceptanceTests.test_curved_rails_generate_real_pes_and_dst) ... ok
+test_native_satin_export_and_independent_decode (tests.test_satin_engine_acceptance.RealSatinEngineAcceptanceTests.test_native_satin_export_and_independent_decode) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 12.507s
+
+OK

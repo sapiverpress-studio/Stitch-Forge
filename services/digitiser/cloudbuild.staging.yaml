@@ -1,0 +1,16 @@
+# Staging container image only; never build or publish from a production merge.
+# Set _IMAGE to a private Artifact Registry image under your own Google Cloud project.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --platform=linux/amd64
+      - -f
+      - services/digitiser/Dockerfile
+      - -t
+      - ${_IMAGE}
+      - .
+images:
+  - "${_IMAGE}"
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -4,18 +4,49 @@ on:
   pull_request:
     paths:
       - "netlify/functions/analyse-embroidery.mjs"
+      - "netlify/functions/reconstruct-embroidery.mjs"
+      - "netlify/functions/machine-embroidery.mjs"
+      - "netlify/functions/lib/cloud-run-auth.mjs"
+      - "tests/test_cloud_run_auth.mjs"
+      - "tests/test_machine_endpoint.mjs"
+      - "site/auto-reconstruct.js"
+      - "site/auto-reconstruct-ui.js"
+      - "tests/test_auto_reconstruct.cjs"
+      - "tests/test_auto_ai_endpoint.mjs"
+      - "tests/test_auto_reconstruct_mobile.py"
       - "site/ai-details.js"
+      - "site/fill-geometry.js"
+      - "site/fill-boundary-ui.js"
+      - "tests/test_fill_geometry.cjs"
+      - "tests/test_manual_fill_mobile.py"
       - "site/index.html"
       - "tests/test_ai_analysis.mjs"
+      - "tests/test_ai_reference_restore.py"
       - ".github/workflows/ai-region-tests.yml"
       - "STITCH_FORGE_MASTER_DEVELOPMENT.md"
   push:
     branches: ["develop/stitch-engine-foundation"]
     paths:
       - "netlify/functions/analyse-embroidery.mjs"
+      - "netlify/functions/reconstruct-embroidery.mjs"
+      - "netlify/functions/machine-embroidery.mjs"
+      - "netlify/functions/lib/cloud-run-auth.mjs"
+      - "tests/test_cloud_run_auth.mjs"
+      - "tests/test_machine_endpoint.mjs"
+      - "site/auto-reconstruct.js"
+      - "site/auto-reconstruct-ui.js"
+      - "tests/test_auto_reconstruct.cjs"
+      - "tests/test_auto_ai_endpoint.mjs"
+      - "tests/test_auto_reconstruct_mobile.py"
       - "site/ai-details.js"
+      - "site/fill-geometry.js"
+      - "site/fill-boundary-ui.js"
+      - "tests/test_fill_geometry.cjs"
+      - "tests/test_manual_fill_mobile.py"
       - "site/index.html"
       - "tests/test_ai_analysis.mjs"
+      - "tests/test_ai_reference_restore.py"
+      - ".github/workflows/ai-region-tests.yml"
   workflow_dispatch:
 
 permissions:
@@ -33,5 +64,22 @@ jobs:
         run: |
           node --check netlify/functions/analyse-embroidery.mjs
           node --check site/ai-details.js
+          node --check netlify/functions/reconstruct-embroidery.mjs
+          node --check netlify/functions/machine-embroidery.mjs
+          node --check netlify/functions/lib/cloud-run-auth.mjs
+          node --check site/auto-reconstruct.js
+          node --check site/auto-reconstruct-ui.js
+          node --check site/fill-geometry.js
+          node --check site/fill-boundary-ui.js
       - name: Verify proposals and authentication with synthetic fixtures
-        run: node --test tests/test_ai_analysis.mjs
+        run: node --test tests/test_ai_analysis.mjs tests/test_fill_geometry.cjs tests/test_auto_ai_endpoint.mjs tests/test_auto_reconstruct.cjs tests/test_machine_endpoint.mjs tests/test_cloud_run_auth.mjs
+      - name: Install browser regression dependencies
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Verify saved-image recovery and edit handles on mobile
+        run: python -m unittest discover -s tests -p "test_ai_reference_restore.py" -v
+      - name: Verify manual fill close and undo on mobile (legacy editor contract)
+        run: python -m unittest discover -s tests -p "test_manual_fill_mobile.py" -v
+      - name: Verify one-click automatic AI reconstruction on mobile
+        run: python -m unittest discover -s tests -p "test_auto_reconstruct_mobile.py" -v
