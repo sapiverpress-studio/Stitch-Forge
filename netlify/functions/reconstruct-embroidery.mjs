@@ -35,7 +35,7 @@ const INSTRUCTIONS=[
  "solid colour areas as FILL polygons, and visible narrow lines as RUNNING centerlines.",
  "Identify the actual subject: logos, plants, animals, abstract shapes and line art are all valid.",
  "Each region points must follow the visible boundary, never a surrounding bounding box.",
- "A genuinely rectangular source shape may have a rectangular boundary. Use 6-24 successive points per fill, 2-16 for lines.",
+ "A genuinely rectangular shape may have four boundary corners; use 4-24 successive points per fill, 2-16 for lines. A closed outline is acceptable but not needed.",
  "All positions are NORMALIZED coordinates 0..1000 relative to the entire source image,",
  "x left-to-right, y top-to-bottom. Do not repeat the first point at the end.",
  "Return 1-32 visible regions as needed, not a fixed count. A single fill or line-only design is valid.",
@@ -78,7 +78,7 @@ export function verifyGeometryPlan(value){
    !/^#[0-9a-f]{6}$/i.test(r.color)||!Number.isInteger(r.layer)||r.layer<0||r.layer>50||
    !["high","medium","low"].includes(r.confidence)||
    !Array.isArray(r.points)||r.points.length>(r.kind==="fill"?32:32)||
-   r.points.length<(r.kind==="fill"?5:2)||typeof r.notes!=="string"||r.notes.length>300)
+   r.points.length<(r.kind==="fill"?4:2)||typeof r.notes!=="string"||r.notes.length>300)
     throw Error("invalid_region");
   ids.add(r.id);
   for(const p of r.points)if(!p||!Number.isInteger(p.x)||!Number.isInteger(p.y)||
@@ -93,13 +93,53 @@ export function verifyGeometryPlan(value){
   warnings:value.warnings,requires_machine_test:true,status:"AI_GEOMETRY_PROPOSAL_NOT_STITCHED",
   coordinate_system:"image_normalized_0_1000"};
 }
+// Model vertex lists often contain a duplicated closing vertex or consecutive
+// copies of the same point. Remove only exact duplicates; never fabricate,
+// clamp, or move coordinates. Individually invalid regions remain rejected,
+// and any partial draft is explicitly barred from automatic machine export.
+function normaliseModelPlan(data){
+ if(!data||!Array.isArray(data.regions)||data.regions.length<1||data.regions.length>32)
+  throw Error("invalid_plan");
+ const regions=[],seen=new Set(),rejected=[];
+ for(const region of data.regions){
+  if(!region||!Array.isArray(region.points)||region.points.length>32||
+     !["fill","running"].includes(region.kind)){
+   rejected.push("invalid_region");continue;
+  }
+  const points=[];
+  let valid=true;
+  for(const p of region.points){
+   if(!p||!Number.isInteger(p.x)||!Number.isInteger(p.y)||
+      p.x<0||p.x>1000||p.y<0||p.y>1000){valid=false;break;}
+   if(!points.length||p.x!==points.at(-1).x||p.y!==points.at(-1).y)
+    points.push({x:p.x,y:p.y});
+  }
+  if(!valid){rejected.push("invalid_points");continue;}
+  if(region.kind==="fill"&&points.length>1&&
+     points[0].x===points.at(-1).x&&points[0].y===points.at(-1).y)points.pop();
+  if(points.length<(region.kind==="fill"?4:2)){
+   rejected.push("degenerate_outline");continue;
+  }
+  if(seen.has(region.id)){rejected.push("duplicate_id");continue;}
+  const candidate={...region,points};
+  try{
+   verifyGeometryPlan({subject:"",regions:[candidate],warnings:[],requires_machine_test:true});
+  }catch{rejected.push("invalid_region");continue;}
+  regions.push(candidate);seen.add(candidate.id);
+ }
+ // Keep the machine-testing requirement enforced by the server even if the
+ // model incorrectly sets it to false. Do not bypass any geometric check.
+ const plan=verifyGeometryPlan({...data,regions,requires_machine_test:true});
+ return {...plan,model_rejected_count:rejected.length,
+  model_rejected_reasons:[...new Set(rejected)]};
+}
 export function parseModelResponse(response){
  if(response?.status!=="completed")throw Error("INCOMPLETE_MODEL");
  const raw=(response.output||[]).flatMap(o=>o.type==="message"?(o.content||[]):[])
  .filter(c=>c.type==="output_text").map(c=>c.text).join("");
  if(!raw||raw.length>45000)throw Error("EMPTY_MODEL");
  let data;try{data=JSON.parse(raw);}catch{throw Error("INVALID_MODEL_JSON");}
- try{return verifyGeometryPlan(data);}catch{throw Error("INVALID_MODEL_GEOMETRY");}
+ try{return normaliseModelPlan(data);}catch{throw Error("INVALID_MODEL_GEOMETRY");}
 }
 const safeFailure=(code)=>reply(502,{code,error:{
  UPSTREAM_REJECTED:"OpenAI rejected the automatic reconstruction request.",
