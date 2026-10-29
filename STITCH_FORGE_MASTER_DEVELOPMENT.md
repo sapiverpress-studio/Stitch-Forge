@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.37 (isolated feature branch only; pushed to the feature branch as `a271f6ab76fc97dcaf3b3a3c6726be5c41619172`) |
+| Document version | MD-2.38 (diagnostics follow-up on `main`; source commit recorded in `docs/ENGINEERING_HANDOVER_MD-2.38.md`) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | MD-2.37 work was pushed to the isolated feature branch (commit `a271f6ab76fc97dcaf3b3a3c6726be5c41619172`). Existing pixel analysis on one private, user-provided model-generated kingfisher illustration found high detail (edge density 0.292, 277 coarse RGB bins) but **zero semantic regions**. The responsive offline inspection page embeds the tracked scanner unchanged and distinguishes pixel metrics from absent reconstruction/stitch evidence. No private art is in the repository. No real-art reconstruction or physical sew-out. No Netlify deploy. |
+| Last independently checked source | `main` started at user-deployed MD-2.37 merge `c493cba207a6a75606b94b52cea0231f6fb196f2`. MD-2.38 exposes per-region machine-scale geometry rejection reasons and accepted region labels while retaining atomic replacement and export blocking. User's actual automatic attempt returned an incomplete proposal rejected by local validation; specific region output was not captured. No worker/PES/DST result or sew-out. MD-2.38 was not deployed. Exact latest SHA and test evidence are in the versioned handover. |
 | Default branch | `main` |
 | Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -78,6 +78,16 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Current main-branch supplement (MD-2.38, 2026-10-29)
+
+**Observed real user attempt:** after the owner deployed the MD-2.37 merge, their OpenAI-backed reconstruction returned an incomplete proposal rejected by machine-scale fill validation. The UI screenshot showed a general rejection message and confirmed the old design stayed unchanged. The exact proposal, region IDs, and validator failures were not retained, so this attempt cannot be assessed region by region. The client calls the machine worker only after reconstruction replacement and quality gates succeed; therefore this rejection occurred before worker invocation. No PES/DST was generated. The authorized AI request was the user's single attempt; token usage/cost is unknown. No further model call was made in MD-2.38.
+
+**Implemented diagnostic improvement:** `site/index.html` now keeps accepted proposal region numbers/labels and rejected fill region numbers/labels/reasons, then calls the formatter from `site/auto-reconstruct.js`. The failure message names the basic checks passed and lists up to four failed fill regions (up to 100 characters per reason) plus a count for additional failures. Labels are bounded and stripped of markup/control characters. Replacement stays all-or-nothing: any invalid fill aborts before snapshot/design mutation; the original remains unchanged and machine export is blocked. Invalid region structures still fail closed through the existing generic safety path. This explains a future failure; it does not repair bad geometry or prove digitising quality.
+
+**Tests/evidence:** exact configured Netlify build checks passed: five JS syntax checks and 66 native Node tests, 0 failed, 0 skipped. New formatter assertion covers accepted labels, first four failure details, omitted-failure count and blocked-language output; code review confirms it is called before any design snapshot/mutation. Python mobile test import was attempted but no browser ran because `playwright` is not installed. Logs are under `docs/test-evidence/MD-2.38-reconstruction-diagnostics/`.
+
+**Status:** diagnostic behavior is locally verified by Node, not yet deployed or browser-verified. No additional AI/API request, hosted worker call, GitHub Actions, Netlify deploy, private artwork upload or physical sew-out occurred. Current app still cannot claim professional detailed-artwork PES/DST generation; realistic image reconstruction remains failed/incomplete.
 
 ### Current isolated-branch supplement (MD-2.37, 2026-10-29)
 
@@ -508,6 +518,8 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-069 | P1 | Make current artwork analysis observable without overstating reconstruction | **OFFLINE PAGE BUILT / BROWSER RUN NOT VERIFIED** | Self-contained local page displays user-selected artwork and actual pixel-scan metrics, then states no semantic regions/stitch evidence exist. It embeds the tracked scanner exactly and makes no network calls. |
 
+| SF-070 | P0 | Explain rejected real reconstruction geometry without weakening export gates | **LOCAL NODE-TESTED / NOT DEPLOYED** | Accepted proposal labels and per-fill rejection region/reason now reach the user; rejection remains atomic and machine export is not called. Actual model response details were unavailable, so no root cause can yet be corrected. |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
@@ -525,6 +537,8 @@ Do not create empty decorative folders or claim an implementation exists because
 - **E-083 (2026-10-29, MD-2.36):** Actual local-only mixed satin+tatami project passed Ink/Stitch 3.3.0 generation and pyembroidery 1.5.1 PES/DST decode. 664 needle stitches each, one color change, 20 × 15 mm extents, max needle movement 4.0 mm. Explicit source order satin then fill matches decoded PES palette order (`#ED171F`, then engine-mapped `#293133`); DST exposes no palette. Hand-authored synthetic geometry, not artwork reconstruction or physical validation. Evidence in `docs/test-evidence/MD-2.36-local-satin-project/`.
 
 - **E-084 (2026-10-29, MD-2.36):** Native Node `node --test tests/*.cjs tests/*.mjs`: **95 pass, 0 fail, 0 skipped**. Focused Python command ran 41 tests across project bridge, stitch planning, format audit, machine-job boundary, worker contract, native satin and real-engine acceptance: **41 pass, 0 fail, 0 skipped**, with Ink/Stitch 3.3.0 and pyembroidery 1.5.1 configured. The browser-specific suite was not rerun. Logs: `docs/test-evidence/MD-2.36-node-tests.txt`, `MD-2.36-python-focused.txt`.
+
+- **E-086 (2026-10-29, MD-2.38):** After the user's one authorized live reconstruction attempt on private artwork, screenshot showed incomplete reconstruction rejected by machine-scale fill checks; source design remained unchanged. Exact model geometry/error list unavailable. Code path confirms machine worker call is gated behind successful replacement, so no worker or machine file resulted. No additional AI call. Local configured build command: five `node --check` checks plus eight native `node --test` files, **66 pass, 0 fail, 0 skipped**; diagnostic test verifies accepted region labels, first four failed fill labels/reasons, truncation count, and unchanged/export-blocked result. Python mobile test import failed before execution because `playwright` is missing; 0 browser tests. Log `docs/test-evidence/MD-2.38-reconstruction-diagnostics/netlify-build-checks.txt`; blocker `browser-test-unavailable.txt`.
 
 - **E-085 (2026-10-29, MD-2.37):** Existing `analyseArtwork` from tracked `site/auto-reconstruct.js` ran under Node 24.22.1 on one private user-provided model-generated kingfisher image, without API call. Original 1353×1163 RGBA was proportionally resized to 768×660 for the 750,000-pixel scan limit. Output: 236,887 foreground pixels, 277 quantized RGB bins, top 12 bins = 35.2%, edge density 0.292/high detail, **zero semantic regions**. `node --test tests/test_artwork_scan_proof.cjs`: 2/2; complete native Node suite: **97 pass, 0 fail, 0 skipped**. The new offline HTML embeds the tracked scanner byte-for-byte and labels absent region/stitch output. Browser execution was not run. No private artwork or visual derivatives are committed. Report `docs/test-evidence/MD-2.37-local-artwork-scan/real-art-pixel-scan-report.md`; HTML `Artwork_Scan_OFFLINE.html`; log `docs/test-evidence/MD-2.37-node-tests.txt`.
 
@@ -656,6 +670,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | 2026-10-28 | D-003 | Build on proven upstream stitching and format libraries where suitable | Reliability, maintainability and reduced custom binary-code burden; integration unverified |
 | 2026-10-28 | D-004 | Keep a living MD updated alongside changes | User requested a detailed, regularly updated record |
 | 2026-10-28 | D-005 | No production deployment or sale without explicit authorisation and physical testing | Minimise harm to buyer, equipment and brand trust |
+| 2026-10-29 | D-017 | Surface bounded per-region geometry diagnostics while keeping reconstruction atomic | The real attempt was rejected with an opaque message; actionable details improve debugging without applying partial geometry or invoking the machine worker. |
 
 | 2026-10-28 | D-006 | Rebuild full reconstructed design without retaining the old dominant silhouette | An extra border and unexpected colour were falsely appearing; Undo remains available. CI-verified in synthetic mobile fixture, physical QA absent. |
 | 2026-10-28 | D-007 | Require original artwork for billed one-click reconstruction; disallow lossy saved trace reference | Current saved-project reference is not faithful enough for fine moth anatomy; fail before OpenAI charge, preserve editable project. |
@@ -740,6 +755,14 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Tests RUN:** `node --test tests/test_artwork_scan_proof.cjs`: 2 pass. `node --test tests/*.cjs tests/*.mjs`: 97 pass, 0 fail/skip. No Python, Chromium, browser/mobile, Ink/Stitch or machine-file run was needed or performed for this milestone.
 - **Evidence:** `docs/test-evidence/MD-2.37-local-artwork-scan/` has the offline inspector and text-only private-art scan report. No image or image-derived overlay is committed.
 - **Next:** The actual bottleneck is candidate-region reconstruction, not more edge metrics. Build a small reusable licensed/original three-subject evaluation set and run the existing AI geometry reconstruction path, recording every source-supported and missed detail. Do not spend API credits without explicit approval. If no free local candidate generator passes the same source-pixel audit, request authorization for a strictly bounded paid test or keep automatic machine export blocked.
+
+### 2026-10-29 — MD-2.38 explain real reconstruction rejection (main)
+
+- **Starting state:** local `main` at the user-deployed merge `c493cba207a6a75606b94b52cea0231f6fb196f2`; no reset. User supplied a screenshot showing their one authorized OpenAI-backed reconstruction attempt rejected because some fill regions failed machine-scale validation; existing artwork remained unchanged.
+- **Evidence review:** traced replacement and machine-worker call ordering. The client attempts replacement and local quality checks before calling the machine endpoint. Since replacement rejected incomplete geometry, the worker was not called. Exact proposal/failed regions were not retained, so root cause cannot yet be isolated; token usage/cost unknown.
+- **Implementation:** keep accepted fill/running region IDs and short labels; collect per-fill validator reasons; show up to four failed regions and summarize additional failures. The formatter bounds label/reason text and strips markup/control characters. Any failure continues to abort before snapshot/mutation and machine export. No private image or screenshot is stored in the repository.
+- **Tests RUN:** five `node --check` calls for reconstruction/UI/server modules, then eight native Node test files via the configured Netlify build check: **66 pass, 0 fail, 0 skipped**. First implementation run caught a fixture assertion mismatch; corrected to the fixture's actual out-of-bounds failure and reran green. Python mobile test import attempted, but `ModuleNotFoundError: No module named 'playwright'` prevented any browser test. No paid call, hosted worker, Netlify deploy or GitHub Actions run.
+- **Next:** after owner deploys the updated main version, use a further reconstruction attempt only if explicitly approved and retain the bounded region IDs/reasons. Fix the most frequent actual validator issue using local unit fixtures, then rerun a genuine licensed detailed-art evaluation. Continue to block machine export until a complete real-art proposal passes geometry and independent PES/DST and physical testing.
 
 ### 2026-10-28 — Initial project foundation
 

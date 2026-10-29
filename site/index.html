@@ -341,8 +341,9 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
   if(!rasterBounds||!rasterReference)throw Error('Source artwork must be loaded');
   const w=Number(draft.width),h=Number(draft.height);
   if(!Number.isFinite(w)||!Number.isFinite(h)||w<48||h<48)throw Error('Missing source pixel size');
-  let dropped=0;
-  const converted=draft.regions.map(region=>{
+  const failures=[],accepted=[];
+  const converted=draft.regions.map((region,index)=>{
+   const detail={region:index+1,label:region?.label||region?.semantic||region?.id||''};
    if(!region||!['fill','running'].includes(region.kind)||!/^#[0-9a-f]{6}$/i.test(region.color)||
      !Array.isArray(region.points)||region.points.length>(region.kind==='fill'?512:100))
     throw Error('Invalid region or colour');
@@ -358,24 +359,34 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
     // erased narrow accents after pixel validation had already passed.
     try{
       const checked=window.StitchForgeFillGeometry.prepare(pts,rasterBounds,{automatic:true});
+      accepted.push(detail);
       return {points:checked.points,style:'tatami',color:region.color};
-    }catch(error){dropped++;return null;}
+    }catch(error){
+      failures.push({...detail,reason:String(error?.message||'Fill geometry rejected').replace(/\s+/g,' ').slice(0,100)});
+      return null;
+    }
    }
    if(pts.length<2)throw Error('Incomplete running path');
+   accepted.push(detail);
    return{points:pts,style:'running',color:region.color};
   });
   // The reconstruction replaces old contours; preserving a legacy silhouette here
   // duplicates running stitches and adds an unrequested thread colour.
   const kept=converted.filter(Boolean);
-  if(!kept.length||dropped)
-    throw Error('Some regions failed machine-scale validation; incomplete reconstruction rejected, old design unchanged');
+  if(failures.length){
+    const format=window.StitchForgeAutoReconstruct?.formatFillValidationFailure;
+    throw Error(typeof format==='function'?format(accepted,failures):
+      'Fill geometry validation failed for '+failures.length+' region(s). The original design is unchanged; partial replacement and machine export were blocked.');
+  }
+  if(!kept.length)
+    throw Error('No regions passed fill-geometry checks; the original design is unchanged.');
   const count=kept.reduce((a,r)=>a+r.points.length,0);
   if(kept.length>128||count>5000)throw Error('Automatic reconstruction exceeds stitch-region safety limits');
   snapshot();
   paths=kept.map(r=>r.points);pathStyles=kept.map(r=>r.style);pathColors=kept.map(r=>r.color);
   activeRegion=0;selected=null;drawingIndex=-1;runIndex=0;changeMode('edit');changed();
   setStatus('Automatically reconstructed '+draft.regions.length+' image-based regions. The complete previous stitch plan is saved in Undo. Experimental colour SVG only; PES/DST multi-colour is NOT verified.','ok');
-  return{regions:kept.length,totalPaths:paths.length,colors:new Set(pathColors).size,dropped};
+  return{regions:kept.length,totalPaths:paths.length,colors:new Set(pathColors).size,dropped:0};
  },
 
  appendReviewedFillRegion:(input)=>{

@@ -1,5 +1,5 @@
 const test=require("node:test"),assert=require("node:assert/strict");
-const {reconstruct,analyseArtwork}=require("../site/auto-reconstruct.js");
+const {reconstruct,analyseArtwork,formatFillValidationFailure}=require("../site/auto-reconstruct.js");
 const w=240,h=160;
 function source(){
  const rgba=new Uint8ClampedArray(w*h*4);
@@ -18,6 +18,27 @@ function region(id,cx){
  }))};
 }
 const plan=()=>({status:"AI_GEOMETRY_PROPOSAL_NOT_STITCHED",regions:[region("left",64),region("right",174)]});
+test("formats individual rejected fill diagnostics",()=>{
+ const failures=[
+  {region:2,reason:"Region is too thin for experimental tatami fill"},
+  {region:5,reason:"Boundary crosses itself; reposition the points"},
+  {region:7,reason:"Fill points must remain inside the artwork"},
+  {region:9,reason:"Region is too small or flattened for a fill"},
+  {region:10,reason:"Boundary points too close together"},
+  {region:11,reason:"Closing edge too short"}
+ ];
+ const accepted=[{region:1,label:"body"},{region:3,label:"left wing"},{region:4,label:"right wing"}];
+ failures[0].label="eye";failures[1].label="antenna";
+ const message=formatFillValidationFailure(accepted,failures);
+ assert.match(message,/Basic geometry checks passed for 3 region\(s\): region 1 \(body\), region 3 \(left wing\), region 4 \(right wing\)/);
+ assert.match(message,/region 2 \(eye\): Region is too thin for experimental tatami fill/);
+ assert.match(message,/region 5 \(antenna\): Boundary crosses itself; reposition the points/);
+ assert.match(message,/region 7: Fill points must remain inside the artwork/);
+ assert.match(message,/region 9: Region is too small or flattened for a fill/);
+ assert.match(message,/2 additional fill region\(s\) failed/);
+ assert.match(message,/original design is unchanged; partial replacement and machine export were blocked/);
+ assert.equal((message.match(/region \d+(?: \([^)]*\))?:/g)||[]).length,4);
+});
 test("automatically reconstructs two separate image-grounded wing fill contours",()=>{
  const result=reconstruct(source(),w,h,plan());
  assert.equal(result.status,"AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED");

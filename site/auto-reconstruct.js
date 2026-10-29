@@ -6,6 +6,21 @@
 (function(root){
 "use strict";
 const finite=n=>typeof n==="number"&&Number.isFinite(n);
+function formatFillValidationFailure(accepted,failures){
+ const passed=Array.isArray(accepted)?accepted:[],items=Array.isArray(failures)?failures:[];
+ const describe=r=>{
+  const label=String(r.label||"").replace(/[<>]/g,"").replace(/[\u0000-\u001f\u007f]/g," ").replace(/\s+/g," ").trim().slice(0,32);
+  return "region "+r.region+(label?" ("+label+")":"");
+ };
+ const acceptedText=passed.slice(0,8).map(describe).join(", ")||"none";
+ const acceptedMore=passed.length>8?"; "+(passed.length-8)+" additional accepted region(s)":"";
+ const total=items.length;
+ const shown=items.slice(0,4).map(f=>describe(f)+": "+
+  String(f.reason||"Fill geometry rejected").replace(/\s+/g," ").slice(0,100)).join("; ");
+ const more=total>4?"; "+(total-4)+" additional fill region(s) failed":"";
+ return "Basic geometry checks passed for "+passed.length+" region(s): "+acceptedText+acceptedMore+
+  ". "+total+" fill region(s) failed ("+shown+more+"). The original design is unchanged; partial replacement and machine export were blocked.";
+}
 function polygonArea(points){let a=0;for(let i=0;i<points.length;i++){let p=points[i],q=points[(i+1)%points.length];a+=p[0]*q[1]-q[0]*p[1];}return Math.abs(a)/2;}
 function inside(px,py,poly){let yes=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){
  const a=poly[i],b=poly[j];if((a[1]>py)!==(b[1]>py)&&px<(b[0]-a[0])*(py-a[1])/(b[1]-a[1])+a[0])yes=!yes;
@@ -506,6 +521,6 @@ function reconstruct(rgba,w,h,plan,opts={}){
    "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified.",
    "Locally recovered image details need stitch-type verification and cannot trigger machine export."]};
 }
-root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork});
-if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork};
+root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork,formatFillValidationFailure});
+if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork,formatFillValidationFailure};
 })(typeof window==="undefined"?globalThis:window);
