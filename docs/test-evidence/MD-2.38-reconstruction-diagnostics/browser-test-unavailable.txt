@@ -1,0 +1,4 @@
+Python mobile-browser test attempt
+Command: python -m unittest discover -s tests -p 'test_auto_reconstruct_mobile.py' -v
+Result: could not import the test module; ModuleNotFoundError: No module named 'playwright'.
+No browser test ran. This is an environment dependency gap, not a test assertion failure.

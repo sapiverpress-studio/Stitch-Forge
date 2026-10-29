@@ -7,6 +7,7 @@ Date: 2026-10-29 (Europe/London)
 - Repository: `sapiverpress-studio/Stitch-Forge`.
 - Active local branch: `main`.
 - Starting commit: `c493cba207a6a75606b94b52cea0231f6fb196f2`, the merge the user deployed to Netlify. The source changes in this handover were made after that deployment and have **not** been deployed.
+- Source/evidence implementation commit on GitHub: `e369247fb0b3fd254cc4cd7222940926b74a546d`, message `fix: show rejected reconstruction regions [skip netlify]`. A documentation/evidence-only follow-up adds the missing browser-test blocker record; no source behavior changes there.
 - User previously authorized using `main`; do not merge to `develop/stitch-engine-foundation`, edit PR #1, or create another PR.
 - Every commit must include `[skip netlify]`. Never deploy Netlify, including previews, without explicit authorization. Do not call the hosted worker or incur model costs without authorization.
 - No GitHub Actions run was triggered in this work. Existing push workflows target only `develop/stitch-engine-foundation`; main does not match. Their PR triggers do not run for a direct main update. No Netlify deploy was performed.
