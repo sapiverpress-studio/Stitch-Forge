@@ -39,7 +39,7 @@ headless display, token requirement and independent PES/DST audit remain intact.
 ## Critical staging security distinction
 
 Cloud Run defaults to **private IAM**. This particular *temporary staging*
-script uses `--allow-unauthenticated` so the existing Netlify function can
+script now uses `--no-allow-unauthenticated` so the existing Netlify function can
 reach its Google HTTPS address, and the Python worker still rejects all
 requests without the separate, long random worker Bearer secret.
 
