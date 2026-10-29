@@ -106,6 +106,20 @@ q("#sfAutoRun").onclick=async()=>{
   status("AI returned "+plan.regions.length+" usable proposed regions"+(plan.model_rejected_count?" ("+plan.model_rejected_count+" unsupported proposals held out)":"")+". Checking artwork pixels and preparing closed fills...");
   const result=window.StitchForgeAutoReconstruct.reconstruct(ctx.getImageData(0,0,canvas.width,canvas.height).data,
      canvas.width,canvas.height,plan);
+  // Proposed centreline and satin-rail geometry is not machine-ready.
+  let candidateSummary="";
+  if(result.quality.autoRecoveredDetails&&window.StitchForgeStitchClassifier){
+   const classes=window.StitchForgeStitchClassifier.classifyDraft(result.regions,context.getWidthMm());
+   const counts={running_candidate:0,satin_candidate:0,fill_candidate:0,manual_review:0};
+   result.regions.forEach((region,n)=>{
+    if(!region.requiresDigitisingReview)return;
+    region.stitchCandidate=classes.regions[n];
+    counts[region.stitchCandidate.candidate]++;
+   });
+   candidateSummary=" Provisional stitch categories: "+counts.running_candidate+" running, "+
+    counts.satin_candidate+" satin, "+counts.fill_candidate+" fill, "+counts.manual_review+
+    " need review. No machine approval.";
+  }
   // End-to-end validation finishes BEFORE mutating the editor.
   const proposed={...result,width:canvas.width,height:canvas.height};
   if(revision!==analysisRevision||context.getImage()!==source)
@@ -118,7 +132,7 @@ q("#sfAutoRun").onclick=async()=>{
     result.regions.filter(r=>r.kind==="fill").length+" fills, "+
     result.regions.filter(r=>r.kind==="running").length+" lines; "+
     result.rejected.length+" rejected). "+summary.colors+" proposed colours. Source coverage: "+Math.round(result.quality.coverage*100)+"%."+
-    (result.quality.autoRecoveredDetails?" Locally recovered "+result.quality.autoRecoveredDetails+" unclassified colour details (dashed outlines, geometry only; machine export blocked pending stitch planning).":"");
+    (result.quality.autoRecoveredDetails?" Locally recovered "+result.quality.autoRecoveredDetails+" unclassified colour details (dashed outlines, geometry only; machine export blocked pending stitch planning)."+candidateSummary:"");
   // The second stage is automatic. Only editable geometric paths and colours
   // leave the browser; no source raster, AI credentials or model proposals.
   // The endpoint returns a ZIP only after native Ink/Stitch + independent audit.

@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.31 (isolated feature branch only) |
+| Document version | MD-2.32 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | 2026-10-29 isolated feature branch: 30/30 reconstruction test callbacks passed in direct V8 in-memory execution (25 existing + 5 new), synthetic only. Full Node/browser, native engine and physical stitch tests not rerun. |
+| Last independently checked source | 2026-10-29 isolated feature branch: 12/12 new classifier cases passed in direct V8 memory execution; prior MD-2.31 reconstruction tests not rerun. Full browser, Node regression, real Ink/Stitch and physical stitching not executed. |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -458,11 +458,15 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-062 | P0 | Automatically recover source-backed fine-detail colour contours without another AI request | **LOCAL SYNTHETIC VERIFICATION / MACHINE EXPORT BLOCKED** | Bounded on-device colour-island flood, contour fidelity re-audit, editable candidate layer and dashed review overlay. 5 additional tests and previous 25 pass. Physical stitch suitability, semantic anatomy and realistic artwork unverified. |
 
+| SF-063 | P0 | Propose real-size running/satin/fill stitch candidates for detailed artwork | **SYNTHETIC GEOMETRY VERIFIED / NATIVE NOT INTEGRATED** | Nine contour-width sections, preview satin rail pairs and centrelines, design-width mm scaling; 12 synthetic targeted tests passed. No verified satin underlay, machine sewing or real wildlife acceptance. |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
 ## 10. Test evidence register
+
+- **E-077 (2026-10-29, MD-2.32):** 12/12 test callbacks passed with direct in-memory V8 evaluation of new site/stitch-classifier.js and tests/test_stitch_classifier.cjs under minimal CommonJS, node:test and strict-assertion shims. This is **not** a native Node runner, a full suite or a browser integration test. Cases cover running/satin/fill, 45-degree and reversed contours, physical scale, invalid geometry, narrow/irregular and too-small forms. UI and native stitch output remain unverified. See docs/test-evidence/MD-2.32-stitch-classifier.txt.
 
 - **E-076 (2026-10-29, MD-2.31):** Direct V8 in-memory execution of reconstructed `site/auto-reconstruct.js` and targeted `tests/test_auto_reconstruct.cjs`: **30 tests passed** (25 existing, 5 new). This uses a minimal CommonJS/assertion shim, **not** native Node `--test`; full browser/Python/native regression not run. Synthetic dark eye 25px and 2px feather stripe reconstruct as distinct source-backed editable candidate colour regions; no duplicated AI-proposed eye, no single-pixel noise recovery, and holes fail closed. Recovered candidates block automatic machine export and keep pre-recovery omission flags. See `docs/test-evidence/MD-2.31-local-recovery.txt`.
 
@@ -611,6 +615,8 @@ Do not create empty decorative folders or claim an implementation exists because
 - **2026-10-29 D-018:** For extracted pixel-grounded regions only, permit contours of at least 12 source pixel² rather than uniformly requiring 35px²; existing 25-pixel connected-component and native physical size gates are retained. Add fail-closed, locally computed coherent high-contrast missing-feature alerts. Both thresholds are heuristics; no semantic correctness or physical quality claim.
 
 - **2026-10-29 D-019:** Automated local contrast-island recovery is permitted to create *editable, low-confidence geometry only* and is not allowed to auto-approve fill/satin stitch types. Keep AI omission audit before and after, limit 16 recovered regions and 1,600 pixels per candidate, preserve region ordering, and prevent machine download if any candidate is recovered. No additional model request or third-party dependency.
+
+- **2026-10-29 D-020:** Classify proposed detailed-art stitch categories by actual design width in millimetres, polygon area moments and nine cross-sections. Candidate centreline and satin rails are preview only, not Ink/Stitch-approved commands. Reject irregular, ambiguous, degenerate or undersized geometry; leave all locally recovered details blocked from automatic machine export.
 
 ### Decision-record template
 
@@ -1082,6 +1088,16 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - Tests: **30/30** targeted JS test callbacks passed in isolated V8 simulation (25 prior + five new); actual recorded command/test method in `docs/test-evidence/MD-2.31-local-recovery.txt`. No bundled external runtime invoked. No Node/browser integration, Ink/Stitch native fixture rerun, real photo/image model, Android device or physical embroidery sewn.
 - Limitations: only discrete high-contrast colour islands; no gradient/feather-shading semantics, satin rails, centreline classification, pull compensation or machine approval. Existing editor's physical-scale validation may reject tiny recovered contours atomically; this remains an intentional safety gate. Real-image quality and computational performance not demonstrated.
 - No dependencies, licences, credentials, hosted calls, PR changes, Netlify deploy or production changes. Next priority: measure candidate usefulness/false positives on licensed real artwork and implement stitched-region geometry/command verification before enabling automatic output.
+
+
+### 2026-10-29 — Real-size provisional stitch classifier for detailed art (MD-2.32)
+
+- Scope: SF-063; isolated feature branch parent cad34b388e211d90a1f25ed4e23c2f01c867a689. Seven files updated atomically.
+- New site/stitch-classifier.js: validates polygon rings and intersections, estimates area-weighted principal orientation, samples nine perpendicular widths and proposes running centreline, satin rail pairs, broad fill or manual review based on actual project design width in millimetres.
+- Site index loads classifier before auto reconstruction UI. Only recovered image-detail regions receive machine-unapproved classification metadata, and category counts appear in the UI status. Existing one-call AI flow, source-art audit and fail-closed machine-export block stay unchanged.
+- Tests: 12 of 12 targeted classifier callbacks passed in local V8 memory harness. Full Node runner, browser, Android, existing regression, Python/Ink-Stitch, real image and physical embroidery not run. Reproducible tests included in tests/test_stitch_classifier.cjs; exact evidence in docs/test-evidence/MD-2.32-stitch-classifier.txt.
+- Limitations: category heuristic is not satin stitch planning. Preview rails require native Ink/Stitch compatibility, rung placement, underlay, pull compensation, fabric/tension controls, independent command audit and real sew-out. Highly curved, branching or holed regions remain unverified.
+- No new dependency, cost, model call, deployment, merge, PR update, main or develop changes. Next priority: independently validated satin rail/rung model, actual native machine-file checks and real-art calibration.
 
 ### Entry template — REQUIRED on every meaningful development update
 
