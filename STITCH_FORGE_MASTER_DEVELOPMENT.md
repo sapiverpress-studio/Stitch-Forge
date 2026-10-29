@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.25 (isolated feature branch only) |
+| Document version | MD-2.26 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
 | Last independently checked source | 2026-10-28: native Docker/moth-logo-line fixture CI SUCCESS (40748895024); regression CI 66 tests / 3 optional skipped SUCCESS incl Cloud Run safety guards (40767768413). Cloud Run staging package PREPARED only; no Google Cloud service or physical stitch-out |
 | Default branch | `main` |
@@ -976,6 +976,15 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - **Open-source technology review:** Considered VTracer (MIT OR Apache-2.0), OpenCV >=4.5 (Apache-2.0), scikit-image (permissive), rembg (MIT source, model-dependent licensing/performance), Meta SAM 2 (Apache-2.0 but heavier inference), GPL-3.0 Lilo (reference architecture only), and existing Ink/Stitch / pyembroidery. Best next **benchmarked experiment** is VTracer colour vectorisation, preferably client-side WebAssembly if Android memory/CPU/bundle costs permit. Do not integrate GPL application code without licence review, or install packages into existing billable Cloud Run service prematurely.
 - **Documentation:** `docs/EMBROIDERY_OPEN_SOURCE_PIPELINE.md` lists software, licences, fixed synthetic acceptance dataset, memory/performance/region fidelity tests, and no-deploy/no-new-cost gate.
 - **Still incomplete:** Thorough high-resolution fine-detail reconstruction, semantic segmentation, stitch planning for satin/underlay/colour order/compensation, mobile performance testing, actual Kingfisher/detailed wildlife benchmark, end-to-end machine file validation, and physical sew-out. No claim of professional automatic digitisation readiness.
+
+### 2026-10-29 — Offline VTracer baseline benchmark harness and execution, no deployment (MD-2.26, feature branch only)
+
+- The owner authorised further engineering but explicitly prohibited all Netlify deployments without their authorisation, while requesting minimal costs.
+- On **only** `feature/detailed-embroidery-analysis-no-deploy`, added `tools/bench_vectorise.py`, a deterministic offline synthetic-vectorisation harness and five test fixtures. Uses OpenCV (supplied exact fixture colours), CairoSVG/Pillow to decode generated SVG output, and measures per-region IoU, foreground IoU, RGB error, SVG path count and duration. The harness automatically includes VTracer `1.0.0a4` **only when available**, reporting `vtracer_benchmarked=false` otherwise.
+- Executed the harness locally with Python 3.13.5, numpy 2.3.5, OpenCV 4.13.0, Pillow 12.3.0 and CairoSVG 2.8.2. **OpenCV oracle-palette macro colour IoU**: four-colour logo **0.9265**, botanical **0.9105**, stylised bird **0.6989**, thin 2px detail **0.7809**. Foreground IoU: 0.9694, 0.9618, 0.9413, 0.8606 respectively. Complex textured-background fixture intentionally rejected by border-uniformity preflight; false safety interpretation of high red-region IoU prevented. **The OpenCV baseline receives the ideal source palette and is not a fair unsupervised model comparison or stitch quality score.**
+- **VTracer was not installed or benchmarked**: package index DNS failed and attempted direct download of the published `vtracer-1.0.0a4` wheel failed. Do not report actual VTracer performance from this run. VTracer API/availability/licence researched using PyPI/GitHub docs. Its benchmark branch is ready to run without a paid model or hosted change when a trusted wheel is obtainable.
+- All results, limitations, reproducibility commands, safety and cost gates logged in `docs/VECTORISATION_BASELINE_2026-10-29.md`. No OpenAI/Cloud Run/Netlify chargeable requests made, no subscriptions, **no Netlify deployment or PR**, no modification to deploy-linked `develop/stitch-engine-foundation` or production `main`.
+- **Next decisions:** Benchmark VTracer truly on same synthetic inputs, then evaluate memory/cold-start and fine detail on Android before considering local WASM use. Even if vectorization is excellent, professional stitch planning and physical validation remain separate gates.
 
 ### Entry template — REQUIRED on every meaningful development update
 
