@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.38 (diagnostics follow-up on `main`; source commit recorded in `docs/ENGINEERING_HANDOVER_MD-2.38.md`) |
+| Document version | MD-2.39 (server model-geometry diagnostics; current handover `docs/ENGINEERING_HANDOVER_MD-2.39.md`) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | `main` started at user-deployed MD-2.37 merge `c493cba207a6a75606b94b52cea0231f6fb196f2`. MD-2.38 exposes per-region machine-scale geometry rejection reasons and accepted region labels while retaining atomic replacement and export blocking. User's actual automatic attempt returned an incomplete proposal rejected by local validation; specific region output was not captured. No worker/PES/DST result or sew-out. MD-2.38 was not deployed. Exact latest SHA and test evidence are in the versioned handover. |
+| Last independently checked source | `main` MD-2.38 head `fc1243ca63662f14ad8a8c87a14751b36ad0d26c`; MD-2.39 preserves bounded per-region model-validator reason codes through the protected API and displays them in the UI, without changing acceptance gates. User screenshot shows `INVALID_MODEL_GEOMETRY`; original server response contained no detailed cause. No further AI/worker call, PES/DST result, browser test, or physical sew-out. MD-2.39 is not deployed. Exact latest SHA and test evidence are in the MD-2.39 handover. |
 | Default branch | `main` |
 | Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -78,6 +78,16 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Current main-branch supplement (MD-2.39, 2026-10-29)
+
+**New evidence:** the owner's next screenshot showed `INVALID_MODEL_GEOMETRY` with the message “The model returned unsafe or incomplete shapes.” This is a distinct earlier failure than the browser's local machine-scale fill check. The protected Netlify function's `parseModelResponse` deliberately caught and discarded all detailed validation errors, and the UI displayed only the generic error/code. The screenshot does not retain the model response, so the specific original cause remains unknown.
+
+**Implemented:** the server now preserves only bounded, static validator reason codes and 1-based rejected region numbers (up to eight, with a remainder count) when every proposed region is rejected. Reasons include `invalid_region`, `invalid_points`, `degenerate_outline`, and `duplicate_id`; invalid top-level plans receive a safe plan-level code. The endpoint does not return raw model output or IDs/labels in an error response. Successful partial proposals also carry bounded region diagnostics. The browser formats these codes in its reconstruction status. Geometry validation and fail-closed behavior are unchanged; no invalid proposal is accepted or sent to the machine worker.
+
+**Regression evidence:** endpoint tests use mocked model responses and synthetic geometry only; no external AI call. Local configured check: five syntax checks and **68 native Node tests passed, 0 failed, 0 skipped**. A Python mobile-browser test import failed before execution because Playwright is not installed; no browser was launched. Logs: `docs/test-evidence/MD-2.39-server-geometry-diagnostics/`.
+
+**Release status:** pushed to `main` in commits with `[skip netlify]`; not deployed. No GitHub Actions run, model call, hosted worker, private artwork, or screenshot was sent/stored. This fix should make a future error more specific, but cannot reconstruct what the already rejected model response contained. Real detailed-artwork reconstruction remains unverified; no machine file or sew-out resulted.
 
 ### Current main-branch supplement (MD-2.38, 2026-10-29)
 
@@ -520,6 +530,8 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-070 | P0 | Explain rejected real reconstruction geometry without weakening export gates | **LOCAL NODE-TESTED / NOT DEPLOYED** | Accepted proposal labels and per-fill rejection region/reason now reach the user; rejection remains atomic and machine export is not called. Actual model response details were unavailable, so no root cause can yet be corrected. |
 
+| SF-071 | P0 | Preserve safe server-side model geometry rejection reasons for the owner | **MOCKED ENDPOINT + NODE-TESTED / NOT DEPLOYED** | Protected response and UI expose only bounded 1-based region numbers and static reason codes; raw model response stays private and invalid plans remain rejected. Browser and live model retry not verified. |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
@@ -537,6 +549,8 @@ Do not create empty decorative folders or claim an implementation exists because
 - **E-083 (2026-10-29, MD-2.36):** Actual local-only mixed satin+tatami project passed Ink/Stitch 3.3.0 generation and pyembroidery 1.5.1 PES/DST decode. 664 needle stitches each, one color change, 20 × 15 mm extents, max needle movement 4.0 mm. Explicit source order satin then fill matches decoded PES palette order (`#ED171F`, then engine-mapped `#293133`); DST exposes no palette. Hand-authored synthetic geometry, not artwork reconstruction or physical validation. Evidence in `docs/test-evidence/MD-2.36-local-satin-project/`.
 
 - **E-084 (2026-10-29, MD-2.36):** Native Node `node --test tests/*.cjs tests/*.mjs`: **95 pass, 0 fail, 0 skipped**. Focused Python command ran 41 tests across project bridge, stitch planning, format audit, machine-job boundary, worker contract, native satin and real-engine acceptance: **41 pass, 0 fail, 0 skipped**, with Ink/Stitch 3.3.0 and pyembroidery 1.5.1 configured. The browser-specific suite was not rerun. Logs: `docs/test-evidence/MD-2.36-node-tests.txt`, `MD-2.36-python-focused.txt`.
+
+- **E-087 (2026-10-29, MD-2.39):** New mocked endpoint regression verifies an invalid model geometry response contains only safe `invalid_points` diagnostics with region number and does not return raw model output. A companion Node test checks bounded UI text formatting and partial proposal diagnostics; `node --check` on affected modules plus configured 8-file Node suite: **68 pass, 0 fail, 0 skipped**. Python mobile test import failed (`ModuleNotFoundError: playwright`), so 0 browser tests. No AI request was made; mocks only. Evidence `docs/test-evidence/MD-2.39-server-geometry-diagnostics/`.
 
 - **E-086 (2026-10-29, MD-2.38):** After the user's one authorized live reconstruction attempt on private artwork, screenshot showed incomplete reconstruction rejected by machine-scale fill checks; source design remained unchanged. Exact model geometry/error list unavailable. Code path confirms machine worker call is gated behind successful replacement, so no worker or machine file resulted. No additional AI call. Local configured build command: five `node --check` checks plus eight native `node --test` files, **66 pass, 0 fail, 0 skipped**; diagnostic test verifies accepted region labels, first four failed fill labels/reasons, truncation count, and unchanged/export-blocked result. Python mobile test import failed before execution because `playwright` is missing; 0 browser tests. Log `docs/test-evidence/MD-2.38-reconstruction-diagnostics/netlify-build-checks.txt`; blocker `browser-test-unavailable.txt`.
 
@@ -671,6 +685,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | 2026-10-28 | D-004 | Keep a living MD updated alongside changes | User requested a detailed, regularly updated record |
 | 2026-10-28 | D-005 | No production deployment or sale without explicit authorisation and physical testing | Minimise harm to buyer, equipment and brand trust |
 | 2026-10-29 | D-017 | Surface bounded per-region geometry diagnostics while keeping reconstruction atomic | The real attempt was rejected with an opaque message; actionable details improve debugging without applying partial geometry or invoking the machine worker. |
+| 2026-10-29 | D-022 | Return safe reason codes for server-rejected model geometry, never raw model output | The strict server validation remains authoritative; a small allowlisted diagnostic payload lets the owner distinguish degenerate polygons, coordinates, duplicates and whole-plan failures without weakening validation or logging source artwork. |
 
 | 2026-10-28 | D-006 | Rebuild full reconstructed design without retaining the old dominant silhouette | An extra border and unexpected colour were falsely appearing; Undo remains available. CI-verified in synthetic mobile fixture, physical QA absent. |
 | 2026-10-28 | D-007 | Require original artwork for billed one-click reconstruction; disallow lossy saved trace reference | Current saved-project reference is not faithful enough for fine moth anatomy; fail before OpenAI charge, preserve editable project. |
@@ -755,6 +770,15 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Tests RUN:** `node --test tests/test_artwork_scan_proof.cjs`: 2 pass. `node --test tests/*.cjs tests/*.mjs`: 97 pass, 0 fail/skip. No Python, Chromium, browser/mobile, Ink/Stitch or machine-file run was needed or performed for this milestone.
 - **Evidence:** `docs/test-evidence/MD-2.37-local-artwork-scan/` has the offline inspector and text-only private-art scan report. No image or image-derived overlay is committed.
 - **Next:** The actual bottleneck is candidate-region reconstruction, not more edge metrics. Build a small reusable licensed/original three-subject evaluation set and run the existing AI geometry reconstruction path, recording every source-supported and missed detail. Do not spend API credits without explicit approval. If no free local candidate generator passes the same source-pixel audit, request authorization for a strictly bounded paid test or keep automatic machine export blocked.
+
+### 2026-10-29 — MD-2.39 explain server-rejected model geometry (main)
+
+- **Starting state:** main at MD-2.38 doc follow-up `fc1243ca63662f14ad8a8c87a14751b36ad0d26c`. User screenshot showed `INVALID_MODEL_GEOMETRY`, not the prior local machine-scale validation message.
+- **Root cause:** inspected `netlify/functions/reconstruct-embroidery.mjs` and `site/auto-reconstruct-ui.js`. `parseModelResponse` caught every validation exception and replaced it with `INVALID_MODEL_GEOMETRY`; `safeFailure` and UI exposed no specific reason. Screenshot alone cannot identify which original rule failed.
+- **Implementation:** keep 1-based region index and static reason code for up to eight failed model regions, plus a count for omitted failures; provide a plan-level code when there are no usable/too many regions or top-level validation fails. Preserve `model_rejected_reasons` as string categories for compatibility and add bounded `model_rejected_regions` for partial success. API failure response uses diagnostics only for `INVALID_MODEL_GEOMETRY`, with no raw model JSON. UI formats only numeric indices and lowercase underscore codes. No validation rules were weakened; no auto-correction was added.
+- **Tests RUN:** five `node --check` commands and configured 8-file Node test suite: **68 pass, 0 fail, 0 skipped**. Added mocked endpoint test verifies diagnostic output and absence of the model's test ID/raw output. Added UI formatter test. Python mobile import attempt failed before browser startup because Playwright is missing. No AI, worker, GitHub Actions or deploy.
+- **Limit:** because the actual earlier model output and detailed exception were discarded, this code change enables a better next attempt but cannot determine the cause of the screenshot's original failure. Updated `main` is not deployed.
+- **Next:** with owner authorization for any additional AI spend, deploy intentionally and make one reconstruction attempt; capture the returned safe region diagnostics. Add the exact failing reason as a local fixture, then fix only the corresponding geometry conversion or prompt/schema issue without auto-accepting it. Keep machine generation blocked until full realistic-art fidelity and independent machine/physical checks pass.
 
 ### 2026-10-29 — MD-2.38 explain real reconstruction rejection (main)
 

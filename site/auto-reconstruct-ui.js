@@ -101,9 +101,16 @@ q("#sfAutoRun").onclick=async()=>{
    body:JSON.stringify({image}),cache:"no-store"
   });
   let plan;try{plan=await response.json();}catch{throw Error("Reconstruction service response unreadable (HTTP "+response.status+")");}
-  if(!response.ok)throw Error((plan.error||"AI reconstruction failed")+(plan.code?" ["+plan.code+"]":""));
+  if(!response.ok){
+   const details=plan.code==="INVALID_MODEL_GEOMETRY"?
+    window.StitchForgeAutoReconstruct.formatModelRejectionDiagnostics(plan.diagnostics):"";
+   throw Error((plan.error||"AI reconstruction failed")+details+(plan.code?" ["+plan.code+"]":""));
+  }
   if(plan.status!=="AI_GEOMETRY_PROPOSAL_NOT_STITCHED")throw Error("Invalid geometry response");
-  status("AI returned "+plan.regions.length+" usable proposed regions"+(plan.model_rejected_count?" ("+plan.model_rejected_count+" unsupported proposals held out)":"")+". Checking artwork pixels and preparing closed fills...");
+  const modelRejectionDetails=window.StitchForgeAutoReconstruct.formatModelRejectionDiagnostics({
+   rejected_regions:plan.model_rejected_regions||[],additional_rejections:plan.model_rejected_additional||0
+  });
+  status("AI returned "+plan.regions.length+" usable proposed regions"+(plan.model_rejected_count?" ("+plan.model_rejected_count+" unsupported proposals held out)":"")+modelRejectionDetails+" Checking artwork pixels and preparing closed fills...");
   const result=window.StitchForgeAutoReconstruct.reconstruct(ctx.getImageData(0,0,canvas.width,canvas.height).data,
      canvas.width,canvas.height,plan);
   // Proposed centreline and satin-rail geometry is not machine-ready.
@@ -146,7 +153,7 @@ q("#sfAutoRun").onclick=async()=>{
    inspection.detailLevel+" edge detail. Automatically rebuilt "+summary.regions+" image-grounded regions ("+
     result.regions.filter(r=>r.kind==="fill").length+" fills, "+
     result.regions.filter(r=>r.kind==="running").length+" lines; "+
-    result.rejected.length+" rejected). "+summary.colors+" proposed colours. Source coverage: "+Math.round(result.quality.coverage*100)+"%."+
+    result.rejected.length+" rejected). "+summary.colors+" proposed colours. Source coverage: "+Math.round(result.quality.coverage*100)+"%."+modelRejectionDetails+
     (result.quality.autoRecoveredDetails?" Locally recovered "+result.quality.autoRecoveredDetails+" unclassified colour details (dashed outlines, geometry only; machine export blocked pending stitch planning)."+candidateSummary:"");
   // The second stage is automatic. Only editable geometric paths and colours
   // leave the browser; no source raster, AI credentials or model proposals.

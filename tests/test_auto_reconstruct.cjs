@@ -1,5 +1,5 @@
 const test=require("node:test"),assert=require("node:assert/strict");
-const {reconstruct,analyseArtwork,formatFillValidationFailure}=require("../site/auto-reconstruct.js");
+const {reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics}=require("../site/auto-reconstruct.js");
 const w=240,h=160;
 function source(){
  const rgba=new Uint8ClampedArray(w*h*4);
@@ -38,6 +38,14 @@ test("formats individual rejected fill diagnostics",()=>{
  assert.match(message,/2 additional fill region\(s\) failed/);
  assert.match(message,/original design is unchanged; partial replacement and machine export were blocked/);
  assert.equal((message.match(/region \d+(?: \([^)]*\))?:/g)||[]).length,4);
+});
+test("formats safe server model-geometry reasons for the reconstruction status",()=>{
+ const message=formatModelRejectionDiagnostics({rejected_regions:[
+  {region:1,reason:"degenerate_outline"},{region:2,reason:"duplicate_id"},
+  {region:0,reason:"<script>alert(1)</script>"}
+ ],additional_rejections:3});
+ assert.equal(message," Rejected proposal checks: region 1: degenerate_outline; region 2: duplicate_id; whole plan: geometry_check_failed; 3 more rejected.");
+ assert.equal(formatModelRejectionDiagnostics(null),"");
 });
 test("automatically reconstructs two separate image-grounded wing fill contours",()=>{
  const result=reconstruct(source(),w,h,plan());

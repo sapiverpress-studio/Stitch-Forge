@@ -21,6 +21,18 @@ function formatFillValidationFailure(accepted,failures){
  return "Basic geometry checks passed for "+passed.length+" region(s): "+acceptedText+acceptedMore+
   ". "+total+" fill region(s) failed ("+shown+more+"). The original design is unchanged; partial replacement and machine export were blocked.";
 }
+function formatModelRejectionDiagnostics(diagnostics){
+ if(!diagnostics||!Array.isArray(diagnostics.rejected_regions))return "";
+ const rows=diagnostics.rejected_regions.slice(0,8).map(item=>{
+  const number=Number.isInteger(item?.region)&&item.region>0?"region "+item.region:"whole plan";
+  const reason=/^[a-z_]{1,40}$/.test(item?.reason||"")?item.reason:"geometry_check_failed";
+  return number+": "+reason;
+ });
+ if(!rows.length)return "";
+ const extra=Number.isInteger(diagnostics.additional_rejections)&&diagnostics.additional_rejections>0?
+  "; "+diagnostics.additional_rejections+" more rejected":"";
+ return " Rejected proposal checks: "+rows.join("; ")+extra+".";
+}
 function polygonArea(points){let a=0;for(let i=0;i<points.length;i++){let p=points[i],q=points[(i+1)%points.length];a+=p[0]*q[1]-q[0]*p[1];}return Math.abs(a)/2;}
 function inside(px,py,poly){let yes=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){
  const a=poly[i],b=poly[j];if((a[1]>py)!==(b[1]>py)&&px<(b[0]-a[0])*(py-a[1])/(b[1]-a[1])+a[0])yes=!yes;
@@ -521,6 +533,6 @@ function reconstruct(rgba,w,h,plan,opts={}){
    "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified.",
    "Locally recovered image details need stitch-type verification and cannot trigger machine export."]};
 }
-root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork,formatFillValidationFailure});
-if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork,formatFillValidationFailure};
+root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics});
+if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics};
 })(typeof window==="undefined"?globalThis:window);

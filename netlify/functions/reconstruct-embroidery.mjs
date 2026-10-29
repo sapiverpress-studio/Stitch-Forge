@@ -107,13 +107,18 @@ export function verifyGeometryPlan(value){
 // clamp, or move coordinates. Individually invalid regions remain rejected,
 // and any partial draft is explicitly barred from automatic machine export.
 function normaliseModelPlan(data){
- if(!data||!Array.isArray(data.regions)||data.regions.length<1||data.regions.length>32)
-  throw Error("invalid_plan");
+ if(!data||!Array.isArray(data.regions))throw Error("invalid_plan");
+ if(data.regions.length<1||data.regions.length>32){
+  const error=Error("invalid_plan");
+  error.diagnostics={accepted_regions:0,rejected_regions:[{region:0,
+   reason:data.regions.length<1?"no_regions_returned":"region_limit_exceeded"}],additional_rejections:0};
+  throw error;
+ }
  const regions=[],seen=new Set(),rejected=[];
- for(const region of data.regions){
+ for(const [index,region] of data.regions.entries()){
   if(!region||!Array.isArray(region.points)||region.points.length>32||
      !["fill","running"].includes(region.kind)){
-   rejected.push("invalid_region");continue;
+   rejected.push({region:index+1,reason:"invalid_region"});continue;
   }
   const points=[];
   let valid=true;
@@ -123,24 +128,39 @@ function normaliseModelPlan(data){
    if(!points.length||p.x!==points.at(-1).x||p.y!==points.at(-1).y)
     points.push({x:p.x,y:p.y});
   }
-  if(!valid){rejected.push("invalid_points");continue;}
+  if(!valid){rejected.push({region:index+1,reason:"invalid_points"});continue;}
   if(region.kind==="fill"&&points.length>1&&
      points[0].x===points.at(-1).x&&points[0].y===points.at(-1).y)points.pop();
   if(points.length<(region.kind==="fill"?4:2)){
-   rejected.push("degenerate_outline");continue;
+   rejected.push({region:index+1,reason:"degenerate_outline"});continue;
   }
-  if(seen.has(region.id)){rejected.push("duplicate_id");continue;}
+  if(seen.has(region.id)){rejected.push({region:index+1,reason:"duplicate_id"});continue;}
   const candidate={...region,points};
   try{
    verifyGeometryPlan({subject:"",regions:[candidate],warnings:[],requires_machine_test:true});
-  }catch{rejected.push("invalid_region");continue;}
+  }catch{rejected.push({region:index+1,reason:"invalid_region"});continue;}
   regions.push(candidate);seen.add(candidate.id);
  }
  // Keep the machine-testing requirement enforced by the server even if the
  // model incorrectly sets it to false. Do not bypass any geometric check.
- const plan=verifyGeometryPlan({...data,regions,requires_machine_test:true});
+ if(!regions.length){
+  const error=Error("invalid_plan");
+  error.diagnostics={accepted_regions:0,rejected_regions:rejected.slice(0,8),
+   additional_rejections:Math.max(0,rejected.length-8)};
+  throw error;
+ }
+ let plan;
+ try{plan=verifyGeometryPlan({...data,regions,requires_machine_test:true});}
+ catch{
+  const error=Error("invalid_plan");
+  error.diagnostics={accepted_regions:regions.length,rejected_regions:[{region:0,reason:"plan_validation_failed"}],
+   additional_rejections:0};
+  throw error;
+ }
  return {...plan,model_rejected_count:rejected.length,
-  model_rejected_reasons:[...new Set(rejected)]};
+  model_rejected_reasons:[...new Set(rejected.map(r=>r.reason))],
+  model_rejected_regions:rejected.slice(0,8),
+  model_rejected_additional:Math.max(0,rejected.length-8)};
 }
 export function parseModelResponse(response){
  if(response?.status!=="completed")throw Error("INCOMPLETE_MODEL");
@@ -148,9 +168,13 @@ export function parseModelResponse(response){
  .filter(c=>c.type==="output_text").map(c=>c.text).join("");
  if(!raw||raw.length>45000)throw Error("EMPTY_MODEL");
  let data;try{data=JSON.parse(raw);}catch{throw Error("INVALID_MODEL_JSON");}
- try{return normaliseModelPlan(data);}catch{throw Error("INVALID_MODEL_GEOMETRY");}
+ try{return normaliseModelPlan(data);}catch(error){
+  const failure=Error("INVALID_MODEL_GEOMETRY");
+  failure.diagnostics=error?.diagnostics||null;
+  throw failure;
+ }
 }
-const safeFailure=(code)=>reply(502,{code,error:{
+const safeFailure=(code,diagnostics=null)=>reply(502,{code,error:{
  UPSTREAM_REJECTED:"OpenAI rejected the automatic reconstruction request.",
  UPSTREAM_LIMIT:"OpenAI usage limit reached. Check API limits.",
  UPSTREAM_UNAVAILABLE:"OpenAI is temporarily unavailable.",
@@ -159,7 +183,8 @@ const safeFailure=(code)=>reply(502,{code,error:{
  INVALID_MODEL_JSON:"The model returned unreadable geometry.",
  INVALID_MODEL_GEOMETRY:"The model returned unsafe or incomplete shapes.",
  NETWORK_FAILURE:"Automatic reconstruction failed. Artwork unchanged."
-}[code]||"Automatic reconstruction failed. Artwork unchanged."});
+}[code]||"Automatic reconstruction failed. Artwork unchanged.",
+ ...(code==="INVALID_MODEL_GEOMETRY"&&diagnostics?{diagnostics}: {})});
 export default async(request)=>{
  if(request.method!=="POST")return reply(405,{error:"POST only"});
  if(!auth(request.headers.get("authorization"),process.env.STITCH_FORGE_ANALYSIS_TOKEN))
@@ -196,7 +221,7 @@ export default async(request)=>{
   }});
  }catch(error){
   const code=["INCOMPLETE_MODEL","EMPTY_MODEL","INVALID_MODEL_JSON","INVALID_MODEL_GEOMETRY"].includes(error?.message)?error.message:"NETWORK_FAILURE";
-  console.error("[stitch-forge/auto] error category",code);return safeFailure(code);
+  console.error("[stitch-forge/auto] error category",code);return safeFailure(code,error?.diagnostics);
  }finally{clearTimeout(timer);}
 };
 export const config={path:"/api/reconstruct-embroidery"};

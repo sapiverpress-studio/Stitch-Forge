@@ -79,8 +79,17 @@ test("rejects invalid regions individually but never claims incomplete plan is r
  const invalid=plan();
  invalid.regions=[{...region("out-of-bounds"),points:[
   {x:-9,y:100},{x:200,y:100},{x:200,y:400},{x:100,y:400}]}];
- assert.throws(()=>parseModelResponse({status:"completed",output:[{type:"message",content:[
-  {type:"output_text",text:JSON.stringify(invalid)}]}]}),/INVALID_MODEL_GEOMETRY/);
+ let failure;
+ try{parseModelResponse({status:"completed",output:[{type:"message",content:[
+  {type:"output_text",text:JSON.stringify(invalid)}]}]});}catch(error){failure=error;}
+ assert.match(failure?.message||"",/INVALID_MODEL_GEOMETRY/);
+ assert.deepEqual(failure.diagnostics,{accepted_regions:0,
+  rejected_regions:[{region:1,reason:"invalid_points"}],additional_rejections:0});
+ const empty=plan();empty.regions=[];let emptyFailure;
+ try{parseModelResponse({status:"completed",output:[{type:"message",content:[
+  {type:"output_text",text:JSON.stringify(empty)}]}]});}catch(error){emptyFailure=error;}
+ assert.deepEqual(emptyFailure?.diagnostics,{accepted_regions:0,
+  rejected_regions:[{region:0,reason:"no_regions_returned"}],additional_rejections:0});
 });
 
 test("duplicate ids never silently produce multiple machine regions",()=>{
@@ -90,6 +99,30 @@ test("duplicate ids never silently produce multiple machine regions",()=>{
  assert.equal(out.regions.length,1);
  assert.equal(out.model_rejected_count,1);
  assert.deepEqual(out.model_rejected_reasons,["duplicate_id"]);
+ assert.deepEqual(out.model_rejected_regions,[{region:2,reason:"duplicate_id"}]);
+});
+
+test("invalid model geometry returns bounded region diagnostics without raw model output",async()=>{
+ const originalKey=process.env.OPENAI_API_KEY,originalToken=process.env.STITCH_FORGE_ANALYSIS_TOKEN,originalFetch=globalThis.fetch;
+ process.env.OPENAI_API_KEY="fake-test-only-key";process.env.STITCH_FORGE_ANALYSIS_TOKEN="fake-test-only-token";
+ const image=Buffer.concat([Buffer.from("89504e470d0a1a0a","hex"),Buffer.alloc(110)]);
+ const invalid=plan();invalid.regions=[{...region("bad"),points:[{x:-1,y:20},{x:20,y:20},{x:40,y:40},{x:20,y:50}]}];
+ try{
+  globalThis.fetch=async()=>new Response(JSON.stringify({status:"completed",output:[{type:"message",content:[
+   {type:"output_text",text:JSON.stringify(invalid)}]}]}),{status:200});
+  const response=await handler(new Request("https://test.invalid/api/reconstruct-embroidery",{
+   method:"POST",headers:{Authorization:"Bearer fake-test-only-token","Content-Type":"application/json"},
+   body:JSON.stringify({image:"data:image/png;base64,"+image.toString("base64")})}));
+  const body=await response.json();
+  assert.equal(response.status,502);assert.equal(body.code,"INVALID_MODEL_GEOMETRY");
+  assert.deepEqual(body.diagnostics,{accepted_regions:0,
+   rejected_regions:[{region:1,reason:"invalid_points"}],additional_rejections:0});
+  assert.equal(JSON.stringify(body).includes("bad"),false);
+ }finally{
+  globalThis.fetch=originalFetch;
+  if(originalKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=originalKey;
+  if(originalToken===undefined)delete process.env.STITCH_FORGE_ANALYSIS_TOKEN;else process.env.STITCH_FORGE_ANALYSIS_TOKEN=originalToken;
+ }
 });
 
 test("missing private token cannot invoke paid OpenAI",async()=>{
