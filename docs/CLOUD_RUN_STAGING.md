@@ -38,25 +38,20 @@ headless display, token requirement and independent PES/DST audit remain intact.
 
 ## Critical staging security distinction
 
-Cloud Run defaults to **private IAM**. This particular *temporary staging*
-script now uses `--no-allow-unauthenticated` so the existing Netlify function can
-reach its Google HTTPS address, and the Python worker still rejects all
-requests without the separate, long random worker Bearer secret.
+The staging script now deploys with **Cloud Run IAM authentication required**
+(`--no-allow-unauthenticated`). Netlify will use a Google-issued ID token
+for the approved service audience, while Ink/Stitch separately verifies its
+existing worker bearer secret. This is private IAM-controlled access over a
+publicly routable HTTPS hostname, not a private network.
 
-**This is NOT a fully private network endpoint.** Public unauthenticated
-requests will be refused by the app, but may still consume billable Cloud Run
-requests and affect availability. Set a strict Google Cloud budget/alerts,
-review ingress abuse and never enable it for public release without stronger
-Google IAM identity-token access, controls and formal cost approval. Budget
-alerts are not a hard spending cap. An external caller cannot obtain the
-engine token or reconstructed user artwork through the client bundle.
+Never enable anonymous Cloud Run invocation to work around a sign-in failure.
+Billing alerts are not hard cost ceilings. Keep a 2 GiB/2 CPU staging instance
+with a zero minimum, a maximum of one, and explicit owner approval of any
+cloud build/deploy charges.
 
-The Netlify credentials **must not** be modified until a real owner-approved
-staging service passes a live HTTPS authenticated smoke test. Restrict new
-`STITCH_FORGE_WORKER_TOKEN` and `STITCH_FORGE_ENGINE_URL` to
-**deploy-preview functions** context, not production, and confirm scopes.
-Do not expose the worker token in local storage, an image, GitHub logs or the
-browser.
+Do not change Netlify credentials until the real private HTTPS worker passes
+its native export smoke. Scope any new worker and Google caller settings to
+**deploy-preview/functions only**, never production or a browser bundle.
 
 ## Preflight on owner-approved Google Cloud account
 
