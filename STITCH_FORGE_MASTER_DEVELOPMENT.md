@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.33 (isolated feature branch only) |
+| Document version | MD-2.34 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | 2026-10-29 isolated feature branch: 13/13 satin rail/rung geometry cases passed in in-memory V8; full suite and native Ink/Stitch and real fabric trials not rerun at the time of implementation. |
+| Last independently checked source | 2026-10-29 MD-2.34 proof: 5/5 native Node.js test cases passed on exact standalone offline HTML + MD-2.33 satin module; Chromium desktop/mobile render verified, zero JS errors and mobile overflow, interactive hatch spacing/toggle confirmed. Git blob hash identical to local HTML. Synthetic visualization only; real PNG-to-stitch quality not proven. |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -462,11 +462,15 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-064 | P0 | Develop a conservative real-size satin rail and rung model for detailed wildlife | **SYNTHETIC 13-CASE GEOMETRY PASS / MACHINE NOT CONNECTED** | Paired same-direction rails, >=3 rungs, >1.5 and <=5mm conservative width, contour crossings and sharp turns rejected; bounded zigzag VISUAL GUIDE only. Native validation/fabric tests pending. |
 
+| SF-065 | P0 | Deliver user-inspectable offline visual evidence with clear synthetic-vs-machine provenance | **NATIVE NODE TESTED / BROWSER RENDER VERIFIED / NOT REAL DIGITISING PROOF** | Standalone offline 3-panel butterfly illustration, colour-geometry layers, clipped direction guides and **real MD-2.33** satin validator producing 68 guide points; 5 native Node tests + headless Chromium desktop/mobile checks passed. Synthetic authored contours are NOT AI segmentation; zero genuine machine export. |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
 ## 10. Test evidence register
+
+- **E-079 (2026-10-29, MD-2.34):** Real local Node.js v22.16.0 `node --test tests/test_visual_proof.cjs`: **5/5 pass** (not merely a V8 assertion shim). File `Stitch_Forge_MD-2.34_Visual_Proof_OFFLINE.html` embeds byte-for-byte source of existing `site/satin-geometry.js` (Git blob `a869d6c1ab346d39b14f6610b9a6e00ce4a0f512`). Chromium desktop (1450px) and mobile (430px) browser execution via `page.set_content`: accepted 7 paired satin rungs, 68 guide points, no JS errors, no mobile horizontal overflow, hatch control changed SVG stroke count from 2419 to 1363, hide toggle exercised. No network requests; 0 PES/DST machine files. **Synthetic fixture authored with known regions**, not AI-digitised source. Local HTML Git blob `bb7e9582c795551815d6ac1e91d8ed734779e0f3`, independently matched. Evidence record `docs/test-evidence/MD-2.34-visual-proof.md`. Full app/browser, real native engine latest branch and actual fabric trials remain open.
 
 - **E-078 (2026-10-29, MD-2.33):** `tests/test_satin_geometry.cjs`: 13/13 targeted tests passed through in-memory V8 node:test/assert adapter, **not** native Node. Includes classifier rail integration, curved/rotated/paired rails, reversed rails, conservative width bounds, crossed rungs, bad dimensions and missing geometry. Original user media inspected locally but no copyrighted frames uploaded to repo. No actual Ink/Stitch/PES-DST or fabric validation. See docs/test-evidence/MD-2.33-satin-rails.txt.
 
@@ -623,6 +627,8 @@ Do not create empty decorative folders or claim an implementation exists because
 - **2026-10-29 D-020:** Classify proposed detailed-art stitch categories by actual design width in millimetres, polygon area moments and nine cross-sections. Candidate centreline and satin rails are preview only, not Ink/Stitch-approved commands. Reject irregular, ambiguous, degenerate or undersized geometry; leave all locally recovered details blocked from automatic machine export.
 
 - **2026-10-29 D-021:** Detailed artwork satin modelling uses two physically scaled matched rails and >=3 rungs before any geometry may be shown as a preview. Follow Ink/Stitch satin direction conventions, but the project-specific 1.5–5mm range is not a universal stitch rule. Centreline zigzags generated here are visual GUIDES only; do not send as actual machine commands or bypass missing-detail/fabric gates. Official reference: https://inkstitch.org/docs/stitches/satin-column/.
+
+- **2026-10-29 D-022:** Visual claims must distinguish an original synthetic control fixture, AI-reconstructed source geometry, and Ink/Stitch-produced machine stitches. The MD-2.34 three-panel **offline** demonstration is a developer proof of region layering and conservative rail geometry, NOT user-artwork reconstruction or sew-out proof. Ship no Netlify preview until native PES/DST produced from the **same** revised geometry and decoded stitch evidence can be displayed alongside the image; the owner must explicitly approve deployment.
 
 ### Decision-record template
 
@@ -1114,6 +1120,15 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - Tests: 13/13 satin source cases passed in V8 CommonJS test shim; full Node/Python, browser/Android and real native Ink/Stitch PES/DST+fabric tests remain open. Evidence: docs/test-evidence/MD-2.33-satin-rails.txt.
 - No external billable service, subscription, third-party dependency or added licensing issue. Validation is geometry-only and cannot claim sew quality, push/pull compensation, underlay, split stitches, lock/travel or fabric profile.
 - Next: native Ink/Stitch multi-subpath satin fixture and independent needle-coordinate audit, directional fill controls and realistic multicolour artwork stitch-out.
+
+### 2026-10-29 — User-visible standalone proof without a deployment (MD-2.34)
+
+- SF-065. Development branch `feature/detailed-embroidery-analysis-no-deploy`, parent `021e75ac99fe1eab631cbb05d4dab8487126e28c`; no main/develop merge or PR changes.
+- Added offline self-contained `Stitch_Forge_MD-2.34_Visual_Proof_OFFLINE.html` (exact local/Git blob `bb7e9582c795551815d6ac1e91d8ed734779e0f3`) with three responsive views: original **synthetic** butterfly artwork, independently outlined **hand-authored** colour regions, and clipped directional fill guides + zigzag computed by byte-identical existing MD-2.33 satin validator. No external scripts/network, machine download button, API calls or claimed source segmentation.
+- Added `tests/test_visual_proof.cjs` (exact SHA `288b01846c9083e5d4b6347eb3f02bce0f345d97`) exercising real original satin module provenance, fixture rails, rejected reverse direction, disclosure and no network/machine export. **5/5 pass** using actual installed Node.js v22.16.0 native test runner.
+- Headless real Chromium: desktop 1450px and mobile 430px, static HTML loaded with `page.set_content` (not hosted). Audited accepted seven rungs, 68 simulated zigzag points, `machineApproved=false`, 0 machine files, no JavaScript errors, no mobile horizontal overflow. Slider changed direction-hatch SVG line count 2419 → 1363, satin visibility control exercised. PNG screenshots produced as current-conversation files, **not** committed since the public branch should remain source-only.
+- This proof is explicitly **NOT** evidence of an AI-reconstructed real design or actual PES/DST Ink/Stitch output, seam directions/fabric performance, underlay, thread density or faithful wing/feather texture. No real OpenAI call or source-image inference, no preview/production deploy. Use as visual inspection instrumentation only; quality milestone not fully met.
+- Next gate: exact feature-branch zero-cost Ink/Stitch acceptance with independently decoded needle positions and realistic reference-image segmentation quality; then an authorised development preview, physical fabric tests, and later professional Target 2 evaluation.
 
 ### Entry template — REQUIRED on every meaningful development update
 
