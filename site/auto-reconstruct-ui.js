@@ -110,6 +110,7 @@ q("#sfAutoRun").onclick=async()=>{
   let candidateSummary="";
   if(result.quality.autoRecoveredDetails&&window.StitchForgeStitchClassifier){
    const classes=window.StitchForgeStitchClassifier.classifyDraft(result.regions,context.getWidthMm());
+   result.stitchScaleMmPerPixel=classes.scaleMmPerPixel;
    const counts={running_candidate:0,satin_candidate:0,fill_candidate:0,manual_review:0};
    result.regions.forEach((region,n)=>{
     if(!region.requiresDigitisingReview)return;
@@ -119,6 +120,20 @@ q("#sfAutoRun").onclick=async()=>{
    candidateSummary=" Provisional stitch categories: "+counts.running_candidate+" running, "+
     counts.satin_candidate+" satin, "+counts.fill_candidate+" fill, "+counts.manual_review+
     " need review. No machine approval.";
+  }
+  // These are validated preview rails/rungs, NOT approved native stitches.
+  if(result.quality.autoRecoveredDetails&&window.StitchForgeSatinGeometry){
+   let accepted=0,refused=0;
+   for(const region of result.regions){
+    if(region.stitchCandidate?.candidate!=="satin_candidate"||
+       !region.stitchCandidate.proposedRails)continue;
+    const geometry=window.StitchForgeSatinGeometry.validateRails(
+      region.stitchCandidate.proposedRails,result.stitchScaleMmPerPixel);
+    region.satinRungPreview=geometry;
+    if(geometry.accepted)accepted++;else refused++;
+   }
+   candidateSummary+=" Satin rail/rung geometry: "+accepted+" bounded preview(s), "+
+    refused+" refused. No machine approval.";
   }
   // End-to-end validation finishes BEFORE mutating the editor.
   const proposed={...result,width:canvas.width,height:canvas.height};

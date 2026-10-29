@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.32 (isolated feature branch only) |
+| Document version | MD-2.33 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | 2026-10-29 isolated feature branch: 12/12 new classifier cases passed in direct V8 memory execution; prior MD-2.31 reconstruction tests not rerun. Full browser, Node regression, real Ink/Stitch and physical stitching not executed. |
+| Last independently checked source | 2026-10-29 isolated feature branch: 13/13 satin rail/rung geometry cases passed in in-memory V8; full suite and native Ink/Stitch and real fabric trials not rerun at the time of implementation. |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -460,11 +460,15 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-063 | P0 | Propose real-size running/satin/fill stitch candidates for detailed artwork | **SYNTHETIC GEOMETRY VERIFIED / NATIVE NOT INTEGRATED** | Nine contour-width sections, preview satin rail pairs and centrelines, design-width mm scaling; 12 synthetic targeted tests passed. No verified satin underlay, machine sewing or real wildlife acceptance. |
 
+| SF-064 | P0 | Develop a conservative real-size satin rail and rung model for detailed wildlife | **SYNTHETIC 13-CASE GEOMETRY PASS / MACHINE NOT CONNECTED** | Paired same-direction rails, >=3 rungs, >1.5 and <=5mm conservative width, contour crossings and sharp turns rejected; bounded zigzag VISUAL GUIDE only. Native validation/fabric tests pending. |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
 ## 10. Test evidence register
+
+- **E-078 (2026-10-29, MD-2.33):** `tests/test_satin_geometry.cjs`: 13/13 targeted tests passed through in-memory V8 node:test/assert adapter, **not** native Node. Includes classifier rail integration, curved/rotated/paired rails, reversed rails, conservative width bounds, crossed rungs, bad dimensions and missing geometry. Original user media inspected locally but no copyrighted frames uploaded to repo. No actual Ink/Stitch/PES-DST or fabric validation. See docs/test-evidence/MD-2.33-satin-rails.txt.
 
 - **E-077 (2026-10-29, MD-2.32):** 12/12 test callbacks passed with direct in-memory V8 evaluation of new site/stitch-classifier.js and tests/test_stitch_classifier.cjs under minimal CommonJS, node:test and strict-assertion shims. This is **not** a native Node runner, a full suite or a browser integration test. Cases cover running/satin/fill, 45-degree and reversed contours, physical scale, invalid geometry, narrow/irregular and too-small forms. UI and native stitch output remain unverified. See docs/test-evidence/MD-2.32-stitch-classifier.txt.
 
@@ -617,6 +621,8 @@ Do not create empty decorative folders or claim an implementation exists because
 - **2026-10-29 D-019:** Automated local contrast-island recovery is permitted to create *editable, low-confidence geometry only* and is not allowed to auto-approve fill/satin stitch types. Keep AI omission audit before and after, limit 16 recovered regions and 1,600 pixels per candidate, preserve region ordering, and prevent machine download if any candidate is recovered. No additional model request or third-party dependency.
 
 - **2026-10-29 D-020:** Classify proposed detailed-art stitch categories by actual design width in millimetres, polygon area moments and nine cross-sections. Candidate centreline and satin rails are preview only, not Ink/Stitch-approved commands. Reject irregular, ambiguous, degenerate or undersized geometry; leave all locally recovered details blocked from automatic machine export.
+
+- **2026-10-29 D-021:** Detailed artwork satin modelling uses two physically scaled matched rails and >=3 rungs before any geometry may be shown as a preview. Follow Ink/Stitch satin direction conventions, but the project-specific 1.5–5mm range is not a universal stitch rule. Centreline zigzags generated here are visual GUIDES only; do not send as actual machine commands or bypass missing-detail/fabric gates. Official reference: https://inkstitch.org/docs/stitches/satin-column/.
 
 ### Decision-record template
 
@@ -1098,6 +1104,16 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - Tests: 12 of 12 targeted classifier callbacks passed in local V8 memory harness. Full Node runner, browser, Android, existing regression, Python/Ink-Stitch, real image and physical embroidery not run. Reproducible tests included in tests/test_stitch_classifier.cjs; exact evidence in docs/test-evidence/MD-2.32-stitch-classifier.txt.
 - Limitations: category heuristic is not satin stitch planning. Preview rails require native Ink/Stitch compatibility, rung placement, underlay, pull compensation, fabric/tension controls, independent command audit and real sew-out. Highly curved, branching or holed regions remain unverified.
 - No new dependency, cost, model call, deployment, merge, PR update, main or develop changes. Next priority: independently validated satin rail/rung model, actual native machine-file checks and real-art calibration.
+
+### 2026-10-29 — Physical satin rail/rung validation for fine wildlife outlines (MD-2.33)
+
+- SF-064. Isolated branch `feature/detailed-embroidery-analysis-no-deploy`, parent `2ccc27ee564a2066def1498b676d80949ea31fc5`. No deploy, PR change, production/integration writes.
+- Inspected supplied swan screenshot and approximately 28-second complex coloured butterfly/moth machine embroidery video locally. Design target: smooth layered directional colour fills, dark clean contours, small accent islands, controlled ordering. No user video or images entered the public repo.
+- New `site/satin-geometry.js` accepts 3+ paired rail coordinates in a physical scale, validates matching direction, 1.5–5mm project-specific column width, finite vertices, rung obliquity, acute bends, taper, opposing/crossing rails and rung intersections, and limits visual guide length/density.
+- `site/index.html` loads validator before `site/auto-reconstruct-ui.js`. Existing source-recovered details with provisional satin labels now record bounded/refused preview rail/rung results, while preserving `machineEligible=false`. No output machine format is changed.
+- Tests: 13/13 satin source cases passed in V8 CommonJS test shim; full Node/Python, browser/Android and real native Ink/Stitch PES/DST+fabric tests remain open. Evidence: docs/test-evidence/MD-2.33-satin-rails.txt.
+- No external billable service, subscription, third-party dependency or added licensing issue. Validation is geometry-only and cannot claim sew quality, push/pull compensation, underlay, split stitches, lock/travel or fabric profile.
+- Next: native Ink/Stitch multi-subpath satin fixture and independent needle-coordinate audit, directional fill controls and realistic multicolour artwork stitch-out.
 
 ### Entry template — REQUIRED on every meaningful development update
 
