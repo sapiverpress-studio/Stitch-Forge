@@ -286,3 +286,57 @@ test("low contrast feather texture does not trigger the high contrast sentinel",
  const output=reconstruct(image,w,h,plan());
  assert.equal(output.quality.unrepresentedFineDetails,0);
 });
+
+
+test('automatically recovers omitted eye from source colour, but blocks machine export',()=>{
+ const img=source();
+ for(let y=65;y<70;y++)for(let x=59;x<64;x++){const j=(y*w+x)*4;img[j]=img[j+1]=img[j+2]=12;}
+ const out=reconstruct(img,w,h,plan());
+ const part=out.regions.find(r=>r.geometrySource==='local_contrast_island_unverified_stitch_type');
+ assert.ok(part);assert.equal(part.pixelArea,25);assert.equal(part.color,'#0C0C0C');
+ assert.equal(part.parentId,'left');assert.equal(part.confidence,'low');
+ assert.equal(part.requiresDigitisingReview,true);assert.equal(out.quality.autoRecoveredDetails,1);
+ assert.equal(out.quality.remainingUnrepresentedFineDetails,0);
+ assert.ok(out.quality.blockers.includes('unverified_auto_recovered_details'));
+ assert.equal(out.quality.machineEligible,false);
+});
+test('automatically recovers 2-pixel feather stripe as editable geometry',()=>{
+ const img=source();
+ for(let y=62;y<64;y++)for(let x=48;x<65;x++){const j=(y*w+x)*4;img[j]=img[j+1]=img[j+2]=15;}
+ const out=reconstruct(img,w,h,plan());
+ const p=out.regions.find(r=>r.geometrySource==='local_contrast_island_unverified_stitch_type');
+ assert.ok(p);assert.equal(p.pixelArea,34);assert.equal(p.color,'#0F0F0F');
+ assert.equal(out.quality.machineEligible,false);
+});
+test('does not duplicate an eye that was in the one-call AI geometry plan',()=>{
+ const img=source();
+ for(let y=65;y<70;y++)for(let x=59;x<64;x++){const j=(y*w+x)*4;img[j]=img[j+1]=img[j+2]=12;}
+ const p=plan();p.regions.push({id:'eye',label:'eye',kind:'fill',semantic:'wing_marking',
+ color:'#0C0C0C',layer:1,confidence:'high',points:[[55,61],[68,61],[68,74],[55,74]]
+ .map(([x,y])=>({x:Math.round(x*1000/w),y:Math.round(y*1000/h)}))});
+ const out=reconstruct(img,w,h,p);
+ assert.equal(out.quality.autoRecoveredDetails,0);
+ assert.equal(out.regions.filter(r=>r.id==='eye').length,1);
+});
+test('does not recover noise, low-contrast shading or absent/black holes',()=>{
+ for(const type of ['noise','shade','hole']){
+  const img=source();
+  if(type==='noise'){const j=(70*w+64)*4;img[j]=img[j+1]=img[j+2]=10;}
+  if(type==='shade')for(let y=62;y<64;y++)for(let x=48;x<65;x++){
+   const j=(y*w+x)*4;img[j]=img[j+1]=img[j+2]=158;}
+  if(type==='hole')for(let y=64;y<72;y++)for(let x=59;x<67;x++){
+   const j=(y*w+x)*4;img[j]=img[j+1]=img[j+2]=0;}
+  const out=reconstruct(img,w,h,plan());
+  assert.equal(out.quality.autoRecoveredDetails,0);
+  if(type==='hole')assert.ok(out.rejected.some(r=>r.reason==='fill_holes_not_supported'));
+ }
+});
+test('unclassified recovery is ordered after source base and keeps IDs unique',()=>{
+ const img=source();
+ for(let y=63;y<69;y++)for(let x=57;x<63;x++){
+  const j=(y*w+x)*4;img[j]=img[j+1]=img[j+2]=18;}
+ const out=reconstruct(img,w,h,plan()),r=out.regions.find(r=>r.recoveryStatus);
+ assert.ok(r);assert.equal(out.regions.indexOf(r),out.regions.findIndex(t=>t.id==='left')+1);
+ assert.equal(new Set(out.regions.map(r=>r.id)).size,out.regions.length);
+ assert.equal(out.quality.machineEligible,false);
+});

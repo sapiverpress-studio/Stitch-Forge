@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.30 (isolated feature branch only) |
+| Document version | MD-2.31 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | 2026-10-29 isolated feature branch: 25 reconstruction test cases executed in a sandboxed JavaScript harness (20 existing and 5 new), no failures; real Node/browser and Ink/Stitch suites not rerun. Fine-detail omission and small-mark preservation remain synthetic-only. |
+| Last independently checked source | 2026-10-29 isolated feature branch: 30/30 reconstruction test callbacks passed in direct V8 in-memory execution (25 existing + 5 new), synthetic only. Full Node/browser, native engine and physical stitch tests not rerun. |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -456,11 +456,15 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-061 | P0 | Preserve small realistic markings and catch missed fine details | **LOCAL SYNTHETIC TEST VERIFIED / REAL-IMAGE QA OPEN** | Source-backed 5×5px eye now survives extracted-contour validator (physical-size gate remains); coherent missing dark eye/feather strokes block automatic export without another AI request. Real art, device, Ink/Stitch and fabric tests pending. |
 
+| SF-062 | P0 | Automatically recover source-backed fine-detail colour contours without another AI request | **LOCAL SYNTHETIC VERIFICATION / MACHINE EXPORT BLOCKED** | Bounded on-device colour-island flood, contour fidelity re-audit, editable candidate layer and dashed review overlay. 5 additional tests and previous 25 pass. Physical stitch suitability, semantic anatomy and realistic artwork unverified. |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
 ## 10. Test evidence register
+
+- **E-076 (2026-10-29, MD-2.31):** Direct V8 in-memory execution of reconstructed `site/auto-reconstruct.js` and targeted `tests/test_auto_reconstruct.cjs`: **30 tests passed** (25 existing, 5 new). This uses a minimal CommonJS/assertion shim, **not** native Node `--test`; full browser/Python/native regression not run. Synthetic dark eye 25px and 2px feather stripe reconstruct as distinct source-backed editable candidate colour regions; no duplicated AI-proposed eye, no single-pixel noise recovery, and holes fail closed. Recovered candidates block automatic machine export and keep pre-recovery omission flags. See `docs/test-evidence/MD-2.31-local-recovery.txt`.
 
 - **E-075 (2026-10-29, MD-2.30):** Current source and tests executed via V8 JavaScript evaluation harness: **25/25 assertions-based test cases passed**, comprising the 20 existing `tests/test_auto_reconstruct.cjs` cases and 5 added fine-detail cases. No Node `node:test` runner claim; no complete JS suite rerun. Synthetic 2px feather-marking and 5×5px eye omitted from AI regions now gate machine export; proposed eye retained by locally validated 12px² extracted contour threshold (AI proposal threshold stays 35px² and physical backend gate stays unchanged). Exact test strategy and boundaries in `docs/test-evidence/MD-2.30-fine-details.txt`. No real image, native engine or fabric test.
 
@@ -605,6 +609,8 @@ Do not create empty decorative folders or claim an implementation exists because
 - **2026-10-29 D-017:** Compound contours are validated as geometry-only. Even-odd SVG preview paths must **not** be forwarded to the native embroidery engine until actual Ink/Stitch produces proven unsewn holes; topology success is not proof of stitch omission. No external dependency or deployment introduced.
 
 - **2026-10-29 D-018:** For extracted pixel-grounded regions only, permit contours of at least 12 source pixel² rather than uniformly requiring 35px²; existing 25-pixel connected-component and native physical size gates are retained. Add fail-closed, locally computed coherent high-contrast missing-feature alerts. Both thresholds are heuristics; no semantic correctness or physical quality claim.
+
+- **2026-10-29 D-019:** Automated local contrast-island recovery is permitted to create *editable, low-confidence geometry only* and is not allowed to auto-approve fill/satin stitch types. Keep AI omission audit before and after, limit 16 recovered regions and 1,600 pixels per candidate, preserve region ordering, and prevent machine download if any candidate is recovered. No additional model request or third-party dependency.
 
 ### Decision-record template
 
@@ -1067,6 +1073,15 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - Not run: native `node --test` in repo working tree, full Python suite, browser/mobile integration, real AI, Ink/Stitch machine-file rerun or physical sew-out. Previously recorded MD-2.28 tests are not claimed as rerun. No dependency/licence addition, credentials, hosted calls or expense.
 - Risk: coherent pixel omission threshold may reject highly textured artwork or miss sub-threshold features. Validation is only against synthetic masks, not wildlife image semantic ground truth; no claim of satin/underlay improvements.
 - Next: evaluate against original high-resolution licensed wildlife illustrations, develop local detail recovery and per-colour stitch evidence, then real engine/file and fabric quality checks. No deployment, merge or PR edit.
+
+### 2026-10-29 — Local image-grounded fine-detail recovery, no extra AI call (MD-2.31)
+
+- Scope: SF-062. Branch: `feature/detailed-embroidery-analysis-no-deploy` from head `c65473dd150931cf7e635b26a712adadfc51181f`; five source/test/docs files committed atomically.
+- New `recoverLocalDetails()` in `site/auto-reconstruct.js`: sample coherent high-contrast omission components, source-colour-constrained connected pixel recovery, closed-boundary extraction, error-bounded simplification and independent raster overlap check. Stop at 16 candidate regions / 1,600 source pixels per candidate / 128 total. No invented named anatomy.
+- Recovered candidate keeps source parent ID, source colour, layer order, low confidence and `requiresDigitisingReview`. `site/auto-reconstruct-ui.js` displays dashed candidate contours and reports machine export is blocked. Audit retains original missing-detail counts plus remaining-detail counts after reconstruction; automatic native export stays blocked even when a candidate now covers the missing image detail.
+- Tests: **30/30** targeted JS test callbacks passed in isolated V8 simulation (25 prior + five new); actual recorded command/test method in `docs/test-evidence/MD-2.31-local-recovery.txt`. No bundled external runtime invoked. No Node/browser integration, Ink/Stitch native fixture rerun, real photo/image model, Android device or physical embroidery sewn.
+- Limitations: only discrete high-contrast colour islands; no gradient/feather-shading semantics, satin rails, centreline classification, pull compensation or machine approval. Existing editor's physical-scale validation may reject tiny recovered contours atomically; this remains an intentional safety gate. Real-image quality and computational performance not demonstrated.
+- No dependencies, licences, credentials, hosted calls, PR changes, Netlify deploy or production changes. Next priority: measure candidate usefulness/false positives on licensed real artwork and implement stitched-region geometry/command verification before enabling automatic output.
 
 ### Entry template — REQUIRED on every meaningful development update
 

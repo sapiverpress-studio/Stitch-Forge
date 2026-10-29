@@ -47,6 +47,7 @@ function paint(){
   path.setAttribute("fill-opacity",region.kind==="fill"?"0.32":"0");
   path.setAttribute("stroke",region.color);
   path.setAttribute("stroke-width",region.kind==="fill"?"1.5":"2.4");
+  if(region.requiresDigitisingReview)path.setAttribute("stroke-dasharray","4 3");
   overlay.appendChild(path);
  }
 }
@@ -116,7 +117,8 @@ q("#sfAutoRun").onclick=async()=>{
    inspection.detailLevel+" edge detail. Automatically rebuilt "+summary.regions+" image-grounded regions ("+
     result.regions.filter(r=>r.kind==="fill").length+" fills, "+
     result.regions.filter(r=>r.kind==="running").length+" lines; "+
-    result.rejected.length+" rejected). "+summary.colors+" proposed colours. Source coverage: "+Math.round(result.quality.coverage*100)+"%.";
+    result.rejected.length+" rejected). "+summary.colors+" proposed colours. Source coverage: "+Math.round(result.quality.coverage*100)+"%."+
+    (result.quality.autoRecoveredDetails?" Locally recovered "+result.quality.autoRecoveredDetails+" unclassified colour details (dashed outlines, geometry only; machine export blocked pending stitch planning).":"");
   // The second stage is automatic. Only editable geometric paths and colours
   // leave the browser; no source raster, AI credentials or model proposals.
   // The endpoint returns a ZIP only after native Ink/Stitch + independent audit.

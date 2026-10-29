@@ -183,7 +183,7 @@ function paintPolygon(points,w,h,visit){
 }
 // Catch coherent high-contrast details that are too small for palette totals.
 // This detects missing detail only; it does not invent stitches or geometry.
-function fineDetailOmissions(rgba,w,h,foreground,owner,colours){
+function fineDetailOmissions(rgba,w,h,foreground,owner,colours,collect=false){
  const mask=new Uint8Array(w*h);
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
   const k=y*w+x,region=owner[k];if(region<0||!foreground[k])continue;
@@ -200,7 +200,7 @@ function fineDetailOmissions(rgba,w,h,foreground,owner,colours){
   }
   if(supportedNeighbour)mask[k]=1;
  }
- let details=0,detailPixels=0;
+ let details=0,detailPixels=0,components=[];
  for(let k=0;k<mask.length;k++){
   if(mask[k]!==1)continue;
   const queue=[k];mask[k]=2;let head=0,minX=w,maxX=0,minY=h,maxY=0;
@@ -218,12 +218,13 @@ function fineDetailOmissions(rgba,w,h,foreground,owner,colours){
   if(queue.length>=12&&(Math.max(spanX,spanY)>=8||
      (queue.length>=16&&Math.min(spanX,spanY)>=3))){
    details++;detailPixels+=queue.length;
+   if(collect&&components.length<16)components.push(queue);
   }
  }
- return {count:details,pixels:detailPixels};
+ return {count:details,pixels:detailPixels,components};
 }
 
-function auditReconstruction(rgba,w,h,foreground,regions){
+function auditReconstruction(rgba,w,h,foreground,regions,collect=false){
  const owner=new Int16Array(w*h);owner.fill(-1);
  let overlapPixels=0;
  regions.forEach((r,index)=>{
@@ -251,7 +252,7 @@ function auditReconstruction(rgba,w,h,foreground,regions){
   const bin=bins.get(key)||{pixels:0,unrepresented:0};bin.pixels++;if(mismatch)bin.unrepresented++;bins.set(key,bin);
  }
  const missingColourGroups=[...bins.values()].filter(b=>b.pixels>=Math.max(25,foregroundPixels*.004)&&b.unrepresented/b.pixels>.25).length;
- const fineDetails=fineDetailOmissions(rgba,w,h,foreground,owner,colours);
+ const fineDetails=fineDetailOmissions(rgba,w,h,foreground,owner,colours,collect);
  const blockers=[];
  if(fineDetails.count)blockers.push('unrepresented_fine_details');
  if(regions.some(r=>r.confidence==='low'))blockers.push('low_confidence_regions');
@@ -261,6 +262,7 @@ function auditReconstruction(rgba,w,h,foreground,regions){
  if(missingColourGroups)blockers.push('unrepresented_source_colours');
  return {foregroundPixels,missingPixels,falseFillPixels,colourMismatchPixels,missingColourGroups,overlapPixels,
   unrepresentedFineDetails:fineDetails.count,unrepresentedFineDetailPixels:fineDetails.pixels,
+  ...(collect?{_detailSeeds:fineDetails.components}:{}),
   coverage:Number((1-missingPixels/Math.max(1,foregroundPixels)).toFixed(4)),blockers,
   machineEligible:blockers.length===0,scope:'pixel_fidelity_only_not_semantic_or_stitch_validation'};
 }
@@ -337,6 +339,59 @@ function contrastCentreline(rgba,mask,w,h,points){
  if(Math.hypot(out[0][0]-out.at(-1)[0],out[0][1]-out.at(-1)[1])<6)return null;
  return{points:out,support:best.length/samples.length};
 }
+// Recover source-backed colour islands using only the existing pixel canvas.
+// These contours do not imply a selected stitch type, sewability or anatomy.
+function recoverLocalDetails(rgba,w,h,foreground,regions,components){
+ if(!components.length)return [];
+ const owner=new Int16Array(w*h);owner.fill(-1);
+ regions.forEach((r,i)=>{if(r.kind==='fill')paintPolygon(r.points,w,h,k=>{owner[k]=i;});});
+ const visited=new Uint8Array(w*h),recovered=[];
+ const rgb=k=>{const j=k*4;return [rgba[j],rgba[j+1],rgba[j+2]];};
+ const diff=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ for(const edge of components){
+  if(recovered.length>=16||regions.length+recovered.length>=128)break;
+  const seed=edge.find(k=>owner[k]>=0&&!visited[k]);
+  if(seed===undefined)continue;
+  const parentIndex=owner[seed],parent=regions[parentIndex];
+  if(parent.kind!=='fill')continue;
+  const base=[1,3,5].map(i=>parseInt(parent.color.slice(i,i+2),16));
+  const anchor=rgb(seed);if(diff(base,anchor)<95)continue;
+  const queue=[seed],mean=[0,0,0];let front=0,tooLarge=false;visited[seed]=1;
+  while(front<queue.length){
+   const k=queue[front++],x=k%w,y=Math.floor(k/w),p=rgb(k);
+   for(let i=0;i<3;i++)mean[i]+=p[i];
+   if(queue.length>1600){tooLarge=true;break;}
+   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    if(!dx&&!dy)continue;
+    const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h)continue;
+    const n=yy*w+xx;
+    if(visited[n]||!foreground[n]||owner[n]!==parentIndex)continue;
+    const c=rgb(n);
+    if(diff(c,anchor)>42||diff(c,base)<90)continue;
+    visited[n]=1;queue.push(n);
+   }
+  }
+  if(tooLarge||queue.length<25)continue;
+  const mask=new Uint8Array(w*h);for(const k of queue)mask[k]=1;
+  const boundary=boundaryPixels(mask,w,h);
+  if(boundary.length<4||Math.abs(polygonArea(boundary)-queue.length)>.25)continue;
+  const points=simplifyRing(boundary);
+  if(points.length<4||invalidPolygon(points,512,4,12))continue;
+  let correct=0,falsePixels=0;
+  paintPolygon(points,w,h,k=>{if(mask[k])correct++;else falsePixels++;});
+  if(falsePixels>Math.max(2,queue.length*.005)||
+     queue.length-correct>Math.max(2,queue.length*.02))continue;
+  const colour='#'+mean.map(v=>Math.round(v/queue.length).toString(16).padStart(2,'0')).join('').toUpperCase();
+  recovered.push({id:'source-detail-'+(recovered.length+1),parentId:parent.id,
+   label:'Unclassified image detail',semantic:'source_only_unclassified_marking',
+   layer:(Number.isFinite(parent.layer)?parent.layer:0)+0.5,kind:'fill',color:colour,
+   points,confidence:'low',sourceSupport:1,pixelArea:queue.length,
+   geometrySource:'local_contrast_island_unverified_stitch_type',
+   requiresDigitisingReview:true,recoveryStatus:'SOURCE_GEOMETRY_ONLY_NOT_MACHINE_APPROVED'});
+ }
+ return recovered;
+}
+
 function checkedRegion(r){
  if(!r||typeof r.id!=="string"||r.id.length>60||typeof r.label!=="string"||
   !["fill","running"].includes(r.kind)||!/^#[0-9a-f]{6}$/i.test(r.color)||
@@ -421,12 +476,35 @@ function reconstruct(rgba,w,h,plan,opts={}){
  }
  if(!regions.length)throw Error("AI reconstruction did not yield any supported regions; design unchanged");
  if(regions.length>128)throw Error("Too many reconstruction regions");
- const quality=auditReconstruction(rgba,w,h,foreground,regions);
+ const before=auditReconstruction(rgba,w,h,foreground,regions,true);
+ const recovery=recoverLocalDetails(rgba,w,h,foreground,regions,before._detailSeeds);
+ delete before._detailSeeds; // No large source-pixel index arrays in the public result.
+ if(recovery.length){
+  // Place recovered detail immediately after its supporting layer, rather
+  // than painting it above unrelated later AI layers.
+  const ordered=[];
+  for(const r of regions){ordered.push(r,...recovery.filter(x=>x.parentId===r.id));}
+  regions.length=0;regions.push(...ordered);
+ }
+ const quality=recovery.length?auditReconstruction(rgba,w,h,foreground,regions):before;
+ quality.initialUnrepresentedFineDetails=before.unrepresentedFineDetails;
+ quality.remainingUnrepresentedFineDetails=quality.unrepresentedFineDetails;
+ quality.autoRecoveredDetails=recovery.length;
+ quality.autoRecoveredDetailPixels=recovery.reduce((n,r)=>n+r.pixelArea,0);
+ if(recovery.length){
+  // Keep original omission evidence. A visual recovery is not stitch approval.
+  quality.blockers=[...new Set([...before.blockers,...quality.blockers,
+    'unverified_auto_recovered_details'])];
+  quality.unrepresentedFineDetails=before.unrepresentedFineDetails;
+  quality.unrepresentedFineDetailPixels=before.unrepresentedFineDetailPixels;
+  quality.machineEligible=false;
+ }
  return {status:"AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED",regions,rejected,quality,
   proposed:plan.regions.length,autoApplied:false,
   warnings:["AI outlines are approximate; source-pixel clipping is not semantic segmentation.",
    "Pixel colour fidelity is not calibrated thread matching or stitch quality.",
-   "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified."]};
+   "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified.",
+   "Locally recovered image details need stitch-type verification and cannot trigger machine export."]};
 }
 root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork});
 if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork};
