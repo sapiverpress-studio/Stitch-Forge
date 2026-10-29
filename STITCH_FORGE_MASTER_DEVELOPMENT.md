@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.40 (plan-shape diagnostic fallback; released to `main` after explicit authorization; production status recorded in the current handover) |
+| Document version | MD-2.40 (plan-shape diagnostic fallback; source commit `b9eee11a6a3808a72d23488984de17e60234849a`; Netlify production verification recorded in this handover) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | GitHub `main`/Netlify production reports MD-2.39 commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52` deployed and ready at 17:02 UTC (deploy ID `6ae37c076fbb1f0a6438e9db`, `manual_deploy=false`, source `api`). The 17:06 screenshot still shows generic `INVALID_MODEL_GEOMETRY`. MD-2.40 adds a tested plan-shape fallback; the user explicitly authorized pushing this fix and deploying production, and the release result is verified in the handover. Trigger for the production deploy is unknown; the user's confirmation is that they did not deploy it manually. No AI/worker call, PES/DST output, browser run, or sew-out occurred in MD-2.40. |
+| Last independently checked source | GitHub `main`/Netlify production reports MD-2.39 commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52` deployed and ready at 17:02 UTC (deploy ID `6ae37c076fbb1f0a6438e9db`, `manual_deploy=false`, source `api`). The 17:06 screenshot still shows generic `INVALID_MODEL_GEOMETRY`. The user authorized pushing the tested plan-shape fallback and deploying production. Source commit `b9eee11a6a3808a72d23488984de17e60234849a` is prepared; GitHub main-ref and Netlify publish verification will be recorded after the release action. Trigger for the production deploy is unknown; the user's confirmation is that they did not deploy it manually. No AI/worker call, PES/DST output, browser run, or sew-out occurred in MD-2.40. |
 | Default branch | `main` |
 | Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -87,7 +87,7 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 
 **Local-only patch:** `normaliseModelPlan` now attaches a safe plan-level `plan_shape_invalid` reason if `regions` is missing or is not an array. `parseModelResponse` supplies a bounded `plan_validation_failed` fallback diagnostic for any other geometry error lacking details. Added a mocked parser assertion. No region is accepted and no model/worker call is made.
 
-**Test:** configured 5 syntax checks and eight Node test files: **68 pass, 0 fail, 0 skipped**. Full output: `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. The patch passed local tests and was published only after explicit user authorization; this handover records the deploy-trigger anomaly and verified release state.
+**Test:** configured 5 syntax checks and eight Node test files: **68 pass, 0 fail, 0 skipped**. Full output: `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. The patch passed local tests; the user explicitly authorized publication. The deployment-trigger anomaly is recorded above, and the exact published commit must be verified after the update.
 
 ### Current main-branch supplement (MD-2.39, 2026-10-29)
 
@@ -791,7 +791,7 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Deployment investigation:** read-only Netlify metadata reports current ready production deploy `6ae37c076fbb1f0a6438e9db` for commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52`, published at 17:02:13 UTC, branch main, `manual_deploy=false`, `deploy_source=api`. No deploy-writing tool was called by this assistant. Netlify official docs say `[skip netlify]` should skip branch/production deploys for a directly pushed commit. The actual trigger is unknown and conflicts with expectation. Stop pushes until resolved/authorized.
 - **Code gap:** MD-2.39 diagnostics omitted the early `!Array.isArray(data.regions)` plan-shape path. Added a safe `plan_shape_invalid` diagnostic and universal `plan_validation_failed` fallback. Added a test for a valid JSON response missing `regions`. The screenshot itself does not prove that this was the exact cause.
 - **Tests RUN:** configured 5 syntax checks + 8 native Node files: 68 pass, 0 fail, 0 skipped. Log in `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. No browser, live model, or worker call.
-- **Release state:** the user explicitly authorized publication after the local checks. GitHub and Netlify status for the resulting release are recorded in the final handover; the earlier production commit was `71de10a`.
+- **Release state:** user explicitly authorized publication after local checks. Source commit prepared on GitHub: `b9eee11a6a3808a72d23488984de17e60234849a`; main-ref update and Netlify deployment verification follow. Earlier production commit was `71de10a`.
 - **Next:** investigate/confirm the Netlify/API automation that published 71de10a, then seek explicit user permission before any production deployment. Once authorized, deliver the tested fallback and run one owner-approved model attempt only if the owner agrees to consume API credits. Do not state the screenshot's exact cause without the new safe diagnostics.
 
 ### 2026-10-29 — MD-2.39 explain server-rejected model geometry (main)
