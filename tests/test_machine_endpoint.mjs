@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {createHash} from "node:crypto";
+import {createHash,generateKeyPairSync} from "node:crypto";
 import machine, {geometryPayload} from "../netlify/functions/machine-embroidery.mjs";
 
 const original={...process.env};
@@ -59,4 +59,44 @@ test("real worker response requires audited checksum, ZIP signature and size",as
    headers:{...workerHeaders,"x-stitch-forge-audit":"NOT_AUDITED"}});
   assert.equal((await machine(req())).status,502);
  }finally{globalThis.fetch=old;}
+});
+
+test("private Cloud Run requires BOTH Google IAM and separate worker secret",async()=>{
+ setEnv(true);
+ const endpoint="https://stitch-forge-private-xzy.a.run.app/v1/digitise";
+ process.env.STITCH_FORGE_ENGINE_URL=endpoint;
+ delete process.env.STITCH_FORGE_CLOUD_RUN_CALLER_JSON;
+ assert.equal((await machine(req())).status,503);
+ const {privateKey}=generateKeyPairSync("rsa",{modulusLength:2048});
+ process.env.STITCH_FORGE_CLOUD_RUN_CALLER_JSON=JSON.stringify({
+  type:"service_account",
+  client_email:"invoker@test-project.iam.gserviceaccount.com",
+  private_key:privateKey.export({type:"pkcs8",format:"pem"}).toString()
+ });
+ const bytes=Uint8Array.from([80,75,3,4,...Array(128).fill(19)]);
+ const digest=createHash("sha256").update(bytes).digest("hex");
+ const headers={"content-type":"application/zip","content-length":String(bytes.length),
+  "x-stitch-forge-sha256":digest,
+  "x-stitch-forge-audit":"STRUCTURALLY_AUDITED_NOT_PHYSICALLY_STITCHED"};
+ const originalFetch=globalThis.fetch;
+ try{
+  const calls=[];
+  globalThis.fetch=async (url,opts)=>{
+   calls.push(url);
+   if(url==="https://oauth2.googleapis.com/token"){
+    assert.equal(opts.method,"POST");
+    assert.ok(new URLSearchParams(opts.body).get("assertion"));
+    return new Response(JSON.stringify({id_token:"a.b.c"}),{status:200});
+   }
+   assert.equal(url,endpoint);
+   assert.equal(opts.headers.Authorization,"Bearer worker-only-secret");
+   assert.equal(opts.headers["X-Serverless-Authorization"],"Bearer a.b.c");
+   return new Response(bytes,{status:200,headers});
+  };
+  assert.equal((await machine(req())).status,200);
+  assert.deepEqual(calls,["https://oauth2.googleapis.com/token",endpoint]);
+  process.env.STITCH_FORGE_ENGINE_URL="https://bad.example/v1/digitise";
+  assert.equal((await machine(req())).status,503);
+  assert.deepEqual(calls,["https://oauth2.googleapis.com/token",endpoint]);
+ }finally{globalThis.fetch=originalFetch;delete process.env.STITCH_FORGE_CLOUD_RUN_CALLER_JSON;}
 });
