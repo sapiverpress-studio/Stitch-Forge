@@ -95,8 +95,8 @@ Following any approved staging deployment:
 - **No Google Cloud account connection** is available to this conversation;
   there is no way to provision Cloud Run from the existing GitHub/Netlify
   connectors alone.
-- No Google IAM private-invoker delegation from Netlify has been implemented.
-  Before general use, prefer adding IAM service-to-service authentication
-  rather than relying only on bearer token at a publicly routable endpoint.
+- Google IAM service-to-service caller code is implemented and tested, but
+  no invoker service account, live Cloud Run IAM binding or preview credential
+  has been configured. The endpoint remains undeployed.
 - No active hosted service, cost commitment or OpenAI request has occurred.
 - Physical embroidery testing remains absent; PES/DST are experimental.
