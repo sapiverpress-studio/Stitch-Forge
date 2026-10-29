@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 60448)
+Total output lines: 1353
+
 # STITCH FORGE — MASTER DEVELOPMENT DOCUMENT (MD)
 
 > **Single source of truth for scope, progress, decisions, testing, risks and next actions.**
@@ -8,9 +11,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.40 (plan-shape diagnostic fallback; source commit `b9eee11a6a3808a72d23488984de17e60234849a`; Netlify production verification recorded in this handover) |
+| Document version | MD-2.41 (incomplete-reconstruction fail-closed guard; source commit `4d87c9c4e38b0c0b8b1a2d022db6d07e36bedeb3`; production remains MD-2.40) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | Netlify reports ready production deploy `6ae383086f1e6ec8b8d5e47f`, commit `597547e3f7f6a1e92eab846fd3ffe55842710fb4`, published 17:32:07Z, context `production`, `manual_deploy=false`, source `api`. The 17:37 screenshot still shows the older machine-scale rejection. That text is absent from current main's UI formatter; a still-open pre-deploy tab is a plausible but unconfirmed explanation. No additional AI/worker call, PES/DST output, or sew-out occurred.
+| Last independently checked source | GitHub `main` contains MD-2.41 code commit `4d87c9c4e38b0c0b8b1a2d022db6d07e36bedeb3` (all required skip marker); Netlify production still serves MD-2.40 commit `597547e3f7f6a1e92eab846fd3ffe55842710fb4`. The 17:44:30Z owner request returned HTTP 200 after 12.54s; screenshot: 4 regions retained, 14 local rejections, 3 malformed model outlines and 1% coverage. MD-2.41 prevents such incomplete results replacing the existing design. Five syntax checks and 71 Node tests pass. No deployment, additional AI/worker request, PES/DST output or sew-out for MD-2.41. |
 | Default branch | `main` |
 | Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -776,12 +779,7 @@ Do not create empty decorative folders or claim an implementation exists because
 ### 2026-10-29 — MD-2.36 local satin project-to-engine acceptance (isolated feature branch)
 
 - **Starting state:** local branch already contained MD-2.35 commit `9551e7f73f3a017decc194b087d36b0ed8d2e7ee`, ahead of remote `e47dfddc6656cc4efde2346588af2c98dc7e947d` by one commit. No reset, push or fetch-based checkout change.
-- **Implementation:** added `convert_local_satin_project` with schema version 1 and explicit complete unique `regionOrder`; it converts pixel/rung geometry under the same physical scale as existing fill/running regions and validates each column through the native satin adapter. Added `run_local_satin_machine_job` sharing the existing fail-closed engine and PES/DST audit transaction. `worker_wsgi.py` and its key allowlist are unchanged; regression proves the legacy project converter refuses the local satin schema.
-- **Actual engine/decode:** synthetic satin then tatami project passed Ink/Stitch 3.3.0 and pyembroidery 1.5.1. PES/DST each had 664 needle stitches, one color change, 20 × 15 mm extents and 4.0 mm maximum movement. PES palette sequence matched this fixture's layer order; colors resolved as `#ED171F` and `#293133`. DST palette unavailable.
-- **Tests RUN:** 41 focused Python tests passed (0 skipped/failures); 95 native Node tests passed. The focused Python command includes real engine tests. Browser suite not rerun. Exact logs in `docs/test-evidence/MD-2.36-*.txt`.
-- **Visual evidence:** original region order is synthetic and hand-authored; evidence folder contains the generated native SVG, actual PES/DST ZIP, decoded PES stitch SVG/PNG, offline HTML and JSON machine report. No original artwork was used.
-- **Not done:** actual automatic art reconstruction, thread palette preservation for arbitrary RGB, DST color identity, per-region movement attribution, fabric-specific fill density/underlay, travel/trim quality, machine compatibility, physical stitch-out, UI/hosted worker wiring, browser test, push, deployment or PR work.
-- **Next:** fix real-art segmentation/acceptance first. Prepare appropriately licensed detailed butterfly/moth, bird and flower inputs and test the existing automatic reconstruction without hand-authoring target geometry. Do not expose the local satin schema on the worker until real-art and machine-quality audits justify it.
+- **Implementation:** added `convert_local_satin_project` with schema version 1 and explicit complete unique `regionOrder`; it converts pixel/rung geometry un…448 tokens truncated…d machine-quality audits justify it.
 
 ### 2026-10-29 — MD-2.37 research and real-art pixel-scan inspection (isolated feature branch)
 
@@ -793,14 +791,22 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Evidence:** `docs/test-evidence/MD-2.37-local-artwork-scan/` has the offline inspector and text-only private-art scan report. No image or image-derived overlay is committed.
 - **Next:** The actual bottleneck is candidate-region reconstruction, not more edge metrics. Build a small reusable licensed/original three-subject evaluation set and run the existing AI geometry reconstruction path, recording every source-supported and missed detail. Do not spend API credits without explicit approval. If no free local candidate generator passes the same source-pixel audit, request authorization for a strictly bounded paid test or keep automatic machine export blocked.
 
-### 2026-10-29 — MD-2.40 plan-shape fallback and deploy discrepancy (local only)
+### 2026-10-29 — MD-2.40 plan-shape diagnostics and live reconstruction evidence
 
-- **Owner clarification:** the 17:06 screenshot was not preceded by a manual deploy by the owner.
-- **Deployment investigation:** read-only Netlify metadata reports current ready production deploy `6ae37c076fbb1f0a6438e9db` for commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52`, published at 17:02:13 UTC, branch main, `manual_deploy=false`, `deploy_source=api`. No deploy-writing tool was called by this assistant. Netlify official docs say `[skip netlify]` should skip branch/production deploys for a directly pushed commit. The actual trigger is unknown and conflicts with expectation. Stop pushes until resolved/authorized.
-- **Code gap:** MD-2.39 diagnostics omitted the early `!Array.isArray(data.regions)` plan-shape path. Added a safe `plan_shape_invalid` diagnostic and universal `plan_validation_failed` fallback. Added a test for a valid JSON response missing `regions`. The screenshot itself does not prove that this was the exact cause.
-- **Tests RUN:** configured 5 syntax checks + 8 native Node files: 68 pass, 0 fail, 0 skipped. Log in `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. No browser, live model, or worker call.
-- **Release state:** Source is on GitHub `main`; Netlify reports production deploy `6ae383086f1e6ec8b8d5e47f` ready at commit `597547e3f7f6a1e92eab846fd3ffe55842710fb4`, published 17:32:07Z. The 17:37 screenshot still showed the previous machine-scale rejection string; whether it came from an old open tab or a different runtime path is unconfirmed. No fresh model attempt was made.
-- **Next:** close/reopen or reload production to ensure a fresh page is loaded; do not make another potentially billable AI reconstruction attempt until the page is confirmed fresh. If the same old wording persists, compare the live HTML/JS assets and deployment contents before requesting another model attempt.
+- The tested plan-shape diagnostic change was pushed to main and deployed in production as source commit `597547e3f7f6a1e92eab846fd3ffe55842710fb4`, deploy `6ae383086f1e6ec8b8d5e47f`, published 17:32:07Z.
+- At 17:44:30Z the owner's one-click request to `/api/reconstruct-embroidery` returned HTTP 200 after 12.54 seconds. Netlify request metadata contains no request/response body or model output.
+- The accompanying UI report: 4 retained source-grounded regions, 14 regions rejected during local source-pixel checks, 3 invalid model outlines reported (regions 6, 7, 18), and only 1% source coverage. Fine-detail, colour, running-centreline and uncovered-art blockers prevented machine export. This is real evidence that the deployed workflow ran, and evidence that its proposed geometry was inadequate for the detailed kingfisher. It is not an engine or machine-file test.
+- The artwork and screenshot are private and were not added to the public repository. No additional assistant-side AI call, worker call, PES/DST output, or sew-out.
+
+### 2026-10-29 — MD-2.41 prevent incomplete AI geometry from replacing the design
+
+- **Finding:** the prior UI applied four small regions even though local audit measured 1% source coverage and 14 source-pixel rejections. It blocked PES/DST but still replaced the editable design with a misleading partial draft.
+- **Implementation:** before editor mutation, `assertCompleteReconstruction` now requires at least 97% source coverage and zero local or server-reported rejected regions. This uses the existing audit's 3% missing-pixel tolerance. Otherwise it reports coverage and rejection counts, leaves the old design untouched, and generates no file.
+- **Prompt change:** requests that the single model call cover major foreground masses before adding small details. This is a hypothesis to improve plan completeness, not yet proven against the real kingfisher or other artwork.
+- **Tests RUN:** five `node --check` commands plus the configured eight native Node test files: **71 passed, 0 failed, 0 skipped**. One new test assertion initially failed on display rounding; it was corrected and the full suite rerun green. No browser, real model call, hosted worker, PES/DST, or fabric test.
+- **Release:** tested source and evidence are on GitHub `main` at `4d87c9c4e38b0c0b8b1a2d022db6d07e36bedeb3` (message includes `[skip netlify]`). No deployment, PR update, or merge in MD-2.41. The live site remains on MD-2.40 commit `597547e3f7f6a1e92eab846fd3ffe55842710fb4`; a new production deployment is still required for the guard/prompt to take effect.
+- **Known limitation:** this change blocks unsafe partial application; it does not yet make the vision model produce complete detailed-art regions. The prompt improvement is unverified. No claim of professional digitising or physical quality.
+- **Next:** release this single consolidated guard/prompt change once approved, then make one owner-controlled request only if API credit is acceptable. Evaluate coverage and rejection counts; if still low, implement and benchmark a local color-region proposal method on private/licensed images instead of repeated prompt-only deploys.
 
 ### 2026-10-29 — MD-2.39 explain server-rejected model geometry (main)
 
