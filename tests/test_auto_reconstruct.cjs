@@ -1,5 +1,5 @@
 const test=require("node:test"),assert=require("node:assert/strict");
-const {reconstruct}=require("../site/auto-reconstruct.js");
+const {reconstruct,analyseArtwork}=require("../site/auto-reconstruct.js");
 const w=240,h=160;
 function source(){
  const rgba=new Uint8ClampedArray(w*h*4);
@@ -141,4 +141,52 @@ test("does not silently fill holes or discard a disconnected logo component",()=
   assert.ok(out.rejected.some(r=>r.id==='left'&&r.reason===(hole?'fill_holes_not_supported':'fragmented_fill')));
   assert.ok(!out.regions.some(r=>r.id==='left'));
  }
+});
+
+test("zero-cost local artwork audit finds real colour groups and source detail",()=>{
+ const width=128,height=128,rgba=new Uint8ClampedArray(width*height*4);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const j=4*(y*width+x),background=x<12||x>=116||y<12||y>=116;
+  rgba[j]=background?255:x<64?10:225;
+  rgba[j+1]=background?255:x<64?90:95;
+  rgba[j+2]=background?255:x<64?210:10;
+  rgba[j+3]=255;
+ }
+ const audit=analyseArtwork(rgba,width,height);
+ assert.equal(audit.source,"local_pixel_scan");
+ assert.equal(audit.requiresMachineTest,true);
+ assert.ok(audit.foregroundPixels>10000);
+ assert.equal(audit.palette.length,2);
+ assert.deepEqual(audit.palette.map(c=>c.color),["#0A5AD2","#E15F0A"]);
+ assert.equal(audit.palette.reduce((sum,c)=>sum+c.percent,0),100);
+ assert.ok(audit.edgeDensity>0&&audit.hotspot.length===4);
+ assert.equal(audit.transparentBackground,false);
+});
+test("mixed-colour subject is split by original pixels rather than copying one filled bounding area",()=>{
+ const width=128,height=128,rgba=new Uint8ClampedArray(width*height*4);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const j=4*(y*width+x),background=x<12||x>=116||y<12||y>=116;
+  rgba[j]=background?255:x<64?10:225;
+  rgba[j+1]=background?255:x<64?90:95;
+  rgba[j+2]=background?255:x<64?210:10;
+  rgba[j+3]=255;
+ }
+ const points=[[6,6],[122,6],[122,122],[6,122]].map(([x,y])=>({
+  x:Math.round(1000*x/width),y:Math.round(1000*y/height)}));
+ const regions=[["left-blue","#0A5AD2"],["right-orange","#E15F0A"]].map(([id,color],layer)=>({
+  id,label:id,kind:"fill",semantic:"other",color,confidence:"high",layer,points}));
+ const result=reconstruct(rgba,width,height,{status:"AI_GEOMETRY_PROPOSAL_NOT_STITCHED",regions});
+ assert.deepEqual(result.rejected,[]);
+ assert.equal(result.regions.length,2);
+ assert.deepEqual(result.regions.map(r=>r.pixelArea),[5408,5408]);
+ assert.ok(result.regions.every(r=>r.geometrySource==="ai_polygon_intersected_with_colour_matched_artwork_pixels"));
+ const [left,right]=result.regions;
+ assert.ok(Math.max(...left.points.map(p=>p[0]))<=64);
+ assert.ok(Math.min(...right.points.map(p=>p[0]))>=64);
+ assert.ok(result.regions.every(r=>r.colourEvidence===.5));
+});
+test("local analysis rejects empty/unseparable artwork rather than inventing a colour plan",()=>{
+ const pixels=new Uint8ClampedArray(w*h*4);
+ for(let i=0;i<w*h;i++)pixels[4*i+3]=255;
+ assert.throws(()=>analyseArtwork(pixels,w,h),/too little distinguishable foreground/);
 });
