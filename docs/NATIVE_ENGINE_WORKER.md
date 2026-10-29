@@ -137,3 +137,85 @@ all three synthetic subjects. Initial xvfb-run startup failed; explicit
 Unix-only Xvfb with bounded socket readiness passed. The native display has
 no TCP listener. Local logo/line-art fixtures avoid moth-only acceptance.
 This is a tested container package, not a deployed persistent HTTPS service.
+
+## MD-2.20 — Google Cloud Run private staging route (2026-10-29)
+
+**Platform decision:** Google Cloud Run, not Railway. This is a staged integration
+plan and checked-in implementation, NOT an existing Google Cloud deployment.
+The Google Cloud account/project and an approved billing arrangement have not
+been accessed from this session. Nothing billable has been provisioned.
+
+### What is implemented
+
+- `services/digitiser/cloudbuild.staging.yaml`: builds the already-tested
+  `services/digitiser/Dockerfile` into a private amd64 Artifact Registry image,
+  tagged with the exact reviewed commit SHA.
+- `services/digitiser/deploy-cloud-run-staging.sh`: defaults to dry-run; a
+  deployment requires `--execute`, `STITCH_FORGE_CLOUD_BILLING_APPROVED=yes-for-this-staging-deploy`,
+  existing billing/API/registry/secret/service-account configuration and a
+  clean, exact `develop/stitch-engine-foundation` source checkout.
+- Security and limits: **Google Cloud Run IAM required** (no anonymous Cloud Run
+  Invoker), **a second application bearer secret**, 2 vCPU/2 GiB, concurrency 1,
+  max instances 1, min instances 0, port 8080, CPU allocated on requests only.
+  These are cost controls, not a guaranteed zero-cost arrangement; billing,
+  Cloud Build, Artifact Registry, Secret Manager, egress and logging may incur
+  charges. Cold starts can exceed the current synchronous Netlify 55-second
+  limit, especially with the large native Ink/Stitch container.
+- `netlify/functions/lib/cloud-run-auth.mjs`: Netlify (server only) can obtain
+  an audience-bound Google-signed ID token from a restricted invoker service
+  account. It sends `X-Serverless-Authorization: Bearer <GOOGLE_ID_TOKEN>`
+  alongside the independent worker `Authorization: Bearer <WORKER_TOKEN>`.
+  Caller credentials are only accepted for an exact HTTPS `*.run.app/v1/digitise`
+  URL, never arbitrary hosts.
+- Netlify defaults to **disabled** until all three deploy-preview-only variables
+  exist, including `STITCH_FORGE_ENGINE_URL`,
+  `STITCH_FORGE_WORKER_TOKEN` and
+  `STITCH_FORGE_CLOUD_RUN_CALLER_JSON`. Do **not** use production/all contexts.
+
+### Prerequisites (must be owner-approved, not automated here)
+
+1. An existing billing-enabled Google Cloud project in a selected region
+   (suggested `europe-west2`, London). Confirm the actual billing plan,
+   budget alerts and account privileges. **Cloud Billing budgets are alerts,
+   not hard spending caps.**
+2. A private Docker Artifact Registry repository, Cloud Build and Cloud Run
+   APIs enabled, and a Secret Manager entry for a random worker token at least
+   32 characters long.
+3. A restricted Cloud Run runtime service account with read access only to
+   this worker secret; and a *separate* Netlify caller service account granted
+   `roles/run.invoker` **on this exact Cloud Run staging service only**.
+   A user-managed service-account JSON key is supported for initial staging
+   but is security-sensitive and needs rotation/secure storage. Prefer
+   short-lived workload identity federation when an appropriate issuer is
+   available. Never store a JSON key in GitHub or share it in chat.
+4. A reviewed exact development commit. Run the cloud deployment script with
+   environment variables `GOOGLE_CLOUD_PROJECT`, `CLOUD_RUN_REGION`,
+   `CLOUD_RUN_REPOSITORY`, `STITCH_FORGE_CLOUD_SECRET`,
+   `CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT` and
+   `STITCH_FORGE_DEPLOY_COMMIT`. Default invocation **prints the complete
+   plan and changes nothing**. Execution is intentionally blocked unless
+   the explicit billing-approval flag and `--execute` are supplied.
+5. Run the existing `services/digitiser/http_smoke.py` **against the real
+   private service** using an authorized Google ID token plus the worker bearer.
+   The current smoke script authenticates only with the worker bearer; a
+   Cloud Run IAM test harness or gcloud identity-token wrapper is still needed.
+   Do not treat CI's local Docker HTTP smoke as proof of live IAM or HTTPS.
+
+### Netlify preview coupling
+
+After the private worker passes authenticated real HTTPS tests:
+set the two worker connection variables and the **caller JSON credential**
+in Netlify's **deploy-preview/functions** context only; verify scopes.
+The existing `STITCH_FORGE_ANALYSIS_TOKEN` is not a Google Cloud credential,
+and the worker token must not appear in the browser. Test a single real
+preview request, malformed input, unauthorized request and automatic ZIP
+download while keeping `main` and production configuration unchanged.
+
+**Not achieved:** Google project connection, deployment, real HTTPS IAM smoke,
+preview worker integration, real owner image accuracy, physical stitch-out or
+universal supported-image coverage.
+
+**Official references:** Cloud Run authentication
+https://docs.cloud.google.com/run/docs/authenticating/service-to-service ,
+deployment https://docs.cloud.google.com/run/docs/deploying ,
+billing https://docs.cloud.google.com/run/docs/configuring/billing-settings .
