@@ -87,6 +87,13 @@ q("#sfAutoRun").onclick=async()=>{
  running=true;q("#sfAutoRun").disabled=true;
  status("OpenAI is proposing visible colour areas and line details. The existing design remains unchanged until geometry passes validation.");
  try{
+  // One local, free pixel scan per click. Reuse these exact image pixels
+  // after the single AI call; never upload the audit or make a second call.
+  const {canvas,ctx}=await decoded(source,512);
+  const inspection=window.StitchForgeAutoReconstruct.analyseArtwork(
+   ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height);
+  status("Local artwork scan: "+inspection.palette.length+" prominent colour groups, "+
+   inspection.detailLevel+" edge detail. Preparing one AI request...");
   const image=await modelImage(source);
   const response=await fetch("/api/reconstruct-embroidery",{
    method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
@@ -96,7 +103,6 @@ q("#sfAutoRun").onclick=async()=>{
   if(!response.ok)throw Error((plan.error||"AI reconstruction failed")+(plan.code?" ["+plan.code+"]":""));
   if(plan.status!=="AI_GEOMETRY_PROPOSAL_NOT_STITCHED")throw Error("Invalid geometry response");
   status("AI returned "+plan.regions.length+" usable proposed regions"+(plan.model_rejected_count?" ("+plan.model_rejected_count+" unsupported proposals held out)":"")+". Checking artwork pixels and preparing closed fills...");
-  const {canvas,ctx}=await decoded(source,512);
   const result=window.StitchForgeAutoReconstruct.reconstruct(ctx.getImageData(0,0,canvas.width,canvas.height).data,
      canvas.width,canvas.height,plan);
   // End-to-end validation finishes BEFORE mutating the editor.
@@ -106,7 +112,8 @@ q("#sfAutoRun").onclick=async()=>{
   const summary=context.replaceWithAutomaticReconstruction(proposed);
   last=proposed;paint();
   q("#sfAutoDownload").disabled=false;q("#sfAutoUndo").disabled=false;
-  const summaryText="Automatically rebuilt "+summary.regions+" image-grounded regions ("+
+  const summaryText="Local scan: "+inspection.palette.length+" colour groups; "+
+   inspection.detailLevel+" edge detail. Automatically rebuilt "+summary.regions+" image-grounded regions ("+
     result.regions.filter(r=>r.kind==="fill").length+" fills, "+
     result.regions.filter(r=>r.kind==="running").length+" lines; "+
     result.rejected.length+" rejected). "+summary.colors+" proposed colours.";
