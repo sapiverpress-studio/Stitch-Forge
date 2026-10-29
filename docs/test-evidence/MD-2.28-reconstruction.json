@@ -1,0 +1,69 @@
+{
+  "runtime": "v24.22.1",
+  "scope": "Synthetic curves on desktop Node, not physical Android or fabric",
+  "results": [
+    {
+      "size": 256,
+      "times_ms": [
+        26.870879000000002,
+        16.74133400000001,
+        11.251031000000012
+      ],
+      "vertices": 134,
+      "quality": {
+        "foregroundPixels": 21595,
+        "missingPixels": 29,
+        "falseFillPixels": 31,
+        "colourMismatchPixels": 0,
+        "missingColourGroups": 0,
+        "overlapPixels": 0,
+        "coverage": 0.9987,
+        "blockers": [],
+        "machineEligible": true,
+        "scope": "pixel_fidelity_only_not_semantic_or_stitch_validation"
+      }
+    },
+    {
+      "size": 512,
+      "times_ms": [
+        38.792677999999995,
+        28.371553999999975,
+        25.279757000000018
+      ],
+      "vertices": 282,
+      "quality": {
+        "foregroundPixels": 86469,
+        "missingPixels": 54,
+        "falseFillPixels": 48,
+        "colourMismatchPixels": 0,
+        "missingColourGroups": 0,
+        "overlapPixels": 0,
+        "coverage": 0.9994,
+        "blockers": [],
+        "machineEligible": true,
+        "scope": "pixel_fidelity_only_not_semantic_or_stitch_validation"
+      }
+    },
+    {
+      "size": 768,
+      "times_ms": [
+        70.68867400000002,
+        76.522557,
+        53.733675000000005
+      ],
+      "vertices": 444,
+      "quality": {
+        "foregroundPixels": 194553,
+        "missingPixels": 96,
+        "falseFillPixels": 67,
+        "colourMismatchPixels": 0,
+        "missingColourGroups": 0,
+        "overlapPixels": 0,
+        "coverage": 0.9995,
+        "blockers": [],
+        "machineEligible": true,
+        "scope": "pixel_fidelity_only_not_semantic_or_stitch_validation"
+      }
+    }
+  ]
+}

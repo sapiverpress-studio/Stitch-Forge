@@ -13,8 +13,12 @@ function intersects(a,b,c,d){
  r[0]<=Math.max(p[0],q[0])+1e-7&&r[1]>=Math.min(p[1],q[1])-1e-7&&r[1]<=Math.max(p[1],q[1])+1e-7;
  return on(a,b,c)||on(a,b,d)||on(c,d,a)||on(c,d,b);
 }
-function prepare(points,sourceBounds){
- if(!Array.isArray(points)||points.length<4||points.length>120)throw Error('Trace 4–120 boundary points');
+function prepare(points,sourceBounds,options={}){
+ const minDistance=options.automatic===true ? .01 : 3;
+ const minArea=options.automatic===true?4:200;
+ const minExtent=options.automatic===true ? .5 : 12;
+ const maxVertices=options.automatic===true?512:120;
+ if(!Array.isArray(points)||points.length<4||points.length>maxVertices)throw Error('Trace 4–'+maxVertices+' boundary points');
  if(!sourceBounds||!['x','y','w','h'].every(k=>Number.isFinite(sourceBounds[k]))||
    sourceBounds.w<20||sourceBounds.h<20)throw Error('Artwork bounds unavailable');
  const out=points.map(p=>{
@@ -24,14 +28,14 @@ function prepare(points,sourceBounds){
     throw Error('Fill points must remain inside the artwork');
   return p.map(n=>Math.round(n*100)/100);
  });
- if(distance(out[0],out.at(-1))<3)throw Error('Do not tap the first point twice; use Close boundary');
- for(let i=1;i<out.length;i++)if(distance(out[i-1],out[i])<3)throw Error('Boundary points too close together');
- if(distance(out.at(-1),out[0])<3)throw Error('Closing edge too short');
+ if(distance(out[0],out.at(-1))<minDistance)throw Error('Do not tap the first point twice; use Close boundary');
+ for(let i=1;i<out.length;i++)if(distance(out[i-1],out[i])<minDistance)throw Error('Boundary points too close together');
+ if(distance(out.at(-1),out[0])<minDistance)throw Error('Closing edge too short');
  let area=0;for(let i=0;i<out.length;i++){let a=out[i],b=out[(i+1)%out.length];area+=a[0]*b[1]-b[0]*a[1];}
- if(Math.abs(area)<400)throw Error('Region is too small or flattened for a fill');
+ if(Math.abs(area)<2*minArea)throw Error('Region is too small or flattened for a fill');
  let loX=Math.min(...out.map(p=>p[0])),hiX=Math.max(...out.map(p=>p[0]));
  let loY=Math.min(...out.map(p=>p[1])),hiY=Math.max(...out.map(p=>p[1]));
- if(hiX-loX<12||hiY-loY<12)throw Error('Region is too thin for experimental tatami fill');
+ if(hiX-loX<minExtent||hiY-loY<minExtent)throw Error('Region is too thin for experimental tatami fill');
  for(let i=0;i<out.length;i++)for(let j=i+1;j<out.length;j++){
   if(j===i+1||(i===0&&j===out.length-1))continue;
   if(intersects(out[i],out[(i+1)%out.length],out[j],out[(j+1)%out.length]))

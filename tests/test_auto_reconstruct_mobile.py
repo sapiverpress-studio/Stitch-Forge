@@ -156,9 +156,9 @@ class AutoMothMobileTest(unittest.TestCase):
                     page.locator('#sfAutoRun').click()
                     page.wait_for_function("!document.querySelector('#sfAutoRun').disabled")
                     self.assertEqual(page.evaluate('window.__stitchforge_test.paths.length'),1)
-                    self.assertEqual(page.evaluate('window.machineCalls'),0 if incomplete else 1)
+                    self.assertEqual(page.evaluate('window.machineCalls'),0) # omitted second wing must block even without a rejected proposal
                     text=page.locator('#sfAutoStatus').inner_text()
-                    self.assertIn('Incomplete reconstruction' if incomplete else 'synthetic unavailable',text)
+                    self.assertIn('Source fidelity check blocked',text)
                 finally:
                     page.close()
 

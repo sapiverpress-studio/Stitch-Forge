@@ -4,7 +4,7 @@ No imported SVG, scripts, embedded image, arbitrary XML or external references p
 through this builder. The result is only an Ink/Stitch *input*, not finished stitches.
 """
 from dataclasses import dataclass
-from math import isfinite
+from math import isfinite, hypot
 from xml.etree import ElementTree as ET
 import re
 
@@ -34,6 +34,25 @@ class Region:
     running_length_mm: float | None = None
 
 
+def validate_fill(points):
+    """Reject zero-area, repeated, touching and crossing rings before the engine."""
+    pts=list(points)
+    if pts[0]==pts[-1]:pts.pop()
+    if len(pts)<3 or len(set(pts))!=len(pts):raise ValueError('Degenerate fill boundary')
+    area=abs(sum(a[0]*b[1]-a[1]*b[0] for a,b in zip(pts,pts[1:]+pts[:1])))/2
+    if area<0.01:raise ValueError('Degenerate fill area')
+    def cross(a,b,c):return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
+    def on(a,b,p):return abs(cross(a,b,p))<1e-9 and min(a[0],b[0])<=p[0]<=max(a[0],b[0]) and min(a[1],b[1])<=p[1]<=max(a[1],b[1])
+    for i,a in enumerate(pts):
+        b=pts[(i+1)%len(pts)]
+        if hypot(b[0]-a[0],b[1]-a[1])<.001:raise ValueError('Degenerate fill edge')
+        for j in range(i+2,len(pts)):
+            if i==0 and j==len(pts)-1:continue
+            c,d=pts[j],pts[(j+1)%len(pts)]
+            if (cross(a,b,c)*cross(a,b,d)<0 and cross(c,d,a)*cross(c,d,b)<0) or any((on(a,b,c),on(a,b,d),on(c,d,a),on(c,d,b))):
+                raise ValueError('Fill boundary crosses or touches itself')
+
+
 def build_svg(width_mm: float, height_mm: float, regions: tuple[Region, ...]) -> bytes:
     """Serialise bounded numeric geometry, not user-provided SVG markup."""
     _bounded(width_mm, 'design width', 1, MAX_SIZE_MM)
@@ -61,11 +80,12 @@ def build_svg(width_mm: float, height_mm: float, regions: tuple[Region, ...]) ->
         if not 2 <= len(pts) <= MAX_VERTICES or (region.stitch_type == 'fill' and len(pts) < 3):
             raise ValueError('Invalid region geometry')
         for pt in pts:
-            if (len(pt) != 2 or not all(isinstance(n, (int, float)) and isfinite(n) for n in pt)
+            if (len(pt) != 2 or not all(not isinstance(n, bool) and isinstance(n, (int, float)) and isfinite(n) for n in pt)
                     or not (0 <= pt[0] <= width_mm and 0 <= pt[1] <= height_mm)):
                 raise ValueError('Vertex outside design bounds')
         coords = ' '.join(f'{x:.3f},{y:.3f}' for x, y in pts)
         if region.stitch_type == 'fill':
+            validate_fill(pts)
             if region.running_length_mm is not None:
                 raise ValueError('Running length not applicable to fill')
             attrs = {'id': f'region-{ix}', 'points': coords,

@@ -129,7 +129,7 @@ test("supports line-only artwork without inventing fill regions",()=>{
  assert.equal(out.rejected.length,0);
 });
 
-test("does not silently fill holes or discard a disconnected logo component",()=>{
+test("rejects holes and preserves disconnected components separately",()=>{
  for(const hole of [true,false]){
   const image=source();
   for(let y=0;y<h;y++)for(let x=20;x<110;x++){
@@ -138,8 +138,8 @@ test("does not silently fill holes or discard a disconnected logo component",()=
    }
   }
   const out=reconstruct(image,w,h,plan());
-  assert.ok(out.rejected.some(r=>r.id==='left'&&r.reason===(hole?'fill_holes_not_supported':'fragmented_fill')));
-  assert.ok(!out.regions.some(r=>r.id==='left'));
+  if(hole)assert.ok(out.rejected.some(r=>r.id==='left'&&r.reason==='fill_holes_not_supported'));
+  else {assert.equal(out.regions.filter(r=>r.parentId==='left').length,2);assert.deepEqual(out.rejected,[]);}
  }
 });
 
@@ -189,4 +189,45 @@ test("local analysis rejects empty/unseparable artwork rather than inventing a c
  const pixels=new Uint8ClampedArray(w*h*4);
  for(let i=0;i<w*h;i++)pixels[4*i+3]=255;
  assert.throws(()=>analyseArtwork(pixels,w,h),/too little distinguishable foreground/);
+});
+
+test('pixel audit catches an entirely omitted subject without any rejected AI proposals',()=>{
+ const partial=plan();partial.regions=partial.regions.slice(0,1);
+ const out=reconstruct(source(),w,h,partial);
+ assert.equal(out.rejected.length,0);
+ assert.ok(out.quality.coverage<.55);
+ assert.ok(out.quality.blockers.includes('uncovered_source_artwork'));
+ assert.equal(out.quality.machineEligible,false);
+});
+test('pixel audit catches missing interior colour despite a complete silhouette',()=>{
+ const image=source();
+ for(let y=65;y<75;y++)for(let x=60;x<70;x++){let j=(y*w+x)*4;image[j]=230;image[j+1]=40;image[j+2]=20;}
+ const out=reconstruct(image,w,h,plan());
+ assert.ok(out.quality.coverage>.95);
+ assert.ok(out.quality.blockers.includes('unrepresented_source_colours'));
+});
+test('small source holes never become false fill',()=>{
+ const image=source();const j=(70*w+64)*4;image[j]=image[j+1]=image[j+2]=0;
+ const out=reconstruct(image,w,h,plan());
+ assert.ok(out.rejected.some(r=>r.reason==='fill_holes_not_supported'));
+});
+test('perimeter inspection detects a complex border missed by six-point sampling',()=>{
+ const image=source();for(let x=12;x<48;x++){image[4*x]=220;image[4*x+1]=120;}
+ assert.throws(()=>reconstruct(image,w,h,plan()),/Background is complex/);
+});
+test('duplicate semantic ids cannot bypass region ownership',()=>{
+ const p=plan();p.regions[1].id=p.regions[0].id;
+ assert.throws(()=>reconstruct(source(),w,h,p),/Duplicate region id/);
+});
+test('audited contours retain pixels without large background bridges',()=>{
+ const out=reconstruct(source(),w,h,plan());
+ assert.ok(out.quality.coverage>.97);
+ assert.ok(out.quality.falseFillPixels<out.quality.foregroundPixels*.005);
+ assert.equal(out.quality.machineEligible,true);
+});
+test('low-confidence geometry remains editable but cannot trigger automatic machine export',()=>{
+ const p=plan();p.regions[0].confidence='low';
+ const out=reconstruct(source(),w,h,p);
+ assert.equal(out.regions.length,2);
+ assert.ok(out.quality.blockers.includes('low_confidence_regions'));
 });

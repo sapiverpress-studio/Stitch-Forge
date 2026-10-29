@@ -4,7 +4,7 @@ Structure-only checks. No machine is claimed compatible and no design is stitch-
 """
 from dataclasses import dataclass, asdict
 from io import BytesIO
-from math import isfinite
+from math import isfinite, hypot
 from pathlib import PurePosixPath
 import json
 import zipfile
@@ -24,6 +24,9 @@ class FileAudit:
     jumps: int
     changes: int
     bounds_mm: tuple[float, float]
+    trims: int = 0
+    stops: int = 0
+    max_needle_move_mm: float = 0.0
 
 
 def audit_zip(payload: bytes) -> tuple[FileAudit, ...]:
@@ -47,6 +50,16 @@ def audit_zip(payload: bytes) -> tuple[FileAudit, ...]:
             try:
                 pattern = (pyembroidery.read_dst if ext == '.dst' else pyembroidery.read_pes)(BytesIO(raw))
                 stitches = pattern.stitches
+                previous = None
+                max_move = 0.0
+                for stitch in stitches:
+                    if len(stitch)<3 or not all(isfinite(n) for n in stitch[:2]):
+                        raise DigitiserError('Non-finite machine coordinate')
+                    if previous is not None and (stitch[2] & pyembroidery.COMMAND_MASK)==pyembroidery.STITCH:
+                        max_move=max(max_move,hypot(stitch[0]-previous[0],stitch[1]-previous[1])/10)
+                    previous=stitch
+                trims=sum((s[2] & pyembroidery.COMMAND_MASK)==pyembroidery.TRIM for s in stitches)
+                stops=sum((s[2] & pyembroidery.COMMAND_MASK)==pyembroidery.STOP for s in stitches)
                 needle = sum((s[2] & pyembroidery.COMMAND_MASK) == pyembroidery.STITCH for s in stitches)
                 jumps = sum((s[2] & pyembroidery.COMMAND_MASK) == pyembroidery.JUMP for s in stitches)
                 changes = sum((s[2] & pyembroidery.COMMAND_MASK) == pyembroidery.COLOR_CHANGE for s in stitches)
@@ -58,7 +71,7 @@ def audit_zip(payload: bytes) -> tuple[FileAudit, ...]:
                 bounds_mm = (round((right-left) / 10, 2), round((bottom-top) / 10, 2))
                 if max(bounds_mm) > 400:
                     raise DigitiserError('Design exceeds maximum engineering extent')
-                reports.append(FileAudit(info.filename, ext[1:], needle, jumps, changes, bounds_mm))
+                reports.append(FileAudit(info.filename, ext[1:], needle, jumps, changes, bounds_mm, trims, stops, round(max_move,3)))
             except DigitiserError:
                 raise
             except Exception as exc:

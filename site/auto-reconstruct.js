@@ -25,11 +25,13 @@ function invalidPolygon(points,maxPoints=32,minPoints=4){
 }
 function foregroundMask(rgba,w,h){
  const sample=[];
- for(const [cx,cy] of [[0,0],[w-1,0],[0,h-1],[w-1,h-1],[Math.floor(w/2),0],[Math.floor(w/2),h-1]]){
-  const k=(cy*w+cx)*4;sample.push([rgba[k],rgba[k+1],rgba[k+2],rgba[k+3]]);
- }
+ const border=[];
+ for(let x=0;x<w;x++){border.push(x);border.push((h-1)*w+x);}
+ for(let y=1;y<h-1;y++){border.push(y*w);border.push(y*w+w-1);}
+ const stride=Math.max(1,Math.floor(border.length/512));
+ for(let n=0;n<border.length;n+=stride){const k=border[n]*4;sample.push([rgba[k],rgba[k+1],rgba[k+2],rgba[k+3]]);}
  const opaque=sample.filter(p=>p[3]>245),transparent=sample.filter(p=>p[3]<25);
- if(!transparent.length&&opaque.length>=4){
+ if(!transparent.length&&opaque.length>=sample.length*.9){
   const mean=[0,1,2].map(c=>opaque.reduce((n,p)=>n+p[c],0)/opaque.length);
   const maxdist=Math.max(...opaque.map(p=>Math.hypot(p[0]-mean[0],p[1]-mean[1],p[2]-mean[2])));
   if(maxdist>45)throw Error("Background is complex; cannot safely isolate embroidery artwork automatically");
@@ -44,7 +46,7 @@ function foregroundMask(rgba,w,h){
   }
   return mask;
  }
- if(transparent.length>=4){
+ if(transparent.length>=sample.length*.9){
   const mask=new Uint8Array(w*h);for(let i=0;i<w*h;i++)mask[i]=rgba[4*i+3]>60?1:0;return mask;
  }
  throw Error("Cannot confidently separate artwork from its background");
@@ -92,8 +94,8 @@ function analyseArtwork(rgba,w,h){
   detailLevel,transparentBackground:alphaPixels>w*h*.1,hotspot,
   source:"local_pixel_scan",requiresMachineTest:true};
 }
-function largestComponent(mask,w,h){
- const visited=new Uint8Array(mask.length);let best=[];
+function connectedComponents(mask,w,h){
+ const visited=new Uint8Array(mask.length);const components=[];
  for(let start=0;start<mask.length;start++){
   if(!mask[start]||visited[start])continue;
   let queue=[start],head=0;visited[start]=1;
@@ -103,10 +105,10 @@ function largestComponent(mask,w,h){
     if(n>=0&&mask[n]&&!visited[n]){visited[n]=1;queue.push(n);}
    }
   }
-  if(queue.length>best.length)best=queue;
+  components.push(queue);
+  if(components.length>128)return components;
  }
- const out=new Uint8Array(mask.length);for(const k of best)out[k]=1;
- return{mask:out,size:best.length};
+ return components.sort((a,b)=>b.length-a.length);
 }
 function boundaryPixels(mask,w,h){
  const edges=new Map(),add=(x1,y1,x2,y2)=>{const k=x1+","+y1;let a=edges.get(k);if(!a)edges.set(k,a=[]);a.push([x2,y2]);};
@@ -140,16 +142,82 @@ function boundaryPixels(mask,w,h){
  }
  return best;
 }
-function simplifyRing(points,maxVertices=115){
- if(points.length<5)return[];
- const p=[];
- for(let i=0;i<points.length;i++){
-  const a=points[(i+points.length-1)%points.length],b=points[i],c=points[(i+1)%points.length];
-  if(Math.abs(cross(a,b,c))>.01)p.push(b);
+// Error-bounded simplification. Never subsample a contour to satisfy a budget:
+// that can bridge a notch or erase a feather. Over-budget shapes fail closed.
+function simplifyRing(points,maxVertices=512){
+ if(points.length<4)return[];
+ const p=points.filter((b,i)=>Math.abs(cross(points[(i+points.length-1)%points.length],b,points[(i+1)%points.length]))>.01);
+ if(p.length<=115)return p;
+ function rdp(seq){
+  const keep=new Uint8Array(seq.length);keep[0]=keep[seq.length-1]=1;
+  const stack=[[0,seq.length-1]];
+  while(stack.length){
+   const [i,j]=stack.pop(),a=seq[i],b=seq[j],dx=b[0]-a[0],dy=b[1]-a[1],den=dx*dx+dy*dy;
+   let index=-1,maximum=.75*.75;
+   for(let k=i+1;k<j;k++){
+    const t=den?Math.max(0,Math.min(1,((seq[k][0]-a[0])*dx+(seq[k][1]-a[1])*dy)/den)):0;
+    const d=(seq[k][0]-a[0]-t*dx)**2+(seq[k][1]-a[1]-t*dy)**2;
+    if(d>maximum){maximum=d;index=k;}
+   }
+   if(index>=0){keep[index]=1;stack.push([i,index],[index,j]);}
+  }
+  return seq.filter((_,i)=>keep[i]);
  }
- if(p.length<=maxVertices)return p;
- const result=[];for(let j=0;j<maxVertices;j++)result.push(p[Math.floor(j*p.length/maxVertices)]);
- return result;
+ let split=1;
+ for(let i=2;i<p.length;i++)if(Math.hypot(p[i][0]-p[0][0],p[i][1]-p[0][1])>Math.hypot(p[split][0]-p[0][0],p[split][1]-p[0][1]))split=i;
+ const out=rdp(p.slice(0,split+1)).slice(0,-1).concat(rdp(p.slice(split).concat([p[0]])).slice(0,-1));
+ return out.length<=maxVertices?out:[];
+}
+// Scan conversion at pixel centres, independent of boundary extraction.
+function paintPolygon(points,w,h,visit){
+ const bb=boundsOf(points);
+ for(let y=Math.max(0,Math.floor(bb.y0));y<Math.min(h,Math.ceil(bb.y1));y++){
+  const cuts=[];
+  for(let i=0,j=points.length-1;i<points.length;j=i++){
+   const a=points[i],b=points[j];
+   if((a[1]>y+.5)!==(b[1]>y+.5))cuts.push(a[0]+(y+.5-a[1])*(b[0]-a[0])/(b[1]-a[1]));
+  }
+  cuts.sort((a,b)=>a-b);
+  for(let i=0;i+1<cuts.length;i+=2)for(let x=Math.max(0,Math.ceil(cuts[i]-.5));x<Math.min(w,Math.ceil(cuts[i+1]-.5));x++)visit(y*w+x);
+ }
+}
+function auditReconstruction(rgba,w,h,foreground,regions){
+ const owner=new Int16Array(w*h);owner.fill(-1);
+ let overlapPixels=0;
+ regions.forEach((r,index)=>{
+  const visit=k=>{if(owner[k]>=0&&owner[k]!==index)overlapPixels++;owner[k]=index;};
+  if(r.kind==='fill')paintPolygon(r.points,w,h,visit);
+  else for(let i=1;i<r.points.length;i++){
+   const a=r.points[i-1],b=r.points[i],steps=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])));
+   for(let j=0;j<=steps;j++){
+    const x=Math.round(a[0]+(b[0]-a[0])*j/steps),y=Math.round(a[1]+(b[1]-a[1])*j/steps);
+    // Only a diagnostic corridor, NOT a running-stitch coverage/width claim.
+    for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++)if(dx*dx+dy*dy<=9&&x+dx>=0&&x+dx<w&&y+dy>=0&&y+dy<h&&foreground[(y+dy)*w+x+dx])visit((y+dy)*w+x+dx);
+   }
+  }
+ });
+ const colours=regions.map(r=>[1,3,5].map(i=>parseInt(r.color.slice(i,i+2),16)));
+ let foregroundPixels=0,missingPixels=0,falseFillPixels=0,colourMismatchPixels=0;
+ const bins=new Map();
+ for(let k=0;k<foreground.length;k++){
+  if(!foreground[k]){if(owner[k]>=0)falseFillPixels++;continue;}
+  foregroundPixels++;const j=4*k,c=colours[owner[k]];
+  if(!c)missingPixels++;
+  const mismatch=!c||Math.hypot(rgba[j]-c[0],rgba[j+1]-c[1],rgba[j+2]-c[2])>60;
+  if(c&&mismatch)colourMismatchPixels++;
+  const key=(rgba[j]>>5)+','+(rgba[j+1]>>5)+','+(rgba[j+2]>>5);
+  const bin=bins.get(key)||{pixels:0,unrepresented:0};bin.pixels++;if(mismatch)bin.unrepresented++;bins.set(key,bin);
+ }
+ const missingColourGroups=[...bins.values()].filter(b=>b.pixels>=Math.max(25,foregroundPixels*.004)&&b.unrepresented/b.pixels>.25).length;
+ const blockers=[];
+ if(regions.some(r=>r.confidence==='low'))blockers.push('low_confidence_regions');
+ if(regions.some(r=>r.kind==='running'&&r.sourceSupport<.9))blockers.push('partial_running_centreline');
+ if(missingPixels>Math.max(16,foregroundPixels*.03))blockers.push('uncovered_source_artwork');
+ if(falseFillPixels>Math.max(4,foregroundPixels*.005))blockers.push('false_filled_background');
+ if(missingColourGroups)blockers.push('unrepresented_source_colours');
+ return {foregroundPixels,missingPixels,falseFillPixels,colourMismatchPixels,missingColourGroups,overlapPixels,
+  coverage:Number((1-missingPixels/Math.max(1,foregroundPixels)).toFixed(4)),blockers,
+  machineEligible:blockers.length===0,scope:'pixel_fidelity_only_not_semantic_or_stitch_validation'};
 }
 // Image-grounded running centreline: AI points are only a search corridor.
 // Every retained centreline segment must be supported by local cross-line contrast.
@@ -239,6 +307,8 @@ function reconstruct(rgba,w,h,plan,opts={}){
  if(!plan||!Array.isArray(plan.regions)||plan.regions.length<1||plan.regions.length>32||
   plan.status!=="AI_GEOMETRY_PROPOSAL_NOT_STITCHED")throw Error("Invalid AI geometry plan");
  const foreground=foregroundMask(rgba,w,h),regions=[],rejected=[];
+ const ids=new Set();
+ for(const r of plan.regions){checkedRegion(r);if(ids.has(r.id))throw Error("Duplicate region id");ids.add(r.id);}
  const ordered=plan.regions.map(checkedRegion).sort((a,b)=>(a.layer||0)-(b.layer||0));
  for(const r of ordered){
   const points=r.points.map(p=>[p.x*w/1000,p.y*h/1000]),base={id:r.id,label:r.label,
@@ -278,25 +348,39 @@ function reconstruct(rgba,w,h,plan,opts={}){
   if(candidate<40||signal<25||signal/candidate<(isMarking ? 0.03 : 0.15)){
    rejected.push({id:r.id,reason:isMarking?"marking_colour_not_supported_by_pixels":"fill_not_supported_by_pixels"});continue;
   }
-  const cc=largestComponent(mask,w,h);
-  if(cc.size<25||signal-cc.size>Math.max(16,signal*.02)){rejected.push({id:r.id,reason:"fragmented_fill"});continue;}
-  const boundary=boundaryPixels(cc.mask,w,h);
-  // This bridge has no compound paths. Never silently sew over a source hole.
-  if(polygonArea(boundary)-cc.size>Math.max(16,cc.size*.02)){
-   rejected.push({id:r.id,reason:"fill_holes_not_supported"});continue;
+  const components=connectedComponents(mask,w,h),parts=[],failures=[];
+  if(components.length>128){rejected.push({id:r.id,reason:'too_many_components'});continue;}
+  for(let index=0;index<components.length;index++){
+   const pixels=components[index],partMask=new Uint8Array(w*h);
+   if(pixels.length<25){failures.push('small_components_not_stitchable');continue;}
+   for(const k of pixels)partMask[k]=1;
+   const boundary=boundaryPixels(partMask,w,h);
+   // Compound holes are deliberately blocked until the entire editor/engine
+   // contract can preserve them. Even a one-pixel hole must not disappear.
+   if(Math.abs(polygonArea(boundary)-pixels.length)>.25){failures.push('fill_holes_not_supported');continue;}
+   const contour=simplifyRing(boundary);
+   if(contour.length<4||invalidPolygon(contour,512,4)){failures.push('could_not_reconstruct_boundary');continue;}
+   let matched=0,extra=0;
+   paintPolygon(contour,w,h,k=>{if(partMask[k])matched++;else extra++;});
+   if(extra>Math.max(2,pixels.length*.005)||pixels.length-matched>Math.max(2,pixels.length*.02)){
+    failures.push('simplification_lost_pixel_fidelity');continue;
+   }
+   parts.push({...base,id:components.length===1?r.id:r.id+'::component-'+(index+1),parentId:r.id,
+    componentIndex:index,points:contour,sourceSupport:pixels.length/candidate,pixelArea:pixels.length,
+    colourEvidence:Number((colourSignal/Math.max(1,baseSignal)).toFixed(3)),
+    geometrySource:selectColour?'ai_polygon_intersected_with_colour_matched_artwork_pixels':'ai_polygon_intersected_with_artwork_pixels'});
   }
-  const contour=simplifyRing(boundary);
-  if(contour.length<4||invalidPolygon(contour,120,4)){rejected.push({id:r.id,reason:"could_not_reconstruct_boundary"});continue;}
-  regions.push({...base,points:contour,sourceSupport:cc.size/candidate,
-   pixelArea:cc.size,colourEvidence:Number((colourSignal/Math.max(1,baseSignal)).toFixed(3)),
-   geometrySource:selectColour?"ai_polygon_intersected_with_colour_matched_artwork_pixels":"ai_polygon_intersected_with_artwork_pixels"});
+  // Atomic per-proposal: never keep only the easiest disconnected fragments.
+  if(failures.length){rejected.push({id:r.id,reason:failures[0]});continue;}
+  regions.push(...parts);
  }
  if(!regions.length)throw Error("AI reconstruction did not yield any supported regions; design unchanged");
  if(regions.length>128)throw Error("Too many reconstruction regions");
- return {status:"AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED",regions,rejected,
+ const quality=auditReconstruction(rgba,w,h,foreground,regions);
+ return {status:"AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED",regions,rejected,quality,
   proposed:plan.regions.length,autoApplied:false,
   warnings:["AI outlines are approximate; source-pixel clipping is not semantic segmentation.",
-   "Colours are approximate and PES/DST export is not multi-colour validated.",
+   "Pixel colour fidelity is not calibrated thread matching or stitch quality.",
    "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified."]};
 }
 root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork});

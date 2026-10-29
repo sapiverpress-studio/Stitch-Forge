@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.27 (isolated feature branch only) |
+| Document version | MD-2.28 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | 2026-10-28: native Docker/moth-logo-line fixture CI SUCCESS (40748895024); regression CI 66 tests / 3 optional skipped SUCCESS incl Cloud Run safety guards (40767768413). Cloud Run staging package PREPARED only; no Google Cloud service or physical stitch-out |
+| Last independently checked source | 2026-10-29 isolated branch: 55 Node / 77 Python tests passed; 48 vectorisation rows × 3 traces; browser WASM and 256/512/768px reconstruction measured. Fresh native engine rerun blocked by local Xvfb Unix-socket restriction; prior engine evidence remains historical. |
 | Default branch | `main` |
 | Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -18,7 +18,7 @@
 | Deployment | **Static v0.3 experimental editor committed to `main` and Netlify reports deployment ready; direct HTTP/browser rendering not independently verified** |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
-| External Ink/Stitch or pyembroidery integration | **Browser→private Netlify proxy→native WSGI worker job handoff implemented and regression-tested on development branch; actual Ink/Stitch 3.3.0 + pyembroidery 1.5.1 two-colour JSON transaction verified CI; worker NOT DEPLOYED, real browser→network→worker E2E NOT VERIFIED** |
+| External Ink/Stitch or pyembroidery integration | Existing private Cloud Run worker established in owner-managed MD-2.22 evidence. No hosted invocation this session. New source-size, topology and independent command diagnostics are local-tested only and not deployed. Physical stitch-out NOT VERIFIED. |
 
 ## 0. How to read and maintain this MD
 
@@ -79,7 +79,15 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 
 ## 2. Current verified baseline (2026-10-28)
 
-### Current isolated-branch supplement (MD-2.27)
+### Current isolated-branch supplement (MD-2.28)
+
+**Delivered locally, not deployed:** disconnected image components become individual editable shapes; error-bounded contour simplification and raster fidelity checks replace vertex subsampling; original pixels are processed up to 768px with at most 512 fill vertices/5,000 total editor vertices. The editor no longer thins away validated fine geometry. A whole-image coverage/colour audit blocks automatic native export after omitted artwork, low-confidence regions, partial running lines or unsupported geometry. Compound holes still fail closed, including tiny holes.
+
+Backend rejects crossing/touching/degenerate fill rings, tiny physical fills (conservative 0.8mm extent / 1mm² area review gate), non-finite decoded coordinates, wrong source dimensions even when PES/DST agree, and mismatched colour order. Geometry planning diagnostics expose dimensions, area, thinness, principal axis, requested/default fill settings and travel proxy, while retaining Ink/Stitch and preserving layer order. No automatic satin rails, fabric compensation or approved density presets are claimed.
+
+**Current validation:** 55 Node tests and 77 Python tests pass, no skips. A pre-existing Cloud Run guard test failed because the gcloud availability check preceded branch refusal; reordered local checks fixed it without any cloud access. Physical Android, new real-engine run and physical fabric remain unverified. Read `docs/ENGINEERING_HANDOVER_MD-2.28.md` before the next session.
+
+### Vectorisation milestone (MD-2.27)
 
 VTracer 1.0.0a4, OpenCV and scikit-image now have actual local comparison results: 48 candidate/fixture rows, three traces each, with topology, colour, boundary, timing and peak-RSS evidence. VTracer WASM executed in desktop Chromium; physical Android remains untested. No tracing library integrated into the application. See `docs/VECTORISATION_EVALUATION_2026-10-29.md`; historical unavailable-library statements below remain dated history.
 
@@ -440,11 +448,20 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-056 | P1 | Measured local vectorisation/WASM comparison | DONE-VERIFIED ON SYNTHETIC FIXTURES | 48 rows × 3 traces, 8 fixtures, optional pinned dependencies; actual browser WASM; Android/real-wildlife acceptance still open |
 
+| SF-057 | P0 | Pixel coverage/colour omission gate and detail-preserving component reconstruction | LOCAL SYNTHETIC + MOBILE BROWSER VERIFIED | Unit omission/hole/component tests; one-click partial-source suppression; 768px curve 99.95% foreground coverage; semantic fidelity and actual Android pending |
+| SF-058 | P0 | Backend topology, physical-size and independent output extent integrity | LOCAL TEST VERIFIED / NATIVE RERUN BLOCKED | Invalid ring/tiny fill rejection; equal-but-wrong PES/DST bounds rejected; finite coordinate checks; real engine needs unrestricted local X display or separately authorised zero-cost CI |
+| SF-059 | P1 | Geometry-driven stitch planning diagnostics | PROTOTYPE-TESTED | Local CLI, source-order colours, dimensions, narrow/tiny-fill alerts, fill settings and endpoint-travel proxy; satin/fabric planning incomplete |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
 ## 10. Test evidence register
+
+- **E-071 (2026-10-29, MD-2.28):** `node --test tests/*.cjs tests/*.mjs`: **55 pass**, zero failures/skips. `python -m unittest discover -s tests -v`: **77 pass**, zero failures/skips. Exact logs `docs/test-evidence/MD-2.28-node.txt` / `MD-2.28-python.txt`. Real pyembroidery reader tests included; browser/model/native HTTP tests use mocks and synthetic artwork.
+- **E-072:** `node tools/bench_reconstruction.cjs`: 256/512/768px ellipses accepted, 99.87%/99.94%/99.95% pixel coverage; exact false/missing counts and timing in `MD-2.28-reconstruction.json`. Not real wildlife or Android evidence.
+- **E-073:** Official Ink/Stitch 3.3.0 installed and archive SHA-256 verified against existing pin. Local Xvfb failed to bind AF_UNIX sockets (PermissionError EPERM independently reproduced); native matrix did not run. No substituted fake engine pass, cloud invocation or physical test. New output-size gate still needs actual Ink/Stitch regression evidence.
+
 
 - **E-070 (2026-10-29, MD-2.27):** Original VTracer benchmark ran successfully. Extended 48-row matrix completed without errors; three repetitions per row; `docs/test-evidence/MD-2.27-vectorisation.json`. Browser WASM evidence `MD-2.27-wasm.json`. Synthetic pixel fidelity only, not machine/fabric evidence.
 
@@ -573,6 +590,9 @@ Do not create empty decorative folders or claim an implementation exists because
 | 2026-10-28 | D-012 | Replace Railway proposal with guarded Cloud Run staging option | Existing 2GiB/2vCPU worker can scale to zero. No Google Cloud account, billing activation or provisioning without explicit authorisation. Public invoker route with worker-token protection alone is insufficient for release, and may incur charges under abuse. |
 
 - **2026-10-29 D-014:** Do not integrate a tracing library on availability alone. Retain current runtime; benchmark favours further investigation of quantised marching and tuned VTracer. WASM is technically feasible but real Android/worker profiling is still required. No cloud deployment or additional service.
+
+- **2026-10-29 D-015:** Adapt Draw DXF integrity principles (read `core/analysis-integrity.js` at `ff9018c29bc6d06683ce3130db8e599e3eee3558`) as pixel ownership, omission gates and explicit unknowns. Do not copy CAD requirements for mathematically exact organic curves. Retain original layer order; do not group colours across overlaps or invent hidden anatomy.
+- **2026-10-29 D-016:** Reconstruction audit thresholds (3% omitted foreground, 0.5% false foreground with small absolute budgets; significant missing colour bins) are conservative engineering heuristics, not professional acceptance limits. Tiny physical fills require review before native execution. Physical validation remains mandatory.
 
 ### Decision-record template
 
@@ -1006,6 +1026,15 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - Browser WASM module 668,378 bytes; desktop Chromium evaluation at four resolutions. Node-target loader adapted only inside test harness; not a production browser integration.
 - See `docs/VECTORISATION_EVALUATION_2026-10-29.md` for exact results, parameters, limitations and commands.
 - Deployment/charges: none. No hosted tests, new subscriptions or model calls. Feature branch has no open PR. Existing draft PR #1 still targets the integration branch and is not modified.
+
+### 2026-10-29 — Detail-preserving reconstruction and source-to-machine integrity (MD-2.28)
+
+- Only isolated feature branch; benchmark milestone commit `c158621`. No main/integration edits, PR changes or deployments.
+- Implemented SF-057/058/059 across `site/auto-reconstruct.js`, UI/editor/fill validator and native `trusted_svg.py`, `stitch_planning.py`, `machine_job.py`, `format_audit.py`. New CLI `tools/inspect_stitch_plan.py` provides zero-cost diagnostics. No new hosted dependency, AI call, retries or worker purchase.
+- 55 Node and 77 Python tests pass with captured logs, including browser Undo/stale-result/automatic-download mocks and independent pyembroidery. Added omitted-subject, lost-interior-colour, tiny-hole, border, ID ownership, low-confidence, invalid-ring, wrong-sized-output, non-finite-command and tiny-physical-fill tests.
+- Fixed baseline deploy-guard test failure by checking branch/SHA before checking for gcloud. All guard tests remain dry-run/refusal tests; no deployment command reaches gcloud.
+- Local native engine obtained and SHA verified but Xvfb cannot bind Unix sockets in this environment. Not counted as a successful native run; do not promote these backend changes before native fixtures pass. Hosted worker and physical machine untouched.
+- Remaining limitations and next priorities: `docs/ENGINEERING_HANDOVER_MD-2.28.md`. No claim of professional stitch quality, realistic wildlife acceptance or universal automatic segmentation.
 
 ### Entry template — REQUIRED on every meaningful development update
 

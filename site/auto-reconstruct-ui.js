@@ -89,7 +89,7 @@ q("#sfAutoRun").onclick=async()=>{
  try{
   // One local, free pixel scan per click. Reuse these exact image pixels
   // after the single AI call; never upload the audit or make a second call.
-  const {canvas,ctx}=await decoded(source,512);
+  const {canvas,ctx}=await decoded(source,768);
   const inspection=window.StitchForgeAutoReconstruct.analyseArtwork(
    ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height);
   status("Local artwork scan: "+inspection.palette.length+" prominent colour groups, "+
@@ -116,7 +116,7 @@ q("#sfAutoRun").onclick=async()=>{
    inspection.detailLevel+" edge detail. Automatically rebuilt "+summary.regions+" image-grounded regions ("+
     result.regions.filter(r=>r.kind==="fill").length+" fills, "+
     result.regions.filter(r=>r.kind==="running").length+" lines; "+
-    result.rejected.length+" rejected). "+summary.colors+" proposed colours.";
+    result.rejected.length+" rejected). "+summary.colors+" proposed colours. Source coverage: "+Math.round(result.quality.coverage*100)+"%.";
   // The second stage is automatic. Only editable geometric paths and colours
   // leave the browser; no source raster, AI credentials or model proposals.
   // The endpoint returns a ZIP only after native Ink/Stitch + independent audit.
@@ -124,6 +124,7 @@ q("#sfAutoRun").onclick=async()=>{
   const machineRevision=JSON.stringify(machineProject),machineGeneration=revision;
   status(summaryText+" Checking independently audited PES/DST engine...");
   try{
+   if(!result.quality?.machineEligible)throw Error('Source fidelity check blocked automatic machine export: '+(result.quality?.blockers||['audit_missing']).join(', '));
    if(result.rejected.length||plan.model_rejected_count)throw Error("Incomplete reconstruction: "+(result.rejected.length+(plan.model_rejected_count||0))+" regions were not validated; automatic machine export blocked");
    const machine=await fetch("/api/machine-embroidery",{
     method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},

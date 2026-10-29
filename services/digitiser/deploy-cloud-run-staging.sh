@@ -56,7 +56,6 @@ if [ "${STITCH_FORGE_CLOUD_BILLING_APPROVED:-}" != "yes-for-this-staging-deploy"
   echo "REFUSED: explicit charge authorisation STITCH_FORGE_CLOUD_BILLING_APPROVED=yes-for-this-staging-deploy is required." >&2
   exit 3
 fi
-command -v gcloud >/dev/null || { echo 'gcloud CLI required (Cloud Shell is suitable).' >&2; exit 3; }
 # Prevent deploying production, another SHA, or an uncommitted working tree.
 head="$(git rev-parse HEAD 2>/dev/null || true)"
 branch="$(git branch --show-current 2>/dev/null || true)"
@@ -65,6 +64,7 @@ if [ "$head" != "$sha" ] || [ "$branch" != "develop/stitch-engine-foundation" ] 
   echo "REFUSED: exact clean reviewed development branch/SHA required." >&2
   exit 3
 fi
+command -v gcloud >/dev/null || { echo 'gcloud CLI required (Cloud Shell is suitable).' >&2; exit 3; }
 billing="$(gcloud beta billing projects describe "$project" --format='value(billingEnabled)' 2>/dev/null || true)"
 if [[ "$billing" != "True" && "$billing" != "true" ]]; then
   echo "REFUSED: existing billing-enabled project could not be verified (no billing services will be enabled)." >&2

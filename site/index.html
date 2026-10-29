@@ -336,7 +336,7 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
  exportEditableSvg:()=>makeSvg({settings:{width:Number($('#designWidth').value)}}),
  replaceWithAutomaticReconstruction:(draft)=>{
   if(!draft||draft.status!=='AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED'||
-     !Array.isArray(draft.regions)||draft.regions.length<1||draft.regions.length>32)
+     !Array.isArray(draft.regions)||draft.regions.length<1||draft.regions.length>128)
     throw Error('No valid automatically reconstructed design');
   if(!rasterBounds||!rasterReference)throw Error('Source artwork must be loaded');
   const w=Number(draft.width),h=Number(draft.height);
@@ -344,7 +344,7 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
   let dropped=0;
   const converted=draft.regions.map(region=>{
    if(!region||!['fill','running'].includes(region.kind)||!/^#[0-9a-f]{6}$/i.test(region.color)||
-     !Array.isArray(region.points)||region.points.length>(region.kind==='fill'?115:100))
+     !Array.isArray(region.points)||region.points.length>(region.kind==='fill'?512:100))
     throw Error('Invalid region or colour');
    const pts=region.points.map(p=>{
     if(!Array.isArray(p)||p.length!==2||!p.every(Number.isFinite))throw Error('Invalid geometry point');
@@ -354,15 +354,10 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
    });
    if(region.kind==='fill'){
     if(!window.StitchForgeFillGeometry)throw Error('Missing closed-region validator');
-    // Contour pixels are finer than safe editable vertices. Thin at canvas scale.
-    const thinned=[];
-    for(const point of pts)if(!thinned.length||
-       Math.hypot(point[0]-thinned.at(-1)[0],point[1]-thinned.at(-1)[1])>=4.5)
-       thinned.push(point);
-    if(thinned.length>2&&Math.hypot(thinned[0][0]-thinned.at(-1)[0],
-       thinned[0][1]-thinned.at(-1)[1])<4.5)thinned.pop();
+    // Preserve the audited contour. The previous 4.5-canvas-unit thinning
+    // erased narrow accents after pixel validation had already passed.
     try{
-      const checked=window.StitchForgeFillGeometry.prepare(thinned,rasterBounds);
+      const checked=window.StitchForgeFillGeometry.prepare(pts,rasterBounds,{automatic:true});
       return {points:checked.points,style:'tatami',color:region.color};
     }catch(error){dropped++;return null;}
    }

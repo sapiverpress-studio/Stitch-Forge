@@ -17,7 +17,7 @@ PROJECT={'width':78,'hoop':150,
 
 def reports(changes=(1,1), stitches=(200,200)):
     return tuple(SimpleNamespace(format=fmt,needle_stitches=n,jumps=3,changes=c,
-              bounds_mm=(30,35)) for fmt,n,c in zip(('pes','dst'),stitches,changes))
+              bounds_mm=(78,93.6)) for fmt,n,c in zip(('pes','dst'),stitches,changes))
 
 class MachineJobTests(unittest.TestCase):
     def test_no_archive_until_independent_reader_passes(self):

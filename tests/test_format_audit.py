@@ -46,3 +46,17 @@ class IndependentFormatAuditTests(unittest.TestCase):
             z.writestr('a.pes', b'fake')
         with self.assertRaises(DigitiserError):
             audit_zip(payload.getvalue())
+
+class CoordinateAuditTests(unittest.TestCase):
+    def test_nan_coordinate_is_rejected_even_if_bounds_appear_valid(self):
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        broken=SimpleNamespace(stitches=[[0,0,0],[float('nan'),1,0],[2,2,0]],bounds=lambda:(0,0,2,2))
+        with patch('format_audit.pyembroidery.read_dst',return_value=broken):
+            with self.assertRaisesRegex(DigitiserError,'Non-finite'):
+                audit_zip(build_machine_zip())
+    def test_diagnostics_report_actual_decoded_movements(self):
+        for audit in audit_zip(build_machine_zip()):
+            self.assertGreater(audit.max_needle_move_mm,0)
+            self.assertGreaterEqual(audit.trims,0)
+            self.assertGreaterEqual(audit.stops,0)
