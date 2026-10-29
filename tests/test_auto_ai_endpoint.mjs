@@ -90,6 +90,12 @@ test("rejects invalid regions individually but never claims incomplete plan is r
   {type:"output_text",text:JSON.stringify(empty)}]}]});}catch(error){emptyFailure=error;}
  assert.deepEqual(emptyFailure?.diagnostics,{accepted_regions:0,
   rejected_regions:[{region:0,reason:"no_regions_returned"}],additional_rejections:0});
+ let shapeFailure;
+ try{parseModelResponse({status:"completed",output:[{type:"message",content:[
+  {type:"output_text",text:JSON.stringify({subject:"missing regions",warnings:[],requires_machine_test:true})}]}]});}
+ catch(error){shapeFailure=error;}
+ assert.deepEqual(shapeFailure?.diagnostics,{accepted_regions:0,
+  rejected_regions:[{region:0,reason:"plan_shape_invalid"}],additional_rejections:0});
 });
 
 test("duplicate ids never silently produce multiple machine regions",()=>{

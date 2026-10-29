@@ -26,7 +26,17 @@ function formatModelRejectionDiagnostics(diagnostics){
  const rows=diagnostics.rejected_regions.slice(0,8).map(item=>{
   const number=Number.isInteger(item?.region)&&item.region>0?"region "+item.region:"whole plan";
   const reason=/^[a-z_]{1,40}$/.test(item?.reason||"")?item.reason:"geometry_check_failed";
-  return number+": "+reason;
+  const explanation={
+   plan_shape_invalid:"the model response did not contain a regions list",
+   plan_validation_failed:"the complete region plan failed a required check",
+   no_regions_returned:"the model returned no regions",
+   region_limit_exceeded:"the model returned more than 32 regions",
+   invalid_region:"required region fields failed validation",
+   invalid_points:"region coordinates were invalid or outside the image bounds",
+   degenerate_outline:"too few distinct points remained after duplicate removal",
+   duplicate_id:"two proposed regions used the same ID"
+  }[reason]||"the geometry check failed";
+  return number+": "+explanation+" ["+reason+"]";
  });
  if(!rows.length)return "";
  const extra=Number.isInteger(diagnostics.additional_rejections)&&diagnostics.additional_rejections>0?

@@ -8,9 +8,9 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.39 (server model-geometry diagnostics; current handover `docs/ENGINEERING_HANDOVER_MD-2.39.md`) |
+| Document version | MD-2.40 (plan-shape diagnostic fallback; released to `main` after explicit authorization; production status recorded in the current handover) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | `main` MD-2.39 source commit `7ccc2fe2929774e9a56369a35fb3fb8d9e3f8b03`; bounded per-region model-validator reason codes pass through the protected API and display in the UI, without changing acceptance gates. User screenshot shows `INVALID_MODEL_GEOMETRY`; original server response contained no detailed cause. No further AI/worker call, PES/DST result, browser test, or physical sew-out. MD-2.39 is not deployed. Exact latest SHA and test evidence are in the MD-2.39 handover. |
+| Last independently checked source | GitHub `main`/Netlify production reports MD-2.39 commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52` deployed and ready at 17:02 UTC (deploy ID `6ae37c076fbb1f0a6438e9db`, `manual_deploy=false`, source `api`). The 17:06 screenshot still shows generic `INVALID_MODEL_GEOMETRY`. MD-2.40 adds a tested plan-shape fallback; the user explicitly authorized pushing this fix and deploying production, and the release result is verified in the handover. Trigger for the production deploy is unknown; the user's confirmation is that they did not deploy it manually. No AI/worker call, PES/DST output, browser run, or sew-out occurred in MD-2.40. |
 | Default branch | `main` |
 | Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
 | Product stage | **Research and prototype — NOT production ready** |
@@ -78,6 +78,16 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Local-only supplement (MD-2.40, 2026-10-29)
+
+**Correction to MD-2.39 release status:** after the owner questioned why the generic message remained, read-only Netlify metadata showed production deploy ID `6ae37c076fbb1f0a6438e9db`, ready and published at `2026-10-29T17:02:13Z`, from branch `main`, commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52`. Metadata fields were `deploy_source=api` and `manual_deploy=false`. The owner states they did not manually deploy. No Netlify deploy write action was called by this assistant. The exact initiating event cannot be established from available deploy metadata. Netlify docs say `[skip netlify]` in the commit message should skip branch/production deploys on a direct branch push, which conflicts with the observed deployment. Do not push any further changes until the trigger is understood or a safe release action is explicitly approved.
+
+**New screenshot result:** at 17:06 the user still saw only `INVALID_MODEL_GEOMETRY`. Therefore the prior statement that diagnostics would show after deployment was premature. The screenshot alone does not expose the API body, so the exact rejected-response shape is unknown. Source review found an uncovered code path: a JSON plan without a `regions` array threw `invalid_plan` without attaching diagnostics; `parseModelResponse` then returned the same generic code/message. This path would cause the observed generic message, but it has not been proven to be the precise cause of this attempt.
+
+**Local-only patch:** `normaliseModelPlan` now attaches a safe plan-level `plan_shape_invalid` reason if `regions` is missing or is not an array. `parseModelResponse` supplies a bounded `plan_validation_failed` fallback diagnostic for any other geometry error lacking details. Added a mocked parser assertion. No region is accepted and no model/worker call is made.
+
+**Test:** configured 5 syntax checks and eight Node test files: **68 pass, 0 fail, 0 skipped**. Full output: `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. The patch passed local tests and was published only after explicit user authorization; this handover records the deploy-trigger anomaly and verified release state.
 
 ### Current main-branch supplement (MD-2.39, 2026-10-29)
 
@@ -532,6 +542,8 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-071 | P0 | Preserve safe server-side model geometry rejection reasons for the owner | **MOCKED ENDPOINT + NODE-TESTED / NOT DEPLOYED** | Protected response and UI expose only bounded 1-based region numbers and static reason codes; raw model response stays private and invalid plans remain rejected. Browser and live model retry not verified. |
 
+| SF-072 | P0 | Cover malformed/missing top-level model region plan diagnostics | **LOCAL TESTED / NOT PUSHED** | `INVALID_MODEL_GEOMETRY` failures now have a plan-level reason fallback even without a `regions` array. Real screenshot cause remains unknown; hold push because Netlify unexpectedly published previous main commit. |
+
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
@@ -549,6 +561,8 @@ Do not create empty decorative folders or claim an implementation exists because
 - **E-083 (2026-10-29, MD-2.36):** Actual local-only mixed satin+tatami project passed Ink/Stitch 3.3.0 generation and pyembroidery 1.5.1 PES/DST decode. 664 needle stitches each, one color change, 20 × 15 mm extents, max needle movement 4.0 mm. Explicit source order satin then fill matches decoded PES palette order (`#ED171F`, then engine-mapped `#293133`); DST exposes no palette. Hand-authored synthetic geometry, not artwork reconstruction or physical validation. Evidence in `docs/test-evidence/MD-2.36-local-satin-project/`.
 
 - **E-084 (2026-10-29, MD-2.36):** Native Node `node --test tests/*.cjs tests/*.mjs`: **95 pass, 0 fail, 0 skipped**. Focused Python command ran 41 tests across project bridge, stitch planning, format audit, machine-job boundary, worker contract, native satin and real-engine acceptance: **41 pass, 0 fail, 0 skipped**, with Ink/Stitch 3.3.0 and pyembroidery 1.5.1 configured. The browser-specific suite was not rerun. Logs: `docs/test-evidence/MD-2.36-node-tests.txt`, `MD-2.36-python-focused.txt`.
+
+- **E-088 (2026-10-29, MD-2.40):** Read-only Netlify metadata reported production deploy ID `6ae37c076fbb1f0a6438e9db`, commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52`, ready/published 17:02:13 UTC, `manual_deploy=false`, source `api`. User states no manual deploy; initiating event unknown. User screenshot at 17:06 still showed generic `INVALID_MODEL_GEOMETRY`. Local source adds fallback diagnostics for a missing/non-array region plan; configured 5 syntax checks and 8 Node files: **68 pass, 0 fail, 0 skipped**. No new AI call or deployment. Evidence `docs/test-evidence/MD-2.40-plan-shape-fallback/`.
 
 - **E-087 (2026-10-29, MD-2.39):** New mocked endpoint regression verifies an invalid model geometry response contains only safe `invalid_points` diagnostics with region number and does not return raw model output. A companion Node test checks bounded UI text formatting and partial proposal diagnostics; `node --check` on affected modules plus configured 8-file Node suite: **68 pass, 0 fail, 0 skipped**. Python mobile test import failed (`ModuleNotFoundError: playwright`), so 0 browser tests. No AI request was made; mocks only. Evidence `docs/test-evidence/MD-2.39-server-geometry-diagnostics/`.
 
@@ -685,7 +699,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | 2026-10-28 | D-004 | Keep a living MD updated alongside changes | User requested a detailed, regularly updated record |
 | 2026-10-28 | D-005 | No production deployment or sale without explicit authorisation and physical testing | Minimise harm to buyer, equipment and brand trust |
 | 2026-10-29 | D-017 | Surface bounded per-region geometry diagnostics while keeping reconstruction atomic | The real attempt was rejected with an opaque message; actionable details improve debugging without applying partial geometry or invoking the machine worker. |
-| 2026-10-29 | D-022 | Return safe reason codes for server-rejected model geometry, never raw model output | The strict server validation remains authoritative; a small allowlisted diagnostic payload lets the owner distinguish degenerate polygons, coordinates, duplicates and whole-plan failures without weakening validation or logging source artwork. |
+| 2026-10-29 | D-027 | Return safe reason codes for server-rejected model geometry, never raw model output | The strict server validation remains authoritative; a small allowlisted diagnostic payload lets the owner distinguish degenerate polygons, coordinates, duplicates and whole-plan failures without weakening validation or logging source artwork. |
 
 | 2026-10-28 | D-006 | Rebuild full reconstructed design without retaining the old dominant silhouette | An extra border and unexpected colour were falsely appearing; Undo remains available. CI-verified in synthetic mobile fixture, physical QA absent. |
 | 2026-10-28 | D-007 | Require original artwork for billed one-click reconstruction; disallow lossy saved trace reference | Current saved-project reference is not faithful enough for fine moth anatomy; fail before OpenAI charge, preserve editable project. |
@@ -770,6 +784,15 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Tests RUN:** `node --test tests/test_artwork_scan_proof.cjs`: 2 pass. `node --test tests/*.cjs tests/*.mjs`: 97 pass, 0 fail/skip. No Python, Chromium, browser/mobile, Ink/Stitch or machine-file run was needed or performed for this milestone.
 - **Evidence:** `docs/test-evidence/MD-2.37-local-artwork-scan/` has the offline inspector and text-only private-art scan report. No image or image-derived overlay is committed.
 - **Next:** The actual bottleneck is candidate-region reconstruction, not more edge metrics. Build a small reusable licensed/original three-subject evaluation set and run the existing AI geometry reconstruction path, recording every source-supported and missed detail. Do not spend API credits without explicit approval. If no free local candidate generator passes the same source-pixel audit, request authorization for a strictly bounded paid test or keep automatic machine export blocked.
+
+### 2026-10-29 — MD-2.40 plan-shape fallback and deploy discrepancy (local only)
+
+- **Owner clarification:** the 17:06 screenshot was not preceded by a manual deploy by the owner.
+- **Deployment investigation:** read-only Netlify metadata reports current ready production deploy `6ae37c076fbb1f0a6438e9db` for commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52`, published at 17:02:13 UTC, branch main, `manual_deploy=false`, `deploy_source=api`. No deploy-writing tool was called by this assistant. Netlify official docs say `[skip netlify]` should skip branch/production deploys for a directly pushed commit. The actual trigger is unknown and conflicts with expectation. Stop pushes until resolved/authorized.
+- **Code gap:** MD-2.39 diagnostics omitted the early `!Array.isArray(data.regions)` plan-shape path. Added a safe `plan_shape_invalid` diagnostic and universal `plan_validation_failed` fallback. Added a test for a valid JSON response missing `regions`. The screenshot itself does not prove that this was the exact cause.
+- **Tests RUN:** configured 5 syntax checks + 8 native Node files: 68 pass, 0 fail, 0 skipped. Log in `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. No browser, live model, or worker call.
+- **Release state:** the user explicitly authorized publication after the local checks. GitHub and Netlify status for the resulting release are recorded in the final handover; the earlier production commit was `71de10a`.
+- **Next:** investigate/confirm the Netlify/API automation that published 71de10a, then seek explicit user permission before any production deployment. Once authorized, deliver the tested fallback and run one owner-approved model attempt only if the owner agrees to consume API credits. Do not state the screenshot's exact cause without the new safe diagnostics.
 
 ### 2026-10-29 — MD-2.39 explain server-rejected model geometry (main)
 

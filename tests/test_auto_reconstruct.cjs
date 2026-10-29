@@ -44,7 +44,8 @@ test("formats safe server model-geometry reasons for the reconstruction status",
   {region:1,reason:"degenerate_outline"},{region:2,reason:"duplicate_id"},
   {region:0,reason:"<script>alert(1)</script>"}
  ],additional_rejections:3});
- assert.equal(message," Rejected proposal checks: region 1: degenerate_outline; region 2: duplicate_id; whole plan: geometry_check_failed; 3 more rejected.");
+ assert.equal(message," Rejected proposal checks: region 1: too few distinct points remained after duplicate removal [degenerate_outline]; region 2: two proposed regions used the same ID [duplicate_id]; whole plan: the geometry check failed [geometry_check_failed]; 3 more rejected.");
+ assert.match(formatModelRejectionDiagnostics({rejected_regions:[{region:0,reason:"plan_shape_invalid"}]}),/the model response did not contain a regions list \[plan_shape_invalid\]/);
  assert.equal(formatModelRejectionDiagnostics(null),"");
 });
 test("automatically reconstructs two separate image-grounded wing fill contours",()=>{

@@ -107,7 +107,11 @@ export function verifyGeometryPlan(value){
 // clamp, or move coordinates. Individually invalid regions remain rejected,
 // and any partial draft is explicitly barred from automatic machine export.
 function normaliseModelPlan(data){
- if(!data||!Array.isArray(data.regions))throw Error("invalid_plan");
+ if(!data||!Array.isArray(data.regions)){
+  const error=Error("invalid_plan");
+  error.diagnostics={accepted_regions:0,rejected_regions:[{region:0,reason:"plan_shape_invalid"}],additional_rejections:0};
+  throw error;
+ }
  if(data.regions.length<1||data.regions.length>32){
   const error=Error("invalid_plan");
   error.diagnostics={accepted_regions:0,rejected_regions:[{region:0,
@@ -170,7 +174,8 @@ export function parseModelResponse(response){
  let data;try{data=JSON.parse(raw);}catch{throw Error("INVALID_MODEL_JSON");}
  try{return normaliseModelPlan(data);}catch(error){
   const failure=Error("INVALID_MODEL_GEOMETRY");
-  failure.diagnostics=error?.diagnostics||null;
+  failure.diagnostics=error?.diagnostics||{accepted_regions:0,
+   rejected_regions:[{region:0,reason:"plan_validation_failed"}],additional_rejections:0};
   throw failure;
  }
 }
