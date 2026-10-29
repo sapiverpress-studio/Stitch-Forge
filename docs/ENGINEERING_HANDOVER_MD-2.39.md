@@ -6,7 +6,7 @@ Date: 2026-10-29 (Europe/London)
 
 - Repository: `sapiverpress-studio/Stitch-Forge`.
 - Branch: `main` (the user previously authorized main updates). Starting MD-2.38 head: `fc1243ca63662f14ad8a8c87a14751b36ad0d26c`.
-- MD-2.39 code/evidence commit SHA: to be recorded after the GitHub commit is created.
+- MD-2.39 code/evidence commit: `7ccc2fe2929774e9a56369a35fb3fb8d9e3f8b03`, message `fix: expose safe model geometry rejection reasons [skip netlify]`. A documentation-only follow-up records this SHA and updates the master document; it also includes the recorded Playwright import limitation.
 - Every commit includes `[skip netlify]`. No Netlify production, branch, or deploy preview has been made in MD-2.39. The updated code is not live until the owner chooses to deploy it.
 - Do not alter `develop/stitch-engine-foundation`, PR #1, credentials, secrets, or the hosted Cloud Run worker. No GitHub Actions workflow was triggered.
 - No AI request was made in this milestone. Endpoint tests mocked OpenAI responses. No user artwork or screenshot is in the repository.

@@ -10,7 +10,7 @@
 | Maintainer | Sapiver Press |
 | Document version | MD-2.39 (server model-geometry diagnostics; current handover `docs/ENGINEERING_HANDOVER_MD-2.39.md`) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | `main` MD-2.38 head `fc1243ca63662f14ad8a8c87a14751b36ad0d26c`; MD-2.39 preserves bounded per-region model-validator reason codes through the protected API and displays them in the UI, without changing acceptance gates. User screenshot shows `INVALID_MODEL_GEOMETRY`; original server response contained no detailed cause. No further AI/worker call, PES/DST result, browser test, or physical sew-out. MD-2.39 is not deployed. Exact latest SHA and test evidence are in the MD-2.39 handover. |
+| Last independently checked source | `main` MD-2.39 source commit `7ccc2fe2929774e9a56369a35fb3fb8d9e3f8b03`; bounded per-region model-validator reason codes pass through the protected API and display in the UI, without changing acceptance gates. User screenshot shows `INVALID_MODEL_GEOMETRY`; original server response contained no detailed cause. No further AI/worker call, PES/DST result, browser test, or physical sew-out. MD-2.39 is not deployed. Exact latest SHA and test evidence are in the MD-2.39 handover. |
 | Default branch | `main` |
 | Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
 | Product stage | **Research and prototype — NOT production ready** |
