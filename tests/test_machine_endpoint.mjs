@@ -11,6 +11,10 @@ const req=(obj=project,token="owner-token")=>new Request("https://example.test/a
  method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+token},
  body:JSON.stringify(obj)});
 function setEnv(worker){
+ // Netlify deploy previews supply a real Google credential at BUILD time.
+ // No unit test may ever access it, contact the live worker, or let it
+ // change the expected mocked endpoint outcome.
+ delete process.env.STITCH_FORGE_CLOUD_RUN_CALLER_JSON;
  process.env.STITCH_FORGE_ANALYSIS_TOKEN="owner-token";
  if(worker){
  process.env.STITCH_FORGE_ENGINE_URL="https://native.example.test/v1/digitise";
