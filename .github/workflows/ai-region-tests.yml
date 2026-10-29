@@ -6,6 +6,8 @@ on:
       - "netlify/functions/analyse-embroidery.mjs"
       - "netlify/functions/reconstruct-embroidery.mjs"
       - "netlify/functions/machine-embroidery.mjs"
+      - "netlify/functions/lib/cloud-run-auth.mjs"
+      - "tests/test_cloud_run_auth.mjs"
       - "tests/test_machine_endpoint.mjs"
       - "site/auto-reconstruct.js"
       - "site/auto-reconstruct-ui.js"
@@ -28,6 +30,8 @@ on:
       - "netlify/functions/analyse-embroidery.mjs"
       - "netlify/functions/reconstruct-embroidery.mjs"
       - "netlify/functions/machine-embroidery.mjs"
+      - "netlify/functions/lib/cloud-run-auth.mjs"
+      - "tests/test_cloud_run_auth.mjs"
       - "tests/test_machine_endpoint.mjs"
       - "site/auto-reconstruct.js"
       - "site/auto-reconstruct-ui.js"
@@ -62,12 +66,13 @@ jobs:
           node --check site/ai-details.js
           node --check netlify/functions/reconstruct-embroidery.mjs
           node --check netlify/functions/machine-embroidery.mjs
+          node --check netlify/functions/lib/cloud-run-auth.mjs
           node --check site/auto-reconstruct.js
           node --check site/auto-reconstruct-ui.js
           node --check site/fill-geometry.js
           node --check site/fill-boundary-ui.js
       - name: Verify proposals and authentication with synthetic fixtures
-        run: node --test tests/test_ai_analysis.mjs tests/test_fill_geometry.cjs tests/test_auto_ai_endpoint.mjs tests/test_auto_reconstruct.cjs tests/test_machine_endpoint.mjs
+        run: node --test tests/test_ai_analysis.mjs tests/test_fill_geometry.cjs tests/test_auto_ai_endpoint.mjs tests/test_auto_reconstruct.cjs tests/test_machine_endpoint.mjs tests/test_cloud_run_auth.mjs
       - name: Install browser regression dependencies
         run: |
           python -m pip install playwright==1.56.0
