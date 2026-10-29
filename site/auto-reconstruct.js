@@ -12,7 +12,7 @@ function inside(px,py,poly){let yes=false;for(let i=0,j=poly.length-1;i<poly.len
 }return yes;}
 function boundsOf(points){let xx=points.map(p=>p[0]),yy=points.map(p=>p[1]);return{x0:Math.min(...xx),x1:Math.max(...xx),y0:Math.min(...yy),y1:Math.max(...yy)};}
 function cross(a,b,c){return(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);}
-function invalidPolygon(points,maxPoints=32,minPoints=5){
+function invalidPolygon(points,maxPoints=32,minPoints=4){
  if(points.length<minPoints||points.length>maxPoints)return true;
  const p=points;
  for(let i=0;i<p.length;i++)for(let j=i+2;j<p.length;j++){
@@ -185,7 +185,7 @@ function checkedRegion(r){
  if(!r||typeof r.id!=="string"||r.id.length>60||typeof r.label!=="string"||
   !["fill","running"].includes(r.kind)||!/^#[0-9a-f]{6}$/i.test(r.color)||
   !["high","medium","low"].includes(r.confidence)||
-  !Array.isArray(r.points)||r.points.length<(r.kind==="fill"?5:2)||r.points.length>32||
+  !Array.isArray(r.points)||r.points.length<(r.kind==="fill"?4:2)||r.points.length>32||
   !r.points.every(p=>p&&Number.isInteger(p.x)&&Number.isInteger(p.y)&&p.x>=0&&p.x<=1000&&p.y>=0&&p.y<=1000))
   throw Error("AI sent invalid region geometry");
  return r;
