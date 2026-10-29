@@ -15,7 +15,8 @@ class CloudRunDeployGuardTests(unittest.TestCase):
              "CLOUD_RUN_REGION":"europe-west2",
              "CLOUD_RUN_REPOSITORY":"stitch-forge-staging",
              "STITCH_FORGE_CLOUD_SECRET":"stitch-forge-worker-token",
-             "STITCH_FORGE_DEPLOY_COMMIT":SHA}
+             "STITCH_FORGE_DEPLOY_COMMIT":SHA,
+             "CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT":"worker@sapiver-staging.iam.gserviceaccount.com"}
         env.pop("STITCH_FORGE_CLOUD_BILLING_APPROVED",None)
         env.update(changes or {})
         return subprocess.run(["bash",str(SCRIPT),*args],cwd=ROOT,
@@ -29,6 +30,9 @@ class CloudRunDeployGuardTests(unittest.TestCase):
         self.assertIn("--min-instances 0",r.stdout)
         self.assertIn("--max-instances 1",r.stdout)
         self.assertIn("--memory 2Gi",r.stdout)
+        self.assertIn("--no-allow-unauthenticated",r.stdout)
+        self.assertNotIn("--allow-unauthenticated ",r.stdout)
+        self.assertIn("DRY RUN ONLY",r.stdout)
 
     def test_execute_requires_explicit_cost_approval_before_gcloud(self):
         r=self.run_script(["--execute"])
@@ -41,7 +45,8 @@ class CloudRunDeployGuardTests(unittest.TestCase):
             {"CLOUD_RUN_REPOSITORY":"bad; echo leaked"},
             {"CLOUD_RUN_REGION":"invalid"},
             {"STITCH_FORGE_CLOUD_SECRET":""},
-            {"STITCH_FORGE_DEPLOY_COMMIT":"main"}]:
+            {"STITCH_FORGE_DEPLOY_COMMIT":"main"},
+            {"CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT":""}]:
             with self.subTest(changes=changes):
                 r=self.run_script(changes=changes)
                 self.assertEqual(r.returncode,2)
