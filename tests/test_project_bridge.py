@@ -6,7 +6,7 @@ import unittest
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'services/digitiser'))
-from project_bridge import convert_project
+from project_bridge import convert_project, convert_local_satin_project
 
 
 class ProjectBridgeTests(unittest.TestCase):
@@ -69,6 +69,46 @@ class ProjectBridgeTests(unittest.TestCase):
         self.assertEqual(len([el for el in root if el.tag.rsplit('}',1)[-1] in ('polygon', 'polyline')]), 2)
         self.assertEqual(root.attrib['width'], '82.000mm')
         self.assertNotIn(b'NaN', svg)
+
+    def test_local_satin_project_preserves_explicit_mixed_layer_order(self):
+        geometry = {'accepted': True, 'machineApproved': False, 'geometryOnly': True,
+                    'rungs': [{'left': [x, 0], 'right': [x, 12]} for x in range(6, 55, 6)]}
+        p = {'schemaVersion': 1, 'width': 20, 'hoop': 80,
+             'paths': [[[0, 0], [80, 0], [80, 60], [0, 60], [0, 0]]],
+             'pathStyles': ['tatami'], 'pathColors': ['#112233'],
+             'satinColumns': [{'geometry': geometry, 'threadColor': '#ED171F'}],
+             'regionOrder': [{'type': 'satin', 'index': 0}, {'type': 'path', 'index': 0}]}
+        svg = convert_local_satin_project(json.dumps(p).encode())
+        root = ET.fromstring(svg)
+        regions = [n for n in root if n.tag.rsplit('}', 1)[-1] in ('polygon', 'polyline', 'path')]
+        self.assertEqual([n.attrib['id'] for n in regions], ['satin-0', 'region-0'])
+        self.assertEqual(root.attrib['width'], '24.000mm')
+        self.assertEqual(root.attrib['height'], '19.000mm')
+        self.assertEqual(regions[0].attrib['stroke'], '#ED171F')
+
+    def test_legacy_conversion_refuses_local_satin_schema(self):
+        geometry = {'accepted': True, 'machineApproved': False, 'geometryOnly': True,
+                    'rungs': [{'left': [x, 0], 'right': [x, 12]} for x in range(6, 55, 6)]}
+        p = {'schemaVersion': 1, 'width': 20, 'hoop': 80,
+             'paths': [[[0, 0], [80, 0], [80, 60], [0, 60], [0, 0]]],
+             'satinColumns': [{'geometry': geometry}],
+             'regionOrder': [{'type': 'path', 'index': 0}, {'type': 'satin', 'index': 0}]}
+        with self.assertRaisesRegex(ValueError, 'Local satin schema'):
+            convert_project(json.dumps(p).encode())
+
+    def test_local_satin_order_must_be_complete_and_unique(self):
+        geometry = {'accepted': True, 'machineApproved': False, 'geometryOnly': True,
+                    'rungs': [{'left': [x, 0], 'right': [x, 12]} for x in range(6, 55, 6)]}
+        p = {'schemaVersion': 1, 'width': 20, 'hoop': 80,
+             'paths': [[[0, 0], [80, 0], [80, 60], [0, 60], [0, 0]]],
+             'satinColumns': [{'geometry': geometry}],
+             'regionOrder': [{'type': 'path', 'index': 0}, {'type': 'satin', 'index': 0}]}
+        p['regionOrder'][1] = {'type': 'path', 'index': 0}
+        with self.assertRaisesRegex(ValueError, 'Duplicate or out-of-range'):
+            convert_local_satin_project(json.dumps(p).encode())
+        p['regionOrder'] = [{'type': 'path', 'index': 0}]
+        with self.assertRaisesRegex(ValueError, 'complete regionOrder'):
+            convert_local_satin_project(json.dumps(p).encode())
 
 
 if __name__ == '__main__':

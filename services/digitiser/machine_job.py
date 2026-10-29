@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import json
 
-from project_bridge import MAX_PROJECT_BYTES, convert_project
+from project_bridge import MAX_PROJECT_BYTES, convert_project, convert_local_satin_project
 from inkstitch_cli import DigitiserError, export_trusted_svg
 from format_audit import audit_zip
 from stitch_planning import inspect_plan
@@ -24,9 +24,23 @@ class MachineJob:
 
 def run_machine_job(project: bytes, *, executable: Path, timeout_seconds: int = 90) -> MachineJob:
     """Process one geometry-only request and fail closed on engine/audit errors."""
+    return _run(project, executable=executable, timeout_seconds=timeout_seconds,
+                converter=convert_project)
+
+
+def run_local_satin_machine_job(project: bytes, *, executable: Path,
+                                timeout_seconds: int = 90) -> MachineJob:
+    """Explicit local acceptance route. The hosted worker never calls this."""
+    return _run(project, executable=executable, timeout_seconds=timeout_seconds,
+                converter=convert_local_satin_project)
+
+
+def _run(project: bytes, *, executable: Path, timeout_seconds: int,
+         converter) -> MachineJob:
+    """Shared fail-closed engine and independent PES/DST acceptance transaction."""
     if not isinstance(project, bytes) or len(project) > MAX_PROJECT_BYTES:
         raise ValueError('Project JSON size invalid')
-    svg = convert_project(project)  # bounded geometry; drops arbitrary/user reference data
+    svg = converter(project)  # bounded geometry; drops arbitrary/user reference data
     planning = inspect_plan(svg)
     if any('small_fill_requires_size_or_stitch_type_review' in region['warnings'] for region in planning['regions']):
         raise ValueError('Fill below conservative 0.8 mm extent / 1 square mm area gate; review size or stitch type')
@@ -54,7 +68,8 @@ def run_machine_job(project: bytes, *, executable: Path, timeout_seconds: int = 
                        'changes': a.changes, 'bounds_mm': list(a.bounds_mm),
                        'jumps': a.jumps, 'trims': getattr(a,'trims',0),
                        'stops': getattr(a,'stops',0),
-                       'max_needle_move_mm': getattr(a,'max_needle_move_mm',0.0)} for a in audits),
+                       'max_needle_move_mm': getattr(a,'max_needle_move_mm',0.0),
+                       'decoded_thread_colors': list(getattr(a,'thread_colors',()))} for a in audits),
         digest=sha256(engine.zip_bytes).hexdigest()
     )
 

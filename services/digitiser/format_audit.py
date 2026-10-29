@@ -27,6 +27,7 @@ class FileAudit:
     trims: int = 0
     stops: int = 0
     max_needle_move_mm: float = 0.0
+    thread_colors: tuple[str, ...] = ()
 
 
 def audit_zip(payload: bytes) -> tuple[FileAudit, ...]:
@@ -71,7 +72,12 @@ def audit_zip(payload: bytes) -> tuple[FileAudit, ...]:
                 bounds_mm = (round((right-left) / 10, 2), round((bottom-top) / 10, 2))
                 if max(bounds_mm) > 400:
                     raise DigitiserError('Design exceeds maximum engineering extent')
-                reports.append(FileAudit(info.filename, ext[1:], needle, jumps, changes, bounds_mm, trims, stops, round(max_move,3)))
+                thread_colors = tuple(
+                    '#' + thread.hex_color().lstrip('#').lower()
+                    for thread in getattr(pattern, 'threadlist', ())
+                    if callable(getattr(thread, 'hex_color', None)))
+                reports.append(FileAudit(info.filename, ext[1:], needle, jumps, changes,
+                    bounds_mm, trims, stops, round(max_move,3), thread_colors))
             except DigitiserError:
                 raise
             except Exception as exc:

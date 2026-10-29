@@ -9,6 +9,8 @@ import re
 from math import hypot, isfinite
 from pathlib import Path
 from trusted_svg import Region, build_svg
+from satin_native import SatinColumn, build_satin_svg, column_from_validated_pixel_rungs
+from xml.etree import ElementTree as ET
 
 MAX_PROJECT_BYTES = 2_000_000
 MAX_PATHS = 128
@@ -55,6 +57,16 @@ def _settings(obj, geometry_width, geometry_height):
 
 
 def convert_project(data: bytes) -> bytes:
+    """Convert the legacy project schema. Satin input is intentionally excluded."""
+    return _convert_project(data, local_satin=False)
+
+
+def convert_local_satin_project(data: bytes) -> bytes:
+    """Local-only acceptance schema; never called by the hosted worker."""
+    return _convert_project(data, local_satin=True)
+
+
+def _convert_project(data: bytes, *, local_satin: bool) -> bytes:
     if not isinstance(data, bytes) or not 5 <= len(data) <= MAX_PROJECT_BYTES:
         raise ValueError('Invalid or oversized project JSON')
     try:
@@ -63,9 +75,17 @@ def convert_project(data: bytes) -> bytes:
         raise ValueError('Invalid project JSON') from exc
     if not isinstance(obj, dict):
         raise ValueError('Project must be an object')
+    satin_inputs = obj.get('satinColumns', []) if local_satin else []
+    if not local_satin and ('satinColumns' in obj or 'regionOrder' in obj or 'schemaVersion' in obj):
+        raise ValueError('Local satin schema is not accepted by this conversion path')
+    if local_satin and (isinstance(obj.get('schemaVersion'), bool) or obj.get('schemaVersion') != 1 or
+                        not isinstance(satin_inputs, list) or len(satin_inputs) > MAX_PATHS):
+        raise ValueError('Invalid local satin project schema')
     paths = obj.get('paths')
     if not isinstance(paths, list) or not 1 <= len(paths) <= MAX_PATHS:
         raise ValueError('Project has no supported regions')
+    if len(paths) + len(satin_inputs) > MAX_PATHS:
+        raise ValueError('Project exceeds 128 total regions')
     styles = obj.get('pathStyles')
     if styles is None:
         styles = [obj.get('stitchMode', 'running')] * len(paths)
@@ -97,6 +117,26 @@ def convert_project(data: bytes) -> bytes:
                     not isfinite(n) or not 0 <= n <= 600 for n in xy)):
                 raise ValueError('Invalid canvas coordinates')
             all_points.append(xy)
+    if satin_inputs:
+        if any(not isinstance(item, dict) or set(item) - {
+                'geometry', 'threadColor', 'zigzagSpacingMm', 'maxStitchLengthMm'}
+               for item in satin_inputs):
+            raise ValueError('Unsupported local satin parameters')
+        for item in satin_inputs:
+            geometry = item.get('geometry')
+            rungs = geometry.get('rungs') if isinstance(geometry, dict) else None
+            if not isinstance(rungs, list):
+                raise ValueError('Invalid local satin geometry')
+            for rung in rungs:
+                if not isinstance(rung, dict):
+                    raise ValueError('Invalid local satin rung')
+                for side in ('left', 'right'):
+                    xy = rung.get(side)
+                    if (not isinstance(xy, list) or len(xy) != 2 or
+                        any(isinstance(n, bool) or not isinstance(n, (int, float)) or
+                            not isfinite(n) or not 0 <= n <= 600 for n in xy)):
+                        raise ValueError('Invalid local satin coordinate')
+                    all_points.append(xy)
     if len(all_points) > MAX_TOTAL_POINTS:
         raise ValueError('Project exceeds 5,000 control points')
     min_x, max_x = min(p[0] for p in all_points), max(p[0] for p in all_points)
@@ -124,7 +164,51 @@ def convert_project(data: bytes) -> bytes:
                               row_spacing_mm=props.get('rowSpacingMm'),
                               fill_underlay=props.get('fillUnderlay'),
                               running_length_mm=props.get('runningLengthMm')))
-    return build_svg(w + 2 * MARGIN_MM, h + 2 * MARGIN_MM, tuple(regions))
+    svg = build_svg(w + 2 * MARGIN_MM, h + 2 * MARGIN_MM, tuple(regions))
+    if not satin_inputs:
+        return svg
+
+    order = obj.get('regionOrder')
+    valid_refs = {('path', i) for i in range(len(paths))} | {
+        ('satin', i) for i in range(len(satin_inputs))}
+    if not isinstance(order, list) or len(order) != len(paths) + len(satin_inputs):
+        raise ValueError('Local satin project requires complete regionOrder')
+    normalized_order = []
+    for entry in order:
+        if (not isinstance(entry, dict) or set(entry) != {'type', 'index'} or
+                entry['type'] not in ('path', 'satin') or isinstance(entry['index'], bool) or
+                not isinstance(entry['index'], int)):
+            raise ValueError('Invalid local regionOrder entry')
+        ref = (entry['type'], entry['index'])
+        if ref not in valid_refs or ref in normalized_order:
+            raise ValueError('Duplicate or out-of-range local regionOrder entry')
+        normalized_order.append(ref)
+    columns = []
+    for item in satin_inputs:
+        columns.append(column_from_validated_pixel_rungs(
+            item['geometry'], scale, origin_mm=(MARGIN_MM - min_x * scale,
+                                                MARGIN_MM - min_y * scale),
+            thread_color=item.get('threadColor', '#153e46'),
+            zigzag_spacing_mm=item.get('zigzagSpacingMm', 0.4),
+            max_stitch_length_mm=item.get('maxStitchLengthMm')))
+    satin_svg = ET.fromstring(build_satin_svg(w + 2 * MARGIN_MM, h + 2 * MARGIN_MM,
+                                               tuple(columns)))
+    root = ET.fromstring(svg)
+    path_nodes = {i: root.find(f".//*[@id='region-{i}']") for i in range(len(paths))}
+    satin_nodes = {i: satin_svg.find(f".//*[@id='satin-{i}']") for i in range(len(columns))}
+    if any(node is None for node in (*path_nodes.values(), *satin_nodes.values())):
+        raise ValueError('Generated local region geometry is incomplete')
+    for node in (*path_nodes.values(),):
+        root.remove(node)
+    for node in (*satin_nodes.values(),):
+        root.append(node)
+    ordered = []
+    for kind, index in normalized_order:
+        ordered.append(path_nodes[index] if kind == 'path' else satin_nodes[index])
+    for node in (*satin_nodes.values(),):
+        root.remove(node)
+    root.extend(ordered)
+    return ET.tostring(root, encoding='utf-8', xml_declaration=True)
 
 
 def main():

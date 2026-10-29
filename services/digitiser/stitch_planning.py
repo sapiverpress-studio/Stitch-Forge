@@ -4,6 +4,7 @@ The engine remains responsible for stitches, underlay and travel inside each reg
 """
 from math import atan2, degrees, hypot
 from xml.etree import ElementTree as ET
+import re
 
 
 def inspect_plan(svg: bytes) -> dict:
@@ -12,8 +13,16 @@ def inspect_plan(svg: bytes) -> dict:
     ink='{http://inkstitch.org/namespace}'
     for node in root:
         tag=node.tag.rsplit('}',1)[-1]
-        if tag not in ('polygon','polyline'):continue
-        pts=[tuple(map(float,p.split(','))) for p in node.attrib['points'].split()]
+        satin = tag == 'path' and node.get(ink+'satin_column') == 'true'
+        if tag not in ('polygon','polyline') and not satin:continue
+        if satin:
+            if node.get(ink+'satin_method') != 'satin_column':
+                raise ValueError('Unsupported native satin method')
+            pts=[(float(x),float(y)) for x,y in re.findall(
+                r'(?<![A-Za-z])(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)',node.get('d',''))]
+            if len(pts)<6:raise ValueError('Incomplete native satin geometry')
+        else:
+            pts=[tuple(map(float,p.split(','))) for p in node.attrib['points'].split()]
         if len(pts)>1 and pts[0]==pts[-1]:pts=pts[:-1]
         all_points.extend(pts)
         fill=tag=='polygon';colour=node.get('fill') if fill else node.get('stroke')
@@ -36,7 +45,7 @@ def inspect_plan(svg: bytes) -> dict:
         if previous:
             changes+=colour.lower()!=previous['colour'].lower()
             travel+=hypot(pts[0][0]-previous['end'][0],pts[0][1]-previous['end'][1])
-        regions.append(dict(id=node.get('id'),kind='fill' if fill else 'running',colour=colour,
+        regions.append(dict(id=node.get('id'),kind='satin' if satin else ('fill' if fill else 'running'),colour=colour,
             width_mm=round(width,3),height_mm=round(height,3),area_mm2=round(area,3),
             thinness_indicator_mm=round(thinness,3) if thinness is not None else None,
             principal_axis_deg=round(axis,2) if axis is not None else None,

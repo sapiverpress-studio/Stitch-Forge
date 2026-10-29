@@ -1,0 +1,255 @@
+setUpClass (test_ai_reference_restore.AIReferenceRestoreTests) ... ERROR
+setUpClass (test_auto_reconstruct_mobile.AutoMothMobileTest) ... ERROR
+setUpClass (test_browser_exports.PrototypeRegression) ... ERROR
+test_default_is_dry_run_with_exact_private_dev_image (test_cloudrun_deploy.CloudRunDeployGuardTests.test_default_is_dry_run_with_exact_private_dev_image) ... ok
+test_execute_requires_explicit_cost_approval_before_gcloud (test_cloudrun_deploy.CloudRunDeployGuardTests.test_execute_requires_explicit_cost_approval_before_gcloud) ... ok
+test_rejects_missing_identifiers_and_command_injection (test_cloudrun_deploy.CloudRunDeployGuardTests.test_rejects_missing_identifiers_and_command_injection) ... ok
+test_rejects_wrong_branch_even_with_explicit_cost_flag (test_cloudrun_deploy.CloudRunDeployGuardTests.test_rejects_wrong_branch_even_with_explicit_cost_flag) ... ok
+test_donut_and_orientation_independence (test_compound_geometry.CompoundTopologyTests.test_donut_and_orientation_independence) ... ok
+test_hole_not_reinterpreted_as_white_thread (test_compound_geometry.CompoundTopologyTests.test_hole_not_reinterpreted_as_white_thread) ... ok
+test_multiple_disjoint_holes (test_compound_geometry.CompoundTopologyTests.test_multiple_disjoint_holes) ... ok
+test_refuses_malformed_rings_and_loss_at_export_precision (test_compound_geometry.CompoundTopologyTests.test_refuses_malformed_rings_and_loss_at_export_precision) ... ok
+test_refuses_unsafe_hole_topology (test_compound_geometry.CompoundTopologyTests.test_refuses_unsafe_hole_topology) ... ok
+test_rejects_holes_budget_and_invalid_design_size (test_compound_geometry.CompoundTopologyTests.test_rejects_holes_budget_and_invalid_design_size) ... ok
+test_invalid_ai_bbox_is_rejected (test_detail_guides.InternalDetailGuidesTests.test_invalid_ai_bbox_is_rejected) ... ok
+test_region_restriction_and_caps (test_detail_guides.InternalDetailGuidesTests.test_region_restriction_and_caps) ... ok
+test_synthetic_wing_lines_detected (test_detail_guides.InternalDetailGuidesTests.test_synthetic_wing_lines_detected) ... ok
+test_large_output_fails_closed (test_engine_process.ProcessTests.test_large_output_fails_closed) ... ok
+test_success_returns_bytes (test_engine_process.ProcessTests.test_success_returns_bytes) ... ok
+test_timeout_kills_descendants (test_engine_process.ProcessTests.test_timeout_kills_descendants) ... ok
+test_diagnostics_report_actual_decoded_movements (test_format_audit.CoordinateAuditTests.test_diagnostics_report_actual_decoded_movements) ... ok
+test_nan_coordinate_is_rejected_even_if_bounds_appear_valid (test_format_audit.CoordinateAuditTests.test_nan_coordinate_is_rejected_even_if_bounds_appear_valid) ... ok
+test_malformed_machine_file_rejected (test_format_audit.IndependentFormatAuditTests.test_malformed_machine_file_rejected) ... ok
+test_missing_or_duplicate_format_rejected (test_format_audit.IndependentFormatAuditTests.test_missing_or_duplicate_format_rejected) ... ok
+test_real_pes_dst_readback (test_format_audit.IndependentFormatAuditTests.test_real_pes_dst_readback) ... ok
+test_rejects_invalid_zip_paths_and_missing_formats (test_inkstitch_adapter.AdapterTests.test_rejects_invalid_zip_paths_and_missing_formats) ... ok
+test_safe_argv_and_successful_zip_return (test_inkstitch_adapter.AdapterTests.test_safe_argv_and_successful_zip_return) ... ok
+test_timeout_and_nonzero_exit_are_reported (test_inkstitch_adapter.AdapterTests.test_timeout_and_nonzero_exit_are_reported) ... ok
+test_timeout_diagnostics_only_in_synthetic_ci (test_inkstitch_adapter.AdapterTests.test_timeout_diagnostics_only_in_synthetic_ci) ... ok
+test_generated_svg_contains_no_embedded_original_reference (test_machine_job.MachineJobTests.test_generated_svg_contains_no_embedded_original_reference) ... ok
+test_mismatched_machine_colors_and_stitches_rejected (test_machine_job.MachineJobTests.test_mismatched_machine_colors_and_stitches_rejected) ... ok
+test_no_archive_until_independent_reader_passes (test_machine_job.MachineJobTests.test_no_archive_until_independent_reader_passes) ... ok
+setUpClass (test_manual_fill_mobile.FillMobileTest) ... ERROR
+setUpClass (test_netlify_preview.NetlifyPreviewTests) ... ERROR
+test_actual_export_report_settings_have_priority (test_project_bridge.ProjectBridgeTests.test_actual_export_report_settings_have_priority) ... ok
+test_aspect_ratio_preserved_and_boundary (test_project_bridge.ProjectBridgeTests.test_aspect_ratio_preserved_and_boundary) ... ok
+test_bean_stitch_refused (test_project_bridge.ProjectBridgeTests.test_bean_stitch_refused) ... ok
+test_compact_realistic_fox_geometry (test_project_bridge.ProjectBridgeTests.test_compact_realistic_fox_geometry) ... ok
+test_real_browser_storage_format_and_no_embedded_image (test_project_bridge.ProjectBridgeTests.test_real_browser_storage_format_and_no_embedded_image) ... ok
+test_rejects_invalid_geometry_and_hoop (test_project_bridge.ProjectBridgeTests.test_rejects_invalid_geometry_and_hoop) ... ok
+test_unclosed_fill_refused (test_project_bridge.ProjectBridgeTests.test_unclosed_fill_refused) ... ok
+test_actual_v03_browser_schema_can_reach_real_engine_input (test_real_engine_input.RealEngineProjectInputTests.test_actual_v03_browser_schema_can_reach_real_engine_input) ... ok
+test_fails_closed_for_unsupported_bean_and_missing_file (test_real_engine_input.RealEngineProjectInputTests.test_fails_closed_for_unsupported_bean_and_missing_file) ... ok
+test_no_project_uses_synthetic_fixture (test_real_engine_input.RealEngineProjectInputTests.test_no_project_uses_synthetic_fixture) ... ok
+test_bad_colours_or_parameters_are_rejected (test_region_parameters.RegionParametersTests.test_bad_colours_or_parameters_are_rejected) ... ok
+test_existing_single_colour_projects_still_work (test_region_parameters.RegionParametersTests.test_existing_single_colour_projects_still_work) ... ok
+test_two_colors_and_stitch_parameters (test_region_parameters.RegionParametersTests.test_two_colors_and_stitch_parameters) ... ok
+test_two_colour_synthetic_engine_fixture (test_region_parameters.RegionParametersTests.test_two_colour_synthetic_engine_fixture) ... ok
+test_archive_path_traversal_refused (test_release_asset.ReleaseAssetTests.test_archive_path_traversal_refused) ... ok
+test_legitimate_simple_archive_extracts (test_release_asset.ReleaseAssetTests.test_legitimate_simple_archive_extracts) ... ok
+test_official_generic_linux_asset_selected (test_release_asset.ReleaseAssetTests.test_official_generic_linux_asset_selected) ... ok
+test_outside_and_absent_symlinks_refused (test_release_asset.ReleaseAssetTests.test_outside_and_absent_symlinks_refused) ... ok
+test_safe_internal_library_symlink_extracts (test_release_asset.ReleaseAssetTests.test_safe_internal_library_symlink_extracts) ... ok
+test_symlink_parent_and_cycle_refused (test_release_asset.ReleaseAssetTests.test_symlink_parent_and_cycle_refused) ... ok
+test_wrong_arch_or_ambiguous_asset_refused (test_release_asset.ReleaseAssetTests.test_wrong_arch_or_ambiguous_asset_refused) ... ok
+test_wrong_tag_or_host_refused (test_release_asset.ReleaseAssetTests.test_wrong_tag_or_host_refused) ... ok
+test_curved_rails_generate_real_pes_and_dst (test_satin_engine_acceptance.RealSatinEngineAcceptanceTests.test_curved_rails_generate_real_pes_and_dst) ... ok
+test_native_satin_export_and_independent_decode (test_satin_engine_acceptance.RealSatinEngineAcceptanceTests.test_native_satin_export_and_independent_decode) ... ok
+test_browser_validated_pixel_rungs_keep_physical_scale_and_colour (test_satin_native.SatinNativeSvgTests.test_browser_validated_pixel_rungs_keep_physical_scale_and_colour) ... ok
+test_crossed_rails_fail_closed (test_satin_native.SatinNativeSvgTests.test_crossed_rails_fail_closed) ... ok
+test_dangling_rung_fails_closed (test_satin_native.SatinNativeSvgTests.test_dangling_rung_fails_closed) ... ok
+test_nonfinite_out_of_bounds_and_bad_colour_rejected (test_satin_native.SatinNativeSvgTests.test_nonfinite_out_of_bounds_and_bad_colour_rejected) ... ok
+test_reversed_rails_fail_closed (test_satin_native.SatinNativeSvgTests.test_reversed_rails_fail_closed) ... ok
+test_reversed_rung_endpoint_order_is_supported (test_satin_native.SatinNativeSvgTests.test_reversed_rung_endpoint_order_is_supported) ... ok
+test_serializes_native_rails_rungs_and_controls (test_satin_native.SatinNativeSvgTests.test_serializes_native_rails_rungs_and_controls) ... ok
+test_smooth_curved_column_geometry_passes (test_satin_native.SatinNativeSvgTests.test_smooth_curved_column_geometry_passes) ... ok
+test_width_turn_length_bounds_are_enforced (test_satin_native.SatinNativeSvgTests.test_width_turn_length_bounds_are_enforced) ... ok
+test_bad_rings_fail_before_engine (test_stitch_planning.PlanningTests.test_bad_rings_fail_before_engine) ... ok
+test_case_only_colour_difference_is_not_a_thread_change (test_stitch_planning.PlanningTests.test_case_only_colour_difference_is_not_a_thread_change) ... ok
+test_geometry_diagnostics_preserve_order_and_do_not_invent_satin (test_stitch_planning.PlanningTests.test_geometry_diagnostics_preserve_order_and_do_not_invent_satin) ... ok
+test_normal_concave_and_closed_rings_work (test_stitch_planning.PlanningTests.test_normal_concave_and_closed_rings_work) ... ok
+test_wrong_size_rejected_even_when_both_machine_formats_agree (test_stitch_planning.PlanningTests.test_wrong_size_rejected_even_when_both_machine_formats_agree) ... ok
+test_submillimetre_fill_blocked_before_native_invocation (test_stitch_planning.SmallFillGateTests.test_submillimetre_fill_blocked_before_native_invocation) ... ok
+test_rejects_outside_geometry_and_unsupported_modes (test_trusted_svg.TrustedSVGTests.test_rejects_outside_geometry_and_unsupported_modes) ... ok
+test_synthetic_shapes_without_external_content (test_trusted_svg.TrustedSVGTests.test_synthetic_shapes_without_external_content) ... ok
+test_complete_silhouette_cannot_hide_lost_internal_colour (test_vectorisation_metrics.VectorMetricTests.test_complete_silhouette_cannot_hide_lost_internal_colour) ... skipped 'Optional vector benchmark dependencies unavailable'
+test_exact_pixel_cells_and_hole_topology (test_vectorisation_metrics.VectorMetricTests.test_exact_pixel_cells_and_hole_topology) ... skipped 'Optional vector benchmark dependencies unavailable'
+test_hidden_rgb_has_no_foreground (test_vectorisation_metrics.VectorMetricTests.test_hidden_rgb_has_no_foreground) ... skipped 'Optional vector benchmark dependencies unavailable'
+test_bounded_requests_and_missing_engine (test_worker_wsgi.WorkerContractTests.test_bounded_requests_and_missing_engine) ... ok
+test_busy_fails_closed (test_worker_wsgi.WorkerContractTests.test_busy_fails_closed) ... ok
+test_success_contract (test_worker_wsgi.WorkerContractTests.test_success_contract) ... ok
+test_token_auth_and_image_rejection (test_worker_wsgi.WorkerContractTests.test_token_auth_and_image_rejection) ... ok
+test_worker_engine_failure_does_not_leak_paths (test_worker_wsgi.WorkerContractTests.test_worker_engine_failure_does_not_leak_paths) ... ok
+
+======================================================================
+ERROR: setUpClass (test_ai_reference_restore.AIReferenceRestoreTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/183197fe5ca2/stitch-forge/tests/test_ai_reference_restore.py", line 62, in setUpClass
+    cls.browser=cls.playwright.chromium.launch(**kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_generated.py", line 14568, in launch
+    self._sync(
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/_impl/_sync_base.py", line 115, in _sync
+    return task.result()
+           ^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/_impl/_browser_type.py", line 98, in launch
+    await self._channel.send(
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/_impl/_connection.py", line 69, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/_impl/_connection.py", line 559, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+playwright._impl._errors.TargetClosedError: BrowserType.launch: Target page, context or browser has been closed
+Browser logs:
+
+<launching> /tmp/stitchforge-chrome/chrome-linux64/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AcceptCHFrame,AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-6hUUjj --remote-debugging-pipe --no-startup-window
+<launched> pid=26
+[pid=26][err] [26:26:1029/153858.281269:FATAL:chrome/browser/process_singleton_posix.cc:292] Check failed: . socket() failed: Operation not permitted (1)
+[pid=26][err] [1029/153858.281497:ERROR:third_party/crashpad/crashpad/util/linux/scoped_ptrace_attach.cc:27] ptrace: Operation not permitted (1)
+[pid=26][err] [1029/153858.281608:ERROR:third_party/crashpad/crashpad/util/file/directory_reader_posix.cc:43] opendir /proc/26/task: No such file or directory (2)
+[pid=26][err] Received signal 6
+[pid=26][err] #0 0x56097bf5850a (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x6111509)
+[pid=26][err] #1 0x5609800c8384 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa281383)
+[pid=26][err] #2 0x7fc7667fb330 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x4532f)
+[pid=26][err] #3 0x7fc7667fb27e (/usr/lib/x86_64-linux-gnu/libc.so.6+0x4527d)
+[pid=26][err] #4 0x7fc7667de8ff (/usr/lib/x86_64-linux-gnu/libc.so.6+0x288fe)
+[pid=26][err] #5 0x5609800bf515 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa278514)
+[pid=26][err] #6 0x56098008283d (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa23b83c)
+[pid=26][err] #7 0x5609800827ce (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa23b7cd)
+[pid=26][err] #8 0x56097a15805c (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x431105b)
+[pid=26][err] #9 0x56097932fbfc (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x34e8bfb)
+[pid=26][err] #10 0x560980082890 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa23b88f)
+[pid=26][err] #11 0x56097b80b7f9 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x59c47f8)
+[pid=26][err] #12 0x56097c03b169 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f4168)
+[pid=26][err] #13 0x56097c03bbc7 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f4bc6)
+[pid=26][err] #14 0x56097c03b932 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f4931)
+[pid=26][err] #15 0x56097c03b8f4 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f48f3)
+[pid=26][err] #16 0x56097c03b8b7 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f48b6)
+[pid=26][err] #17 0x56097aee11b0 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x509a1af)
+[pid=26][err] #18 0x56097b2298f6 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x53e28f5)
+[pid=26][err] #19 0x56097b61f5d4 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x57d85d3)
+[pid=26][err] #20 0x56097b61e1f7 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x57d71f6)
+[pid=26][err] #21 0x56097b61d743 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x57d6742)
+[pid=26][err] #22 0x7fc7667e01ca (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9)
+[pid=26][err] #23 0x7fc7667e028b (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a28a)
+[pid=26][err] #24 0x56097c28c03a (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x6445039)
+[pid=26][err]   r8: 00003c20000686bb  r9: 0000000000000001 r10: 0000000000000008 r11: 0000000000000246
+[pid=26][err]  r12: 0000000000000006 r13: 000000000000008c r14: 0000000000000016 r15: 00003c20000a4780
+[pid=26][err]   di: 000000000000001a  si: 000000000000001a  bp: 00007ffe472eb730  bx: 000000000000001a
+[pid=26][err]   dx: 0000000000000006  ax: 0000000000000000  cx: 00007fc766854b2c  sp: 00007ffe472eb6f0
+[pid=26][err]   ip: 00007fc766854b2c efl: 0000000000000246 cgf: 002b000000000033 erf: 0000000000000000
+[pid=26][err]  trp: 0000000000000000 msk: 0000000000000000 cr2: 0000000000000000
+[pid=26][err] [end of stack trace]
+Call log:
+  - <launching> /tmp/stitchforge-chrome/chrome-linux64/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AcceptCHFrame,AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-6hUUjj --remote-debugging-pipe --no-startup-window
+  - <launched> pid=26
+  - [pid=26][err] [26:26:1029/153858.281269:FATAL:chrome/browser/process_singleton_posix.cc:292] Check failed: . socket() failed: Operation not permitted (1)
+  - [pid=26][err] [1029/153858.281497:ERROR:third_party/crashpad/crashpad/util/linux/scoped_ptrace_attach.cc:27] ptrace: Operation not permitted (1)
+  - [pid=26][err] [1029/153858.281608:ERROR:third_party/crashpad/crashpad/util/file/directory_reader_posix.cc:43] opendir /proc/26/task: No such file or directory (2)
+  - [pid=26][err] Received signal 6
+  - [pid=26][err] #0 0x56097bf5850a (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x6111509)
+  - [pid=26][err] #1 0x5609800c8384 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa281383)
+  - [pid=26][err] #2 0x7fc7667fb330 (/usr/lib/x86_64-linux-gnu/libc.so.6+0x4532f)
+  - [pid=26][err] #3 0x7fc7667fb27e (/usr/lib/x86_64-linux-gnu/libc.so.6+0x4527d)
+  - [pid=26][err] #4 0x7fc7667de8ff (/usr/lib/x86_64-linux-gnu/libc.so.6+0x288fe)
+  - [pid=26][err] #5 0x5609800bf515 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa278514)
+  - [pid=26][err] #6 0x56098008283d (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa23b83c)
+  - [pid=26][err] #7 0x5609800827ce (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa23b7cd)
+  - [pid=26][err] #8 0x56097a15805c (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x431105b)
+  - [pid=26][err] #9 0x56097932fbfc (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x34e8bfb)
+  - [pid=26][err] #10 0x560980082890 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0xa23b88f)
+  - [pid=26][err] #11 0x56097b80b7f9 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x59c47f8)
+  - [pid=26][err] #12 0x56097c03b169 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f4168)
+  - [pid=26][err] #13 0x56097c03bbc7 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f4bc6)
+  - [pid=26][err] #14 0x56097c03b932 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f4931)
+  - [pid=26][err] #15 0x56097c03b8f4 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f48f3)
+  - [pid=26][err] #16 0x56097c03b8b7 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x61f48b6)
+  - [pid=26][err] #17 0x56097aee11b0 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x509a1af)
+  - [pid=26][err] #18 0x56097b2298f6 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x53e28f5)
+  - [pid=26][err] #19 0x56097b61f5d4 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x57d85d3)
+  - [pid=26][err] #20 0x56097b61e1f7 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x57d71f6)
+  - [pid=26][err] #21 0x56097b61d743 (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x57d6742)
+  - [pid=26][err] #22 0x7fc7667e01ca (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9)
+  - [pid=26][err] #23 0x7fc7667e028b (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a28a)
+  - [pid=26][err] #24 0x56097c28c03a (/tmp/stitchforge-chrome/chrome-linux64/chrome+0x6445039)
+  - [pid=26][err]   r8: 00003c20000686bb  r9: 0000000000000001 r10: 0000000000000008 r11: 0000000000000246
+  - [pid=26][err]  r12: 0000000000000006 r13: 000000000000008c r14: 0000000000000016 r15: 00003c20000a4780
+  - [pid=26][err]   di: 000000000000001a  si: 000000000000001a  bp: 00007ffe472eb730  bx: 000000000000001a
+  - [pid=26][err]   dx: 0000000000000006  ax: 0000000000000000  cx: 00007fc766854b2c  sp: 00007ffe472eb6f0
+  - [pid=26][err]   ip: 00007fc766854b2c efl: 0000000000000246 cgf: 002b000000000033 erf: 0000000000000000
+  - [pid=26][err]  trp: 0000000000000000 msk: 0000000000000000 cr2: 0000000000000000
+  - [pid=26][err] [end of stack trace]
+  - [pid=26] <gracefully close start>
+  - [pid=26] <kill>
+  - [pid=26] <will force kill>
+  - [pid=26] <process did exit: exitCode=null, signal=SIGABRT>
+  - [pid=26] starting temporary directories cleanup
+  - [pid=26] finished temporary directories cleanup
+  - [pid=26] <gracefully close end>
+
+
+======================================================================
+ERROR: setUpClass (test_auto_reconstruct_mobile.AutoMothMobileTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/183197fe5ca2/stitch-forge/tests/test_auto_reconstruct_mobile.py", line 51, in setUpClass
+    cls.playwright=sync_playwright().start()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_context_manager.py", line 84, in start
+    return self.__enter__()
+           ^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_context_manager.py", line 47, in __enter__
+    raise Error(
+playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
+Please use the Async API instead.
+
+======================================================================
+ERROR: setUpClass (test_browser_exports.PrototypeRegression)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/183197fe5ca2/stitch-forge/tests/test_browser_exports.py", line 109, in setUpClass
+    cls.p = sync_playwright().start()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_context_manager.py", line 84, in start
+    return self.__enter__()
+           ^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_context_manager.py", line 47, in __enter__
+    raise Error(
+playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
+Please use the Async API instead.
+
+======================================================================
+ERROR: setUpClass (test_manual_fill_mobile.FillMobileTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/183197fe5ca2/stitch-forge/tests/test_manual_fill_mobile.py", line 42, in setUpClass
+    cls.playwright=sync_playwright().start()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_context_manager.py", line 84, in start
+    return self.__enter__()
+           ^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_context_manager.py", line 47, in __enter__
+    raise Error(
+playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
+Please use the Async API instead.
+
+======================================================================
+ERROR: setUpClass (test_netlify_preview.NetlifyPreviewTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/183197fe5ca2/stitch-forge/tests/test_netlify_preview.py", line 15, in setUpClass
+    cls.playwright = sync_playwright().start()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_context_manager.py", line 84, in start
+    return self.__enter__()
+           ^^^^^^^^^^^^^^^^
+  File "/tmp/stitchforge-detailpy/lib/python3.12/site-packages/playwright/sync_api/_context_manager.py", line 47, in __enter__
+    raise Error(
+playwright._impl._errors.Error: It looks like you are using Playwright Sync API inside the asyncio loop.
+Please use the Async API instead.
+
+----------------------------------------------------------------------
+Ran 77 tests in 13.684s
+
+FAILED (errors=5, skipped=3)

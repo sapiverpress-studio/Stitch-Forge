@@ -8,17 +8,17 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.34 (isolated feature branch only) |
+| Document version | MD-2.37 (isolated feature branch only; local work, not pushed) |
 | Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | 2026-10-29 MD-2.34 proof: 5/5 native Node.js test cases passed on exact standalone offline HTML + MD-2.33 satin module; Chromium desktop/mobile render verified, zero JS errors and mobile overflow, interactive hatch spacing/toggle confirmed. Git blob hash identical to local HTML. Synthetic visualization only; real PNG-to-stitch quality not proven. |
+| Last independently checked source | MD-2.37 local work based on MD-2.36. Existing local pixel analysis was run on one private, user-provided model-generated kingfisher illustration: high-detail scan (edge density 0.292, 277 coarse RGB bins) but **zero semantic regions**. A responsive offline inspection page embeds the tracked scanner unchanged and distinguishes pixel metrics from absent reconstruction/stitch evidence. No private art is in the repository. No real-art reconstruction, physical sew-out, push or deploy. |
 | Default branch | `main` |
-| Development branch | `develop/stitch-engine-foundation` (created and confirmed 2026-10-28) |
+| Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
 | Deployment | **Static v0.3 experimental editor committed to `main` and Netlify reports deployment ready; direct HTTP/browser rendering not independently verified** |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
-| External Ink/Stitch or pyembroidery integration | Existing private Cloud Run worker established in owner-managed MD-2.22 evidence. No hosted invocation this session. New source-size, topology and independent command diagnostics are local-tested only and not deployed. Physical stitch-out NOT VERIFIED. |
+| External Ink/Stitch or pyembroidery integration | This session ran the pinned official Ink/Stitch v3.3.0 binary and pyembroidery 1.5.1 locally on synthetic satin geometry. No hosted worker or paid service was called. Physical stitch-out NOT VERIFIED. |
 
 ## 0. How to read and maintain this MD
 
@@ -78,6 +78,42 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Current isolated-branch supplement (MD-2.37, 2026-10-29)
+
+**Research and local evaluation:** OpenCV GrabCut's official sample is interactive, seeded by a user rectangle and optionally corrected with labelled strokes, so it does not meet automatic reconstruction. Meta SAM 2 provides automatic image masks, but its current official install calls for PyTorch/TorchVision, downloaded checkpoints, and describes a GPU setup; masks still are not semantic stitch regions or a validated stitch plan. Do not add this heavy dependency before a representative evaluation set demonstrates that it solves the present bottleneck.
+
+**Existing paid reconstruction route:** source `netlify/functions/reconstruct-embroidery.mjs` uses `STITCH_FORGE_RECONSTRUCTION_MODEL` if configured, otherwise `gpt-4.1`; request cap is 12,000 output tokens. The deployed override is unknown and was not inspected. The current official gpt-4.1 price makes the output-token cap alone about $0.096, before input, if the default model is in use. The owner approved one request, but the deployed site returns 404 for this route; no request occurred. Making the feature available needs separate deployment authorization or an available private local runtime.
+
+**Approved-call availability check:** the owner approved one reconstruction request for the private kingfisher image. The published Netlify site visibly remains Prototype 0.3 without the reconstruction UI; a direct GET of the repository route `/api/reconstruct-embroidery` returned the site's 404 page. No image was sent and no API call occurred. Making the local feature code callable would require a separate explicitly authorized deployment or a private local credential/runtime path; approval of one model request did not authorize either.
+
+**Real-image result:** ran the existing deterministic `analyseArtwork` scan (no AI/API request) on one private user-provided model-generated kingfisher illustration. Original 1353 × 1163 px; proportionally resized to 768 × 660 for the 750,000-pixel limit. It reports 236,887 foreground pixels (46.7%), 277 coarse RGB bins, top 12 bins totaling 35.2% of foreground, edge density 0.292/high-detail. It produced **zero semantic regions**, no recovered details, stitch types or machine files. This is a failed reconstruction acceptance case, not a successful digitising result. Full report: `docs/test-evidence/MD-2.37-local-artwork-scan/real-art-pixel-scan-report.md`.
+
+**Visible evidence:** `tools/build_artwork_scan_proof.py` creates `docs/test-evidence/MD-2.37-local-artwork-scan/Artwork_Scan_OFFLINE.html`, a self-contained desktop/Android local image inspector embedding byte-identical `site/auto-reconstruct.js`. It shows the actual source image chosen by the user and pixel-scan metrics, then explicitly marks reconstructed geometry, stitch planning and PES/DST as absent. No input image or derived image was committed.
+
+**Regression:** native Node suite is 97/97; new proof-page tests 2/2. Report and log: `docs/test-evidence/MD-2.37-node-tests.txt`. No browser rendering or Python/browser test was run for this milestone; no engine test applies because no geometry was produced.
+
+### Current isolated-branch supplement (MD-2.36, 2026-10-29)
+
+**Delivered locally, not pushed or deployed:** a separate `convert_local_satin_project` schema (`schemaVersion: 1`) and `run_local_satin_machine_job` path now pass validator-produced pixel/rung geometry through the physical scale shared with existing regions. It enforces paired rungs, explicit complete unique `regionOrder`, existing geometry bounds, satin width/taper/turn/rung controls and a 128-region combined ceiling. The original `convert_project`, `run_machine_job` and WSGI allowlist do not enable this schema; tests confirm the legacy conversion rejects it. This is a local acceptance path, not a browser or deployed export feature.
+
+**Actual mixed-project engine evidence:** local Ink/Stitch 3.3.0 generated PES/DST from a hand-authored synthetic satin column plus a tatami rectangle in the declared satin-then-fill order. pyembroidery 1.5.1 independently decoded both: 664 needle stitches each, one color change, 20 × 15 mm extents, 4.0 mm maximum needle move. PES palette order began with the satin red mapped to `#ED171F`, then mapped the fill to `#293133`; DST had a color change but no palette. Evidence package `docs/test-evidence/MD-2.36-local-satin-project/` includes native SVG, actual ZIP, decoded stitch SVG/PNG, offline HTML and report. It is not automatic reconstruction or physical sew-out evidence.
+
+**Regression:** 41 focused Python tests pass, including actual local mixed-project PES/DST acceptance, safety validation, independent decode and legacy WSGI contract. Native Node suite is 95/95. Browser classes were not rerun this milestone. Logs: `docs/test-evidence/MD-2.36-python-focused.txt`, `MD-2.36-node-tests.txt`.
+
+**Not proven:** decoded PES color sequence is checked only for this known fixture; arbitrary source RGB is not preserved, and DST does not expose thread identity. Per-region needle-movement attribution, realistic-image reconstruction, fill density/underlay suitability, overlap/travel quality, machine compatibility and physical sew-out remain unverified. No UI or worker integration was made. See `docs/ENGINEERING_HANDOVER_MD-2.36.md`.
+
+### Current isolated-branch supplement (MD-2.35, 2026-10-29)
+
+**Delivered locally, not pushed or deployed:** `services/digitiser/satin_native.py` converts the existing browser rail/rung preview shape into millimetre geometry, repeats bounded checks at the worker boundary, and serializes native Ink/Stitch satin paths (`inkstitch:satin_column=true`, satin method, spacing and optional maximum stitch length). It does not modify the production machine endpoint or unblock automatic app export.
+
+**Actual engine evidence:** official Ink/Stitch v3.3.0 source commit `b0edd96311ece82ee48816dc93466274b12c2a9c`; local release archive matched the existing SHA-256 pin in `services/digitiser/install_engine.py`. Real straight and curved synthetic columns generated both PES and DST. pyembroidery 1.5.1 independently decoded both. Straight sample: 310 needle stitches per format, 60 × 4 mm decoded extents, 301 cross-column stitch moves, maximum needle movement 4.02 mm; PES/DST jump counts differ 2/3. PES maps input `#CC2233` to Brother Red `#ED171F`; DST has no full thread colour identity. This is structural machine-file evidence only.
+
+**Regression:** native Node suite 95/95 passed; local satin Python tests 11/11 passed with the real engine; non-browser Python regression 77 passed, 3 optional vector tests skipped. The full browser Python attempt could not initialise five Playwright browser classes: Chromium launch was blocked by the container's Unix-socket/process restrictions after Playwright's browser download endpoint returned HTTP 400. No app/browser behavior is newly verified.
+
+**Real-art attempt:** a private Library kingfisher source (1353 × 1163) was processed locally with the existing deterministic OpenCV edge-guide extractor, without an AI call. Full size and 1000-pixel input were refused at the 45,000-edge safety limit. At 768 × 660 it returned 220 candidate edge guides (the configured cap), totaling 5693.34 mm at a nominal 100 mm design width. The overlay is noisy and unlabelled; no semantic segmentation, art-preservation score or machine export resulted. The private source and overlay remain outside the repository. Evidence: `docs/test-evidence/MD-2.35-real-art-attempt.md`.
+
+**Not proven:** automatic colour-region reconstruction from realistic artwork, production project-to-satin handoff, fills/underlay configuration, thread identity preservation, physical machine compatibility, material-specific settings or a fabric sew-out. See `docs/ENGINEERING_HANDOVER_MD-2.35.md`.
 
 ### Current isolated-branch supplement (MD-2.28)
 
@@ -460,9 +496,17 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-063 | P0 | Propose real-size running/satin/fill stitch candidates for detailed artwork | **SYNTHETIC GEOMETRY VERIFIED / NATIVE NOT INTEGRATED** | Nine contour-width sections, preview satin rail pairs and centrelines, design-width mm scaling; 12 synthetic targeted tests passed. No verified satin underlay, machine sewing or real wildlife acceptance. |
 
-| SF-064 | P0 | Develop a conservative real-size satin rail and rung model for detailed wildlife | **SYNTHETIC 13-CASE GEOMETRY PASS / MACHINE NOT CONNECTED** | Paired same-direction rails, >=3 rungs, >1.5 and <=5mm conservative width, contour crossings and sharp turns rejected; bounded zigzag VISUAL GUIDE only. Native validation/fabric tests pending. |
+| SF-064 | P0 | Develop a conservative real-size satin rail and rung model for detailed wildlife | **LOCAL-ONLY PROJECT-TO-ENGINE PASS ON SYNTHETIC GEOMETRY** | Separate versioned local schema now combines validated paired rails/rungs and existing fills/running paths with explicit unique region order; actual PES/DST decode and known-fixture PES palette order pass. Hosted worker/UI remain unchanged; arbitrary color routing, realistic art, fill planning and fabric remain unverified. |
 
 | SF-065 | P0 | Deliver user-inspectable offline visual evidence with clear synthetic-vs-machine provenance | **NATIVE NODE TESTED / BROWSER RENDER VERIFIED / NOT REAL DIGITISING PROOF** | Standalone offline 3-panel butterfly illustration, colour-geometry layers, clipped direction guides and **real MD-2.33** satin validator producing 68 guide points; 5 native Node tests + headless Chromium desktop/mobile checks passed. Synthetic authored contours are NOT AI segmentation; zero genuine machine export. |
+
+| SF-066 | P0 | Convert validated satin rail/rung previews into native Ink/Stitch input and audit real PES/DST | **LOCAL SYNTHETIC ENGINE PASS / NOT WIRED INTO APP EXPORT** | Pixel/rung-to-mm adapter repeats server-side validation; official v3.3.0 generated straight and curved satin columns; pyembroidery 1.5.1 checked needle movements and physical extents. Thread palette remapping, underlay and physical sewing remain open. |
+
+| SF-067 | P0 | Evaluate realistic artwork through the automatic detail pipeline | **LOCAL PIXEL SCAN RUN / SEMANTIC RECONSTRUCTION FAILED** | Private 1353×1163 model-generated kingfisher was downscaled to 768×660. Pixel scanner reports 277 coarse RGB bins and high detail but creates zero regions. No paid call; no machine file. Need a reusable three-subject set and actual automatic reconstruction outputs. |
+
+| SF-068 | P0 | Preserve source region order and audit engine output for local satin projects | **LOCAL SYNTHETIC ENGINE PASS / PARTIAL DECODE AUDIT** | Local `regionOrder` must be complete and unique; engine color-change count is checked against it; PES palette sequence is recorded. DST has no palette and source RGB can be remapped. Per-region needle attribution and realistic-art colors remain open. |
+
+| SF-069 | P1 | Make current artwork analysis observable without overstating reconstruction | **OFFLINE PAGE BUILT / BROWSER RUN NOT VERIFIED** | Self-contained local page displays user-selected artwork and actual pixel-scan metrics, then states no semantic regions/stitch evidence exist. It embeds the tracked scanner exactly and makes no network calls. |
 
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
@@ -471,6 +515,18 @@ Do not create empty decorative folders or claim an implementation exists because
 ## 10. Test evidence register
 
 - **E-079 (2026-10-29, MD-2.34):** Real local Node.js v22.16.0 `node --test tests/test_visual_proof.cjs`: **5/5 pass** (not merely a V8 assertion shim). File `Stitch_Forge_MD-2.34_Visual_Proof_OFFLINE.html` embeds byte-for-byte source of existing `site/satin-geometry.js` (Git blob `a869d6c1ab346d39b14f6610b9a6e00ce4a0f512`). Chromium desktop (1450px) and mobile (430px) browser execution via `page.set_content`: accepted 7 paired satin rungs, 68 guide points, no JS errors, no mobile horizontal overflow, hatch control changed SVG stroke count from 2419 to 1363, hide toggle exercised. No network requests; 0 PES/DST machine files. **Synthetic fixture authored with known regions**, not AI-digitised source. Local HTML Git blob `bb7e9582c795551815d6ac1e91d8ed734779e0f3`, independently matched. Evidence record `docs/test-evidence/MD-2.34-visual-proof.md`. Full app/browser, real native engine latest branch and actual fabric trials remain open.
+
+- **E-080 (2026-10-29, MD-2.35):** `tests/test_satin_native.py` + `tests/test_satin_engine_acceptance.py`: **11/11 local tests pass**, including actual Ink/Stitch 3.3.0 export of straight and curved synthetic satin columns and independent pyembroidery 1.5.1 PES/DST decoding. Straight column: 310 needle stitches each, 301 repeated cross-column moves, identical 60 × 4 mm extents; PES/DST jumps 2/3; max needle move 4.02 mm. Input `#CC2233` became Brother palette `#ED171F`. Not integrated into the browser machine-job contract and not physically sewn. Runnable source: `tools/accept_satin_engine.py`; visual/ZIP/report package in `docs/test-evidence/MD-2.35-native-satin/`.
+
+- **E-081 (2026-10-29, MD-2.35):** `node --test tests/*.cjs tests/*.mjs`: **95 pass, 0 fail, 0 skipped**. Python non-browser regression: **77 pass, 3 optional vector tests skipped** with official engine and pyembroidery enabled; includes 2 actual satin engine tests. Full Python suite attempt: 5 browser test classes could not initialise because local Chromium failed on container socket/process restrictions; no browser pass claimed. Log: `docs/test-evidence/MD-2.35-python-tests-attempt.txt` and `MD-2.35-python-nonbrowser-tests.txt`.
+
+- **E-082 (2026-10-29, MD-2.35):** Private Library kingfisher source tested through existing OpenCV edge-guide extractor, no model call. Source-size and 1000px inputs refused at the edge complexity limit; 768px returned the 220-guide cap with dense unlabelled texture traces. Failed as a reconstruction acceptance test; no machine file. Private source/overlay are excluded from Git. See `docs/test-evidence/MD-2.35-real-art-attempt.md`.
+
+- **E-083 (2026-10-29, MD-2.36):** Actual local-only mixed satin+tatami project passed Ink/Stitch 3.3.0 generation and pyembroidery 1.5.1 PES/DST decode. 664 needle stitches each, one color change, 20 × 15 mm extents, max needle movement 4.0 mm. Explicit source order satin then fill matches decoded PES palette order (`#ED171F`, then engine-mapped `#293133`); DST exposes no palette. Hand-authored synthetic geometry, not artwork reconstruction or physical validation. Evidence in `docs/test-evidence/MD-2.36-local-satin-project/`.
+
+- **E-084 (2026-10-29, MD-2.36):** Native Node `node --test tests/*.cjs tests/*.mjs`: **95 pass, 0 fail, 0 skipped**. Focused Python command ran 41 tests across project bridge, stitch planning, format audit, machine-job boundary, worker contract, native satin and real-engine acceptance: **41 pass, 0 fail, 0 skipped**, with Ink/Stitch 3.3.0 and pyembroidery 1.5.1 configured. The browser-specific suite was not rerun. Logs: `docs/test-evidence/MD-2.36-node-tests.txt`, `MD-2.36-python-focused.txt`.
+
+- **E-085 (2026-10-29, MD-2.37):** Existing `analyseArtwork` from tracked `site/auto-reconstruct.js` ran under Node 24.22.1 on one private user-provided model-generated kingfisher image, without API call. Original 1353×1163 RGBA was proportionally resized to 768×660 for the 750,000-pixel scan limit. Output: 236,887 foreground pixels, 277 quantized RGB bins, top 12 bins = 35.2%, edge density 0.292/high detail, **zero semantic regions**. `node --test tests/test_artwork_scan_proof.cjs`: 2/2; complete native Node suite: **97 pass, 0 fail, 0 skipped**. The new offline HTML embeds the tracked scanner byte-for-byte and labels absent region/stitch output. Browser execution was not run. No private artwork or visual derivatives are committed. Report `docs/test-evidence/MD-2.37-local-artwork-scan/real-art-pixel-scan-report.md`; HTML `Artwork_Scan_OFFLINE.html`; log `docs/test-evidence/MD-2.37-node-tests.txt`.
 
 - **E-078 (2026-10-29, MD-2.33):** `tests/test_satin_geometry.cjs`: 13/13 targeted tests passed through in-memory V8 node:test/assert adapter, **not** native Node. Includes classifier rail integration, curved/rotated/paired rails, reversed rails, conservative width bounds, crossed rungs, bad dimensions and missing geometry. Original user media inspected locally but no copyrighted frames uploaded to repo. No actual Ink/Stitch/PES-DST or fabric validation. See docs/test-evidence/MD-2.33-satin-rails.txt.
 
@@ -630,6 +686,13 @@ Do not create empty decorative folders or claim an implementation exists because
 
 - **2026-10-29 D-022:** Visual claims must distinguish an original synthetic control fixture, AI-reconstructed source geometry, and Ink/Stitch-produced machine stitches. The MD-2.34 three-panel **offline** demonstration is a developer proof of region layering and conservative rail geometry, NOT user-artwork reconstruction or sew-out proof. Ship no Netlify preview until native PES/DST produced from the **same** revised geometry and decoded stitch evidence can be displayed alongside the image; the owner must explicitly approve deployment.
 
+- **2026-10-29 D-023:** Native satin input may be generated only from paired rails/rungs that pass both browser geometry checks and independent worker-side millimetre validation. Existing app machine export remains blocked for satin until its project schema, stitch planner, output audit and user-visible warnings are integrated. An engine-generated sample is not a professional or fabric-qualified design.
+- **2026-10-29 D-024:** Preserve source hex and document the resolved PES palette entry. Ink/Stitch v3.3.0 mapped synthetic `#CC2233` to Brother Red `#ED171F`; DST has no full thread color identity. Do not claim exact source colour preservation until a tested thread mapping contract exists.
+
+- **2026-10-29 D-025:** Allow native satin project-to-engine testing only through a separate versioned local acceptance function. Keep the WSGI allowlist and normal `run_machine_job` schema unchanged until realistic-art acceptance and broader decoded audit evidence justify a product integration. An engine passing hand-authored regions is a pipeline check only.
+
+- **2026-10-29 D-026:** Do not add SAM 2 or interactive GrabCut as the next production dependency. The former brings a large PyTorch/checkpoint/GPU workflow and only returns masks that still need embroidery-specific interpretation; the latter is explicitly interactive and requires user-seeded rectangles/corrections. First run a controlled automatic reconstruction evaluation set and inspect real outputs. Do not make a paid model call unless the user explicitly authorizes the cost.
+
 ### Decision-record template
 
 ```md
@@ -646,6 +709,37 @@ Do not create empty decorative folders or claim an implementation exists because
 ---
 
 ## 13. Dated work log / progress journal
+
+### 2026-10-29 — MD-2.35 native satin engine acceptance (isolated feature branch)
+
+- **Starting state:** fetched the current active feature branch, still at remote checkpoint `e47dfddc6656cc4efde2346588af2c98dc7e947d`; did not reset it. Draft PR #1, `main`, `develop/stitch-engine-foundation`, Netlify and Cloud Run were not modified.
+- **Implementation:** added bounded conversion from the browser validator's pixel/rung result to physical millimetre `SatinColumn`; serialized native Ink/Stitch rail/rung path with explicit satin flags and stitch controls. Added a reusable real-engine acceptance runner, a generated offline inspection HTML/PNG, actual PES/DST ZIP, decoded report, and straight/curved native engine tests.
+- **Official references checked:** Ink/Stitch v3.3.0 source at `b0edd96311ece82ee48816dc93466274b12c2a9c` (`lib/elements/satin_column.py`, `lib/extensions/stroke_to_satin.py`, `lib/extensions/zip.py`) and official satin-column guide `https://inkstitch.org/docs/stitches/satin-column/`. Native input is one path containing two rail subpaths and rung subpaths, marked `inkstitch:satin_column=true`; rungs are expected to intersect both rails.
+- **Actual local tests:** 95 native Node tests pass; 11 focused Python satin tests pass with actual Ink/Stitch 3.3.0 and pyembroidery 1.5.1; 77 non-browser Python regressions pass with 3 optional vector tests skipped. Full browser Python attempt cannot initialize five Playwright browser classes because Chrome launch fails on container socket/process restrictions. No GitHub Actions triggered.
+- **Actual output:** straight synthetic single-column control generates 310 stitches in both PES/DST, 60 × 4mm extents, 301 cross-column movements, maximum movement 4.02mm; PES/DST jumps are 2/3. Curved synthetic rails also generate both formats and decode to expected 60 × 22mm extents. PES maps source hex `#CC2233` to Brother Red `#ED171F`.
+- **Real image attempt:** privately processed user Library kingfisher art without model/API use. Existing local edge detector refuses 1353px and 1000px due edge-count cap; 768px returns a 220-guide cap with excessive unlabelled traces. It remains an unsuccessful automatic reconstruction; private artwork was not copied into repository.
+- **Not done:** wiring satin into `project_bridge`/`machine_job` or the UI; directional fill/underlay/material testing; automatic semantic artwork segmentation; realistic three-image acceptance set; actual machine compatibility or fabric sew-out; mobile browser test; deployment. No paid AI, hosted worker, PR change, push or merge.
+- **Next:** connect the pixel/rung model to an isolated machine-job schema behind explicit design-level validation, add decoded color mapping and per-region stitch audits, then acquire three appropriately licensed detailed sources and run the real automatic reconstruction pipeline without authoring target geometry. Keep machine export blocked until all integrated outputs pass independent checks and physical tests.
+
+### 2026-10-29 — MD-2.36 local satin project-to-engine acceptance (isolated feature branch)
+
+- **Starting state:** local branch already contained MD-2.35 commit `9551e7f73f3a017decc194b087d36b0ed8d2e7ee`, ahead of remote `e47dfddc6656cc4efde2346588af2c98dc7e947d` by one commit. No reset, push or fetch-based checkout change.
+- **Implementation:** added `convert_local_satin_project` with schema version 1 and explicit complete unique `regionOrder`; it converts pixel/rung geometry under the same physical scale as existing fill/running regions and validates each column through the native satin adapter. Added `run_local_satin_machine_job` sharing the existing fail-closed engine and PES/DST audit transaction. `worker_wsgi.py` and its key allowlist are unchanged; regression proves the legacy project converter refuses the local satin schema.
+- **Actual engine/decode:** synthetic satin then tatami project passed Ink/Stitch 3.3.0 and pyembroidery 1.5.1. PES/DST each had 664 needle stitches, one color change, 20 × 15 mm extents and 4.0 mm maximum movement. PES palette sequence matched this fixture's layer order; colors resolved as `#ED171F` and `#293133`. DST palette unavailable.
+- **Tests RUN:** 41 focused Python tests passed (0 skipped/failures); 95 native Node tests passed. The focused Python command includes real engine tests. Browser suite not rerun. Exact logs in `docs/test-evidence/MD-2.36-*.txt`.
+- **Visual evidence:** original region order is synthetic and hand-authored; evidence folder contains the generated native SVG, actual PES/DST ZIP, decoded PES stitch SVG/PNG, offline HTML and JSON machine report. No original artwork was used.
+- **Not done:** actual automatic art reconstruction, thread palette preservation for arbitrary RGB, DST color identity, per-region movement attribution, fabric-specific fill density/underlay, travel/trim quality, machine compatibility, physical stitch-out, UI/hosted worker wiring, browser test, push, deployment or PR work.
+- **Next:** fix real-art segmentation/acceptance first. Prepare appropriately licensed detailed butterfly/moth, bird and flower inputs and test the existing automatic reconstruction without hand-authoring target geometry. Do not expose the local satin schema on the worker until real-art and machine-quality audits justify it.
+
+### 2026-10-29 — MD-2.37 research and real-art pixel-scan inspection (isolated feature branch)
+
+- **Starting state:** branch at local MD-2.36; clean worktree, two commits ahead of remote feature branch. This turn did not fetch, push, deploy, call hosted compute, edit a PR, merge or use a paid model.
+- **Research:** checked official Meta SAM 2 repository and OpenCV GrabCut docs. SAM 2 supports automatic image masks but current install requires PyTorch/TorchVision and checkpoints, with a GPU environment recommended; masks do not supply embroidery stitch semantics. OpenCV's GrabCut tutorial starts with a user rectangle and supports manual correction, so it is not fully automatic. No dependency was added.
+- **Real input:** used a private Library user-provided model-generated kingfisher image only in scratch. Existing `analyseArtwork` ran locally with no API call. Original 1353×1163; scaled to 768×660; scan reports 236,887 foreground pixels, 277 coarse RGB bins, edge density .292/high detail, and 0 semantic regions. The art was not written into repository or committed as an asset.
+- **Implementation:** added `tools/build_artwork_scan_proof.py` and generated a responsive self-contained offline HTML that embeds the byte-identical tracked local scanner. It lets the owner choose an image locally and inspect scan metrics, with explicit no-region/no-stitch status. Added static Node tests to verify code identity, no network path, labels and embedded JS syntax.
+- **Tests RUN:** `node --test tests/test_artwork_scan_proof.cjs`: 2 pass. `node --test tests/*.cjs tests/*.mjs`: 97 pass, 0 fail/skip. No Python, Chromium, browser/mobile, Ink/Stitch or machine-file run was needed or performed for this milestone.
+- **Evidence:** `docs/test-evidence/MD-2.37-local-artwork-scan/` has the offline inspector and text-only private-art scan report. No image or image-derived overlay is committed.
+- **Next:** The actual bottleneck is candidate-region reconstruction, not more edge metrics. Build a small reusable licensed/original three-subject evaluation set and run the existing AI geometry reconstruction path, recording every source-supported and missed detail. Do not spend API credits without explicit approval. If no free local candidate generator passes the same source-pixel audit, request authorization for a strictly bounded paid test or keep automatic machine export blocked.
 
 ### 2026-10-28 — Initial project foundation
 

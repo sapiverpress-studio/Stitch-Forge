@@ -1,0 +1,86 @@
+{
+  "status": "STRUCTURALLY_VERIFIED_NOT_PHYSICALLY_STITCHED",
+  "fixture": {
+    "source": "Human-authored synthetic control geometry; not artwork or an AI reconstruction",
+    "physical_column_mm": [
+      60.0,
+      4.0
+    ],
+    "rungs": 4,
+    "thread_color": "#CC2233",
+    "requested_zigzag_spacing_mm": 0.4,
+    "requested_max_stitch_length_mm": 7.0
+  },
+  "engine": {
+    "name": "Ink/Stitch v3.3.0",
+    "source_commit": "b0edd96311ece82ee48816dc93466274b12c2a9c",
+    "trusted_svg_sha256": "cecb38994fe5c25109ff44f43ff2d8568e092b145a7d88c65fc18fb8d997c188"
+  },
+  "reader": {
+    "name": "pyembroidery",
+    "version": "1.5.1"
+  },
+  "decoded": {
+    "files": [
+      {
+        "name": "embroidery.pes",
+        "format": "pes",
+        "needle_stitches": 310,
+        "jumps": 2,
+        "trims": 0,
+        "color_changes": 0,
+        "bounds_mm": [
+          60.0,
+          4.0
+        ],
+        "max_needle_move_mm": 4.02,
+        "sha256": "deeb040761a414ea6443ad8600f54254a08ef94fa174e1643e4d43cc980a1a28"
+      },
+      {
+        "name": "embroidery.dst",
+        "format": "dst",
+        "needle_stitches": 310,
+        "jumps": 3,
+        "trims": 0,
+        "color_changes": 0,
+        "bounds_mm": [
+          60.0,
+          4.0
+        ],
+        "max_needle_move_mm": 4.02,
+        "sha256": "0ed565e453d2175ee67c4bbefa875841154dfa93b1fbc2aeba5ad6b1ffc56274"
+      }
+    ],
+    "cross_column_needle_moves": 301,
+    "needle_points_inside_requested_bounds": true,
+    "pes_thread_palette": [
+      {
+        "color": "#ed171f",
+        "brand": "Brother",
+        "catalog_number": "5",
+        "description": "Red"
+      }
+    ],
+    "color_mapping_note": "PES stores a resolved thread palette entry; it may differ from the source SVG hex. DST does not store full thread colour identity.",
+    "pes_dst_decoded_physical_extents_agree_within_0_1_mm": true,
+    "format_coordinate_origins": {
+      "pes": [
+        0,
+        0
+      ],
+      "dst": [
+        -300,
+        -20
+      ]
+    }
+  },
+  "archive_sha256": "8444caf7fd39482bd733b7b5f18f06dce21399f538ba01fe779b76e6610b37b2",
+  "visual_evidence": {
+    "svg": "native-satin-comparison.svg",
+    "png": "native-satin-comparison.png",
+    "png_sha256": "bbd0fa67005e79939b488b6ba559dae964c144bf0c962e8bc8ac6334ad870d15",
+    "description": "Source rail/rung geometry compared with actual decoded PES stitches"
+  },
+  "physical_stitch_out": "NOT PERFORMED",
+  "realistic_artwork_acceptance": "NOT TESTED"
+}
