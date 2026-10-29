@@ -8,7 +8,7 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.24 |
+| Document version | MD-2.25 (isolated feature branch only) |
 | Last updated | 2026-10-29 (Europe/London) |
 | Last independently checked source | 2026-10-28: native Docker/moth-logo-line fixture CI SUCCESS (40748895024); regression CI 66 tests / 3 optional skipped SUCCESS incl Cloud Run safety guards (40767768413). Cloud Run staging package PREPARED only; no Google Cloud service or physical stitch-out |
 | Default branch | `main` |
@@ -967,6 +967,16 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - **Regression tests** in `tests/test_auto_ai_endpoint.mjs` cover exact duplicate/closed-loop repair, supported four-corner fills, invalid regions and out-of-bounds rejection, and duplicate region IDs. Development code head `c5240c25efae3409b7b9d1ad688427ea82d95f91`; Netlify deploy preview `6ae3076e24d498237aaf195f` independently verified **READY** with new configuration. GitHub AI region safety workflow `40844324853` **success**. Remaining workflows were in progress at time of note; recheck before full release.
 - **Next gate:** Re-run the same original image in a fresh preview session (refresh page first), note whether the AI returns usable regions and how many are skipped, validate pixel shapes, then independently verify real Cloud Run PES/DST ZIP and physical stitch-out. No new public production deployment or physical quality approval.
  
+### 2026-10-29 — Detailed embroidery analysis, free software research, strict no-deploy (MD-2.25, feature branch only)
+
+- **Owner constraints:** Minimise further expenditure; some pence per genuinely necessary image analysis may be acceptable. Do **not** run Netlify deployments without express owner authorisation. Avoid new chargeable services, unnecessary OpenAI requests or Cloud Run invocations.
+- **Engineering separation:** Created `feature/detailed-embroidery-analysis-no-deploy` from `develop/stitch-engine-foundation`. No PR, no main or development integration, no Netlify deployment requested. Commits include `[skip netlify]`. Netlify's documented skip convention also depends on whether a branch PR is opened; do not open one without approval. This master entry intentionally remains on the feature branch, not the Netlify-linked dev/main branches.
+- **Code implemented:** `site/auto-reconstruct.js` adds a browser-side, deterministic `analyseArtwork` that reports prominent RGB colours, detail/edge density and local grid hotspots. Existing image-grounded region reconstruction now preserves distinct supported colour sub-areas instead of always treating a mixed-colour proposal as a single connected fill; old conservative fallback is retained for uncertain swatches and mono art. `site/auto-reconstruct-ui.js` reuses the same 512px source canvas, shows the local scan and **still makes only one AI request**. `netlify/functions/reconstruct-embroidery.mjs` gives the existing structured model more explicit part inventory/overlap instructions; no model/version/API call count change.
+- **Tests executed:** All **13/13** `tests/test_auto_reconstruct.cjs` cases passed in an isolated V8 harness using actual fetched feature-branch source and assertion shims, including the new two-colour region reconstruction test. No GitHub Actions workflow or paid service invocation; future CI and browser integration still required before claiming robustness.
+- **Open-source technology review:** Considered VTracer (MIT OR Apache-2.0), OpenCV >=4.5 (Apache-2.0), scikit-image (permissive), rembg (MIT source, model-dependent licensing/performance), Meta SAM 2 (Apache-2.0 but heavier inference), GPL-3.0 Lilo (reference architecture only), and existing Ink/Stitch / pyembroidery. Best next **benchmarked experiment** is VTracer colour vectorisation, preferably client-side WebAssembly if Android memory/CPU/bundle costs permit. Do not integrate GPL application code without licence review, or install packages into existing billable Cloud Run service prematurely.
+- **Documentation:** `docs/EMBROIDERY_OPEN_SOURCE_PIPELINE.md` lists software, licences, fixed synthetic acceptance dataset, memory/performance/region fidelity tests, and no-deploy/no-new-cost gate.
+- **Still incomplete:** Thorough high-resolution fine-detail reconstruction, semantic segmentation, stitch planning for satin/underlay/colour order/compensation, mobile performance testing, actual Kingfisher/detailed wildlife benchmark, end-to-end machine file validation, and physical sew-out. No claim of professional automatic digitisation readiness.
+
 ### Entry template — REQUIRED on every meaningful development update
 
 ```md
