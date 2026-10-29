@@ -3,7 +3,7 @@
 # Experimental machine files are not approved for retail or machine use.
 [build]
   publish = "site"
-  command = "node --check site/auto-reconstruct.js && node --check site/auto-reconstruct-ui.js && node --check netlify/functions/reconstruct-embroidery.mjs && node --check netlify/functions/machine-embroidery.mjs && node --test tests/test_ai_analysis.mjs tests/test_ai_guides.cjs tests/test_travel_routing.cjs tests/test_fill_geometry.cjs tests/test_auto_reconstruct.cjs tests/test_auto_ai_endpoint.mjs tests/test_machine_endpoint.mjs"
+  command = "node --check site/auto-reconstruct.js && node --check site/auto-reconstruct-ui.js && node --check netlify/functions/reconstruct-embroidery.mjs && node --check netlify/functions/machine-embroidery.mjs && node --check netlify/functions/lib/cloud-run-auth.mjs && node --test tests/test_ai_analysis.mjs tests/test_ai_guides.cjs tests/test_travel_routing.cjs tests/test_fill_geometry.cjs tests/test_auto_reconstruct.cjs tests/test_auto_ai_endpoint.mjs tests/test_machine_endpoint.mjs tests/test_cloud_run_auth.mjs"
 
 [[headers]]
   for = "/*"
