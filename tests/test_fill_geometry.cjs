@@ -19,10 +19,17 @@ test('rejects self-crossing polygons and near-duplicate points',()=>{
  assert.throws(()=>prepare([[100,185],[100.5,185],[250,245],[160,320]],bounds),/too close/);
 });
 test('rejects incomplete, degenerate, giant or non-finite paths',()=>{
- assert.throws(()=>prepare([[100,200],[200,200],[200,250]],bounds),/4/);
+ assert.throws(()=>prepare([[100,200],[200,200]],bounds),/3/);
  assert.throws(()=>prepare([[100,200],[120,200],[140,200],[160,200]],bounds),/small|flattened|thin/);
  assert.throws(()=>prepare([[100,200],[200,210],[NaN,250],[120,260]],bounds),/Invalid/);
  assert.throws(()=>prepare(Array(121).fill([100,180]),bounds),/120/);
+});
+test('preserves a valid three-corner fill and closes it once',()=>{
+ const input=[[100,200],[240,200],[100,320]],out=prepare(input,bounds);
+ assert.equal(out.vertexCount,3);
+ assert.deepEqual(out.points,[...input,input[0]]);
+ assert.equal(out.areaCanvas,8400);
+ assert.throws(()=>prepare([[100,200],[160,200],[220,200]],bounds),/small|flattened/);
 });
 test('prevents committing the same close point twice',()=>{
  assert.throws(()=>prepare([[100,195],[200,165],[240,260],[120,320],[100,195]],bounds),/Close boundary/);

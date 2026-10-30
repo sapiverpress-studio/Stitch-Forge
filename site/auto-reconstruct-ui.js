@@ -10,16 +10,26 @@ const panel=document.createElement("section");
 panel.className="ai-detail-panel";
 panel.id="sfAutoPanel";
 panel.innerHTML=[
- '<div class="ai-detail-head"><strong>Automatic AI embroidery reconstruction</strong><small>Experimental</small></div>',
- '<p class="tiny">Rebuild visible colour areas, outlines and fine lines from the original artwork. AI proposes the shapes; the program checks fill areas against image pixels. No boundary tracing required.</p>',
- '<label for="sfAutoToken" class="tiny">Private analysis access token (not saved)</label>',
+ '<div class="ai-detail-head"><strong>Automatic artwork digitising</strong><small>Engineering trial</small></div>',
+ '<label class="tiny" for="sfAutoWorkflow">Workflow</label><select id="sfAutoWorkflow"><option value="native">Source-based PES/DST trial · no OpenAI call</option><option value="ai">AI geometry proposal · experimental, uses API credits</option></select>',
+ '<p class="tiny">Prepare colour shapes from the original pixels, generate real Ink/Stitch files and inspect independently decoded stitches. Trial files require review and have not been physically sewn.</p>',
+ '<label class="tiny" for="sfNativeWidth">Full artwork image width (mm)</label><input id="sfNativeWidth" type="number" min="10" max="250" value="80" step="1" inputmode="decimal">',
+ '<label class="tiny"><input id="sfNativeTexture" type="checkbox" checked> Allow measured simplification of tiny texture if geometry is too complex. Fine details may change.</label>',
+ '<label for="sfAutoToken" class="tiny">Private access token (not saved)</label>',
  '<input id="sfAutoToken" type="password" autocomplete="off" placeholder="Your Stitch Forge analysis token">',
- '<div class="ai-actions"><button class="btn primary" id="sfAutoRun" type="button">Reconstruct embroidery automatically</button>',
+ '<div class="ai-actions"><button class="btn primary" id="sfAutoRun" type="button">Generate PES/DST trial automatically</button>',
+ '<button class="btn" id="sfAutoCancelNative" type="button" disabled>Cancel</button>',
  '<button class="btn" type="button" id="sfAutoDownload" disabled>Download editable colour SVG</button>',
- '<button class="btn" type="button" id="sfAutoUndo" disabled>Undo reconstruction</button></div>',
- '<label class="toggle"><input id="sfAutoShow" type="checkbox" checked> Show reconstructed coloured regions</label>',
- '<p class="tiny" role="status" id="sfAutoStatus">Upload the original detailed artwork, then press Reconstruct. One analysis request may use OpenAI API credits.</p>',
- '<p class="tiny">After reconstruction, a separately hosted Ink/Stitch worker can automatically create an independently audited PES/DST ZIP when configured. Until then only the editable colour SVG is available. No generated file has been physically stitch-tested or approved for sale.</p>'
+ '<button class="btn" type="button" id="sfAutoUndo" disabled>Undo reconstruction</button>',
+ '<button class="btn" type="button" id="sfAutoNativeReport" disabled>Download actual machine report</button></div>',
+ '<div class="ai-actions"><button class="btn" type="button" id="sfAutoNativeGeometry" disabled>Download editable Ink/Stitch SVG</button></div>',
+ '<div class="ai-actions"><button class="btn" type="button" id="sfAutoDiagnostic" disabled>Download private diagnostic</button>',
+ '<button class="btn" type="button" id="sfAutoReplay">Replay saved diagnostic locally</button></div>',
+ '<input type="file" id="sfAutoReplayFile" accept="application/json,.json" hidden>',
+ '<p class="tiny">Diagnostics contain proposed artwork geometry and rejection codes, without the image or access token. Keep them private. Replay uses the same original image and no AI credits.</p>',
+ '<label class="toggle"><input id="sfAutoShow" type="checkbox" checked> Show result on the artwork</label>',
+ '<p class="tiny" role="status" id="sfAutoStatus">Upload the original artwork, enter the private token and generate a trial. The source-based workflow uses no OpenAI request.</p>',
+ '<p class="tiny">Reduced source pixels and proposed colour labels go only to your configured private native worker. App and worker must both support this workflow. No generated file is machine-approved, physically stitch-tested or approved for sale.</p>'
 ].join("");
 host.prepend(panel);
 const css=document.createElement("style");css.textContent=[
@@ -27,14 +37,26 @@ const css=document.createElement("style");css.textContent=[
  "#sfAutoStatus{border-left:3px solid #187a82;background:#edf7f5;padding:10px;margin:12px 0}",
  "#sfAutoOverlay path{stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;pointer-events:none}",
  "#sfAutoPanel strong{font-size:1.05em}"
+ ,"#sfAutoWorkflow,#sfNativeWidth{max-width:100%;box-sizing:border-box}"
+ ,"#sfAutoReplayFile[hidden]{display:none!important}"
 ].join("\n");document.head.appendChild(css);
 const overlay=document.createElementNS("http://www.w3.org/2000/svg","g");
 overlay.setAttribute("id","sfAutoOverlay");
 overlay.setAttribute("pointer-events","none");canvasSvg.appendChild(overlay);
-let last=null,running=false,revision=0;
+const nativeOverlay=document.createElementNS('http://www.w3.org/2000/svg','g');nativeOverlay.id='sfNativeDecodedOverlay';nativeOverlay.setAttribute('pointer-events','none');canvasSvg.appendChild(nativeOverlay);
+let last=null,diagnostic=null,running=false,revision=0,nativeResult=null,nativeAbort=null;
 const status=s=>q("#sfAutoStatus").textContent=s;
 function paint(){
- overlay.replaceChildren();if(!last||!q("#sfAutoShow").checked)return;
+ nativeOverlay.replaceChildren();overlay.replaceChildren();
+ if(nativeResult){
+  if(!q('#sfAutoShow').checked)return;const b=context.getBounds();if(!b)return;
+  const mm=nativeResult.sourceDraft.physical.imageWidthMm,scale=b.w/mm;
+  nativeOverlay.setAttribute('transform','translate('+(b.x-2*scale)+' '+(b.y-2*scale)+') scale('+scale+')');
+  const p=nativeResult.preview,groups=p.palette.map(()=>[]);
+  for(const [ax,ay,bx,by,index] of p.segments)groups[index].push('M'+ax+' '+ay+'L'+bx+' '+by);
+  for(const [i,commands] of groups.entries()){const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',commands.join(' '));path.setAttribute('stroke',p.palette[i]);path.setAttribute('fill','none');path.setAttribute('stroke-width','.15');path.setAttribute('data-evidence','actual-decoded-PES6');nativeOverlay.appendChild(path);}return;
+ }
+ if(!last||!q("#sfAutoShow").checked)return;
  const b=context.getBounds();if(!b)return;
  const ns="http://www.w3.org/2000/svg";
  for(const region of last.regions){
@@ -51,6 +73,14 @@ function paint(){
   overlay.appendChild(path);
  }
 }
+function clearNative(){if(nativeResult)context.setSourceRegionInspectionActive(false);nativeResult=null;nativeOverlay.replaceChildren();q('#sfAutoNativeReport').disabled=true;q('#sfAutoNativeGeometry').disabled=true;}
+function saveBytes(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+function invalidateNative(){revision++;nativeAbort?.abort();clearNative();q('#sfAutoDownload').disabled=!last;q('#sfAutoUndo').disabled=!last;q('#sfAutoDownload').textContent='Download editable colour SVG';status('Artwork settings changed. Previous native result cleared; generate again when ready.');}
+q('#sfAutoWorkflow').onchange=()=>{invalidateNative();q('#sfAutoRun').textContent=q('#sfAutoWorkflow').value==='native'?'Generate PES/DST trial automatically':'Reconstruct AI geometry proposal';status(q('#sfAutoWorkflow').value==='native'?'Source-based trial: reduced pixels go to the private native worker. No OpenAI call.':'AI geometry proposals use API credits and are not machine-approved stitch plans.');};
+q('#sfNativeWidth').onchange=invalidateNative;q('#sfNativeTexture').onchange=invalidateNative;
+q('#sfAutoCancelNative').onclick=()=>{invalidateNative();status('Native generation cancelled. No further phase will be requested.');};
+q('#sfAutoNativeReport').onclick=()=>{if(nativeResult)saveBytes(JSON.stringify(nativeResult.report,null,2),'stitch-forge-machine-report-PRIVATE-NOT-APPROVED.json','application/json');};
+q('#sfAutoNativeGeometry').onclick=()=>{if(nativeResult)saveBytes(nativeResult.geometry,'stitch-forge-editable-native-TRIAL-NOT-APPROVED.svg','image/svg+xml');};
 q("#sfAutoShow").onchange=paint;
 async function decoded(src,maxDim){
  const image=new Image();
@@ -58,8 +88,9 @@ async function decoded(src,maxDim){
  if(image.naturalWidth*image.naturalHeight>45000000)throw Error("Image resolution too large");
  const scale=Math.min(1,maxDim/Math.max(image.naturalWidth,image.naturalHeight));
  const cvs=document.createElement("canvas");
- cvs.width=Math.max(48,Math.round(image.naturalWidth*scale));
- cvs.height=Math.max(48,Math.round(image.naturalHeight*scale));
+ cvs.width=Math.round(image.naturalWidth*scale);
+ cvs.height=Math.round(image.naturalHeight*scale);
+ if(cvs.width<48||cvs.height<48)throw Error('Source is too narrow for bounded analysis; no aspect-ratio stretching was applied');
  const ctx=cvs.getContext("2d",{willReadFrequently:true});
  ctx.clearRect(0,0,cvs.width,cvs.height);ctx.drawImage(image,0,0,cvs.width,cvs.height);
  return {canvas:cvs,ctx};
@@ -83,16 +114,38 @@ q("#sfAutoRun").onclick=async()=>{
  }
  const token=q("#sfAutoToken").value.trim()||q("#sfAiToken")?.value.trim();
  if(!token){status("Enter your private analysis token (not your OpenAI API key).");return;}
+ if(q('#sfAutoWorkflow').value==='native'){
+  const api=window.StitchForgeArtworkPipeline,stamp=revision,width=Number(q('#sfNativeWidth').value),texturePolicy=q('#sfNativeTexture').checked?'if_needed':'off';
+  if(!api){status('Source-native pipeline unavailable; reload the current app. No AI request was made.');return;}
+  running=true;q('#sfAutoRun').disabled=true;q('#sfAutoCancelNative').disabled=false;nativeAbort=new AbortController();
+  const current=()=>revision===stamp&&context.getImage()===source;
+  status('Preparing source pixels and colour shapes locally…');
+  try{
+   const {canvas,ctx}=await decoded(source,768),original=new Image();await new Promise((yes,no)=>{original.onload=yes;original.onerror=no;original.src=source;});
+   const packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,{imageWidthMm:width,originalWidth:original.naturalWidth,originalHeight:original.naturalHeight,texturePolicy});
+   const result=await api.generate(packed,{token,signal:nativeAbort.signal,isCurrent:current,onProgress:text=>{if(current())status(text);}});
+   if(!current())throw Error('Source or size changed; stale result discarded');
+   window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
+   q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoUndo').disabled=false;
+   const r=result.report,d=r.decoded.find(x=>x.format==='pes');
+   status('Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
+   saveBytes(result.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED.zip','application/zip');
+  }catch(error){if(current())status('Native artwork trial unavailable: '+(error.message||error)+'. No OpenAI request or substitute machine file was produced.');}
+  finally{running=false;nativeAbort=null;q('#sfAutoRun').disabled=false;q('#sfAutoCancelNative').disabled=true;}return;
+ }
  if(!window.StitchForgeAutoReconstruct){status("Automatic reconstruction engine missing; no changes made.");return;}
+ const diagnostics=window.StitchForgeReconstructionDiagnostics;
+ if(!diagnostics){status('Local diagnostic module missing; reload before using AI analysis.');return;}
  const analysisRevision=revision;
  running=true;q("#sfAutoRun").disabled=true;
+ diagnostic=null;q('#sfAutoDiagnostic').disabled=true;
  status("OpenAI is proposing visible colour areas and line details. The existing design remains unchanged until geometry passes validation.");
  try{
   // One local, free pixel scan per click. Reuse these exact image pixels
   // after the single AI call; never upload the audit or make a second call.
   const {canvas,ctx}=await decoded(source,768);
-  const inspection=window.StitchForgeAutoReconstruct.analyseArtwork(
-   ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height);
+  const rgba=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  const inspection=window.StitchForgeAutoReconstruct.analyseArtwork(rgba,canvas.width,canvas.height);
   status("Local artwork scan: "+inspection.palette.length+" prominent colour groups, "+
    inspection.detailLevel+" edge detail. Preparing one AI request...");
   const image=await modelImage(source);
@@ -100,7 +153,13 @@ q("#sfAutoRun").onclick=async()=>{
    method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
    body:JSON.stringify({image}),cache:"no-store"
   });
-  let plan;try{plan=await response.json();}catch{throw Error("Reconstruction service response unreadable (HTTP "+response.status+")");}
+  let plan;try{plan=await response.json();}catch{
+   const captured=await diagnostics.captureAnalysis(rgba,canvas.width,canvas.height,{}, {httpStatus:response.status});
+   diagnostic=captured.capture;q('#sfAutoDiagnostic').disabled=false;
+   throw Error("Reconstruction service response unreadable (HTTP "+response.status+")");
+  }
+  const evaluation=await diagnostics.captureAnalysis(rgba,canvas.width,canvas.height,plan,{httpStatus:response.status});
+  diagnostic=evaluation.capture;q('#sfAutoDiagnostic').disabled=false;
   if(!response.ok){
    const details=plan.code==="INVALID_MODEL_GEOMETRY"?
     window.StitchForgeAutoReconstruct.formatModelRejectionDiagnostics(plan.diagnostics):"";
@@ -111,8 +170,8 @@ q("#sfAutoRun").onclick=async()=>{
    rejected_regions:plan.model_rejected_regions||[],additional_rejections:plan.model_rejected_additional||0
   });
   status("AI returned "+plan.regions.length+" usable proposed regions"+(plan.model_rejected_count?" ("+plan.model_rejected_count+" unsupported proposals held out)":"")+modelRejectionDetails+" Checking artwork pixels and preparing closed fills...");
-  const result=window.StitchForgeAutoReconstruct.reconstruct(ctx.getImageData(0,0,canvas.width,canvas.height).data,
-     canvas.width,canvas.height,plan);
+  if(evaluation.error)throw evaluation.error;
+  const result=evaluation.result;
   // Never replace the user's design with a tiny, partial AI result. The
   // 97% floor matches the source-pixel audit's existing 3% missing-pixel limit.
   window.StitchForgeAutoReconstruct.assertCompleteReconstruction(result,plan.model_rejected_count||0);
@@ -149,7 +208,9 @@ q("#sfAutoRun").onclick=async()=>{
   const proposed={...result,width:canvas.width,height:canvas.height};
   if(revision!==analysisRevision||context.getImage()!==source)
    throw Error("Artwork or design changed during analysis; stale reconstruction discarded");
+  diagnostic.applicationStage='editor_rejected';
   const summary=context.replaceWithAutomaticReconstruction(proposed);
+  diagnostic.applicationStage='applied_geometry';
   last=proposed;paint();
   q("#sfAutoDownload").disabled=false;q("#sfAutoUndo").disabled=false;
   const summaryText="Local scan: "+inspection.palette.length+" colour groups; "+
@@ -196,6 +257,7 @@ q("#sfAutoRun").onclick=async()=>{
  }finally{running=false;q("#sfAutoRun").disabled=false;}
 };
 q("#sfAutoDownload").onclick=()=>{
+ if(nativeResult){saveBytes(nativeResult.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED.zip','application/zip');return;}
  if(!last)return;
  try{
   const svg=context.exportEditableSvg();
@@ -206,19 +268,51 @@ q("#sfAutoDownload").onclick=()=>{
   setTimeout(()=>URL.revokeObjectURL(url),5000);
  }catch(error){status("SVG export unavailable: "+String(error?.message||error));}
 };
+q('#sfAutoDiagnostic').onclick=()=>{
+ if(!diagnostic)return;
+ try{
+  const text=window.StitchForgeReconstructionDiagnostics.serialiseCapture(diagnostic);
+  const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');
+  a.href=url;a.download='stitch-forge-reconstruction-diagnostic-PRIVATE.json';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+ }catch(error){status('Diagnostic download unavailable: '+error.message);}
+};
+q('#sfAutoReplay').onclick=()=>{if(!running)q('#sfAutoReplayFile').click();};
+q('#sfAutoReplayFile').onchange=async()=>{
+ const file=q('#sfAutoReplayFile').files?.[0];q('#sfAutoReplayFile').value='';if(!file||running)return;
+ const source=context.getImage(),startRevision=revision;
+ if(!source||context.getSourceStatus()!=='original'){status('Upload the same original image before local replay.');return;}
+ running=true;q('#sfAutoRun').disabled=true;
+ try{
+  if(file.size>256000)throw Error('Diagnostic file is too large');
+  const diagnostics=window.StitchForgeReconstructionDiagnostics;
+  if(!diagnostics)throw Error('Local diagnostic module missing');
+  const capture=diagnostics.parseCapture(await file.text()),{canvas,ctx}=await decoded(source,768);
+  const replay=await diagnostics.replayCapture(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,capture);
+  if(revision!==startRevision||context.getImage()!==source)throw Error('Artwork changed during replay; stale result discarded');
+  diagnostic=capture;q('#sfAutoDiagnostic').disabled=false;
+  status('Local replay '+(replay.reproduced?'reproduced the saved result':'differs from the saved result; investigate before export')+
+   ': '+replay.assessment.retainedRegions+' retained regions, '+(100*(replay.assessment.coverage||0)).toFixed(1)+
+   '% source coverage, '+replay.assessment.rejected.length+' rejected regions. No AI request, editor change or machine file.');
+ }catch(error){status('Local replay blocked: '+error.message+'. Existing design is unchanged.');}
+ finally{running=false;q('#sfAutoRun').disabled=false;}
+};
 q("#sfAutoUndo").onclick=()=>{
+ if(nativeResult){clearNative();q('#sfAutoDownload').disabled=true;q('#sfAutoUndo').disabled=true;status('Native result closed. Earlier editable paths are restored; the downloaded trial remains unapproved.');return;}
  const btn=q("#undoBtn");if(!btn||btn.disabled){status("No reconstruction undo available.");return;}
  btn.click();last=null;overlay.replaceChildren();q("#sfAutoDownload").disabled=true;
  q("#sfAutoUndo").disabled=true;status("Reconstruction undone. Previous editable design restored.");
 };
 window.addEventListener("stitchforge:design-changed",()=>{
- revision++;
+ const hadNative=!!nativeResult||!!nativeAbort;revision++;nativeAbort?.abort();clearNative();
+ if(hadNative){q('#sfAutoDownload').disabled=true;q('#sfAutoUndo').disabled=true;status('Design changed. Native generation/result cleared; no stale files will be downloaded.');}
  if(!last)return;
  last=null;overlay.replaceChildren();q("#sfAutoDownload").disabled=true;q("#sfAutoUndo").disabled=true;
  status("Design changed. The previous AI overlay is no longer presented as current geometry; use normal Undo or reconstruct again.");
 });
 window.addEventListener("stitchforge:image-imported",()=>{
- revision++;
+ revision++;nativeAbort?.abort();clearNative();
+ diagnostic=null;q('#sfAutoDiagnostic').disabled=true;
  last=null;overlay.replaceChildren();q("#sfAutoDownload").disabled=true;q("#sfAutoUndo").disabled=true;
  status("Artwork ready. Reconstruct automatically when you choose.");
 });

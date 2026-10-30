@@ -9,7 +9,7 @@ if(!editor||!tracePanel||!svg)return;
 const panel=document.createElement("section");panel.className="ai-detail-panel";
 panel.innerHTML=[
  '<div class="ai-detail-head"><strong>Trace a fill region</strong><small>Manual boundary · experimental</small></div>',
- '<p class="tiny">AI boxes cannot define real wing shapes. Select a wing or body area in the list above, then tap around its <b>actual visible boundary</b> on the moth. Add at least four points. The resulting closed region is editable.</p>',
+ '<p class="tiny">Select an area in the list above, then tap around its <b>actual visible boundary</b> on the artwork. Add at least three distinct points. The resulting closed region is editable.</p>',
  '<div class="ai-actions"><button type="button" class="btn primary" id="sfFillStart">Start tracing boundary</button>',
  '<button type="button" class="btn" id="sfFillBack" disabled>Undo point</button>',
  '<button type="button" class="btn" id="sfFillClose" disabled>Close & inspect</button>',
@@ -41,7 +41,7 @@ function refresh(){
  }
  $("#sfFillStart").disabled=mode!=="idle";
  $("#sfFillBack").disabled=mode!=="drawing"||nodes.length===0;
- $("#sfFillClose").disabled=mode!=="drawing"||nodes.length<4;
+ $("#sfFillClose").disabled=mode!=="drawing"||nodes.length<3;
  $("#sfFillApply").disabled=mode!=="preview"||!validated;
  $("#sfFillCancel").disabled=mode==="idle";
 }

@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 60448)
-Total output lines: 1353
-
 # STITCH FORGE — MASTER DEVELOPMENT DOCUMENT (MD)
 
 > **Single source of truth for scope, progress, decisions, testing, risks and next actions.**
@@ -11,14 +8,14 @@ Total output lines: 1353
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.41 (incomplete-reconstruction fail-closed guard; source commit `4d87c9c4e38b0c0b8b1a2d022db6d07e36bedeb3`; production remains MD-2.40) |
-| Last updated | 2026-10-29 (Europe/London) |
-| Last independently checked source | GitHub `main` contains MD-2.41 code commit `4d87c9c4e38b0c0b8b1a2d022db6d07e36bedeb3` (all required skip marker); Netlify production still serves MD-2.40 commit `597547e3f7f6a1e92eab846fd3ffe55842710fb4`. The 17:44:30Z owner request returned HTTP 200 after 12.54s; screenshot: 4 regions retained, 14 local rejections, 3 malformed model outlines and 1% coverage. MD-2.41 prevents such incomplete results replacing the existing design. Five syntax checks and 71 Node tests pass. No deployment, additional AI/worker request, PES/DST output or sew-out for MD-2.41. |
+| Document version | MD-2.49 (recovered original source; actual app-to-native PES6/DST workflow verified locally; hosted upgrade pending) |
+| Last updated | 2026-10-30 (Europe/London) |
+| Last independently checked source | Recovered original MD-2.48 local 9d19230e9245aae86b47d9db37a0c62c8f004ede; merged GitHub main 8648bf736a261737c969cb932133811b8034be64. MD-2.49: 161 Node, 89 Python, 19 browser regressions + four real app/native artwork workflows pass. Read final Git main SHA/release record for publication. No Netlify deploy or paid AI request. |
 | Default branch | `main` |
-| Development branch | Active isolated branch `feature/detailed-embroidery-analysis-no-deploy`; integration branch remains `develop/stitch-engine-foundation` |
+| Development branch | Integration tested on `feature/recovered-native-workflow-md249`; owner explicitly authorised bringing main up to date and later updating the existing worker. Original branches preserved. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Deployment | **Static v0.3 experimental editor committed to `main` and Netlify reports deployment ready; direct HTTP/browser rendering not independently verified** |
+| Deployment | Website deployment remains manual by owner. Local native flow verified; matching private worker update and enabled feature flags required. Last published Netlify source read: 597547e3f7f6a1e92eab846fd3ffe55842710fb4. |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
 | External Ink/Stitch or pyembroidery integration | This session ran the pinned official Ink/Stitch v3.3.0 binary and pyembroidery 1.5.1 locally on synthetic satin geometry. No hosted worker or paid service was called. Physical stitch-out NOT VERIFIED. |
@@ -82,7 +79,104 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 
 ## 2. Current verified baseline (2026-10-28)
 
-### Local-only supplement (MD-2.40, 2026-10-29)
+### Current app/native integration (MD-2.49, 2026-10-30)
+
+**Recovery:** original MD-2.48 source and full local history recovered at `9d19230`, with bundles/checkpoints; no rebuilding from machine files. GitHub `8648bf7` verified as a recovery-doc/offline-audit-only change and reconciled without overwriting it. Three remote branches and merged PR #1 were read; no PR was modified.
+
+**Implemented:** existing app automatic action → complete source-pixel/object preparation → protected new Function → real native PES6/DST phases → independent source/colour/movement/framing audit → numeric actual-stitch overlay + automatic ZIP, report and editable native SVG. No OpenAI call in this source-native mode. Existing AI alternative, editor, authentication and worker IAM integration remain. Source/size changes, cancellation, stale results and invalid archives fail closed.
+
+**Actual local acceptance:** licensed rose **13,328**, macaw **14,180**, butterfly **17,891**, private painted **51,902** needle stitches per format. Every final result has zero outside-colour needle points and complete segments at the unchanged **0.11mm** engineering tolerance. The private case required one source-bound repair of an **8.9193mm² / 823-equivalent-pixel** native fill piece to source-skeleton running, followed by fresh generation/audit. Repair is capped at one retry, 12 faults/pieces and 2% source area; no unsafe files are downloaded. No private source/geometry/machine files enter public Git.
+
+**Verification:** **161 Node + 89 Python + 19 Chromium regressions + four actual local app/native cases pass**. Eight Python test cases use real native controls. Syntax: 23 source files + one inline script. Initial failures and rejected approaches are recorded, not relabelled passes. No physical Android, container build, hosted native chain, sew-out or owner likeness acceptance. 1,155 private PES trims remain excessive. Different browser sampling means counts cannot be claimed as a controlled likeness improvement over MD-2.48.
+
+**Release limit:** a Netlify-only deploy will not enable the new flow against the older worker. Both new endpoints are off unless `STITCH_FORGE_ARTWORK_TRIAL_ENABLED=1`; matching private worker code/dependencies must be deployed and tested first. Owner authorised updating that existing worker; initial runtime inspection found no gcloud/Docker/authenticated Cloud Run deployment access. No website deploy is authorised. Source-based artwork still uses fill/running trials, not automatic satin or verified semantic/fabric planning.
+
+**Release blocked after implementation commit 3136eab:** automatic approval review rejected the main push because unverified automatic Netlify deployment could violate the owner restriction. Fresh main remains 8648bf7; published Netlify deploy unchanged. Existing worker update is authorised but lacks authenticated deployment access; Google Cloud console was unavailable. No push/deploy occurred. Exact prerequisite and continuation: `docs/RELEASE_STATUS_MD-2.49.md`.
+
+Handover: `docs/ENGINEERING_HANDOVER_MD-2.49.md`. Evidence: `docs/test-evidence/MD-2.49-app-native/Actual_App_Workflow_OFFLINE.html`, actual public app ZIPs, separate decoded-only PNGs, reports and logs.
+
+### Historical local real-art engine trials (MD-2.48, 2026-10-30)
+
+**Genuine new evidence:** CC0 butterfly/macaw/rose PNGs automatically pass through the actual app source/object modules into local native fill/running trials. Real Ink/Stitch 3.3.0 PES6/DST independently decode to **15,343 / 12,328 / 11,483 needle stitches per format**, respectively. All three have zero outside-colour needle points or complete segments at the unchanged 0.11mm coordinate tolerance. Every PES/DST needle coordinate agrees after translation. Native PES6 retains exact requested RGB/order; DST requires external thread colours. Original vector outlines were not inputs. These are **engineering trials with unresolved details and no fabric approval**, not completed professional digitising.
+
+**Private painted experiment:** unchanged 768×660 analysis, 80mm full-image width. Initial plan refuses the native path budget. A separate one-pass 0.21mm-axis-radius texture experiment (actual 0.2083mm, maximum target sample distance 0.2946mm) plus connected source-skeleton branch routing produces **1,169 native paths / 50,035 decoded needles per format**, zero outside working-colour movements. It wholly recolours 14,184 earlier working components (21,608 pixels), leaves 1,514 tiny/short objects unresolved (2,071 pixels), has fill-direction review flags and **1,168 decoded PES trims**. Original source masks remain unchanged. All private artwork/geometry/machine outputs are excluded from Git; only deidentified measurements are committed. The owner has a private four-panel comparison and actual decoded PNG.
+
+**App-connected change:** source inspection can prepare source-bound artwork objects, toggle original/prepared geometry, save the unapproved object contract and invalidate it on source/size changes. This step alone reduces pieces but remains fragmented. **The paid reconstruction action and hosted/native app export route are unchanged and still not proven end-to-end.** The optional texture/native runner is local research only.
+
+**Verified now:** 151 Node, 72 Python, 17 automated Chromium pass; one additional private evidence page passes 390px/1450px browser checks. Seven Python tests use real local engine controls; three public and one private artwork trials are separately recorded actual executions. No physical Android device or sew-out. See `docs/ENGINEERING_HANDOVER_MD-2.48.md`, `docs/test-evidence/MD-2.48-source-objects/Prepared_Artwork_OFFLINE.html` and `Native_Artwork_Evidence_OFFLINE.html`. Production deployment as a finished Target 2 digitiser is not justified; no deployment/push occurred.
+
+### Current local textured-art preview (MD-2.47, 2026-10-29)
+
+**Real blocker addressed:** the private painted source exceeded the fine-reference graph budget. The app now falls back only on named graph resource refusals to a bounded palette-first preview: up to 12 working colours before component construction, unchanged analysis dimensions and limits. All selected foreground pixels remain represented; full fine-reference nodes/semantic feature protection are explicitly unavailable, and candidate/native export stays blocked. No invalid input/background errors are silently accepted.
+
+**Actual private painted source:** at unchanged 768×660 raw analysis, 236,887 selected pixels retain exact mask union; old strong RGB mismatches 74,623→18,619, mean distance 44.19→33.74. Preview JSON is 4.23MB, below unchanged 8MB limit, with 23,355 working pieces. Actual original PNG through mobile-sized Chromium also previews/reopens successfully (236,772 selected browser-canvas pixels, 22,855 pieces, 4.16MB, zero unexpected/API requests). Private images/derived geometry remain outside the repository. The visible eye/beak/wing/flower detail is a visual observation, not semantic/machine or physical approval.
+
+**Safety/tests:** legacy native bridge explicitly rejects named inspection/control/candidate schemas even with otherwise valid legacy paths. 148 Node + 63 focused Python (including six real synthetic native controls) + 13 Chromium pass, zero failures/skips. One additional private-art app check passed. The initial synthetic browser upload timeout was its >97%-foreground fixture, corrected by a five-pixel margin without relaxing the existing import guard.
+
+**Owner can inspect now:** `docs/test-evidence/MD-2.47-textured-preview/Working_Likeness_OFFLINE.html` runs the actual modules locally, including the textured preview fallback, with no token/network/AI credits. No real-art PES/DST or sew-out. The paid model-coordinate action is still unchanged; useful source likeness now precedes unresolved stitch-object/intent planning. Latest handover: `docs/ENGINEERING_HANDOVER_MD-2.47.md`. No push/deploy/PR/secret changes.
+
+### Current local planning phase (MD-2.46, 2026-10-29)
+
+**Owner target:** high-quality likeness, with sensible fine-shading/texture simplification. Exact reference pixels remain available; not every antialiased shade is a thread colour or stitch object.
+
+**Implemented:** bounded one-step grouping of at most four-pixel possible blends into directly adjacent stable colours; no protected core changes, chain propagation, source deletion or transparent-void filling. Reference IDs/runs/colour statistics remain unchanged. Working pieces reduce butterfly 6,208→2,786, bird 1,199→856, rose 1,180→367. Working colour changes affect 4,174 / 1,008 / 1,040 pixels with a maximum one-analysis-pixel bound. Pixel colour error worsens somewhat; this is an explicit approximation trade-off, not an automatic likeness pass.
+
+**Physical review:** app download now binds every source node to size-based fill/narrow/small/tiny-blend candidates, with physical measurements, provisional axes and a source/assignment/size SHA256. No candidate is omitted; no density, underlay, real centreline/rails or stitches are generated. Resizing or editing invalidates the candidate binding; stale async downloads are refused. Source/candidate schemas remain rejected by native and hosted conversion.
+
+**Executed:** 145 Node, 63 focused Python (including six real synthetic native-engine tests), 11 actual Chromium tests pass, zero failures/skips. Native regression is not real-art export evidence. Initial expected-hole assertion failure was corrected from one to two (transparent void plus eye-colour hole); log preserved.
+
+**Visible now:** `docs/test-evidence/MD-2.46-boundary-planning/Working_Likeness_OFFLINE.html` shows actual source/old/new approximations and includes a private on-device uploader running the same app modules. No API token, upload, paid request, hosted worker or deployment. File-page/mobile Chromium checked; owner's physical Android unverified. Full handover: `docs/ENGINEERING_HANDOVER_MD-2.46.md`.
+
+**New realistic private-art failure:** the painted example at 768×660 and a 512×440 probe exceeds 30,000 graph nodes. A 384×330 probe builds but exceeds the project download budget; no quality pass or downsampling fix is claimed. A private scratch palette-first probe reduces reference construction cost at original analysis size, but has not been integrated. Only deidentified measurements, no artwork/geometry, are recorded.
+
+**Remaining:** paid model-coordinate reconstruction action is unchanged; source-ID semantics/stitch intent, narrow-feature geometry, whole-art native acceptance and physical quality remain open. No detailed-artwork PES/DST or sew-out is verified. Next engineering task is the bounded source-ID intent contract and its integration, with local mocks before any paid test. No push/deploy/PR or secret changes.
+
+### Current local likeness phase (MD-2.45, 2026-10-29)
+
+**Owner target clarified:** high-quality match/likeness, not pixel perfection. Keep recognisable shapes, convincing colours and significant markings; simplify fine shading where appropriate. Exact source masks remain reference evidence, not a requirement for hundreds of thread colours.
+
+**Implemented:** app-connected source graph with stable component IDs, exact selected-pixel RLE and true adjacency; bounded 12-colour coverage/refinement with attention to small contrasting candidates. Possible antialiased blends are recorded separately, never deleted. V2 graph projects save/reopen against actual source pixels; legacy V1 remains supported. A tiny-eye control now preserves its own working colour. Source inspection remains machine-ineligible; the earlier paid model-coordinate reconstruction path is not proven fixed by this phase.
+
+**Evidence:** licensed butterfly/macaw/rose strong RGB mismatches drop 1,973→839 / 27,581→6,118 / 57→12 with at most 12 working colours. Mean shading error worsens slightly on butterfly/rose, explicitly disclosed; these metrics are not a human likeness score. 137 Node + 9 actual Chromium pass, zero failures/skips. No new native engine run applies in this phase. Original/old/new PNG/SVG comparisons and responsive offline evidence are under `docs/test-evidence/MD-2.45-working-likeness/`.
+
+**Next:** one-step bounded grouping of tiny boundary blends, preserving all references/protected candidates, then source-ID stitch intent and physically meaningful planning. Handover: `docs/ENGINEERING_HANDOVER_MD-2.45.md`. No push, deployment, paid AI, hosted worker or PR change.
+
+### Current local native acceptance (MD-2.44, 2026-10-29)
+
+**New engine evidence:** four explicitly synthetic raster controls were automatically converted by the app source extractor into native compound fill inputs, then exported locally through real Ink/Stitch 3.3.0 to actual PES/DST and independently decoded by pyembroidery 1.5.1. Horizontal / diagonal / underlay / resized nested-island controls produce 1,537 / 1,655 / 2,177 / 1,427 needle stitches per format. No needle point or complete stitch segment leaves the requested source-colour regions or crosses their voids within the stated 0.11mm quantisation tolerance. Directions, 0.6mm row gaps, physical extents, palette order, jumps/trims and END are checked.
+
+**Native representation:** disconnected components are separate paths because the pinned engine treats a path’s largest subpath as outer and other subpaths as holes. An explicit full-source-frame origin anchors DST; every PES needle is cross-checked after translation. Initial horizontal-extent checks failed because rows stop before outline extrema; the corrected audit uses bounded row shortfall and absolute point/segment checks rather than inventing outline stitches or fitting scale. Settings are controlled experiments, not fabric presets.
+
+**Scope and tests:** new local-only compound contract; hosted bridge/allowlist and browser source drafts stay machine-ineligible. 131 Node, 63 focused Python (3 new compound + 3 rerun satin real-engine tests), 7 actual desktop/mobile Chromium tests pass with zero failures/skips. Configured repository build now checks all 18 JS/MJS source files + one inline script and all native Node tests; it was run locally without Netlify deployment.
+
+**Evidence:** `docs/test-evidence/MD-2.44-compound-machine/Compound_Machine_Evidence_OFFLINE.html`, actual PES/DST/ZIP/SVG/PNG and per-case reports; source-art inspection remains in MD-2.43. Latest handover: `docs/ENGINEERING_HANDOVER_MD-2.44.md`.
+
+**Still unverified:** source semantic grouping, rare eye/feather colour preservation, compound stitch editing, whole-real-art planning/export, local narrow bottlenecks, routing/density/fabric suitability and physical quality. Licensed butterfly/bird/flower have actual source geometry only, not machine files. Next: a source-region grouping graph preserving colour boundaries and rare features, followed by AI labels over stable IDs. No push/deploy, paid AI or hosted worker call.
+
+### Current local implementation (MD-2.43, 2026-10-29)
+
+**App-wide progress:** source masks now become exact outer/inner pixel-edge rings in a versioned source-region project loaded by the existing app. Holes and disconnected pieces survive save/reload, geometry SVG export and physical-size edits. A free local inspection control retains all selected pixels; source inspection blocks legacy playback and machine exports and does not pretend to be a stitch plan. Private geometry-only diagnostic downloads/local replay now survive local AI reconstruction rejection, without another AI request.
+
+**Measured acceptance:** all 65,536 possible 4×4 masks round-trip exactly. Licensed butterfly/macaw/rose raster inputs preserve 193,187 / 157,119 / 202,807 selected pixels and 100 / 28 / 1 holes. Their 5,983 / 1,470 / 1,332 disconnected pieces expose the unresolved semantic-grouping problem. Palette differences, excluded partial-alpha pixels and tiny/touching features are recorded; exact storage is not source-feature accuracy. All three were also exercised through actual Chromium app controls.
+
+**Executed now:** 131 Node, 6 actual Chromium desktop/mobile, 19 focused Python and 3 real existing satin engine acceptance tests pass. Early environment/harness failures are retained in logs. The satin tests generated/decoded synthetic PES/DST; no machine file was generated for the three source-region drafts. No physical quality or complete detailed-art digitising is verified.
+
+**Evidence:** `docs/test-evidence/MD-2.43-source-region-drafts/Source_Regions_OFFLINE.html` is self-contained, tested at 390/1280px and includes private local artwork inspection. Adjacent actual PNG/SVG comparisons, browser screenshots and reports are available. `docs/ENGINEERING_HANDOVER_MD-2.43.md` records code paths, exact limitations and runtime setup. GitHub main remains unchanged; nothing pushed or deployed.
+
+**Next:** bounded native compound fill/hole acceptance using source-extracted synthetic raster rings, real Ink/Stitch and independent decoding. Then source-region semantics/grouping and stitch planning. Current source drafts remain machine-ineligible.
+
+### Current local investigation (MD-2.42, 2026-10-29)
+
+**App-wide finding:** the contour stage rejects an entire region when a colour mask has a tiny island or hole, and stops above 128 components. These behaviours are reproduced on generic controls and independent licensed illustrations. A valid closed triangle was also falsely called degenerate after duplicate-close normalization. The earlier 1% result cannot be attributed entirely to AI without its missing response data.
+
+**Implemented locally:** triangle handling is corrected with nonzero-area checks across endpoint/editor/classifier. A new bounded source-mask ledger preserves holes and all selected components exactly, with small parts flagged for review; it is not loaded by the app or engine. Thirty-six colour-mask stress probes across butterfly, macaw and rose round-trip exactly, while the existing contour path returns only four of those masks. These probes are not AI reconstruction acceptance.
+
+**Evidence and limitation:** ten syntax checks, **113/113 Node**, **19/19 Python** pass. The licensed three-subject VTracer trial ran nine configurations twice and demonstrates that a basic vector tracer loses colour/internal detail and emits unsupported compound paths. No full replacement pipeline, genuine realistic-art PES/DST, browser/mobile run or physical stitch-out is proven. Report: `docs/RECONSTRUCTION_ROOT_CAUSE_MD-2.42.md`; responsive offline evidence in `docs/test-evidence/MD-2.42-reconstruction-root-cause/offline-comparison.html`.
+
+**Required repair:** make pixel-derived masks the geometry source, preserve complete ring/component topology through project and native conversion, and apply AI interpretation/stitch intent over stable region IDs. Add local proposal capture/replay before another paid request. Do not deploy a prompt-only change as a quality fix or loosen the export gates.
+
+### Historical diagnostic note (MD-2.40, 2026-10-29)
+
 
 **Correction to MD-2.39 release status:** after the owner questioned why the generic message remained, read-only Netlify metadata showed production deploy ID `6ae37c076fbb1f0a6438e9db`, ready and published at `2026-10-29T17:02:13Z`, from branch `main`, commit `71de10aedb1a65ef0859cb6c67ec9edad3538e52`. Metadata fields were `deploy_source=api` and `manual_deploy=false`. The owner states they did not manually deploy. No Netlify deploy write action was called by this assistant. The exact initiating event cannot be established from available deploy metadata. Netlify docs say `[skip netlify]` in the commit message should skip branch/production deploys on a direct branch push, which conflicts with the observed deployment. Do not push any further changes until the trigger is understood or a safe release action is explicitly approved.
 
@@ -97,7 +191,7 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 - Source commit `b9eee11a6a3808a72d23488984de17e60234849a` is on GitHub `main`; docs follow-up `1e2ef8cccd6e5c6b3e07fa4a2e73bb9169e2b239` records this deployment attempt. All commits include `[skip netlify]`.
 - Root cause of screenshot remains unproven: screenshot did not include the API response. Code adds bounded `plan_shape_invalid` diagnostics when `regions` is missing/non-array, a `plan_validation_failed` fallback, and safe human-readable status text. Validators remain fail-closed.
 - Tests executed locally: 5 syntax checks and 68 Node tests passed, 0 failed, 0 skipped; see `docs/test-evidence/MD-2.40-plan-shape-fallback/netlify-build-checks.txt`. No browser, live model request, worker, PES/DST generation or sew-out.
-- Release status: source is on GitHub `main`, but Netlify production remains MD-2.39. Production deploy writing is unavailable in the connected tools and there is no local CLI/token. No production deployment occurred in this session. A fresh explicit deployment route is needed to publish MD-2.40.
+- Later verified release status: MD-2.40 code is deployed as `597547e3` / deploy `6ae383086f1e6ec8b8d5e47f`. MD-2.41 is on GitHub main but not deployed. Current MD-2.42 work is isolated and local only.
 - Remaining scope: actual detailed-art reconstruction and machine-file quality are unverified; no claim of professional digitising or physical stitch quality.
 
 ### Current main-branch supplement (MD-2.39, 2026-10-29)
@@ -223,12 +317,21 @@ No original moth was available in this checkout; all new fixtures are synthetic.
 
 ### 2.3 Confirmed limitations and defects
 
+**MD-2.49 current limits:** hosted worker/website upgrade is pending; physical quality, semantic feature identity, automatic satin, routing/trim quality and fabric settings remain unverified. Actual source-native app integration now passes four local artwork workflows. See latest handover.
+
+**Historical MD-2.48 limits:** real whole-illustration and private painted native **trials** now exist. Approval is still blocked by unverified feature/semantic intent, tiny unresolved components, source texture loss, geometric rather than semantic directions, heavy travel/trims, unset fabric/underlay and physical quality. The existing app does not yet run this local native trial pipeline. The MD-2.44/43 paragraphs and numbered prototype history below describe earlier stages where applicable.
+
+**MD-2.44 update:** local source-derived compound controls now have genuine decoded PES/DST evidence; this is not whole-art machine acceptance. Minimum local width, same-colour component attribution, routing and fabric suitability remain open.
+
+**MD-2.43 source-draft limits (still applicable):** the source inspection mode is integrated and tested, but its palette groups are not semantic embroidery regions. Compound ring point editing, feature identities/colour accuracy, source-group stitch planning and native realistic-art export remain open. Selected-pixel accounting excludes the foreground detector’s rejected alpha/background pixels. Source inspection blocks stale legacy playback and machine export; returning to the editor restores the previous unrelated stitch plan. No sew-out or professional detailed-art acceptance.
+
+
 1. **Critical:** the moth becomes an external contour; detailed internal pattern and colours are lost. Requires raster segmentation, manually editable embroidery regions and independent colour plans.
 2. **Critical:** scanline fill is a proof of concept; jump count, routing and stitch parameters require professional algorithms and physical testing.
-3. **Critical:** no satin column construction, tie-ins, tie-offs, real trims, robust colour changes, pull compensation or material-specific settings.
-4. **Critical:** no external engine is integrated; our prototype currently writes custom PES/DST directly. Need trusted read-back validation.
+3. **Critical:** native satin controls, locks, trims and colour changes have local evidence; correct detailed-art stitch families, compensation and material-specific settings remain unverified.
+4. **Critical:** real native engine and independent read-back now work locally; the source/object trial pipeline is not integrated into the deployed app export route. Legacy browser writers remain separate.
 5. **Critical:** physical machine results, compatible hoop/machine combinations and retail quality are UNKNOWN.
-6. **High:** one-file browser architecture is fragile; needs source modules and automated tests without changing behaviour.
+6. **High:** the legacy editor still contains substantial inline code; source preparation now has tested modules, but a complete safe app/native integration remains open.
 7. **High:** limited SVG parsing; unsupported forms must fail safely without destroying an open project.
 8. **High:** local HTML is awkward on Android. A test deployment may be useful, **only if authorised**; do not assume a production deployment.
 9. **High:** licence/attribution, data handling and commercial distribution review for dependencies remains open.
@@ -549,17 +652,43 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | SF-069 | P1 | Make current artwork analysis observable without overstating reconstruction | **OFFLINE PAGE BUILT / BROWSER RUN NOT VERIFIED** | Self-contained local page displays user-selected artwork and actual pixel-scan metrics, then states no semantic regions/stitch evidence exist. It embeds the tracked scanner exactly and makes no network calls. |
 
-| SF-070 | P0 | Explain rejected real reconstruction geometry without weakening export gates | **LOCAL NODE-TESTED / NOT DEPLOYED** | Accepted proposal labels and per-fill rejection region/reason now reach the user; rejection remains atomic and machine export is not called. Actual model response details were unavailable, so no root cause can yet be corrected. |
+| SF-070 | P0 | Explain rejected real reconstruction geometry without weakening export gates | **DEPLOYED IN MD-2.40 / REAL-ART QUALITY FAILED** | Accepted proposal labels and per-fill rejection region/reason now reach the user; rejection remains atomic and machine export is not called. Actual model response details were unavailable, so no root cause can yet be corrected. |
 
-| SF-071 | P0 | Preserve safe server-side model geometry rejection reasons for the owner | **MOCKED ENDPOINT + NODE-TESTED / NOT DEPLOYED** | Protected response and UI expose only bounded 1-based region numbers and static reason codes; raw model response stays private and invalid plans remain rejected. Browser and live model retry not verified. |
+| SF-071 | P0 | Preserve safe server-side model geometry rejection reasons for the owner | **DEPLOYED IN MD-2.40 / REASONS OBSERVED** | Protected response and UI expose only bounded 1-based region numbers and static reason codes; raw model response stays private and invalid plans remain rejected. Browser and live model retry not verified. |
 
-| SF-072 | P0 | Cover malformed/missing top-level model region plan diagnostics | **LOCAL TESTED / NOT PUSHED** | `INVALID_MODEL_GEOMETRY` failures now have a plan-level reason fallback even without a `regions` array. Real screenshot cause remains unknown; hold push because Netlify unexpectedly published previous main commit. |
+| SF-072 | P0 | Cover malformed/missing top-level model region plan diagnostics | **DEPLOYED IN MD-2.40 / ORIGINAL ERROR CAUSE UNKNOWN** | `INVALID_MODEL_GEOMETRY` failures now have a plan-level reason fallback even without a `regions` array. Real screenshot cause remains unknown; hold push because Netlify unexpectedly published previous main commit. |
+
+| SF-073 | P0 | Prevent incomplete source reconstruction replacing the editable design | **MD-2.41 MAIN SOURCE TESTED / NOT DEPLOYED** | Coverage and zero-rejection gate precedes editor mutation; the prompt change is unverified and does not repair region extraction. |
+| SF-074 | P0 | Diagnose app-wide reconstruction loss and correct false triangle rejection | **LOCAL MD-2.42 VERIFIED** | Generic tiny-island/hole/component controls reproduce failures; valid closed triangle corrected across endpoint/editor/classifier; collinear forms still rejected. |
+| SF-075 | P0 | Preserve selected source masks and full topology through the app | **MD-2.43 APP-CONNECTED SOURCE INSPECTION / MACHINE BLOCKED** | Exact outer/inner rings, all islands, stable pixel IDs, private JSON reload, physical edits and even-odd geometry SVG; exhaustive 4×4 matrix and three licensed rasters. Compound stitch editing/semantics remain open. |
+| SF-076 | P0 | Reusable independent bird/butterfly/flower artwork evaluation | **MD-2.43 APP SOURCE-INSPECTION ACCEPTANCE / SEMANTIC AI OPEN** | Three licensed PNG partitions preserve all selected masks/rings, save/reload and size edits; actual Chromium controls exercised. Colour uncertainty/thousands of tiny parts remain. Earlier VTracer trial retained as historical failure evidence; no private art published. |
+| SF-077 | P0 | Capture private reconstruction diagnostics and replay locally | **MD-2.43 NODE + ACTUAL CHROMIUM VERIFIED** | Geometry allowlist, aliased IDs, source hash, bounded rejection counters; no image/header/token/free model text. Owner downloads explicitly; replay uses matching original pixels, no AI/worker or editor mutation. |
+| SF-078 | P0 | Native source-derived compound fill/hole acceptance | **MD-2.44 LOCAL SYNTHETIC ENGINE VERIFIED / REAL ART OPEN** | Four raster-extracted controls yield actual PES/DST; every needle/segment, origin, row gap, direction, palette and file completeness checked. Local contract only; source drafts/hosted allowlist stay blocked. |
+| SF-079 | P0 | Source-supported region graph and rare-feature colour preservation | **MD-2.45 APP-CONNECTED / SEMANTICS UNVERIFIED** | Stable exact reference nodes/adjacency, bounded 12-colour refinement and tiny-eye control; licensed colour-error improvements measured. Possible blends/contrasting candidates retained; human likeness and biological identity unverified. |
+| SF-080 | P1 | Include source topology/replay regressions in configured build gate | **MD-2.44 LOCAL CONFIGURED BUILD PASSED** | Syntax of all 20 app/function modules + inline script and full 148-test native Node suite. No browser/engine/paid call installed or run by the Netlify command; no deployment triggered. |
+| SF-081 | P0 | Simplify tiny boundary blends without deleting source evidence | **MD-2.46 APP-CONNECTED / LIKENESS REVIEW OPEN** | At most four-pixel blend nodes, directly adjacent stable parents, one-pixel bound and loss records; no protected core/reference/foreground changes. Real illustration fragment reduction measured; colour trade-offs disclosed. |
+| SF-082 | P0 | Source-bound physical review candidates | **MD-2.46 NODE/CHROMIUM VERIFIED / NO STITCH PLAN** | All source nodes accounted; size/area/perimeter/thinness and provisional axes, stable object IDs, size-bound SHA256, stale-download refusal. No centreline/rails/density/underlay/needles; native schemas reject candidates. |
+| SF-083 | P0 | Replace model boundary invention with bounded source-ID intent | **MD-2.48 SOURCE-PART BINDINGS / AI SEMANTICS OPEN** | Source-bound object assignments and local native intent manifest exist; the paid action, semantic labels/layers and important-feature acceptance remain unintegrated. |
+| SF-084 | P0 | Bounded painted/textured source preview when fine graph exceeds budget | **MD-2.47 ACTUAL PRIVATE ORIGINAL + CHROMIUM VERIFIED / STITCH PLAN OPEN** | Palette-first preview at unchanged analysis resolution, up to 12 colours, source-checked save/reopen under existing limits. Fine graph/feature protection explicitly unavailable; candidate and machine eligibility blocked. No private artwork/geometry published. |
+
 
 **Historical next action order (MD-2.20; superseded by current supplement and latest handover):** verify container CI; obtain an approved existing Linux amd64 HTTPS host (or approved hosting account/cost); deploy private staging and configure only deploy-preview worker variables; prove the genuine preview chain; benchmark multiple original image types before physical stitch-out. No production promotion.
 
 ---
 
+| SF-085 | P0 | Source-bound physical object generalisation in app | **MD-2.48 NODE/CHROMIUM VERIFIED / NO APPROVAL** | Small adjacent fragments may join stable cores within explicit area/contrast/reach bounds; original masks retained, no selected pixels omitted, stale downloads blocked. Still fragmented. |
+| SF-086 | P0 | Actual artwork native fill/running trials and independent source checks | **MD-2.48 THREE LICENSED PNG TRIALS VERIFIED / PHYSICAL OPEN** | Actual PES6/DST, complete framing, exact RGB/order, cross-format needles, source-colour point/segment containment and per-fill direction measurements. Tiny details, routing/underlay and professional quality unresolved. |
+| SF-087 | P0 | Bounded painted texture and connected thin-branch research | **MD-2.48 PRIVATE REAL ENGINE TRIAL / FEATURE REVIEW BLOCKED** | One physical colour-mode pass, explicit wholly recoloured components, source-skeleton edge walks at most twice; 50,035 actual needles per format. Loss/trim/direction/fabric blockers retained. Not enabled in browser/worker. |
+| SF-088 | P0 | Integrate detailed-art source-to-native contract into existing app | **MD-2.49 FOUR ACTUAL LOCAL APP/NATIVE WORKFLOWS PASS / HOSTED PENDING** | Real Function/HTTP worker/engine/decoder, automatic ZIP, editable SVG, actual overlay; no paid AI. Off by default until paired hosted update. |
+| SF-089 | P0 | Bounded source-specific native feedback repair | **MD-2.49 PRIVATE ACTUAL APP PASS / LIKENESS REVIEW OPEN** | One signed retry, maximum 12 native fill pieces and 2% area; regenerate with source-derived running and re-audit unchanged masks. No unsafe-export gate relaxed. |
+| SF-090 | P0 | Existing private worker update and owner manual website release | **AUTHORISED / ACCESS AND HOSTED ACCEPTANCE PENDING** | No gcloud/Docker/authenticated deploy access in initial runtime; preserve service IAM/secrets/resource caps. Netlify-only deploy is insufficient. |
+
 ## 10. Test evidence register
+
+- **E-090 (2026-10-30, MD-2.49):** 161 Node, 89 Python, 19 browser regressions and four real local app/native image cases pass. Actual protected repository Function, loopback WSGI, Ink/Stitch and independent decoder. Private case 51,902 needles, bounded 823-pixel repair, 0 outside points/segments. Public cases 13,328 / 14,180 / 17,891. Initial time/budget/source/density/native-option failures preserved in investigation record. No hosted/physical approval. Logs and owner-inspectable actual evidence under `docs/test-evidence/MD-2.49-app-native/`.
+
+- **E-089 (2026-10-30, MD-2.48):** 151 Node, 72 Python and 17 actual Chromium pass, zero failures/skips in final runs. Python includes seven actual local native control tests. Three independent licensed raster trials produce 15,343 / 12,328 / 11,483 needles per format; one private painted texture/routing experiment produces 50,035. Complete PES6/DST framing, exact PES6 RGB/order, cross-format coordinates and zero outside working-colour movements verified. Private evidence page also checked at 390/1450px with no network/errors. Initial failures, 60s butterfly timeout, palette/lock/framing corrections and texture/feature losses retained in `docs/test-evidence/MD-2.48-source-objects/`. No paid AI, hosted worker, sew-out or deployment.
+
 
 - **E-079 (2026-10-29, MD-2.34):** Real local Node.js v22.16.0 `node --test tests/test_visual_proof.cjs`: **5/5 pass** (not merely a V8 assertion shim). File `Stitch_Forge_MD-2.34_Visual_Proof_OFFLINE.html` embeds byte-for-byte source of existing `site/satin-geometry.js` (Git blob `a869d6c1ab346d39b14f6610b9a6e00ce4a0f512`). Chromium desktop (1450px) and mobile (430px) browser execution via `page.set_content`: accepted 7 paired satin rungs, 68 guide points, no JS errors, no mobile horizontal overflow, hatch control changed SVG stroke count from 2419 to 1363, hide toggle exercised. No network requests; 0 PES/DST machine files. **Synthetic fixture authored with known regions**, not AI-digitised source. Local HTML Git blob `bb7e9582c795551815d6ac1e91d8ed734779e0f3`, independently matched. Evidence record `docs/test-evidence/MD-2.34-visual-proof.md`. Full app/browser, real native engine latest branch and actual fabric trials remain open.
 
@@ -684,6 +813,9 @@ Do not create empty decorative folders or claim an implementation exists because
 
 ## 11. Risk register and mitigations
 
+**MD-2.48:** numeric source-colour containment and real file generation are now verified for local artwork trials. They do not settle feature loss, routing/trim cost, fabric density/underlay or physical quality. Native trial flags never grant hosted/app export approval.
+
+
 | Risk | Impact | Current level | Mitigation and evidence needed |
 | --- | --- | --- | --- |
 | Attractive preview but failed stitch-out | Faulty customer product, reputational loss | CRITICAL | Physical G5 test; inspect density, fabric, thread and backing |
@@ -704,6 +836,7 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | Date | ID | Decision / proposal | Reason / status |
 | --- | --- | --- | --- |
+| 2026-10-30 | D-028 | Keep source preparation, native trial and physical approval distinct | PES6 RGB and source-contained needles are genuine evidence; texture loss, unresolved details and excessive travel remain explicit blockers. Optional physical smoothing/routing is local research only. |
 | 2026-10-28 | D-001 | Use dedicated `sapiverpress-studio/Stitch-Forge` repository | User authorised; separates work from Pattern Forge and live sites |
 | 2026-10-28 | D-002 | Keep v0.3 explicitly labelled experimental | Raster silhouette and naive fill are not professional digitising |
 | 2026-10-28 | D-003 | Build on proven upstream stitching and format libraries where suitable | Reliability, maintainability and reduced custom binary-code burden; integration unverified |
@@ -765,6 +898,20 @@ Do not create empty decorative folders or claim an implementation exists because
 
 ## 13. Dated work log / progress journal
 
+### 2026-10-30 — MD-2.49 original recovery and app/native integration
+
+Recovered local source at 9d19230 and merged remote 8648bf7 additions; implemented protected stateless native phases, independently bound RGBA/labels, actual decoded overlay, ZIP/SVG/report downloads, cancellation and one bounded native-feedback repair. Four realistic raster cases passed actual browser-to-engine execution. Owner repeatedly requested all work on main and later authorised updating existing worker; no Netlify deploy call, PR mutation, paid AI or new infrastructure. See detailed standalone handover for protocol, failed approaches, exact tests and remaining access/physical-quality limits.
+
+
+### 2026-10-30 — MD-2.48 real detailed-art native trials, local only
+
+- Continued from local `c05c86df6d17d0213c03aec6a35f2ab75c7f814f`, with clean isolated branch; GitHub main rechecked at `033234cde699644048598cee65bb166bdb3191ea`. No reset/push/PR/merge/deployment or paid call.
+- Built source-bound object generalisation and app preview/save controls. Implemented optional local source-mask fill/running compiler, geometric axes, exact bounded contours, source-skeleton paths and independent native audits.
+- Diagnosed real PES1 palette shifts; actual native PES6 preserves RGB. Diagnosed collapsed travels and straight relative locks crossing curved source boundaries; explicit native metadata/backtracking locks resolve the observed containment failures without loosening tolerance.
+- Actual licensed butterfly/bird/flower trials now have native files and decoded visual evidence. Additional private painted experiment uses measured source texture simplification and connected branch walking; 50,035 needles per format. Private artwork and derivatives remain outside Git.
+- Final 151 Node / 72 Python / 17 Chromium pass; extra private evidence page check passes. Physical machine/fabric, semantics and full app integration remain open. Owner evidence now distinguishes actual decoded stitches from prepared geometry. No production digitiser approval. Handover `docs/ENGINEERING_HANDOVER_MD-2.48.md`.
+
+
 ### 2026-10-29 — MD-2.35 native satin engine acceptance (isolated feature branch)
 
 - **Starting state:** fetched the current active feature branch, still at remote checkpoint `e47dfddc6656cc4efde2346588af2c98dc7e947d`; did not reset it. Draft PR #1, `main`, `develop/stitch-engine-foundation`, Netlify and Cloud Run were not modified.
@@ -790,6 +937,48 @@ Do not create empty decorative folders or claim an implementation exists because
 - **Tests RUN:** `node --test tests/test_artwork_scan_proof.cjs`: 2 pass. `node --test tests/*.cjs tests/*.mjs`: 97 pass, 0 fail/skip. No Python, Chromium, browser/mobile, Ink/Stitch or machine-file run was needed or performed for this milestone.
 - **Evidence:** `docs/test-evidence/MD-2.37-local-artwork-scan/` has the offline inspector and text-only private-art scan report. No image or image-derived overlay is committed.
 - **Next:** The actual bottleneck is candidate-region reconstruction, not more edge metrics. Build a small reusable licensed/original three-subject evaluation set and run the existing AI geometry reconstruction path, recording every source-supported and missed detail. Do not spend API credits without explicit approval. If no free local candidate generator passes the same source-pixel audit, request authorization for a strictly bounded paid test or keep automatic machine export blocked.
+
+### 2026-10-29 — MD-2.47 bounded preview closes tested painted-art graph refusal
+
+- Added explicit palette-first fallback only for fine-graph resource limits, retaining all selected foreground positions and same analysis resolution. No raised limits, downsampling fix, full-graph or small-feature approval claim. The actual private painted original now previews and reopens in the real app without AI/worker/network requests; images/derived geometry remain private.
+- Added named-schema rejection in the legacy native bridge and valid-path forgery tests. Modern preview/inspection/candidate packets cannot imply machine approval.
+- 148 Node + 63 Python + 13 Chromium pass; six Python controls use real local engines. One additional private-original app check passes. No realistic-art machine file or sew-out. Updated offline private inspector needs no deploy/token. Handover: `docs/ENGINEERING_HANDOVER_MD-2.47.md`. No push/deploy/PR, paid AI, hosted worker or secret changes.
+
+### 2026-10-29 — MD-2.46 bounded boundary grouping and physical candidate review
+
+- Added one-step grouping of tiny possible blends, with per-change source/parent records and one-pixel spatial bound. All reference nodes and protected cores retained; no source objects omitted. Counts/colour trade-offs measured on all three licensed rasters.
+- Added source-bound physical candidate report and actual app download, complete node accounting and stale size/signature refusal. Native/legacy conversion rejects source and candidate schemas; export gates remain intact.
+- New self-contained offline evidence includes private image inspection using exact embedded app modules. 145 Node + 63 Python + 11 Chromium pass; six Python controls run real engines. Original/working images are not machine or sew-out evidence. No push/deploy, paid AI/worker, private-art publication or PR changes. Handover: `docs/ENGINEERING_HANDOVER_MD-2.46.md`.
+
+### 2026-10-29 — MD-2.45 source graph and practical working likeness
+
+- Owner clarified that high-quality likeness is the target, with sensible shading/texture simplification. Added source graph/adjacency/stable IDs and bounded 12-colour coverage refinement; tiny-eye colour preservation is tested.
+- V2 graph projects are wired into existing free inspection, retain all selected source pixels and reopen against actual source evidence. V1 remains supported. No machine gate or paid model-coordinate path was loosened.
+- 137 Node + 9 Chromium pass; licensed original/old/new comparisons record lower large colour errors plus shading trade-offs. Native controls were not rerun here. No AI/hosted worker/push/deploy/PR or private-art publication. Handover: `docs/ENGINEERING_HANDOVER_MD-2.45.md`.
+
+### 2026-10-29 — MD-2.44 real local compound fill/hole machine acceptance
+
+- Added explicit local numeric compound control bridge with physical scale, complete region order, bounded topology/density/settings and native fixed origin. Disconnected components become separate paths; islands are not mistaken for holes.
+- Four automatically raster-extracted synthetic controls generated real PES/DST; independent decoding checks every needle/segment, holes, source-colour blocks, direction, row gap, extents and completeness. Initial extent-assumption failures investigated and preserved; no fictitious boundary stitches or geometry fitting.
+- 131 Node + 63 focused Python + 7 Chromium tests pass, zero failures/skips. Six Python tests execute real engines (three compound and three existing satin); four further cases build the visible evidence package. No realistic-art machine/physical acceptance.
+- Updated local Netlify build command to gate all source syntax and native Node regressions; command executed locally. No push/deploy, main/PR update, paid AI, hosted worker or private-art publication. Handover: `docs/ENGINEERING_HANDOVER_MD-2.44.md`; evidence: `docs/test-evidence/MD-2.44-compound-machine/`.
+
+### 2026-10-29 — MD-2.43 exact source topology and private replay in the actual app
+
+- Source-mask ledgers now become all outer/inner rings in a versioned local source project; holes/islands are not dropped. Bounded failures retain masks. Automatic colour partition remains semantically unverified.
+- Existing app loads source inspection, private save/reopen, physical-size edit and SVG controls. Inspection hides legacy paths and blocks playback/machine export. AI diagnostics can be downloaded and replayed against exact source pixels without another paid request.
+- 131 Node + 6 Chromium + 19 Python + 3 real existing synthetic satin engine tests pass. Exhaustive 65,536 tiny masks; three licensed PNG partitions round-trip through contours and save/load. Earlier environment/harness failures are preserved.
+- Offline Android/desktop evidence, actual screenshots and per-source uncertainty reports are in `docs/test-evidence/MD-2.43-source-region-drafts/`. No real-art stitches/PES/DST or sew-out. No push/deploy, hosted worker, paid AI, PR or production-secret changes. Handover: `docs/ENGINEERING_HANDOVER_MD-2.43.md`.
+
+### 2026-10-29 — MD-2.42 app-wide root-cause investigation and exact mask preservation
+
+- Scope: SF-074/075/076. Isolated local branch `feature/reconstruction-root-cause-md242`, parent GitHub main `033234cde699644048598cee65bb166bdb3191ea`. No main update, push, PR, merge, paid call or deployment.
+- Reproduced whole-region refusal caused by a one-pixel island/hole and fragmented colour masks, plus a valid closed triangle falsely rejected as degenerate. Exact earlier paid model plan is unavailable; no claim to replay its 14 specific client refusals.
+- Corrected triangle admission throughout the endpoint/editor/classifier while retaining area/malformed/crossing safety checks. The native SVG/project bridge already supports three corners; Python tests verify the handoff representation, not actual engine execution.
+- Added bounded exact source-mask ledger, deliberately not loaded into the app. Tiny components are retained and flagged rather than deleting a large enclosing region. 36 whole-frame colour-mask probes across three independent CC0 rasters round-trip exactly; current contour path returns four masks. This is mask accounting, not full AI reconstruction.
+- VTracer 1.0.0a4 candidate trial: three licensed vector-origin raster inputs, three fixed settings, two repeats = 18 conversions. Results are deterministic; colour/internal detail loss and unsupported compound/large paths prevent safe drop-in use. Self-contained HTML + actual candidate PNG/SVG evidence contains no machine simulation or private artwork.
+- Final tests: 10 syntax checks; 113 Node pass / 0 fail / 0 skipped; 19 Python geometry/bridge pass. First full Node run failed on a pre-existing historical MD-2.37 scanner/current-code equality test; pinned the actual historical digest without rewriting old evidence, then reran green. No browser, actual Ink/Stitch/decode, hosted worker or physical embroidery test this milestone.
+- Next: topology-aware mask-to-contour/project contract, local proposal/rejection replay, semantic labels over source-derived region IDs, then complete licensed-art acceptance before considering a single deployment. Never lower gates to force output.
 
 ### 2026-10-29 — MD-2.40 plan-shape diagnostics and live reconstruction evidence
 

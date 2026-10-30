@@ -1,0 +1,33 @@
+{
+  "sample": "macaw",
+  "private": false,
+  "sourceDimensions": [
+    550,
+    768
+  ],
+  "needleStitchesPerFormat": 14180,
+  "colourChanges": 11,
+  "unresolvedObjects": 513,
+  "unresolvedPixels": 584,
+  "outsidePoints": 0,
+  "outsideSegments": 0,
+  "nativePasses": 1,
+  "repairedObjects": 0,
+  "repairedSourcePixels": 0,
+  "phases": [
+    {
+      "phase": "pes",
+      "status": 200,
+      "elapsedMs": 14517
+    },
+    {
+      "phase": "dst",
+      "status": 200,
+      "elapsedMs": 6619
+    }
+  ],
+  "externalCalls": 0,
+  "pageErrors": 0,
+  "legacyPathsUnchanged": true,
+  "machineApproved": false
+}

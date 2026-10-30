@@ -20,6 +20,9 @@ _ALLOWED_KEYS = frozenset({'paths','pathStyles','pathColors','pathSettings','wid
 MAX_REQUEST = 250_000
 
 def application(environ, start_response):
+    if environ.get('PATH_INFO')=='/v1/artwork-trial' and environ.get('REQUEST_METHOD')=='POST':
+        from artwork_wsgi import application as artwork_application
+        return artwork_application(environ,start_response,_lock)
     def response(status, value, extra=()):
         payload = json.dumps({'error': value}, separators=(',', ':')).encode('ascii')
         start_response(status, [('Content-Type', 'application/json'),

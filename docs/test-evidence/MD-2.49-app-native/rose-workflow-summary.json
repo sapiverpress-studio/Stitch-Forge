@@ -1,0 +1,33 @@
+{
+  "sample": "rose",
+  "private": false,
+  "sourceDimensions": [
+    764,
+    768
+  ],
+  "needleStitchesPerFormat": 13328,
+  "colourChanges": 11,
+  "unresolvedObjects": 115,
+  "unresolvedPixels": 118,
+  "outsidePoints": 0,
+  "outsideSegments": 0,
+  "nativePasses": 1,
+  "repairedObjects": 0,
+  "repairedSourcePixels": 0,
+  "phases": [
+    {
+      "phase": "pes",
+      "status": 200,
+      "elapsedMs": 11875
+    },
+    {
+      "phase": "dst",
+      "status": 200,
+      "elapsedMs": 8598
+    }
+  ],
+  "externalCalls": 0,
+  "pageErrors": 0,
+  "legacyPathsUnchanged": true,
+  "machineApproved": false
+}

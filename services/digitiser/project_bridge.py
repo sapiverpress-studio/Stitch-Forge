@@ -75,6 +75,8 @@ def _convert_project(data: bytes, *, local_satin: bool) -> bytes:
         raise ValueError('Invalid project JSON') from exc
     if not isinstance(obj, dict):
         raise ValueError('Project must be an object')
+    if 'schema' in obj:
+        raise ValueError('Named source-inspection/control schemas are not legacy machine projects')
     satin_inputs = obj.get('satinColumns', []) if local_satin else []
     if not local_satin and ('satinColumns' in obj or 'regionOrder' in obj or 'schemaVersion' in obj):
         raise ValueError('Local satin schema is not accepted by this conversion path')

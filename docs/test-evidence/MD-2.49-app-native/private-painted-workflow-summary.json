@@ -1,0 +1,43 @@
+{
+  "sample": "private-painted",
+  "private": true,
+  "sourceDimensions": [
+    768,
+    660
+  ],
+  "needleStitchesPerFormat": 51902,
+  "colourChanges": 11,
+  "unresolvedObjects": 852,
+  "unresolvedPixels": 1364,
+  "outsidePoints": 0,
+  "outsideSegments": 0,
+  "nativePasses": 2,
+  "repairedObjects": 1,
+  "repairedSourcePixels": 823,
+  "phases": [
+    {
+      "phase": "pes",
+      "status": 200,
+      "elapsedMs": 17011
+    },
+    {
+      "phase": "dst",
+      "status": 202,
+      "elapsedMs": 36857
+    },
+    {
+      "phase": "pes",
+      "status": 200,
+      "elapsedMs": 21533
+    },
+    {
+      "phase": "dst",
+      "status": 200,
+      "elapsedMs": 37849
+    }
+  ],
+  "externalCalls": 0,
+  "pageErrors": 0,
+  "legacyPathsUnchanged": true,
+  "machineApproved": false
+}

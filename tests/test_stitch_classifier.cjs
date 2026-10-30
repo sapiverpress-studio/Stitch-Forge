@@ -22,6 +22,13 @@ test('reversed winding and repeated closing vertex',()=>{
  const p=rect(0,0,60,12).reverse();p.push(p[0]);
  assert.equal(classifyRegion(p,.25).candidate,'satin_candidate');
 });
+test('open and explicitly closed triangles have the same physical category proposal',()=>{
+ const triangle=[[0,0],[100,0],[0,80]];
+ const open=classifyRegion(triangle,.3);
+ assert.notEqual(open.reason,'invalid_or_self_intersecting_contour');
+ assert.deepEqual(open,classifyRegion([...triangle,triangle[0]],.3));
+ assert.equal(open.machineApproved,false);
+});
 test('broad region is fill proposal',()=>{
  const r=classifyRegion(rect(0,0,60,45),.25);
  assert.equal(r.candidate,'fill_candidate');assert.equal(r.proposedRails,null);

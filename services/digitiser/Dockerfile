@@ -9,6 +9,8 @@ ENV PATH="/opt/venv/bin:${PATH}"
 WORKDIR /app
 COPY services/digitiser/requirements-worker.txt /app/
 RUN pip install --no-cache-dir -r requirements-worker.txt
+COPY services/digitiser/requirements-artwork-trial.txt /app/
+RUN pip install --no-cache-dir -r requirements-artwork-trial.txt
 COPY services/digitiser/ /app/
 RUN python install_engine.py /opt/inkstitch && chmod -R a+rX /opt/inkstitch \
     && useradd --uid 10001 --no-create-home worker

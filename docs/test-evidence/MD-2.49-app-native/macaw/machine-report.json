@@ -1,0 +1,1015 @@
+{
+  "status": "REAL_ARTWORK_ENGINE_TRIAL_NOT_MACHINE_APPROVED",
+  "engine": "Ink/Stitch 3.3.0",
+  "reader": "pyembroidery 1.5.1",
+  "source": {
+    "sha256": "efefa94252039dcecea1dfc059ce9bca84675198dab98493025c9e78ab19bf97",
+    "width": 550,
+    "height": 768,
+    "originalWidth": 550,
+    "originalHeight": 768
+  },
+  "imageWidthMm": 80,
+  "objectSummary": {
+    "sourceParts": 638,
+    "workingParts": 638,
+    "sourcePixels": 157119,
+    "representedPixels": 157119,
+    "recolouredPixels": null,
+    "protectedParts": null,
+    "protectedPartsRecoloured": null,
+    "omittedPixels": 0
+  },
+  "nativePaths": 222,
+  "pesVersion": 6,
+  "nativeRepairObjects": [],
+  "stitchPlanning": {
+    "settings": {
+      "fillDirection": "component_axis_in_15_degree_steps_or_horizontal_if_isotropic",
+      "fillRowSpacingMm": 0.5,
+      "fillMaxStitchMm": 3.5,
+      "fillUnderlay": false,
+      "runningLengthMm": 1.5,
+      "runningToleranceMm": 0.01,
+      "contourToleranceMm": 0.02,
+      "collapseJumpBelowMm": 0,
+      "minimumStitchMm": 0.05,
+      "nativeLock": "back_forth",
+      "nativeLockScaleMm": 0.2,
+      "complexFillPartitionEnabled": true,
+      "complexFillPartitionGridMm": 8,
+      "nativeFillInteriorTravel": true,
+      "boundedNativeRepairMaxSourceFraction": 0.02
+    },
+    "families": "native_fill_and_source_skeleton_running",
+    "semanticStitchIntentVerified": false
+  },
+  "unresolvedObjects": 513,
+  "unresolvedPixels": 584,
+  "decoded": [
+    {
+      "format": "dst",
+      "needleStitches": 14180,
+      "colourChanges": 11,
+      "jumps": 267,
+      "trims": 8,
+      "boundsMm": [
+        76.0,
+        106.0
+      ],
+      "maxNeedleMoveMm": 3.5999999999999943,
+      "maxNeedlesInOneMmSquare": 95,
+      "needlePointsOutsideWorkingColour": 0,
+      "needleSegmentsOutsideWorkingColour": 0,
+      "firstOutsideSegments": [],
+      "sourceBoundaryToleranceMm": 0.11,
+      "coverageProxy": {
+        "#000000": {
+          "selectedPixels": 10150,
+          "pixelsNearDecodedPath": 8844,
+          "fractionNearDecodedPath": 0.8713300492610837
+        },
+        "#0039AA": {
+          "selectedPixels": 11489,
+          "pixelsNearDecodedPath": 10069,
+          "fractionNearDecodedPath": 0.876403516406998
+        },
+        "#0067B2": {
+          "selectedPixels": 5781,
+          "pixelsNearDecodedPath": 5245,
+          "fractionNearDecodedPath": 0.9072824770800899
+        },
+        "#04BFE6": {
+          "selectedPixels": 13658,
+          "pixelsNearDecodedPath": 13222,
+          "fractionNearDecodedPath": 0.9680773173231806
+        },
+        "#054964": {
+          "selectedPixels": 10655,
+          "pixelsNearDecodedPath": 9408,
+          "fractionNearDecodedPath": 0.8829657437822619
+        },
+        "#412102": {
+          "selectedPixels": 24639,
+          "pixelsNearDecodedPath": 21406,
+          "fractionNearDecodedPath": 0.8687852591420107
+        },
+        "#71712B": {
+          "selectedPixels": 10774,
+          "pixelsNearDecodedPath": 9212,
+          "fractionNearDecodedPath": 0.8550213476888806
+        },
+        "#A5A503": {
+          "selectedPixels": 21299,
+          "pixelsNearDecodedPath": 18409,
+          "fractionNearDecodedPath": 0.8643128785388985
+        },
+        "#B0B4AD": {
+          "selectedPixels": 18011,
+          "pixelsNearDecodedPath": 15332,
+          "fractionNearDecodedPath": 0.851257564821498
+        },
+        "#CECF6C": {
+          "selectedPixels": 10710,
+          "pixelsNearDecodedPath": 9290,
+          "fractionNearDecodedPath": 0.8674136321195145
+        },
+        "#EEEE1E": {
+          "selectedPixels": 16785,
+          "pixelsNearDecodedPath": 15476,
+          "fractionNearDecodedPath": 0.9220137027107537
+        },
+        "#F7F7F7": {
+          "selectedPixels": 3168,
+          "pixelsNearDecodedPath": 3049,
+          "fractionNearDecodedPath": 0.9624368686868687
+        }
+      },
+      "coverageProxyRadiusMm": 0.25,
+      "fillDirectionAudit": {
+        "000000-4": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 137.17515115557717,
+          "alignedWithin8DegMm": 122.02640136304983,
+          "alignedLongSegmentFraction": 0.8895663706953282
+        },
+        "000000-13": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 26.22433382847268,
+          "alignedWithin8DegMm": 22.00621073594946,
+          "alignedLongSegmentFraction": 0.839152326228266
+        },
+        "000000-18": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 18.350484378151304,
+          "alignedWithin8DegMm": 18.350484378151304,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "000000-19": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 196.30839167535683,
+          "alignedWithin8DegMm": 186.70677911763315,
+          "alignedLongSegmentFraction": 0.9510891384938742
+        },
+        "000000-20": {
+          "requestedAngleDeg": 90,
+          "attributedLongSegmentMm": 16.104987562112125,
+          "alignedWithin8DegMm": 16.104987562112125,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "000000-21": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 18.263711601921536,
+          "alignedWithin8DegMm": 13.148753869016975,
+          "alignedLongSegmentFraction": 0.7199387591968758
+        },
+        "000000-22": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 0.0,
+          "alignedWithin8DegMm": 0.0,
+          "alignedLongSegmentFraction": null
+        },
+        "0039AA-0": {
+          "requestedAngleDeg": -90,
+          "attributedLongSegmentMm": 480.8073883684102,
+          "alignedWithin8DegMm": 470.11239492791447,
+          "alignedLongSegmentFraction": 0.9777561790870383
+        },
+        "0039AA-6": {
+          "requestedAngleDeg": -90,
+          "attributedLongSegmentMm": 4.700000000000003,
+          "alignedWithin8DegMm": 4.700000000000003,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "0067B2-0": {
+          "requestedAngleDeg": -60,
+          "attributedLongSegmentMm": 170.75117486268013,
+          "alignedWithin8DegMm": 159.58925177789956,
+          "alignedLongSegmentFraction": 0.9346304756394379
+        },
+        "0067B2-1": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 40.543609944047596,
+          "alignedWithin8DegMm": 28.999454954366904,
+          "alignedLongSegmentFraction": 0.7152657347085704
+        },
+        "0067B2-14": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 21.82576676222187,
+          "alignedWithin8DegMm": 20.721230660503146,
+          "alignedLongSegmentFraction": 0.9493930218465194
+        },
+        "0067B2-15": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 11.571931188000649,
+          "alignedWithin8DegMm": 10.071931188000647,
+          "alignedLongSegmentFraction": 0.8703760007184103
+        },
+        "0067B2-16": {
+          "requestedAngleDeg": 90,
+          "attributedLongSegmentMm": 8.217780447134926,
+          "alignedWithin8DegMm": 4.200000000000003,
+          "alignedLongSegmentFraction": 0.5110869080792131
+        },
+        "04BFE6-0": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 569.3759813511141,
+          "alignedWithin8DegMm": 525.5395574486283,
+          "alignedLongSegmentFraction": 0.923009706523863
+        },
+        "054964-0": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 328.1043047730292,
+          "alignedWithin8DegMm": 299.00161248385416,
+          "alignedLongSegmentFraction": 0.9113004862605896
+        },
+        "054964-14": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 26.30249306499892,
+          "alignedWithin8DegMm": 25.184459076249034,
+          "alignedLongSegmentFraction": 0.9574932313075041
+        },
+        "054964-18": {
+          "requestedAngleDeg": 60,
+          "attributedLongSegmentMm": 33.53193985735456,
+          "alignedWithin8DegMm": 32.02861021951727,
+          "alignedLongSegmentFraction": 0.9551672332637933
+        },
+        "054964-22": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 38.74321445366303,
+          "alignedWithin8DegMm": 32.41550679311619,
+          "alignedLongSegmentFraction": 0.8366757185799646
+        },
+        "054964-23": {
+          "requestedAngleDeg": 30,
+          "attributedLongSegmentMm": 42.80852319666776,
+          "alignedWithin8DegMm": 38.24751365669956,
+          "alignedLongSegmentFraction": 0.89345557381145
+        },
+        "412102-12": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 917.5061486806491,
+          "alignedWithin8DegMm": 879.9895474847267,
+          "alignedLongSegmentFraction": 0.9591102454737003
+        },
+        "412102-26": {
+          "requestedAngleDeg": 30,
+          "attributedLongSegmentMm": 18.82243848803708,
+          "alignedWithin8DegMm": 15.409597788958896,
+          "alignedLongSegmentFraction": 0.8186823295373088
+        },
+        "412102-27": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 16.092192323126014,
+          "alignedWithin8DegMm": 13.082430827221382,
+          "alignedLongSegmentFraction": 0.8129675910236719
+        },
+        "412102-29": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 47.16181808535957,
+          "alignedWithin8DegMm": 32.18036292954403,
+          "alignedLongSegmentFraction": 0.6823393210011506
+        },
+        "412102-30": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 22.32497664688094,
+          "alignedWithin8DegMm": 17.299999999999997,
+          "alignedLongSegmentFraction": 0.7749168240414266
+        },
+        "412102-31": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 15.936591783058716,
+          "alignedWithin8DegMm": 12.447717358393579,
+          "alignedLongSegmentFraction": 0.7810777566396624
+        },
+        "412102-32": {
+          "requestedAngleDeg": -15,
+          "attributedLongSegmentMm": 31.081044291991862,
+          "alignedWithin8DegMm": 28.628843896829313,
+          "alignedLongSegmentFraction": 0.9211030243345342
+        },
+        "71712B-76": {
+          "requestedAngleDeg": -60,
+          "attributedLongSegmentMm": 167.74293528373707,
+          "alignedWithin8DegMm": 150.2576410074208,
+          "alignedLongSegmentFraction": 0.8957613669586746
+        },
+        "71712B-203": {
+          "requestedAngleDeg": 15,
+          "attributedLongSegmentMm": 13.072975437284557,
+          "alignedWithin8DegMm": 9.631416725800797,
+          "alignedLongSegmentFraction": 0.7367425091560778
+        },
+        "71712B-204": {
+          "requestedAngleDeg": 15,
+          "attributedLongSegmentMm": 15.604751555270925,
+          "alignedWithin8DegMm": 10.486325223753328,
+          "alignedLongSegmentFraction": 0.671995653798877
+        },
+        "71712B-207": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 6.04863802076669,
+          "alignedWithin8DegMm": 4.525483399593902,
+          "alignedLongSegmentFraction": 0.7481822162372147
+        },
+        "71712B-208": {
+          "requestedAngleDeg": -90,
+          "attributedLongSegmentMm": 53.76330881879039,
+          "alignedWithin8DegMm": 51.20000000000002,
+          "alignedLongSegmentFraction": 0.9523223388755698
+        },
+        "71712B-209": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 52.062616954150236,
+          "alignedWithin8DegMm": 42.90000000000001,
+          "alignedLongSegmentFraction": 0.8240077527754813
+        },
+        "71712B-210": {
+          "requestedAngleDeg": -90,
+          "attributedLongSegmentMm": 7.644857657895278,
+          "alignedWithin8DegMm": 5.299999999999997,
+          "alignedLongSegmentFraction": 0.6932764790625482
+        },
+        "71712B-211": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 9.70537636062872,
+          "alignedWithin8DegMm": 9.70537636062872,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "71712B-212": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 20.539439357672084,
+          "alignedWithin8DegMm": 15.40000000000001,
+          "alignedLongSegmentFraction": 0.7497770378161591
+        },
+        "71712B-216": {
+          "requestedAngleDeg": -15,
+          "attributedLongSegmentMm": 50.909013017110155,
+          "alignedWithin8DegMm": 46.019940268668606,
+          "alignedLongSegmentFraction": 0.9039644955049833
+        },
+        "A5A503-18": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 30.553656187850397,
+          "alignedWithin8DegMm": 28.3585892376736,
+          "alignedLongSegmentFraction": 0.9281569794239662
+        },
+        "A5A503-25": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 175.5911495473345,
+          "alignedWithin8DegMm": 156.20000000000005,
+          "alignedLongSegmentFraction": 0.8895664753188078
+        },
+        "A5A503-35": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 494.07832674753564,
+          "alignedWithin8DegMm": 466.69999999999993,
+          "alignedLongSegmentFraction": 0.9445870719977452
+        },
+        "A5A503-36": {
+          "requestedAngleDeg": 90,
+          "attributedLongSegmentMm": 21.54290791257703,
+          "alignedWithin8DegMm": 16.904987562112108,
+          "alignedLongSegmentFraction": 0.784712427436166
+        },
+        "A5A503-38": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 40.25015980769334,
+          "alignedWithin8DegMm": 36.50773228519459,
+          "alignedLongSegmentFraction": 0.9070208033861413
+        },
+        "A5A503-40": {
+          "requestedAngleDeg": -15,
+          "attributedLongSegmentMm": 152.93198721804671,
+          "alignedWithin8DegMm": 130.15660869767413,
+          "alignedLongSegmentFraction": 0.8510751155812812
+        },
+        "B0B4AD-23": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 6.895957478150265,
+          "alignedWithin8DegMm": 5.89595747815026,
+          "alignedLongSegmentFraction": 0.85498750490146
+        },
+        "B0B4AD-51": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 728.7507668007806,
+          "alignedWithin8DegMm": 632.4582961101064,
+          "alignedLongSegmentFraction": 0.8678663885138692
+        },
+        "B0B4AD-166": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 10.607094029537294,
+          "alignedWithin8DegMm": 9.265453243037419,
+          "alignedLongSegmentFraction": 0.8735147644808424
+        },
+        "B0B4AD-221": {
+          "requestedAngleDeg": 15,
+          "attributedLongSegmentMm": 39.06203860750423,
+          "alignedWithin8DegMm": 32.7737557014349,
+          "alignedLongSegmentFraction": 0.8390180561425875
+        },
+        "CECF6C-3": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 225.66261567448683,
+          "alignedWithin8DegMm": 218.62338637539668,
+          "alignedLongSegmentFraction": 0.9688064003067124
+        },
+        "CECF6C-10": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 160.1237545316319,
+          "alignedWithin8DegMm": 139.9252919160131,
+          "alignedLongSegmentFraction": 0.8738571758156678
+        },
+        "CECF6C-11": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 63.0505828734295,
+          "alignedWithin8DegMm": 52.05969597994958,
+          "alignedLongSegmentFraction": 0.8256814387339844
+        },
+        "CECF6C-13": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 3.2526911934581193,
+          "alignedWithin8DegMm": 3.2526911934581193,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "EEEE1E-0": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 254.05266766990746,
+          "alignedWithin8DegMm": 237.754850600935,
+          "alignedLongSegmentFraction": 0.935848667843361
+        },
+        "EEEE1E-1": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 423.1478626004201,
+          "alignedWithin8DegMm": 363.39785862886043,
+          "alignedLongSegmentFraction": 0.8587963942335168
+        },
+        "EEEE1E-6": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 15.385453635089913,
+          "alignedWithin8DegMm": 11.481294177210671,
+          "alignedLongSegmentFraction": 0.7462434614878727
+        },
+        "EEEE1E-7": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 10.045600786257538,
+          "alignedWithin8DegMm": 8.78068972219019,
+          "alignedLongSegmentFraction": 0.8740830846276754
+        },
+        "EEEE1E-8": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 21.374898291172258,
+          "alignedWithin8DegMm": 20.059603647375667,
+          "alignedLongSegmentFraction": 0.9384654548583372
+        },
+        "F7F7F7-0": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 106.25343825486604,
+          "alignedWithin8DegMm": 87.71903788081129,
+          "alignedLongSegmentFraction": 0.8255642294643021
+        }
+      },
+      "fillDirectionAuditMethod": "source-component midpoint attribution, length >=1mm, 8 degree coordinate-quantisation allowance; underpath segments remain in denominator",
+      "coverageProxyMethod": "analysis-pixel raster of actual decoded segments; not physical thread/fabric coverage",
+      "requestedColourOrder": [
+        "#000000",
+        "#0039AA",
+        "#0067B2",
+        "#04BFE6",
+        "#054964",
+        "#412102",
+        "#71712B",
+        "#A5A503",
+        "#B0B4AD",
+        "#CECF6C",
+        "#EEEE1E",
+        "#F7F7F7"
+      ],
+      "translationToSourceMm": [
+        42.0,
+        57.85454545454545
+      ],
+      "sha256": "5ef2c13998a3a85ca4b4e1ee27fb230ff24d0778c192a1ce2d972e3de69a7a99"
+    },
+    {
+      "format": "pes",
+      "needleStitches": 14180,
+      "colourChanges": 11,
+      "jumps": 201,
+      "trims": 199,
+      "boundsMm": [
+        76.0,
+        106.0
+      ],
+      "maxNeedleMoveMm": 3.6000000000000014,
+      "maxNeedlesInOneMmSquare": 95,
+      "needlePointsOutsideWorkingColour": 0,
+      "needleSegmentsOutsideWorkingColour": 0,
+      "firstOutsideSegments": [],
+      "sourceBoundaryToleranceMm": 0.11,
+      "coverageProxy": {
+        "#000000": {
+          "selectedPixels": 10150,
+          "pixelsNearDecodedPath": 8845,
+          "fractionNearDecodedPath": 0.8714285714285714
+        },
+        "#0039AA": {
+          "selectedPixels": 11489,
+          "pixelsNearDecodedPath": 10069,
+          "fractionNearDecodedPath": 0.876403516406998
+        },
+        "#0067B2": {
+          "selectedPixels": 5781,
+          "pixelsNearDecodedPath": 5251,
+          "fractionNearDecodedPath": 0.9083203597993427
+        },
+        "#04BFE6": {
+          "selectedPixels": 13658,
+          "pixelsNearDecodedPath": 13245,
+          "fractionNearDecodedPath": 0.9697613120515449
+        },
+        "#054964": {
+          "selectedPixels": 10655,
+          "pixelsNearDecodedPath": 9422,
+          "fractionNearDecodedPath": 0.8842796809009854
+        },
+        "#412102": {
+          "selectedPixels": 24639,
+          "pixelsNearDecodedPath": 21406,
+          "fractionNearDecodedPath": 0.8687852591420107
+        },
+        "#71712B": {
+          "selectedPixels": 10774,
+          "pixelsNearDecodedPath": 9211,
+          "fractionNearDecodedPath": 0.8549285316502692
+        },
+        "#A5A503": {
+          "selectedPixels": 21299,
+          "pixelsNearDecodedPath": 18406,
+          "fractionNearDecodedPath": 0.8641720268557209
+        },
+        "#B0B4AD": {
+          "selectedPixels": 18011,
+          "pixelsNearDecodedPath": 15334,
+          "fractionNearDecodedPath": 0.8513686080728444
+        },
+        "#CECF6C": {
+          "selectedPixels": 10710,
+          "pixelsNearDecodedPath": 9290,
+          "fractionNearDecodedPath": 0.8674136321195145
+        },
+        "#EEEE1E": {
+          "selectedPixels": 16785,
+          "pixelsNearDecodedPath": 15472,
+          "fractionNearDecodedPath": 0.9217753946976467
+        },
+        "#F7F7F7": {
+          "selectedPixels": 3168,
+          "pixelsNearDecodedPath": 3043,
+          "fractionNearDecodedPath": 0.9605429292929293
+        }
+      },
+      "coverageProxyRadiusMm": 0.25,
+      "fillDirectionAudit": {
+        "000000-4": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 137.1751511555772,
+          "alignedWithin8DegMm": 122.02640136304983,
+          "alignedLongSegmentFraction": 0.889566370695328
+        },
+        "000000-13": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 26.22433382847267,
+          "alignedWithin8DegMm": 22.006210735949455,
+          "alignedLongSegmentFraction": 0.8391523262282662
+        },
+        "000000-18": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 18.35048437815131,
+          "alignedWithin8DegMm": 18.35048437815131,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "000000-19": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 197.3083916753568,
+          "alignedWithin8DegMm": 186.70677911763318,
+          "alignedLongSegmentFraction": 0.9462688207647697
+        },
+        "000000-20": {
+          "requestedAngleDeg": 90,
+          "attributedLongSegmentMm": 16.104987562112097,
+          "alignedWithin8DegMm": 16.104987562112097,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "000000-21": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 18.26371160192155,
+          "alignedWithin8DegMm": 13.148753869016975,
+          "alignedLongSegmentFraction": 0.7199387591968752
+        },
+        "000000-22": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 0.0,
+          "alignedWithin8DegMm": 0.0,
+          "alignedLongSegmentFraction": null
+        },
+        "0039AA-0": {
+          "requestedAngleDeg": -90,
+          "attributedLongSegmentMm": 480.8073883684102,
+          "alignedWithin8DegMm": 470.11239492791447,
+          "alignedLongSegmentFraction": 0.9777561790870383
+        },
+        "0039AA-6": {
+          "requestedAngleDeg": -90,
+          "attributedLongSegmentMm": 4.700000000000003,
+          "alignedWithin8DegMm": 4.700000000000003,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "0067B2-0": {
+          "requestedAngleDeg": -60,
+          "attributedLongSegmentMm": 170.75117486268013,
+          "alignedWithin8DegMm": 159.5892517778996,
+          "alignedLongSegmentFraction": 0.934630475639438
+        },
+        "0067B2-1": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 40.543609944047596,
+          "alignedWithin8DegMm": 28.999454954366907,
+          "alignedLongSegmentFraction": 0.7152657347085705
+        },
+        "0067B2-14": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 21.82576676222187,
+          "alignedWithin8DegMm": 20.72123066050314,
+          "alignedLongSegmentFraction": 0.9493930218465191
+        },
+        "0067B2-15": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 11.571931188000615,
+          "alignedWithin8DegMm": 10.071931188000622,
+          "alignedLongSegmentFraction": 0.8703760007184107
+        },
+        "0067B2-16": {
+          "requestedAngleDeg": 90,
+          "attributedLongSegmentMm": 8.217780447134881,
+          "alignedWithin8DegMm": 4.199999999999974,
+          "alignedLongSegmentFraction": 0.5110869080792124
+        },
+        "04BFE6-0": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 569.3759813511141,
+          "alignedWithin8DegMm": 525.5395574486283,
+          "alignedLongSegmentFraction": 0.923009706523863
+        },
+        "054964-0": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 327.1043047730293,
+          "alignedWithin8DegMm": 298.00161248385416,
+          "alignedLongSegmentFraction": 0.9110293204200756
+        },
+        "054964-14": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 26.302493064998913,
+          "alignedWithin8DegMm": 25.184459076249023,
+          "alignedLongSegmentFraction": 0.957493231307504
+        },
+        "054964-18": {
+          "requestedAngleDeg": 60,
+          "attributedLongSegmentMm": 33.53193985735458,
+          "alignedWithin8DegMm": 32.02861021951729,
+          "alignedLongSegmentFraction": 0.9551672332637933
+        },
+        "054964-22": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 38.74321445366313,
+          "alignedWithin8DegMm": 32.41550679311628,
+          "alignedLongSegmentFraction": 0.8366757185799649
+        },
+        "054964-23": {
+          "requestedAngleDeg": 30,
+          "attributedLongSegmentMm": 42.80852319666781,
+          "alignedWithin8DegMm": 38.24751365669961,
+          "alignedLongSegmentFraction": 0.8934555738114501
+        },
+        "412102-12": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 918.506148680649,
+          "alignedWithin8DegMm": 879.9895474847268,
+          "alignedLongSegmentFraction": 0.9580660388052407
+        },
+        "412102-26": {
+          "requestedAngleDeg": 30,
+          "attributedLongSegmentMm": 18.822438488037104,
+          "alignedWithin8DegMm": 15.409597788958921,
+          "alignedLongSegmentFraction": 0.818682329537309
+        },
+        "412102-27": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 16.09219232312603,
+          "alignedWithin8DegMm": 13.08243082722139,
+          "alignedLongSegmentFraction": 0.8129675910236716
+        },
+        "412102-29": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 47.16181808535958,
+          "alignedWithin8DegMm": 32.18036292954403,
+          "alignedLongSegmentFraction": 0.6823393210011505
+        },
+        "412102-30": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 22.32497664688094,
+          "alignedWithin8DegMm": 17.300000000000004,
+          "alignedLongSegmentFraction": 0.7749168240414269
+        },
+        "412102-31": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 15.936591783058741,
+          "alignedWithin8DegMm": 12.447717358393596,
+          "alignedLongSegmentFraction": 0.7810777566396623
+        },
+        "412102-32": {
+          "requestedAngleDeg": -15,
+          "attributedLongSegmentMm": 31.08104429199185,
+          "alignedWithin8DegMm": 28.628843896829302,
+          "alignedLongSegmentFraction": 0.9211030243345341
+        },
+        "71712B-76": {
+          "requestedAngleDeg": -60,
+          "attributedLongSegmentMm": 167.74293528373707,
+          "alignedWithin8DegMm": 150.2576410074208,
+          "alignedLongSegmentFraction": 0.8957613669586746
+        },
+        "71712B-203": {
+          "requestedAngleDeg": 15,
+          "attributedLongSegmentMm": 13.072975437284544,
+          "alignedWithin8DegMm": 9.6314167258008,
+          "alignedLongSegmentFraction": 0.7367425091560788
+        },
+        "71712B-204": {
+          "requestedAngleDeg": 15,
+          "attributedLongSegmentMm": 15.604751555270928,
+          "alignedWithin8DegMm": 10.486325223753335,
+          "alignedLongSegmentFraction": 0.6719956537988773
+        },
+        "71712B-207": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 6.048638020766695,
+          "alignedWithin8DegMm": 4.525483399593908,
+          "alignedLongSegmentFraction": 0.7481822162372149
+        },
+        "71712B-208": {
+          "requestedAngleDeg": -90,
+          "attributedLongSegmentMm": 53.763308818790385,
+          "alignedWithin8DegMm": 51.2,
+          "alignedLongSegmentFraction": 0.9523223388755697
+        },
+        "71712B-209": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 52.06261695415022,
+          "alignedWithin8DegMm": 42.89999999999999,
+          "alignedLongSegmentFraction": 0.8240077527754812
+        },
+        "71712B-210": {
+          "requestedAngleDeg": -90,
+          "attributedLongSegmentMm": 7.644857657895277,
+          "alignedWithin8DegMm": 5.299999999999997,
+          "alignedLongSegmentFraction": 0.6932764790625483
+        },
+        "71712B-211": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 9.705376360628716,
+          "alignedWithin8DegMm": 9.705376360628716,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "71712B-212": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 20.539439357672066,
+          "alignedWithin8DegMm": 15.400000000000002,
+          "alignedLongSegmentFraction": 0.7497770378161595
+        },
+        "71712B-216": {
+          "requestedAngleDeg": -15,
+          "attributedLongSegmentMm": 50.90901301711015,
+          "alignedWithin8DegMm": 46.0199402686686,
+          "alignedLongSegmentFraction": 0.9039644955049833
+        },
+        "A5A503-18": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 30.553656187850386,
+          "alignedWithin8DegMm": 28.35858923767359,
+          "alignedLongSegmentFraction": 0.9281569794239662
+        },
+        "A5A503-25": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 174.5911495473345,
+          "alignedWithin8DegMm": 156.19999999999993,
+          "alignedLongSegmentFraction": 0.8946616160382835
+        },
+        "A5A503-35": {
+          "requestedAngleDeg": 0,
+          "attributedLongSegmentMm": 494.0783267475357,
+          "alignedWithin8DegMm": 466.70000000000005,
+          "alignedLongSegmentFraction": 0.9445870719977454
+        },
+        "A5A503-36": {
+          "requestedAngleDeg": 90,
+          "attributedLongSegmentMm": 21.54290791257702,
+          "alignedWithin8DegMm": 16.904987562112108,
+          "alignedLongSegmentFraction": 0.7847124274361663
+        },
+        "A5A503-38": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 40.250159807693336,
+          "alignedWithin8DegMm": 36.50773228519459,
+          "alignedLongSegmentFraction": 0.9070208033861414
+        },
+        "A5A503-40": {
+          "requestedAngleDeg": -15,
+          "attributedLongSegmentMm": 152.9319872180467,
+          "alignedWithin8DegMm": 130.1566086976742,
+          "alignedLongSegmentFraction": 0.8510751155812818
+        },
+        "B0B4AD-23": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 6.895957478150271,
+          "alignedWithin8DegMm": 5.895957478150269,
+          "alignedLongSegmentFraction": 0.8549875049014607
+        },
+        "B0B4AD-51": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 728.7507668007806,
+          "alignedWithin8DegMm": 632.4582961101066,
+          "alignedLongSegmentFraction": 0.8678663885138695
+        },
+        "B0B4AD-166": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 10.607094029537278,
+          "alignedWithin8DegMm": 9.26545324303741,
+          "alignedLongSegmentFraction": 0.8735147644808429
+        },
+        "B0B4AD-221": {
+          "requestedAngleDeg": 15,
+          "attributedLongSegmentMm": 39.06203860750422,
+          "alignedWithin8DegMm": 32.7737557014349,
+          "alignedLongSegmentFraction": 0.8390180561425876
+        },
+        "CECF6C-3": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 225.66261567448677,
+          "alignedWithin8DegMm": 218.62338637539656,
+          "alignedLongSegmentFraction": 0.9688064003067122
+        },
+        "CECF6C-10": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 160.12375453163187,
+          "alignedWithin8DegMm": 139.92529191601304,
+          "alignedLongSegmentFraction": 0.8738571758156676
+        },
+        "CECF6C-11": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 63.05058287342951,
+          "alignedWithin8DegMm": 52.059695979949595,
+          "alignedLongSegmentFraction": 0.8256814387339844
+        },
+        "CECF6C-13": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 3.2526911934581144,
+          "alignedWithin8DegMm": 3.2526911934581144,
+          "alignedLongSegmentFraction": 1.0
+        },
+        "EEEE1E-0": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 254.05266766990755,
+          "alignedWithin8DegMm": 237.7548506009351,
+          "alignedLongSegmentFraction": 0.9358486678433611
+        },
+        "EEEE1E-1": {
+          "requestedAngleDeg": 45,
+          "attributedLongSegmentMm": 423.14786260041996,
+          "alignedWithin8DegMm": 363.39785862886055,
+          "alignedLongSegmentFraction": 0.8587963942335175
+        },
+        "EEEE1E-6": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 15.385453635089917,
+          "alignedWithin8DegMm": 11.481294177210675,
+          "alignedLongSegmentFraction": 0.7462434614878728
+        },
+        "EEEE1E-7": {
+          "requestedAngleDeg": -75,
+          "attributedLongSegmentMm": 10.045600786257541,
+          "alignedWithin8DegMm": 8.78068972219019,
+          "alignedLongSegmentFraction": 0.874083084627675
+        },
+        "EEEE1E-8": {
+          "requestedAngleDeg": 75,
+          "attributedLongSegmentMm": 21.374898291172276,
+          "alignedWithin8DegMm": 20.059603647375685,
+          "alignedLongSegmentFraction": 0.9384654548583372
+        },
+        "F7F7F7-0": {
+          "requestedAngleDeg": -45,
+          "attributedLongSegmentMm": 106.25343825486598,
+          "alignedWithin8DegMm": 87.71903788081129,
+          "alignedLongSegmentFraction": 0.8255642294643025
+        }
+      },
+      "fillDirectionAuditMethod": "source-component midpoint attribution, length >=1mm, 8 degree coordinate-quantisation allowance; underpath segments remain in denominator",
+      "coverageProxyMethod": "analysis-pixel raster of actual decoded segments; not physical thread/fabric coverage",
+      "requestedColourOrder": [
+        "#000000",
+        "#0039AA",
+        "#0067B2",
+        "#04BFE6",
+        "#054964",
+        "#412102",
+        "#71712B",
+        "#A5A503",
+        "#B0B4AD",
+        "#CECF6C",
+        "#EEEE1E",
+        "#F7F7F7"
+      ],
+      "translationToSourceMm": [
+        3.700000000000003,
+        4.754545454545454
+      ],
+      "sha256": "929231cb462c636af5025073da496acda744bd08f8b1e3327b737165d75ffa5d"
+    }
+  ],
+  "structuralAudit": [
+    {
+      "name": "native-artwork.pes",
+      "format": "pes",
+      "needle_stitches": 14180,
+      "jumps": 201,
+      "changes": 11,
+      "bounds_mm": [
+        76.0,
+        106.0
+      ],
+      "trims": 199,
+      "stops": 0,
+      "max_needle_move_mm": 3.6,
+      "thread_colors": [
+        "#000000",
+        "#0039aa",
+        "#0067b2",
+        "#04bfe6",
+        "#054964",
+        "#412102",
+        "#71712b",
+        "#a5a503",
+        "#b0b4ad",
+        "#cecf6c",
+        "#eeee1e",
+        "#f7f7f7"
+      ]
+    },
+    {
+      "name": "native-artwork.dst",
+      "format": "dst",
+      "needle_stitches": 14180,
+      "jumps": 267,
+      "changes": 11,
+      "bounds_mm": [
+        76.0,
+        106.0
+      ],
+      "trims": 8,
+      "stops": 0,
+      "max_needle_move_mm": 3.6,
+      "thread_colors": []
+    }
+  ],
+  "blockers": [
+    "stitch_intent_semantics_unverified",
+    "fabric_underlay_density_routing_unverified",
+    "physical_quality_unverified",
+    "unresolved_small_source_details"
+  ],
+  "machineEligible": false,
+  "physicalQualityVerified": false,
+  "automaticAISemanticsVerified": false,
+  "limitations": [
+    "Shape-based fill/running trials; no AI semantics or satin planning.",
+    "Geometric-axis fill and no underlay are controlled trials, not semantic directions or fabric presets.",
+    "Skeleton branches are not proven feather/vein intent. Unresolved tiny details are explicit.",
+    "Layer, routing, local density, thread palette and physical fabric quality require review."
+  ],
+  "requestId": "2fc7ff34a7910394b241ac977c94bd42fecb54acaf7391201ae7fdae3a0317a5",
+  "sourceBinding": {
+    "sourcePixelsVerified": true,
+    "foregroundIndependentlyVerified": true,
+    "clientObjectAlgorithmRecomputed": false,
+    "clientPreparationSignature": "14d9369dec6f30dcff60288ac2c0b334d0dfd487b0346ffe160c430428bbfd73",
+    "sourceMeanRgbDistance": 25.684558337299478,
+    "sourcePixelsBeyondRgb60": 6855,
+    "sourceSemanticFeaturesVerified": false
+  },
+  "nativePasses": 1,
+  "maxNativePasses": 2,
+  "nativeInputSha256": "a0f0b003c230d1d91d0c97ea5e10550923c06c78587bf72987253bc8a382861d",
+  "workflow": "TWO_NATIVE_PHASES_NO_AI"
+}

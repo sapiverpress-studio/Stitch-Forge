@@ -1,0 +1,95 @@
+{
+  "scope": "Licensed non-synthetic vector-origin illustrations, used as raster input. Not representative of every painted/textured image.",
+  "samples": [
+    {
+      "id": "butterfly",
+      "title": "Danaus plexippus",
+      "author": "donchico",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Danaus_plexippus.svg",
+      "source_file_url": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Danaus_plexippus.svg",
+      "licence": "CC0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "retrieved_date": "2026-10-29",
+      "original_nominal_dimensions": [
+        890,
+        785
+      ],
+      "original_svg_sha256": "09b5a44033d9cecfdb953eb97f11f3e835028dc1e30fe276fb118b7b44e216f7",
+      "raster_file": "butterfly.png",
+      "raster_dimensions": [
+        768,
+        680
+      ],
+      "raster_sha256": "823ba8f78f280f9a3a7bee821617a7a4f41724c5dbe146e271c0d8d6d760c63b",
+      "preparation": "Rasterised by CairoSVG, maximum content dimension 744px plus 12px transparent padding; source vector geometry is not given to the candidate algorithm.",
+      "expected_visible_features": [
+        "wing panels and contrasting veins",
+        "white border spots",
+        "body and antennae"
+      ],
+      "automatic_ai_reconstruction_verified": false,
+      "machine_files_verified": false
+    },
+    {
+      "id": "macaw",
+      "title": "Blue-and-yellow macaw",
+      "author": "adw3163",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Blue-and-yellow_macaw.svg",
+      "source_file_url": "https://upload.wikimedia.org/wikipedia/commons/9/98/Blue-and-yellow_macaw.svg",
+      "licence": "CC0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "retrieved_date": "2026-10-29",
+      "original_nominal_dimensions": [
+        744,
+        1052
+      ],
+      "original_svg_sha256": "9bebb5250f637004c8e11ccce77a08ed54ab3ac46f96303cd192da409167f3d8",
+      "raster_file": "macaw.png",
+      "raster_dimensions": [
+        550,
+        768
+      ],
+      "raster_sha256": "3aedfb0ea139d67bfbce0b4529812b00593f98f7e429df667c61750c242ca3b3",
+      "preparation": "Rasterised by CairoSVG, maximum content dimension 744px plus 12px transparent padding; source vector geometry is not given to the candidate algorithm.",
+      "expected_visible_features": [
+        "visible eye and facial markings",
+        "beak",
+        "cyan and yellow masses",
+        "overlapping wing and tail feathers",
+        "feet and perch"
+      ],
+      "automatic_ai_reconstruction_verified": false,
+      "machine_files_verified": false
+    },
+    {
+      "id": "rose",
+      "title": "Rose with leafs",
+      "author": "COAmaker17",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Rose_with_leafs.svg",
+      "source_file_url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Rose_with_leafs.svg",
+      "licence": "CC0-1.0",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "retrieved_date": "2026-10-29",
+      "original_nominal_dimensions": [
+        512,
+        515
+      ],
+      "original_svg_sha256": "a34f4815b9df75826e42603999735111fc80f9160729883576ec3255933a2949",
+      "raster_file": "rose.png",
+      "raster_dimensions": [
+        764,
+        768
+      ],
+      "raster_sha256": "0a8015735a6d9c6833a4f9e4319f7dcc3575efd047f7cc8341c2ce00716deed4",
+      "preparation": "Rasterised by CairoSVG, maximum content dimension 744px plus 12px transparent padding; source vector geometry is not given to the candidate algorithm.",
+      "expected_visible_features": [
+        "overlapping pink petals",
+        "central spiral",
+        "four green leaves",
+        "visible colour boundaries and shading"
+      ],
+      "automatic_ai_reconstruction_verified": false,
+      "machine_files_verified": false
+    }
+  ]
+}

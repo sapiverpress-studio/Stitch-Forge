@@ -45,6 +45,16 @@ class ProjectBridgeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'explicitly closed'):
             convert_project(json.dumps(p).encode())
 
+    def test_three_unique_corners_survive_the_native_fill_bridge(self):
+        p = self.project()
+        p['paths'] = [[[100, 100], [200, 100], [100, 200], [100, 100]]]
+        svg = convert_project(json.dumps(p).encode())
+        root = ET.fromstring(svg)
+        polygon = root.find('{http://www.w3.org/2000/svg}polygon')
+        self.assertIsNotNone(polygon)
+        self.assertEqual(polygon.attrib['points'],
+                         '2.000,2.000 80.000,2.000 2.000,80.000 2.000,2.000')
+
     def test_bean_stitch_refused(self):
         p = self.project()
         p['pathStyles'] = ['bean']

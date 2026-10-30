@@ -16,7 +16,7 @@ function intersects(a,b,c,d){
   touch(a,b,c)||touch(a,b,d)||touch(c,d,a)||touch(c,d,b);
 }
 function ring(points){
- if(!Array.isArray(points)||points.length<4||points.length>513)throw Error('Invalid contour size');
+ if(!Array.isArray(points)||points.length<3||points.length>513)throw Error('Invalid contour size');
  const p=points.map(x=>{
   if(!Array.isArray(x)||x.length!==2||!x.every(finite))throw Error('Invalid contour point');
   return x.slice();

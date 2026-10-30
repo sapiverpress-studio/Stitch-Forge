@@ -1,5 +1,7 @@
 # Stitch Forge MD-2.48 recovery record — 30 October 2026
 
+> Superseded recovery finding, MD-2.49: the original checkout, commit 9d19230 and bundles were recovered in the originating runtime. Application integration now passes four real local browser/native workflows. See ENGINEERING_HANDOVER_MD-2.49.md; the account below remains historical evidence of what the other runtime could access.
+
 ## Authoritative source/deployment distinction
 
 GitHub main as checked before this recovery commit: MD-2.41 at `033234cde699644048598cee65bb166bdb3191ea`.

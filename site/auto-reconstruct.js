@@ -62,7 +62,7 @@ function inside(px,py,poly){let yes=false;for(let i=0,j=poly.length-1;i<poly.len
 }return yes;}
 function boundsOf(points){let xx=points.map(p=>p[0]),yy=points.map(p=>p[1]);return{x0:Math.min(...xx),x1:Math.max(...xx),y0:Math.min(...yy),y1:Math.max(...yy)};}
 function cross(a,b,c){return(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);}
-function invalidPolygon(points,maxPoints=32,minPoints=4,minArea=35){
+function invalidPolygon(points,maxPoints=32,minPoints=3,minArea=35){
  if(points.length<minPoints||points.length>maxPoints)return true;
  const p=points;
  for(let i=0;i<p.length;i++)for(let j=i+2;j<p.length;j++){
@@ -195,7 +195,7 @@ function boundaryPixels(mask,w,h){
 // Error-bounded simplification. Never subsample a contour to satisfy a budget:
 // that can bridge a notch or erase a feather. Over-budget shapes fail closed.
 function simplifyRing(points,maxVertices=512){
- if(points.length<4)return[];
+ if(points.length<3)return[];
  const p=points.filter((b,i)=>Math.abs(cross(points[(i+points.length-1)%points.length],b,points[(i+1)%points.length]))>.01);
  if(p.length<=115)return p;
  function rdp(seq){
@@ -424,9 +424,9 @@ function recoverLocalDetails(rgba,w,h,foreground,regions,components){
   if(tooLarge||queue.length<25)continue;
   const mask=new Uint8Array(w*h);for(const k of queue)mask[k]=1;
   const boundary=boundaryPixels(mask,w,h);
-  if(boundary.length<4||Math.abs(polygonArea(boundary)-queue.length)>.25)continue;
+  if(boundary.length<3||Math.abs(polygonArea(boundary)-queue.length)>.25)continue;
   const points=simplifyRing(boundary);
-  if(points.length<4||invalidPolygon(points,512,4,12))continue;
+  if(points.length<3||invalidPolygon(points,512,3,12))continue;
   let correct=0,falsePixels=0;
   paintPolygon(points,w,h,k=>{if(mask[k])correct++;else falsePixels++;});
   if(falsePixels>Math.max(2,queue.length*.005)||
@@ -446,10 +446,15 @@ function checkedRegion(r){
  if(!r||typeof r.id!=="string"||r.id.length>60||typeof r.label!=="string"||
   !["fill","running"].includes(r.kind)||!/^#[0-9a-f]{6}$/i.test(r.color)||
   !["high","medium","low"].includes(r.confidence)||
-  !Array.isArray(r.points)||r.points.length<(r.kind==="fill"?4:2)||r.points.length>32||
+  !Array.isArray(r.points)||r.points.length<(r.kind==="fill"?3:2)||r.points.length>32||
   !r.points.every(p=>p&&Number.isInteger(p.x)&&Number.isInteger(p.y)&&p.x>=0&&p.x<=1000&&p.y>=0&&p.y<=1000))
   throw Error("AI sent invalid region geometry");
  return r;
+}
+function sourceForegroundMask(rgba,w,h){
+ if(!(rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||
+    w<48||h<48||w*h>750000||rgba.length!==w*h*4)throw Error('Invalid source image');
+ return foregroundMask(rgba,w,h);
 }
 function reconstruct(rgba,w,h,plan,opts={}){
  if(!(rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||
@@ -509,7 +514,7 @@ function reconstruct(rgba,w,h,plan,opts={}){
    // contract can preserve them. Even a one-pixel hole must not disappear.
    if(Math.abs(polygonArea(boundary)-pixels.length)>.25){failures.push('fill_holes_not_supported');continue;}
    const contour=simplifyRing(boundary);
-   if(contour.length<4||invalidPolygon(contour,512,4,12)){failures.push('could_not_reconstruct_boundary');continue;}
+   if(contour.length<3||invalidPolygon(contour,512,3,12)){failures.push('could_not_reconstruct_boundary');continue;}
    let matched=0,extra=0;
    paintPolygon(contour,w,h,k=>{if(partMask[k])matched++;else extra++;});
    if(extra>Math.max(2,pixels.length*.005)||pixels.length-matched>Math.max(2,pixels.length*.02)){
@@ -524,7 +529,10 @@ function reconstruct(rgba,w,h,plan,opts={}){
   if(failures.length){rejected.push({id:r.id,reason:failures[0]});continue;}
   regions.push(...parts);
  }
- if(!regions.length)throw Error("AI reconstruction did not yield any supported regions; design unchanged");
+ if(!regions.length){
+  const error=Error("AI reconstruction did not yield any supported regions; design unchanged");
+  error.rejected=rejected;throw error;
+ }
  if(regions.length>128)throw Error("Too many reconstruction regions");
  const before=auditReconstruction(rgba,w,h,foreground,regions,true);
  const recovery=recoverLocalDetails(rgba,w,h,foreground,regions,before._detailSeeds);
@@ -556,6 +564,6 @@ function reconstruct(rgba,w,h,plan,opts={}){
    "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified.",
    "Locally recovered image details need stitch-type verification and cannot trigger machine export."]};
 }
-root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction});
-if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction};
+root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork,sourceForegroundMask,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction});
+if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork,sourceForegroundMask,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction};
 })(typeof window==="undefined"?globalThis:window);

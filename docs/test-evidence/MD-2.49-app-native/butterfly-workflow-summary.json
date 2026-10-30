@@ -1,0 +1,33 @@
+{
+  "sample": "butterfly",
+  "private": false,
+  "sourceDimensions": [
+    768,
+    680
+  ],
+  "needleStitchesPerFormat": 17891,
+  "colourChanges": 11,
+  "unresolvedObjects": 1451,
+  "unresolvedPixels": 1812,
+  "outsidePoints": 0,
+  "outsideSegments": 0,
+  "nativePasses": 1,
+  "repairedObjects": 0,
+  "repairedSourcePixels": 0,
+  "phases": [
+    {
+      "phase": "pes",
+      "status": 200,
+      "elapsedMs": 21427
+    },
+    {
+      "phase": "dst",
+      "status": 200,
+      "elapsedMs": 16377
+    }
+  ],
+  "externalCalls": 0,
+  "pageErrors": 0,
+  "legacyPathsUnchanged": true,
+  "machineApproved": false
+}

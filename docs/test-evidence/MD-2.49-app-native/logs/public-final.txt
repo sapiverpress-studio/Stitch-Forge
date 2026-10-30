@@ -1,0 +1,11 @@
+✔ actual automatic app/native workflow: rose (24275.688899ms)
+✔ actual automatic app/native workflow: macaw (24528.14127ms)
+✔ actual automatic app/native workflow: butterfly (41379.180874ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 95590.537607

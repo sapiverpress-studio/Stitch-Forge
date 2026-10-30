@@ -50,7 +50,7 @@ const INSTRUCTIONS=[
  "solid colour areas as FILL polygons, and visible narrow lines as RUNNING centerlines.",
  "Identify the actual subject: logos, plants, animals, abstract shapes and line art are all valid.",
  "Each region points must follow the visible boundary, never a surrounding bounding box.",
- "A genuinely rectangular shape may have four boundary corners; use 4-24 successive points per fill, 2-16 for lines. A closed outline is acceptable but not needed.",
+ "Use 3-24 distinct successive points per fill, including three corners for a triangle and four for a rectangle; use 2-16 for lines. A closed outline is acceptable but not needed.",
  "All positions are NORMALIZED coordinates 0..1000 relative to the entire source image,",
  "x left-to-right, y top-to-bottom. Do not repeat the first point at the end.",
  "Return 1-32 visible regions as needed, not a fixed count. A single fill or line-only design is valid.",
@@ -93,13 +93,16 @@ export function verifyGeometryPlan(value){
    !/^#[0-9a-f]{6}$/i.test(r.color)||!Number.isInteger(r.layer)||r.layer<0||r.layer>50||
    !["high","medium","low"].includes(r.confidence)||
    !Array.isArray(r.points)||r.points.length>(r.kind==="fill"?32:32)||
-   r.points.length<(r.kind==="fill"?4:2)||typeof r.notes!=="string"||r.notes.length>300)
+   r.points.length<(r.kind==="fill"?3:2)||typeof r.notes!=="string"||r.notes.length>300)
     throw Error("invalid_region");
   ids.add(r.id);
   for(const p of r.points)if(!p||!Number.isInteger(p.x)||!Number.isInteger(p.y)||
    p.x<0||p.x>1000||p.y<0||p.y>1000)throw Error("invalid_point");
   if(r.points[0].x===r.points.at(-1).x&&r.points[0].y===r.points.at(-1).y)
    throw Error("repeat_end");
+  if(r.kind==="fill"&&Math.abs(r.points.reduce((area,p,i)=>{
+   const q=r.points[(i+1)%r.points.length];return area+p.x*q.y-q.x*p.y;
+  },0))<1)throw Error("degenerate_outline");
   return {id:r.id,label:r.label,kind:r.kind,semantic:r.semantic,color:r.color,
     layer:r.layer,confidence:r.confidence,points:r.points,notes:r.notes};
  });
@@ -141,7 +144,8 @@ function normaliseModelPlan(data){
   if(!valid){rejected.push({region:index+1,reason:"invalid_points"});continue;}
   if(region.kind==="fill"&&points.length>1&&
      points[0].x===points.at(-1).x&&points[0].y===points.at(-1).y)points.pop();
-  if(points.length<(region.kind==="fill"?4:2)){
+  if(points.length<(region.kind==="fill"?3:2)||region.kind==="fill"&&
+     Math.abs(points.reduce((area,p,i)=>{const q=points[(i+1)%points.length];return area+p.x*q.y-q.x*p.y;},0))<1){
    rejected.push({region:index+1,reason:"degenerate_outline"});continue;
   }
   if(seen.has(region.id)){rejected.push({region:index+1,reason:"duplicate_id"});continue;}

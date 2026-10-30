@@ -18,7 +18,7 @@ function prepare(points,sourceBounds,options={}){
  const minArea=options.automatic===true?4:200;
  const minExtent=options.automatic===true ? .5 : 12;
  const maxVertices=options.automatic===true?512:120;
- if(!Array.isArray(points)||points.length<4||points.length>maxVertices)throw Error('Trace 4–'+maxVertices+' boundary points');
+ if(!Array.isArray(points)||points.length<3||points.length>maxVertices)throw Error('Trace 3–'+maxVertices+' boundary points');
  if(!sourceBounds||!['x','y','w','h'].every(k=>Number.isFinite(sourceBounds[k]))||
    sourceBounds.w<20||sourceBounds.h<20)throw Error('Artwork bounds unavailable');
  const out=points.map(p=>{

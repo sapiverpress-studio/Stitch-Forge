@@ -71,6 +71,18 @@ test("automatically reconstructs two separate image-grounded wing fill contours"
  assert.ok(result.regions.every(r=>r.sourceSupport>.5));
  assert.deepEqual(result.regions.map(r=>r.color),["#AABBDD","#EECCAA"]);
 });
+test("reconstructs a triangular source region with three unique proposed vertices",()=>{
+ const image=new Uint8ClampedArray(w*h*4);
+ for(let y=20;y<128;y++)for(let x=24;x<168;x++){
+  if((x+.5-24)/144+(y+.5-20)/108>=1)continue;
+  const k=(y*w+x)*4;image.set([35,100,160,255],k);
+ }
+ const p={status:plan().status,regions:[{id:'triangle',label:'Triangle control',kind:'fill',semantic:'other',color:'#2364A0',layer:0,confidence:'high',points:[{x:100,y:125},{x:700,y:125},{x:100,y:800}]}]};
+ const out=reconstruct(image,w,h,p);
+ assert.deepEqual(out.rejected,[]);
+ assert.equal(out.regions.length,1);
+ assert.ok(out.quality.coverage>.97);
+});
 test("does not invent wing fills where no artwork exists",()=>{
  const empty=new Uint8ClampedArray(w*h*4);
  for(let i=0;i<w*h;i++)empty[i*4+3]=255;

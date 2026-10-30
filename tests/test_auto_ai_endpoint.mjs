@@ -17,7 +17,7 @@ test("accepts explicit proposed fill geometry, not rectangles alone",()=>{
 test("rejects unsafe geometry, missing fill points, colours, and duplicate ids",()=>{
  const cases=[
   x=>x.regions[0].points[0].x=-2,
-  x=>x.regions[0].points=x.regions[0].points.slice(0,3),
+  x=>x.regions[0].points=x.regions[0].points.slice(0,2),
   x=>x.regions[0].color="bronze",
   x=>x.regions[1].id=x.regions[0].id,
   x=>x.requires_machine_test=false,
@@ -65,6 +65,17 @@ test("model accepts exactly four corners and removes duplicate closing/adjacent 
  assert.equal(out.model_rejected_count,0);
  assert.equal(out.regions.length,1);
  assert.equal(verifyGeometryPlan({...p,regions:p.regions.map(r=>({...r,points:r.points.slice(0,4)}))}).regions.length,1);
+});
+test("accepts a closed triangle after removing its repeated closing vertex",()=>{
+ const p=plan();
+ p.regions=[{...region("triangle"),points:[{x:100,y:100},{x:700,y:100},{x:100,y:700},{x:100,y:100}]}];
+ const out=parseModelResponse({status:"completed",output:[{type:"message",content:[
+  {type:"output_text",text:JSON.stringify(p)}]}]});
+ assert.equal(out.model_rejected_count,0);
+ assert.deepEqual(out.regions[0].points,p.regions[0].points.slice(0,3));
+ assert.equal(verifyGeometryPlan({...p,regions:out.regions}).regions.length,1);
+ const line=structuredClone(p);line.regions[0].points=[{x:100,y:100},{x:300,y:300},{x:500,y:500}];
+ assert.throws(()=>verifyGeometryPlan(line),/degenerate_outline/);
 });
 
 test("rejects invalid regions individually but never claims incomplete plan is ready for machine",()=>{

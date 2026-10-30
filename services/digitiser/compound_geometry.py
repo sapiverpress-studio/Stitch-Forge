@@ -1,7 +1,8 @@
-"""Validate compound fill topology before any engine integration.
+"""Bounded compound topology, used by explicit local engine acceptance only.
 
-This module is deliberately NOT wired into Ink/Stitch. A geometrically valid
-SVG hole is not evidence that the embroidery engine will leave a sewn hole.
+The hosted bridge and source-region browser projects remain machine-ineligible.
+A geometrically valid SVG hole is not evidence of a sewn hole; local compound
+acceptance additionally checks real independently decoded needle movements.
 Inputs and outputs are geometry-only and cannot contain SVG or external URLs.
 """
 from math import isfinite
@@ -114,7 +115,7 @@ def validate_compound(outer, holes, width_mm, height_mm):
 
 
 def evenodd_path(outer, holes, width_mm, height_mm):
-    """Build a safe SVG path *preview* from validated rings, not sewn output."""
+    """Build safe SVG input/preview geometry from rings, never sewn output."""
     outside, inside = validate_compound(outer, holes, width_mm, height_mm)
     def commands(ring):
         return 'M ' + ' L '.join(f'{x:.3f},{y:.3f}' for x, y in ring) + ' Z'

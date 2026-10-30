@@ -66,6 +66,7 @@ const fox=[
 [[142,317],[161,328],[176,346],[191,348]],
 [[247,369],[275,379],[301,373]],
 ];
+let sourceRegionInspectionActive=false;
 let rasterSource=null, rasterReference=null, rasterBounds=null, traceMeta=null;let pathStyles=Array(fox.length).fill('running'),pathColors=Array(fox.length).fill('#153e46'),activeRegion=0;
 let paths=deep(fox),mode='edit',selected=null,drawingIndex=-1,history=[],drag=null,plan=[],planKey='',running=false,runIndex=0,runId=null,lastT=0,playAccumulator=0;
 function deep(o){return JSON.parse(JSON.stringify(o))}const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -75,7 +76,7 @@ function node(tag,attrs){let e=document.createElementNS(svgNS,tag);for(const [k,
 function toSvgPath(points){return points.map((p,i)=>(i?'L':'M')+p[0].toFixed(2)+' '+p[1].toFixed(2)).join(' ')}
 function render(){$('#design').classList.remove('previewing');syncReference();syncRegionUI();const a=$('#paths'),b=$('#nodes');a.replaceChildren();b.replaceChildren();paths.forEach((path,pi)=>{if(path.length>1)a.appendChild(node('path',{d:toSvgPath(path),class:'path'+((selected?.pi===pi||activeRegion===pi)?' active':'')}));if($('#showNodes').checked&&mode==='edit'){path.forEach((p,ni)=>{let c=node('circle',{cx:p[0],cy:p[1],r:10,class:'node'+(selected?.pi===pi&&selected?.ni===ni?' selected':'')});c.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation();selected={pi,ni};activeRegion=pi;snapshot();drag={pi,ni,moved:false};$('#design').setPointerCapture(ev.pointerId);render();});b.appendChild(c)})}});$('#modeText').textContent=mode==='edit'?'Edit points':'Draw path';$('#pathCount').textContent=paths.length+' path'+(paths.length===1?'':'s');$('#deleteBtn').disabled=!selected;$('#finishBtn').disabled=mode!=='draw'||drawingIndex<0;$('#editBtn').classList.toggle('active',mode==='edit');$('#drawBtn').classList.toggle('active',mode==='draw');$('#design').classList.toggle('edit',mode==='edit');$('#hint').textContent=mode==='edit'?'Select and drag any orange point. Delete removes a selected point.': 'Tap on the canvas to add points to the active path, then Finish path.';renderStitches()}
 function svgCoord(e){let svg=$('#design'),pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;let m=svg.getScreenCTM();if(!m)return [300,300];pt=pt.matrixTransform(m.inverse());return [clamp(pt.x,20,580),clamp(pt.y,20,580)]}
-$('#design').addEventListener('pointerdown',e=>{if(e.target.closest('.node'))return;
+$('#design').addEventListener('pointerdown',e=>{if(sourceRegionInspectionActive||e.target.closest('.node'))return;
 if(mode==='edit'){let target=svgCoord(e),nearest=null,best=Infinity;paths.forEach((p,pi)=>p.forEach((xy,ni)=>{let dist=Math.hypot(xy[0]-target[0],xy[1]-target[1]);if(dist<best){best=dist;nearest={pi,ni}}}));let max=Math.min(58,24*600/Math.max(200,$('#design').getBoundingClientRect().width));if(nearest&&best<max){e.preventDefault();selected=nearest;activeRegion=nearest.pi;snapshot();drag={...nearest,moved:false};$('#design').setPointerCapture(e.pointerId);render()}return}
 if(mode!=='draw')return;e.preventDefault();snapshot();if(drawingIndex<0){paths.push([]);pathStyles.push('running');pathColors.push('#153e46');drawingIndex=paths.length-1;activeRegion=drawingIndex}paths[drawingIndex].push(svgCoord(e));changed()});
 // Delegate drag handling from nodes container, since nodes rerender after pointerdown.
@@ -159,7 +160,7 @@ function vectorFromSVG(source){
 }
 
 // Raster/reference workflow: no remote fetches and no imported markup is injected into the DOM.
-function clearReference(){rasterSource=null;rasterReference=null;rasterBounds=null;traceMeta=null;$('#tracePanel').classList.add('hidden');$('#referenceImage').style.display='none'}
+function clearReference(){sourceRegionInspectionActive=false;$('#design').classList.remove('source-inspection');window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));rasterSource=null;rasterReference=null;rasterBounds=null;traceMeta=null;$('#tracePanel').classList.add('hidden');$('#referenceImage').style.display='none'}
 function syncReference(){let img=$('#referenceImage');if(rasterReference&&rasterBounds&&$('#referenceVisible').checked){img.setAttribute('href',rasterReference);img.setAttribute('x',rasterBounds.x);img.setAttribute('y',rasterBounds.y);img.setAttribute('width',rasterBounds.w);img.setAttribute('height',rasterBounds.h);img.style.display=''}else img.style.display='none'}
 function readBlobURL(f){return new Promise((resolve,reject)=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Cannot read image file'));r.readAsDataURL(f)})}
 function loadPicture(src){return new Promise((resolve,reject)=>{let im=new Image();im.onload=()=>{if(im.naturalWidth*im.naturalHeight>45000000){reject(Error('Artwork exceeds 45 megapixels. Reduce its pixel dimensions.'));return}resolve(im)};im.onerror=()=>reject(Error('Image cannot be decoded.'));im.src=src})}
@@ -256,7 +257,7 @@ function generate(){
  if(needleCount<2)throw Error('Not enough distinct stitches.');let xs=out.map(p=>p.x),ys=out.map(p=>p.y),bounds=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)],w=(bounds[2]-bounds[0])/10,h=(bounds[3]-bounds[1])/10;if(w>hoop-4||h>hoop-4)throw Error('Stitches exceed hoop margin (2 mm each side). Increase hoop or reduce width.');let travelMm=0,lastMove=[0,0];for(const c of out){const current=[c.x,c.y];if(c.cmd==='JUMP')travelMm+=Math.hypot(current[0]-lastMove[0],current[1]-lastMove[1])/10;lastMove=current;}
  return{commands:out,bounds,widthMm:w,heightMm:h,count:needleCount,jumps,travelMm,settings:{width,sp,hoop,optimizeTravel:$('#optimizeTravel').checked,style:pathStyles.every(v=>v===pathStyles[0])?(pathStyles[0]||'running'):'mixed',pathStyles:deep(pathStyles),rowSpacing:Number($('#rowSpacing').value),fillAngle:Number($('#fillAngle').value),underlay:$('#underlay').checked}};
 }
-function getPlan(){const key=JSON.stringify([paths,$('#designWidth').value,$('#stitchLength').value,$('#hoop').value,$('#optimizeTravel').checked,pathStyles,$('#rowSpacing').value,$('#fillAngle').value,$('#underlay').checked]);if(key===planKey)return plan;let d=generate();plan=d;planKey=key;return d}
+function getPlan(){if(sourceRegionInspectionActive)throw Error('Source-region geometry has no stitch plan. Return to the stitch editor before playback or machine export.');const key=JSON.stringify([paths,$('#designWidth').value,$('#stitchLength').value,$('#hoop').value,$('#optimizeTravel').checked,pathStyles,$('#rowSpacing').value,$('#fillAngle').value,$('#underlay').checked]);if(key===planKey)return plan;let d=generate();plan=d;planKey=key;return d}
 function updateMetrics(){try{let o=getPlan();$('#stitchCount').textContent=o.count.toLocaleString('en-GB');$('#extent').textContent=o.widthMm.toFixed(1)+'×'+o.heightMm.toFixed(1);$('#jumps').textContent=o.jumps;$('#travelDistance').textContent=o.travelMm.toFixed(1);$('#progress').max=o.commands.length;$('#progressText').textContent=runIndex+' / '+o.commands.length;if($('#status').classList.contains('err'))setStatus('File structure is experimental. Inspect with independent software and stitch-test.',false)}catch(e){$('#stitchCount').textContent='—';$('#extent').textContent='—';$('#jumps').textContent='—';$('#travelDistance').textContent='—';$('#progress').max=0;setStatus(e.message,'err')}}
 function setStatus(msg,type){let s=$('#status');s.textContent=msg;s.className='notice'+(type==='err'?' err':type==='ok'?' ok':'')}
 function renderStitches(){let g=$('#sim');g.replaceChildren();let p;try{p=getPlan()}catch(e){updateFailed(e);return}$('#stitchCount').textContent=p.count.toLocaleString('en-GB');$('#extent').textContent=p.widthMm.toFixed(1)+'×'+p.heightMm.toFixed(1);$('#jumps').textContent=p.jumps;$('#travelDistance').textContent=p.travelMm.toFixed(1);$('#progress').max=p.commands.length;$('#progress').value=Math.min(runIndex,p.commands.length);$('#progressText').textContent=runIndex+' / '+p.commands.length;$('#design').classList.toggle('previewing',runIndex>0);if(runIndex===0)return;let thread='',travel='',last=null,needle=[300,300],scale=52/p.settings.width;for(let i=0;i<runIndex;i++){let a=p.commands[i],x=300+a.x*scale,y=300+a.y*scale;if(last){let piece=`M${last[0].toFixed(1)} ${last[1].toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}`;if(a.cmd==='STITCH')thread+=piece;else travel+=piece}last=[x,y];needle=[x,y]}if(travel&&$('#showTravel').checked)g.appendChild(node('path',{d:travel,class:'jump'}));if(thread)g.appendChild(node('path',{d:thread,class:'stitch'}));g.appendChild(node('circle',{cx:needle[0],cy:needle[1],r:7,class:'needle'}))}
@@ -327,13 +328,14 @@ $('#stitchValue').textContent=Number($('#stitchLength').value).toFixed(2)+' mm';
 // Readiness diagnostic for automated browser checks. Not machine certification.
 window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterReference||null,getSourceStatus:()=>rasterSource?'original':rasterReference?'restored-preview':'none',getBounds:()=>rasterBounds?deep(rasterBounds):null,
  getWidthMm:()=>Number($('#designWidth').value),
+ setSourceRegionInspectionActive:(active)=>{sourceRegionInspectionActive=active===true;$('#design').classList.toggle('source-inspection',sourceRegionInspectionActive);drag=null;stop();runIndex=0;planKey='';try{renderStitches()}catch(e){updateFailed(e)}},
  // Explicit allowlist: never upload the full-colour original or lossy trace preview
  // to the native worker. Its source of truth is the current editable vector plan.
- exportMachineProject:()=>({
+ exportMachineProject:()=>{if(sourceRegionInspectionActive)throw Error('Source-region geometry has no verified stitch plan; machine export blocked');return {
   paths:deep(paths),pathStyles:deep(pathStyles),pathColors:deep(pathColors),
   width:Number($('#designWidth').value),hoop:Number($('#hoop').value)
- }),
- exportEditableSvg:()=>makeSvg({settings:{width:Number($('#designWidth').value)}}),
+ };},
+ exportEditableSvg:()=>{if(sourceRegionInspectionActive)throw Error('Use Download geometry SVG for the source draft; it has no stitch plan');return makeSvg({settings:{width:Number($('#designWidth').value)}});},
  replaceWithAutomaticReconstruction:(draft)=>{
   if(!draft||draft.status!=='AUTO_RECONSTRUCTED_DRAFT_NOT_MACHINE_VERIFIED'||
      !Array.isArray(draft.regions)||draft.regions.length<1||draft.regions.length>128)
@@ -383,6 +385,7 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
   const count=kept.reduce((a,r)=>a+r.points.length,0);
   if(kept.length>128||count>5000)throw Error('Automatic reconstruction exceeds stitch-region safety limits');
   snapshot();
+  sourceRegionInspectionActive=false;$('#design').classList.remove('source-inspection');window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));
   paths=kept.map(r=>r.points);pathStyles=kept.map(r=>r.style);pathColors=kept.map(r=>r.color);
   activeRegion=0;selected=null;drawingIndex=-1;runIndex=0;changeMode('edit');changed();
   setStatus('Automatically reconstructed '+draft.regions.length+' image-based regions. The complete previous stitch plan is saved in Undo. Experimental colour SVG only; PES/DST multi-colour is NOT verified.','ok');
@@ -422,4 +425,4 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
 });
 window.__stitchforge_test={generate,makeDst,makePes,zip,exportSvg:()=>makeSvg(getPlan()),get pathColors(){return deep(pathColors)},fox:()=>deep(fox),get paths(){return deep(paths)},setPaths(p){paths=deep(p);selected=null;planKey='';render()},report(){let p=getPlan();return{count:p.count,jumps:p.jumps,extent:[p.widthMm,p.heightMm],pesLength:makePes(p).length,dstLength:makeDst(p).length}}};
 })();
-</script><script src="/fill-geometry.js" defer></script><script src="/auto-reconstruct.js" defer></script><script src="/ai-guides.js" defer></script><script src="/ai-details.js" defer></script><script src="/stitch-classifier.js" defer></script><script src="/satin-geometry.js" defer></script><script src="/auto-reconstruct-ui.js" defer></script></body></html>
+</script><script src="/fill-geometry.js" defer></script><script src="/auto-reconstruct.js" defer></script><script src="/ai-guides.js" defer></script><script src="/ai-details.js" defer></script><script src="/stitch-classifier.js" defer></script><script src="/satin-geometry.js" defer></script><script src="/source-mask-ledger.js" defer></script><script src="/source-topology.js" defer></script><script src="/source-region-graph.js" defer></script><script src="/source-region-project.js" defer></script><script src="/reconstruction-diagnostics.js" defer></script><script src="/auto-reconstruct-ui.js" defer></script><script src="/source-stitch-candidates.js" defer></script><script src="/source-object-plan.js" defer></script><script src="/artwork-pipeline.js" defer></script><script src="/source-region-ui.js" defer></script></body></html>

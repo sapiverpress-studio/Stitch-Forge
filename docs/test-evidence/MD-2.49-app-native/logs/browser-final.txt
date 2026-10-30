@@ -1,0 +1,27 @@
+✔ default source-native action reports an unavailable worker without any OpenAI fallback (2221.640438ms)
+✔ changing native physical size during phase one aborts the request and prevents a DST phase (1989.056001ms)
+✔ prepared source objects render on mobile, retain bindings, and clear after physical resize (2045.169141ms)
+✔ a pending prepared-artwork result is discarded when physical size changes (1605.52295ms)
+✔ offline prepared-artwork comparison runs private source modules with no network (748.415559ms)
+✔ real-artwork offline evidence renders actual decoded PNGs and exact reports on mobile (564.481168ms)
+✔ mobile source inspection retains holes/islands, saves/reopens/resizes, and blocks stale playback and exports (2158.183428ms)
+✔ failed synthetic AI attempt downloads safe diagnostics and replays exactly without an additional request (1746.170354ms)
+✔ server geometry rejection remains downloadable without exposing raw model or request data (2125.883904ms)
+✔ all three licensed raster inputs run through the actual desktop app controls with no model or worker (4302.928318ms)
+✔ offline inspector at 390px performs no network calls and exports actual geometry (669.972334ms)
+✔ offline inspector at 1280px performs no network calls and exports actual geometry (762.367304ms)
+✔ actual compound machine evidence renders all real panels offline at desktop/mobile widths (356.237004ms)
+✔ actual mobile app retains a small contrasting eye in the bounded working palette and source graph (1558.308988ms)
+✔ working-likeness proof renders real old/new approximations offline on desktop and mobile (299.115375ms)
+✔ boundary-planning proof renders actual approximations and honest candidate limitations offline (711.950743ms)
+✔ changing physical size while candidate compilation is pending discards the stale download (1606.355383ms)
+✔ textured source gets an explicit preview fallback in the actual app without stitch approval (2338.140227ms)
+✔ latest offline inspector supports the bounded textured preview without network or paid calls (1474.062537ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29828.366299
