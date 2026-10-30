@@ -39,7 +39,7 @@ test('physical grouping is deterministic, bounded, and rejects malformed configu
  const d=await project.createApproximationDraft(image(),w,h,{imageWidthMm:40}),p=await api.build(d);
  assert.deepEqual(await api.build(d),p);assert.match(api.geometrySvg(p),/not stitches/);
  assert.throws(()=>api.geometrySvg(structuredClone(p)),/Rebuild/);
- for(const options of [{maxRgbChange:101},{maxReachMm:Infinity},{smallAreaMm2:-1},{allowOmissions:true}])await assert.rejects(api.build(d,options),/option/);
+ for(const options of [{maxRgbChange:201},{maxReachMm:Infinity},{smallAreaMm2:-1},{allowOmissions:true}])await assert.rejects(api.build(d,options),/option/);
  const resized=await api.build(project.resizeDraft(d,200));assert.notEqual(resized.sourcePlanSignature,p.sourcePlanSignature);
  assert.ok(resized.summary.recolouredPixels<p.summary.recolouredPixels);
 });

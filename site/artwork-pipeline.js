@@ -22,10 +22,48 @@ async function transform(bytes,format,compress,max){
  for(;;){const {done,value}=await reader.read();if(done)break;count+=value.length;if(count>max){await reader.cancel();throw Error('Compressed artwork or archive exceeds its budget');}chunks.push(value);}
  const out=new Uint8Array(count);let at=0;for(const c of chunks){out.set(c,at);at+=c.length;}return out;
 }
-async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed'}={}){
+function analysisSizes(imageWidthMm,originalWidth,originalHeight,texturePolicy='if_needed'){
+ if(typeof imageWidthMm!=='number'||!Number.isFinite(imageWidthMm)||imageWidthMm<10||imageWidthMm>250||
+    !Number.isInteger(originalWidth)||!Number.isInteger(originalHeight)||
+    originalWidth<48||originalHeight<48||!['if_needed','off'].includes(texturePolicy))
+  throw Error('Invalid physical analysis sizing');
+ if(texturePolicy==='off')return [768];
+ const longMm=imageWidthMm*Math.max(originalWidth,originalHeight)/originalWidth;
+ return [...new Set([4,3.2,2.4,1.8].map(rate=>
+  Math.min(768,Math.max(120,Math.round(longMm*rate)))))];
+}
+async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0}={}){
  if(!['if_needed','off'].includes(texturePolicy))throw Error('Invalid texture policy');
  if(Number.isFinite(imageWidthMm)&&imageWidthMm*h/w>296)throw Error('Artwork height exceeds 296mm at this width; reduce the width before generating');
- const draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm,originalWidth,originalHeight}),plan=await A.build(draft);
+ if(!Number.isInteger(maxWorkingParts)||maxWorkingParts<0||maxWorkingParts>10000)
+  throw Error('Invalid maximum working-part budget');
+ let draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm,originalWidth,originalHeight});
+ let plan;
+ try{plan=await A.build(draft);}
+ catch(error){
+  // A fully tracked graph can be too large to sign as a source plan even
+  // when its region masks are valid. Fall back to a bounded, source-fingerprinted
+  // palette partition; never truncate graph nodes or silently discard pixels.
+  if(!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
+  draft=await P.createApproximationDraft(rgba,w,h,{imageWidthMm,originalWidth,originalHeight,
+   reasonCode:'source_graph_serialisation_budget'});
+  plan=await A.build(draft);
+ }
+ // Preserve exact foreground, original region accounting and high-contrast
+ // features. Physical-scale texture grouping is only attempted when the user
+ // enables simplification; neither colours nor shapes are silently dropped.
+ if(texturePolicy==='if_needed'&&plan.summary.workingParts>1300){
+  const reduced=await A.build(draft,{maxRgbChange:180,maxReachMm:2});
+  if(reduced.summary.workingParts<plan.summary.workingParts&&
+     reduced.summary.representedPixels===plan.summary.representedPixels&&
+     !reduced.summary.protectedPartsRecoloured)plan=reduced;
+ }
+ if(maxWorkingParts&&plan.summary.workingParts>maxWorkingParts){
+  const error=Error('Detailed artwork still contains '+plan.summary.workingParts+
+   ' working colour components (limit '+maxWorkingParts+'); preparing at a physically appropriate resolution');
+  error.code='SOURCE_DETAIL_BUDGET';error.workingParts=plan.summary.workingParts;
+  throw error;
+ }
  const labels=new Uint8Array(w*h),palette=plan.regions.map(r=>r.color);
  for(const [i,r] of plan.regions.entries())for(const c of r.ledger.components)for(const [y,x0,x1] of c.runs)labels.fill(i+1,y*w+x0,y*w+x1);
  const {sha256,width,height}=plan.source;
@@ -100,6 +138,6 @@ async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fe
  }
  throw Error('Native source repair did not complete');
 }
-const api=Object.freeze({pack,generate,readArchive,previewPacket,digest,AUDIT});root.StitchForgeArtworkPipeline=api;
+const api=Object.freeze({pack,analysisSizes,generate,readArchive,previewPacket,digest,AUDIT});root.StitchForgeArtworkPipeline=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

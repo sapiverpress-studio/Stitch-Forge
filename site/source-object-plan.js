@@ -20,7 +20,7 @@ async function digest(text){
 function parameters(input={}){
  if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!Object.hasOwn(DEFAULTS,k)))throw Error('Unknown object-generalisation option');
  const p={...DEFAULTS,...input};
- for(const [k,lo,hi] of [['smallAreaMm2',.01,1],['maxFragmentSpanMm',.1,2],['maxReachMm',.1,2],['maxRgbChange',0,100],['protectContrast',50,120],['protectAreaMm2',0,.1]])
+ for(const [k,lo,hi] of [['smallAreaMm2',.01,1],['maxFragmentSpanMm',.1,2],['maxReachMm',.1,2],['maxRgbChange',0,200],['protectContrast',50,120],['protectAreaMm2',0,.1]])
   if(typeof p[k]!=='number'||!Number.isFinite(p[k])||p[k]<lo||p[k]>hi)throw Error('Invalid object-generalisation option: '+k);
  return p;
 }

@@ -121,14 +121,37 @@ q("#sfAutoRun").onclick=async()=>{
   const current=()=>revision===stamp&&context.getImage()===source;
   status('Preparing source pixels and colour shapes locally…');
   try{
-   const {canvas,ctx}=await decoded(source,768),original=new Image();await new Promise((yes,no)=>{original.onload=yes;original.onerror=no;original.src=source;});
-   const packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,{imageWidthMm:width,originalWidth:original.naturalWidth,originalHeight:original.naturalHeight,texturePolicy});
+   const original=new Image();await new Promise((yes,no)=>{original.onload=yes;original.onerror=no;original.src=source;});
+   // Native fill detail is physically bounded. Attempt the finest reasonable
+   // resolution first, then reduce *analysis* resolution if there are still too
+   // many unsewable working parts. Never resize the physical embroidery width.
+   // Raw analysis pixels and the exact foreground remain independently bound
+   // in each source packet; the reference image stays untouched in the editor.
+   const attempts=api.analysisSizes(width,original.naturalWidth,original.naturalHeight,texturePolicy);
+   let packed=null,analysisPixels=null;
+   for(const size of [...new Set(attempts)]){
+    if(!current()||nativeAbort.signal.aborted)throw Error('Cancelled: original artwork or settings changed');
+    status('Preparing source-bound colour regions at '+size+' analysis pixels (longest side); protecting the silhouette and contrasting details…');
+    const {canvas,ctx}=await decoded(source,size);
+    try{
+     packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,
+      {imageWidthMm:width,originalWidth:original.naturalWidth,originalHeight:original.naturalHeight,
+       texturePolicy,maxWorkingParts:1500});
+     analysisPixels=canvas.width+' × '+canvas.height;
+     break;
+    }catch(error){
+     if(texturePolicy==='off'||(error.code!=='SOURCE_DETAIL_BUDGET'&&
+       !/^(Object plan exceeds source-component budget|Source (graph|regions) exceed)/.test(error.message||'')))throw error;
+     if(!current())throw Error('Original artwork changed during preparation');
+    }
+   }
+   if(!packed)throw Error('Detailed regions remain beyond the native trial budget at this physical size. The original image is unchanged; no machine file was produced');
    const result=await api.generate(packed,{token,signal:nativeAbort.signal,isCurrent:current,onProgress:text=>{if(current())status(text);}});
    if(!current())throw Error('Source or size changed; stale result discarded');
    window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
    q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoUndo').disabled=false;
    const r=result.report,d=r.decoded.find(x=>x.format==='pes');
-   status('Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
+   status('Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
    saveBytes(result.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED.zip','application/zip');
   }catch(error){if(current())status('Native artwork trial unavailable: '+(error.message||error)+'. No OpenAI request or substitute machine file was produced.');}
   finally{running=false;nativeAbort=null;q('#sfAutoRun').disabled=false;q('#sfAutoCancelNative').disabled=true;}return;

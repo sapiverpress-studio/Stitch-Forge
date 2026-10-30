@@ -113,7 +113,7 @@ function validateDraft(input){
  }
  if(input.schema===APPROX_SCHEMA){
   if(input.approximation?.algorithm!=='palette_first_preview_MD-2.47'||
-     !['source_graph_node_budget','source_graph_run_budget','source_graph_adjacency_budget','explicit_preview_only'].includes(input.approximation.reasonCode))
+     !['source_graph_node_budget','source_graph_run_budget','source_graph_adjacency_budget','explicit_preview_only','source_graph_serialisation_budget'].includes(input.approximation.reasonCode))
    throw Error('Invalid bounded preview provenance');
   output.approximation={algorithm:'palette_first_preview_MD-2.47',reasonCode:input.approximation.reasonCode,
    referenceGraphAvailable:false,smallFeaturePreservationVerified:false,semanticFeaturesVerified:false,machineEligible:false};
@@ -181,8 +181,8 @@ async function createInspectionDraft(rgba,w,h,options={}){
  try{return await createGraphDraft(rgba,w,h,options);}
  catch(error){
   const code=/^Source graph exceeds (node|run|adjacency) budget;/.exec(error.message||'');
-  if(!code)throw error;
-  return createApproximationDraft(rgba,w,h,{...options,reasonCode:'source_graph_'+code[1]+'_budget'});
+  if(!code&&!/^Source-region project exceeds download budget$/.test(error.message||''))throw error;
+  return createApproximationDraft(rgba,w,h,{...options,reasonCode:code?'source_graph_'+code[1]+'_budget':'source_graph_serialisation_budget'});
  }
 }
 async function assertMatchesSource(draft,rgba,w,h){
