@@ -21,7 +21,7 @@ div.innerHTML =
   '<div class="ai-actions"><button type="button" class="btn" id="sfAiLoadReport">Use saved AI report</button>'+
   '<input type="file" accept=".json,application/json" id="sfAiReportFile" hidden>'+
   '<button type="button" class="btn" id="sfAiRebuild" disabled>Rebuild draft details</button>'+
-  '<button type="button" class="btn primary" id="sfAiApply" disabled>Apply draft to stitches</button></div>'+
+  '<button type="button" class="btn primary" id="sfAiApply" disabled>Add provisional running outlines (not finished embroidery)</button></div>'+
   '<div id="sfAiDraftStatus" class="tiny">AI rectangles locate parts; only actual image lines can become draft stitches.</div>'+
   '<div id="sfAiStatus" role="status" class="tiny">The original image stays visible; machine-file exports remain experimental.</div>'+
   '<label class="toggle"><input id="sfAiBoxes" type="checkbox"> Show AI search boxes (not stitches)</label>'+
@@ -146,7 +146,7 @@ async function prepareDraft(){
  get("#sfAiRebuild").disabled=false;
  const covered=new Set(draft.paths.map(p=>p.regionId)).size;
  setDraftStatus(draft.paths.length
-  ?'Found '+draft.paths.length+' provisional internal running paths in '+covered+' areas. Pink lines follow image pixels, not AI boxes. Review, then tap Apply draft to stitches. Wing fills and satin remain unconverted.'
+  ?'Found '+draft.paths.length+' provisional internal running paths in '+covered+' areas. Pink lines follow image pixels, not AI boxes. Review, then tap Add provisional running outlines (not finished embroidery). Wing fills and satin remain unconverted.'
   :'No reliable internal lines detected. Use the original detailed image or adjust the artwork; no stitch paths were changed.');
  paintDraft();
 }

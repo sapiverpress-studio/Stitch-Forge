@@ -32,6 +32,14 @@ panel.innerHTML=[
  '<p class="tiny">Reduced source pixels and proposed colour labels go only to your configured private native worker. App and worker must both support this workflow. No generated file is machine-approved, physically stitch-tested or approved for sale.</p>'
 ].join("");
 host.prepend(panel);
+// Lead raster users to the genuine native trial without removing manual
+// outline editing or triggering a paid OpenAI request.
+q('#sfNativeJump')?.addEventListener('click',()=>{
+ q('#sfAutoWorkflow').value='native';
+ q('#sfAutoWorkflow').dispatchEvent(new Event('change'));
+ panel.scrollIntoView({behavior:'smooth',block:'start'});
+ status('Source-based Ink/Stitch trial selected (no OpenAI call). Enter your private analysis token and generate. Only the ZIP from this panel contains the independently decoded native machine files.');
+});
 const css=document.createElement("style");css.textContent=[
  "#sfAutoPanel{border:2px solid #90b9b1;background:#f8fbfa}",
  "#sfAutoStatus{border-left:3px solid #187a82;background:#edf7f5;padding:10px;margin:12px 0}",
