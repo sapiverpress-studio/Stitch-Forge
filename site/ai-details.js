@@ -123,7 +123,17 @@ function reviewedReport(data){
  }
  return data;
 }
-async function prepareDraft(){
+// The main one-button native flow shares its single advisory AI report here.
+ // No second API request is needed to inspect named features in Advanced tools.
+ window.addEventListener('stitchforge:automatic-ai-report',event=>{
+  try{
+   if(event.detail?.source!==editor.getImage())return;
+   const report=reviewedReport(event.detail.report);
+   analysis=report;selectedId=null;clearDraft();render();
+   status('AI identified '+report.regions.length+' visible parts. This is an advisory map; the actual native machine files come from source-pixel geometry.');
+  }catch{ /* Untrusted AI output never alters the existing design. */ }
+ });
+ async function prepareDraft(){
  clearDraft();
  if(!analysis)return;
  if(!window.StitchForgeDetailGuides)throw Error('Internal detail extractor did not load');

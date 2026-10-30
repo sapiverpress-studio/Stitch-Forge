@@ -21,6 +21,8 @@ for(const sample of cases)test('actual automatic app/native workflow: '+sample.i
   await page.goto(app.url);await page.locator('#importFile').setInputFiles(sample.file);await page.waitForFunction('window.StitchForgeAIContext.getImage() && document.querySelector("#status").textContent.includes("Raster imported")');
   assert.equal(await page.locator('#sfAutoWorkflow').inputValue(),'native');const originalPaths=await page.evaluate('window.__stitchforge_test.paths');
   await page.locator('#sfAutoToken').fill(ownerToken);
+  await page.locator('#sfAutoAdvanced summary').click();
+  await page.locator('#sfAutoUseAI').uncheck(); // Offline no-API native regression remains deterministic
   let download;page.on('download',item=>{download=item;});
   await page.locator('#sfAutoRun').click();await page.waitForFunction('!document.querySelector("#sfAutoRun").disabled',{},{timeout:150000});
   const status=await page.locator('#sfAutoStatus').innerText();assert.match(status,/Actual decoded stitches are shown/,status);assert.ok(download,status);

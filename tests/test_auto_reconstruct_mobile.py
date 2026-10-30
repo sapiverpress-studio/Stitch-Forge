@@ -79,6 +79,7 @@ class AutoMothMobileTest(unittest.TestCase):
               };
             }""",geometry())
             page.locator("#sfAutoToken").fill("synthetic-test-token")
+            page.locator("#sfAutoAdvanced summary").click()
             page.locator("#sfAutoWorkflow").select_option("ai")
             page.locator("#sfAutoRun").click()
             page.wait_for_function("document.querySelector('#sfAutoStatus').textContent.includes('Native worker not configured')",timeout=15000)
@@ -123,6 +124,7 @@ class AutoMothMobileTest(unittest.TestCase):
                 throw Error('unexpected URL');
               };
             }""",geometry())
+            page.locator("#sfAutoAdvanced summary").click()
             page.locator("#sfAutoWorkflow").select_option("ai")
             page.locator("#sfAutoToken").fill("synthetic-test-token")
             with page.expect_download(timeout=20000) as item:
@@ -154,6 +156,7 @@ class AutoMothMobileTest(unittest.TestCase):
                       window.machineCalls++;return {ok:false,status:503,json:async()=>({error:'synthetic unavailable'})};
                      };
                     }""",plan)
+                    page.locator("#sfAutoAdvanced summary").click()
                     page.locator("#sfAutoWorkflow").select_option("ai")
                     page.locator('#sfAutoToken').fill('synthetic-test-token')
                     page.locator('#sfAutoRun').click()
@@ -188,6 +191,7 @@ class AutoMothMobileTest(unittest.TestCase):
                           blob:async()=>new Blob([bytes])};
                       };
                     }""",{'plan':geometry(),'stage':stage})
+                    page.locator("#sfAutoAdvanced summary").click()
                     page.locator("#sfAutoWorkflow").select_option("ai")
                     page.locator('#sfAutoToken').fill('synthetic-test-token')
                     page.locator('#sfAutoRun').click()

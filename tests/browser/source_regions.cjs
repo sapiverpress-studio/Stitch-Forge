@@ -75,7 +75,7 @@ test('default source-native action reports an unavailable worker without any Ope
  await page.route('**/api/artwork-embroidery',route=>{calls++;return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Native artwork route disabled'})});});
  try{
   const previous=await page.evaluate('window.__stitchforge_test.paths');
-  await page.locator('#sfAutoToken').fill('synthetic-local-owner-token');await page.locator('#sfAutoRun').click();
+  await page.locator('#sfAutoToken').fill('synthetic-local-owner-token');await page.locator('#sfAutoAdvanced summary').click();await page.locator('#sfAutoUseAI').uncheck();await page.locator('#sfAutoRun').click();
   await page.waitForFunction('!document.querySelector("#sfAutoRun").disabled');
   assert.match(await page.locator('#sfAutoStatus').innerText(),/route disabled/);
   assert.equal(calls,1);assert.ok(await page.locator('#sfAutoNativeReport').isDisabled());assert.ok(await page.locator('#sfAutoDownload').isDisabled());
@@ -87,7 +87,7 @@ test('changing native physical size during phase one aborts the request and prev
  const {page,errors,unexpected}=await app();
  try{
   await page.evaluate(()=>{window.__nativePhases=[];window.fetch=(url,opts)=>{window.__nativePhases.push(JSON.parse(opts.body).phase);window.__nativeWaiting=true;return new Promise((resolve,reject)=>opts.signal.addEventListener('abort',()=>reject(new DOMException('aborted','AbortError'))));};});
-  await page.locator('#sfAutoToken').fill('synthetic-local-owner-token');await page.locator('#sfAutoRun').click();await page.waitForFunction('window.__nativeWaiting');
+  await page.locator('#sfAutoToken').fill('synthetic-local-owner-token');await page.locator('#sfAutoAdvanced summary').click();await page.locator('#sfAutoUseAI').uncheck();await page.locator('#sfAutoRun').click();await page.waitForFunction('window.__nativeWaiting');
   await page.locator('#sfNativeWidth').fill('100');await page.locator('#sfNativeWidth').dispatchEvent('change');
   await page.waitForFunction('!document.querySelector("#sfAutoRun").disabled');
   assert.deepEqual(await page.evaluate('window.__nativePhases'),['pes']);assert.ok(await page.locator('#sfAutoDownload').isDisabled());assert.ok(await page.locator('#sfAutoNativeReport').isDisabled());
@@ -200,7 +200,7 @@ test('failed synthetic AI attempt downloads safe diagnostics and replays exactly
  try{
   await page.route('**/api/reconstruct-embroidery',route=>{calls++;return route.fulfill({status:200,json:proposal()});});
   const before=await page.evaluate('window.__stitchforge_test.paths');
-  await page.locator('#sfAutoWorkflow').selectOption('ai');await page.locator('#sfAutoToken').fill('synthetic-private-access-token');await page.locator('#sfAutoRun').click();
+  await page.locator('#sfAutoAdvanced summary').click();await page.locator('#sfAutoWorkflow').selectOption('ai');await page.locator('#sfAutoToken').fill('synthetic-private-access-token');await page.locator('#sfAutoRun').click();
   await page.waitForFunction('!document.querySelector("#sfAutoRun").disabled');
   assert.match(await page.locator('#sfAutoStatus').innerText(),/Reconstruction not applied/);
   assert.deepEqual(await page.evaluate('window.__stitchforge_test.paths'),before);
@@ -221,7 +221,7 @@ test('server geometry rejection remains downloadable without exposing raw model 
  try{
   await page.route('**/api/reconstruct-embroidery',route=>route.fulfill({status:422,json:{code:'INVALID_MODEL_GEOMETRY',
    error:'Unsafe model geometry',raw:'server-private-output',diagnostics:{rejected_regions:[{region:3,reason:'degenerate_outline'}]}}}));
-  await page.locator('#sfAutoWorkflow').selectOption('ai');await page.locator('#sfAutoToken').fill('synthetic-private-access-token');await page.locator('#sfAutoRun').click();
+  await page.locator('#sfAutoAdvanced summary').click();await page.locator('#sfAutoWorkflow').selectOption('ai');await page.locator('#sfAutoToken').fill('synthetic-private-access-token');await page.locator('#sfAutoRun').click();
   await page.waitForFunction('!document.querySelector("#sfAutoRun").disabled');
   const text=(await downloaded(page,'#sfAutoDiagnostic')).bytes.toString();
   assert.doesNotMatch(text,/server-private-output|synthetic-private-access-token/);

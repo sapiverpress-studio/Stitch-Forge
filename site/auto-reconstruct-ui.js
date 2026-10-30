@@ -11,13 +11,19 @@ panel.className="ai-detail-panel";
 panel.id="sfAutoPanel";
 panel.innerHTML=[
  '<div class="ai-detail-head"><strong>Automatic artwork digitising</strong><small>Engineering trial</small></div>',
- '<label class="tiny" for="sfAutoWorkflow">Workflow</label><select id="sfAutoWorkflow"><option value="native">Source-based PES/DST trial · no OpenAI call</option><option value="ai">AI geometry proposal · experimental, uses API credits</option></select>',
+ '<p class="tiny">One button runs AI feature analysis, then native multicolour PES/DST. AI advice does not yet change stitch geometry or guarantee likeness.</p>',
  '<p class="tiny">Prepare colour shapes from the original pixels, generate real Ink/Stitch files and inspect independently decoded stitches. Trial files require review and have not been physically sewn.</p>',
  '<label class="tiny" for="sfNativeWidth">Full artwork image width (mm)</label><input id="sfNativeWidth" type="number" min="10" max="250" value="80" step="1" inputmode="decimal">',
+ '<label for="sfAutoToken" class="tiny">Private Stitch Forge access token (not your OpenAI API key)</label>',
+ '<input id="sfAutoToken" type="password" autocomplete="off" placeholder="Enter once on this device">',
+ '<label class="tiny"><input id="sfRememberToken" type="checkbox" checked> Remember token on this device</label>',
+ '<div class="ai-actions"><button class="btn" id="sfForgetToken" type="button">Forget saved token</button></div>',
+ '<details id="sfAutoAdvanced"><summary>Advanced settings</summary>',
+ '<label class="tiny" for="sfAutoWorkflow">Workflow</label><select id="sfAutoWorkflow"><option value="native">Automatic AI analysis + native PES/DST</option><option value="ai">AI geometry proposal only (not stitches)</option></select>',
+ '<label class="tiny"><input id="sfAutoUseAI" type="checkbox" checked> Include one paid OpenAI image-analysis request per generation (advisory only).</label>',
  '<label class="tiny"><input id="sfNativeTexture" type="checkbox" checked> Allow measured simplification of tiny texture if geometry is too complex. Fine details may change.</label>',
- '<label for="sfAutoToken" class="tiny">Private access token (not saved)</label>',
- '<input id="sfAutoToken" type="password" autocomplete="off" placeholder="Your Stitch Forge analysis token">',
- '<div class="ai-actions"><button class="btn primary" id="sfAutoRun" type="button">Generate PES/DST trial automatically</button>',
+ '</details>',
+ '<div class="ai-actions"><button class="btn primary" id="sfAutoRun" type="button">Generate embroidery</button>',
  '<button class="btn" id="sfAutoCancelNative" type="button" disabled>Cancel</button>',
  '<button class="btn" type="button" id="sfAutoDownload" disabled>Download editable colour SVG</button>',
  '<button class="btn" type="button" id="sfAutoUndo" disabled>Undo reconstruction</button>',
@@ -28,7 +34,8 @@ panel.innerHTML=[
  '<input type="file" id="sfAutoReplayFile" accept="application/json,.json" hidden>',
  '<p class="tiny">Diagnostics contain proposed artwork geometry and rejection codes, without the image or access token. Keep them private. Replay uses the same original image and no AI credits.</p>',
  '<label class="toggle"><input id="sfAutoShow" type="checkbox" checked> Show result on the artwork</label>',
- '<p class="tiny" role="status" id="sfAutoStatus">Upload the original artwork, enter the private token and generate a trial. The source-based workflow uses no OpenAI request.</p>',
+ '<p class="tiny" id="sfAutoAiSummary">AI is included by default (one chargeable image analysis). It identifies features for review; native geometry generates the stitches.</p>',
+ '<p class="tiny" role="status" id="sfAutoStatus">Upload artwork, enter your private Stitch Forge access token once, and tap Generate embroidery.</p>',
  '<p class="tiny">Reduced source pixels and proposed colour labels go only to your configured private native worker. App and worker must both support this workflow. No generated file is machine-approved, physically stitch-tested or approved for sale.</p>'
 ].join("");
 host.prepend(panel);
@@ -38,7 +45,7 @@ q('#sfNativeJump')?.addEventListener('click',()=>{
  q('#sfAutoWorkflow').value='native';
  q('#sfAutoWorkflow').dispatchEvent(new Event('change'));
  panel.scrollIntoView({behavior:'smooth',block:'start'});
- status('Source-based Ink/Stitch trial selected (no OpenAI call). Enter your private analysis token and generate. Only the ZIP from this panel contains the independently decoded native machine files.');
+ status('Automatic embroidery selected. One OpenAI image-analysis call will run before the native PES/DST trial unless disabled in Advanced settings.');
 });
 const css=document.createElement("style");css.textContent=[
  "#sfAutoPanel{border:2px solid #90b9b1;background:#f8fbfa}",
@@ -46,14 +53,31 @@ const css=document.createElement("style");css.textContent=[
  "#sfAutoOverlay path{stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;pointer-events:none}",
  "#sfAutoPanel strong{font-size:1.05em}"
  ,"#sfAutoWorkflow,#sfNativeWidth{max-width:100%;box-sizing:border-box}"
+ ,"#sfAutoAdvanced{border:1px solid #b9d0cb;border-radius:9px;padding:10px;margin:10px 0}"
+ ,"#sfAutoAdvanced summary{cursor:pointer;font-weight:650}"
+ ,"#sfRememberToken{width:auto;min-height:0;display:inline;margin:0 6px 0 0}"
+ ,"#sfAutoAiSummary{background:#e6f2f0;border-radius:9px;padding:9px;margin:8px 0}"
  ,"#sfAutoReplayFile[hidden]{display:none!important}"
 ].join("\n");document.head.appendChild(css);
 const overlay=document.createElementNS("http://www.w3.org/2000/svg","g");
 overlay.setAttribute("id","sfAutoOverlay");
 overlay.setAttribute("pointer-events","none");canvasSvg.appendChild(overlay);
 const nativeOverlay=document.createElementNS('http://www.w3.org/2000/svg','g');nativeOverlay.id='sfNativeDecodedOverlay';nativeOverlay.setAttribute('pointer-events','none');canvasSvg.appendChild(nativeOverlay);
-let last=null,diagnostic=null,running=false,revision=0,nativeResult=null,nativeAbort=null;
+let last=null,diagnostic=null,running=false,revision=0,nativeResult=null,nativeAbort=null,aiCached=null;
 const status=s=>q("#sfAutoStatus").textContent=s;
+const tokenStore=window.StitchForgeTokenStore,restoredToken=tokenStore?.read()||'';
+if(restoredToken){q('#sfAutoToken').value=restoredToken;status('Private token restored from this browser. Upload an image and generate.');}
+const secondaryToken=q('#sfAiToken');
+if(secondaryToken&&restoredToken)secondaryToken.value=restoredToken;
+q('#sfAutoToken').addEventListener('input',()=>{if(secondaryToken)secondaryToken.value=q('#sfAutoToken').value;});
+q('#sfForgetToken').onclick=()=>{
+ tokenStore?.forget();q('#sfAutoToken').value='';if(secondaryToken)secondaryToken.value='';
+ q('#sfRememberToken').checked=false;
+ status('Saved access token removed from this browser. Enter it again to generate.');
+};
+q('#sfRememberToken').onchange=()=>{
+ if(!q('#sfRememberToken').checked){tokenStore?.forget();status('Token saving disabled; existing saved token cleared.');}
+};
 function paint(){
  nativeOverlay.replaceChildren();overlay.replaceChildren();
  if(nativeResult){
@@ -84,8 +108,8 @@ function paint(){
 function clearNative(){if(nativeResult)context.setSourceRegionInspectionActive(false);nativeResult=null;nativeOverlay.replaceChildren();q('#sfAutoNativeReport').disabled=true;q('#sfAutoNativeGeometry').disabled=true;}
 function saveBytes(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 function invalidateNative(){revision++;nativeAbort?.abort();clearNative();q('#sfAutoDownload').disabled=!last;q('#sfAutoUndo').disabled=!last;q('#sfAutoDownload').textContent='Download editable colour SVG';status('Artwork settings changed. Previous native result cleared; generate again when ready.');}
-q('#sfAutoWorkflow').onchange=()=>{invalidateNative();q('#sfAutoRun').textContent=q('#sfAutoWorkflow').value==='native'?'Generate PES/DST trial automatically':'Reconstruct AI geometry proposal';status(q('#sfAutoWorkflow').value==='native'?'Source-based trial: reduced pixels go to the private native worker. No OpenAI call.':'AI geometry proposals use API credits and are not machine-approved stitch plans.');};
-q('#sfNativeWidth').onchange=invalidateNative;q('#sfNativeTexture').onchange=invalidateNative;
+q('#sfAutoWorkflow').onchange=()=>{invalidateNative();q('#sfAutoRun').textContent=q('#sfAutoWorkflow').value==='native'?'Generate embroidery':'Generate AI proposal (not machine stitches)';status(q('#sfAutoWorkflow').value==='native'?'Automatic AI feature analysis and native PES/DST trial. AI is advisory and uses a paid API call when enabled.':'AI proposal is an experimental geometry draft; it is not machine embroidery.');};
+q('#sfNativeWidth').onchange=invalidateNative;q('#sfNativeTexture').onchange=invalidateNative;q('#sfAutoUseAI').onchange=invalidateNative;
 q('#sfAutoCancelNative').onclick=()=>{invalidateNative();status('Native generation cancelled. No further phase will be requested.');};
 q('#sfAutoNativeReport').onclick=()=>{if(nativeResult)saveBytes(JSON.stringify(nativeResult.report,null,2),'stitch-forge-machine-report-PRIVATE-NOT-APPROVED.json','application/json');};
 q('#sfAutoNativeGeometry').onclick=()=>{if(nativeResult)saveBytes(nativeResult.geometry,'stitch-forge-editable-native-TRIAL-NOT-APPROVED.svg','image/svg+xml');};
@@ -114,6 +138,17 @@ async function modelImage(source){
  if(data.length>2100000)throw Error("Image too large for the vision endpoint");
  return data;
 }
+async function analyseNativeFeatures(source,token,signal){
+ const image=await modelImage(source);
+ const response=await fetch('/api/analyse-embroidery',{method:'POST',headers:{
+  'Content-Type':'application/json','Authorization':'Bearer '+token
+ },body:JSON.stringify({image}),cache:'no-store',signal});
+ let report;try{report=await response.json();}catch{throw Error('Unreadable AI report');}
+ if(!response.ok)throw Error(String(report?.error||'AI analysis unavailable').slice(0,180));
+ if(report?.status!=='REGION_PROPOSAL_NOT_DIGITISED'||!Array.isArray(report.regions)||report.regions.length>24)
+  throw Error('Invalid advisory AI region report');
+ return report;
+}
 q("#sfAutoRun").onclick=async()=>{
  if(running)return;
  const source=context.getImage();if(!source){status("Upload the original detailed image first.");return;}
@@ -121,7 +156,11 @@ q("#sfAutoRun").onclick=async()=>{
   status("Re-upload the original artwork to reconstruct. A restored project contains only a reduced trace reference, not the original colours and fine detail. Existing design unchanged.");return;
  }
  const token=q("#sfAutoToken").value.trim()||q("#sfAiToken")?.value.trim();
- if(!token){status("Enter your private analysis token (not your OpenAI API key).");return;}
+ if(!token){status("Enter your private Stitch Forge access token (not the OpenAI API key).");return;}
+ if(q('#sfRememberToken').checked){
+  if(!tokenStore?.save(token))q('#sfAutoAiSummary').textContent='This browser could not save the token; it will still work for this session.';
+ }else tokenStore?.forget();
+ if(secondaryToken)secondaryToken.value=token;
  if(q('#sfAutoWorkflow').value==='native'){
   const api=window.StitchForgeArtworkPipeline,stamp=revision,width=Number(q('#sfNativeWidth').value),texturePolicy=q('#sfNativeTexture').checked?'if_needed':'off';
   if(!api){status('Source-native pipeline unavailable; reload the current app. No AI request was made.');return;}
@@ -154,14 +193,33 @@ q("#sfAutoRun").onclick=async()=>{
     }
    }
    if(!packed)throw Error('Detailed regions remain beyond the native trial budget at this physical size. The original image is unchanged; no machine file was produced');
+   // AI supplies feature names for review only. Native source masks and existing
+   // safety budgets remain authoritative, regardless of the AI response.
+   let aiNote='AI disabled in Advanced settings. ';
+   if(q('#sfAutoUseAI').checked){
+    status('Analysing visible features with OpenAI (one paid request), then generating native embroidery…');
+    try{
+     const reused=aiCached?.source===source;
+     const report=reused?aiCached.report:await analyseNativeFeatures(source,token,nativeAbort.signal);
+     aiCached={source,report};
+     if(!current())throw Error('Source changed during AI analysis');
+     window.dispatchEvent(new CustomEvent('stitchforge:automatic-ai-report',{detail:{source,report}}));
+     aiNote='AI reviewed '+report.regions.length+' visible parts (advisory only'+(reused?'; reused previous result':'')+'). ';
+     q('#sfAutoAiSummary').textContent=aiNote+'Native stitches still follow the original source pixels.';
+    }catch(err){
+     if(!current()||nativeAbort.signal.aborted)throw err;
+     aiNote='AI analysis unavailable ('+String(err?.message||err).slice(0,180)+'); ';
+     q('#sfAutoAiSummary').textContent=aiNote+'Continuing native digitising without a second paid AI request.';
+    }
+   }else q('#sfAutoAiSummary').textContent='AI analysis skipped. Native embroidery uses the source image.';
    const result=await api.generate(packed,{token,signal:nativeAbort.signal,isCurrent:current,onProgress:text=>{if(current())status(text);}});
    if(!current())throw Error('Source or size changed; stale result discarded');
    window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
    q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoUndo').disabled=false;
    const r=result.report,d=r.decoded.find(x=>x.format==='pes');
-   status('Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
+   status(aiNote+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
    saveBytes(result.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED.zip','application/zip');
-  }catch(error){if(current())status('Native artwork trial unavailable: '+(error.message||error)+'. No OpenAI request or substitute machine file was produced.');}
+  }catch(error){if(current())status('Native artwork trial unavailable: '+(error.message||error)+'. No substitute machine file was produced. AI analysis is advisory only.');}
   finally{running=false;nativeAbort=null;q('#sfAutoRun').disabled=false;q('#sfAutoCancelNative').disabled=true;}return;
  }
  if(!window.StitchForgeAutoReconstruct){status("Automatic reconstruction engine missing; no changes made.");return;}

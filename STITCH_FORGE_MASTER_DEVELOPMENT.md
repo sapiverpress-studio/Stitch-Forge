@@ -1538,3 +1538,7 @@ Final application source for this session: `dbd9d46b7a0b3321cbbb9a1e1cc27b0adda6
 - Etsy, licensing, standards and machine documentation may change. Link to the *current* source when making a compliance or compatibility claim; never rely solely on historic project notes.
 
 **This document records reality, uncertainty and evidence. It is not a promotional feature list.**
+
+## 2026-10-30 — MD-2.52 one-button AI review and device token memory
+
+The main native action can now automatically call the existing server-side OpenAI feature-map endpoint once per source image per page session, then continue to native PES/DST. It retains the original source-image masks and independent native audit; AI report labels are advisory only, not stitch parameters. The owner's access token is saved in browser-profile localStorage only when Remember is selected, restored across site reloads and deletable with Forget. OpenAI API key stays server-side. The use of paid AI does **not** imply improved stitch fidelity; complex kingfisher PES/DST and physical sewout remain outstanding. See [MD-2.52 handover](docs/ENGINEERING_HANDOVER_MD-2.52.md) for evidence and security tradeoffs. No worker change.

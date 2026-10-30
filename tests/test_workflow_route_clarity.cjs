@@ -7,7 +7,7 @@ const ui=fs.readFileSync(path.join(__dirname,'../site/auto-reconstruct-ui.js'),'
 const ai=fs.readFileSync(path.join(__dirname,'../site/ai-details.js'),'utf8');
 
 test('raster upload offers a direct native multi-colour route without removing manual tracing',()=>{
- assert.match(index,/id="sfNativeJump"[^>]*>Continue to detailed PES\/DST trial · no AI charge/);
+ assert.match(index,/id="sfNativeJump"[^>]*>Continue to Generate embroidery/);
  assert.match(index,/id="tracePanel"/);
  assert.match(index,/id="importFile"/);
  assert.match(ui,/q\('#sfNativeJump'\)\?\.addEventListener\('click'/);
@@ -30,8 +30,8 @@ test('legacy browser exports and simulator are visibly segregated from true nati
 });
 
 test('native mode is selected without initiating a paid AI proposal',()=>{
- assert.match(ui,/<option value="native">Source-based PES\/DST trial · no OpenAI call/);
- assert.match(ui,/<option value="ai">AI geometry proposal · experimental, uses API credits/);
+ assert.match(ui,/<option value="native">Automatic AI analysis \+ native PES\/DST/);
+ assert.match(ui,/<option value="ai">AI geometry proposal only \(not stitches\)/);
  assert.match(ui,/q\('#sfAutoWorkflow'\)\.dispatchEvent\(new Event\('change'\)\)/);
- assert.match(ui,/status\('Source-based Ink\/Stitch trial selected \(no OpenAI call\)/);
+ assert.match(ui,/Automatic embroidery selected/);
 });
