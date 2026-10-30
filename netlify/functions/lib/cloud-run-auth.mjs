@@ -12,7 +12,18 @@ export function cloudRunAudience(endpoint){
     url.hostname==="run.app"||url.port||url.username||url.password||
     url.pathname!=="/v1/digitise"||url.search||url.hash)
   throw Error("Invalid private Cloud Run endpoint");
- return url.origin;
+ // Cloud Run IAM requires the canonical *service* audience even when the
+ // HTTPS request targets a traffic-tagged revision (tag---service.run.app).
+ // Do not use the tagged URL as the ID-token audience.
+ const marker=url.hostname.indexOf('---');
+ if(marker<0)return url.origin;
+ const tag=url.hostname.slice(0,marker);
+ const serviceHost=url.hostname.slice(marker+3);
+ if(!/^[a-z][a-z0-9-]{0,62}$/.test(tag)||
+    !/^[a-z0-9][a-z0-9.-]*\.run\.app$/.test(serviceHost)||
+    serviceHost.includes('---'))
+   throw Error("Invalid private Cloud Run traffic-tag URL");
+ return 'https://'+serviceHost;
 }
 export async function acquireCloudRunIdToken(endpoint, credential, {
  fetchImpl=fetch, epoch=Math.floor(Date.now()/1000)

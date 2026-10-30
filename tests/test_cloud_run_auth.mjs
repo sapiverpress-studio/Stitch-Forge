@@ -4,6 +4,7 @@ import {generateKeyPairSync,createVerify} from "node:crypto";
 import {cloudRunAudience,acquireCloudRunIdToken} from "../netlify/functions/lib/cloud-run-auth.mjs";
 
 const URL="https://stitch-forge-worker-7qaz-ew.a.run.app/v1/digitise";
+const TAGGED_URL="https://md249---stitch-forge-worker-7qaz-ew.a.run.app/v1/digitise";
 const {privateKey,publicKey}=generateKeyPairSync("rsa",{modulusLength:2048});
 const credential=JSON.stringify({
  type:"service_account",client_email:"stitch-forge-invoker@test-project.iam.gserviceaccount.com",
@@ -12,6 +13,7 @@ const credential=JSON.stringify({
 });
 test("only an exact secure run.app worker origin can receive a Google IAM token",()=>{
  assert.equal(cloudRunAudience(URL),"https://stitch-forge-worker-7qaz-ew.a.run.app");
+ assert.equal(cloudRunAudience(TAGGED_URL),"https://stitch-forge-worker-7qaz-ew.a.run.app");
  for(const unsafe of [
   "https://evil.example/v1/digitise",
   "http://stitch-forge.a.run.app/v1/digitise",
@@ -20,7 +22,9 @@ test("only an exact secure run.app worker origin can receive a Google IAM token"
   "https://stitch-forge.a.run.app/v1/digitise#hash",
   "https://stitch-forge.a.run.app/other",
   "https://fake-run.app/v1/digitise",
-  "https://attacker@stitch-forge.a.run.app/v1/digitise"
+  "https://attacker@stitch-forge.a.run.app/v1/digitise",
+  "https://bad_tag---stitch-forge.a.run.app/v1/digitise",
+  "https://md249---other---stitch-forge.a.run.app/v1/digitise"
  ])assert.throws(()=>cloudRunAudience(unsafe),unsafe);
 });
 test("server-only JWT is signed with restricted caller key, audience-locked and exchanged with Google",async()=>{
@@ -58,4 +62,17 @@ test("malformed caller credentials and failed Google ID-token exchange fail clos
  await assert.rejects(acquireCloudRunIdToken(URL,credential,{
   fetchImpl:async()=>new Response(JSON.stringify({access_token:"not-an-id-token"}),{status:200})
  }),/ID token/);
+});
+
+test("tagged revisions obtain an ID token for the canonical Cloud Run service, never the tag",async()=>{
+ let audience;
+ const token=await acquireCloudRunIdToken(TAGGED_URL,credential,{
+  fetchImpl:async (_url,opts)=>{
+   const jwt=new URLSearchParams(opts.body).get("assertion");
+   audience=JSON.parse(Buffer.from(jwt.split(".")[1],"base64url").toString()).target_audience;
+   return new Response(JSON.stringify({id_token:"aaaa.bbbb.cccc"}),{status:200});
+  }
+ });
+ assert.equal(token,"aaaa.bbbb.cccc");
+ assert.equal(audience,"https://stitch-forge-worker-7qaz-ew.a.run.app");
 });
