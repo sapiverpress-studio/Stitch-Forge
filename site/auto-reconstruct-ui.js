@@ -64,7 +64,10 @@ overlay.setAttribute("id","sfAutoOverlay");
 overlay.setAttribute("pointer-events","none");canvasSvg.appendChild(overlay);
 const nativeOverlay=document.createElementNS('http://www.w3.org/2000/svg','g');nativeOverlay.id='sfNativeDecodedOverlay';nativeOverlay.setAttribute('pointer-events','none');canvasSvg.appendChild(nativeOverlay);
 let last=null,diagnostic=null,running=false,revision=0,nativeResult=null,nativeAbort=null,aiCached=null;
-const status=s=>q("#sfAutoStatus").textContent=s;
+const status=s=>{
+ q("#sfAutoStatus").textContent=s;
+ window.dispatchEvent(new CustomEvent('stitchforge:workflow-status',{detail:{message:s}}));
+};
 const tokenStore=window.StitchForgeTokenStore,restoredToken=tokenStore?.read()||'';
 if(restoredToken){q('#sfAutoToken').value=restoredToken;status('Private token restored from this browser. Upload an image and generate.');}
 const secondaryToken=q('#sfAiToken');
@@ -163,7 +166,12 @@ q("#sfAutoRun").onclick=async()=>{
  if(secondaryToken)secondaryToken.value=token;
  if(q('#sfAutoWorkflow').value==='native'){
   const api=window.StitchForgeArtworkPipeline,stamp=revision,width=Number(q('#sfNativeWidth').value),texturePolicy=q('#sfNativeTexture').checked?'if_needed':'off';
-  if(!api){status('Source-native pipeline unavailable; reload the current app. No AI request was made.');return;}
+  if(!api){
+   const message='Source-native pipeline unavailable; reload the current app.';
+   status(message);
+   window.dispatchEvent(new CustomEvent('stitchforge:native-error',{detail:{message}}));
+   window.dispatchEvent(new Event('stitchforge:native-idle'));return;
+  }
   running=true;q('#sfAutoRun').disabled=true;q('#sfAutoCancelNative').disabled=false;nativeAbort=new AbortController();
   const current=()=>revision===stamp&&context.getImage()===source;
   status('Preparing source pixels and colour shapes locally…');
@@ -218,9 +226,19 @@ q("#sfAutoRun").onclick=async()=>{
    q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoUndo').disabled=false;
    const r=result.report,d=r.decoded.find(x=>x.format==='pes');
    status(aiNote+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
+   window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview:result.preview,report:result.report}}));
+   // Preserve verified ZIP auto-download, and expose a re-download button.
    saveBytes(result.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED.zip','application/zip');
-  }catch(error){if(current())status('Native artwork trial unavailable: '+(error.message||error)+'. No substitute machine file was produced. AI analysis is advisory only.');}
-  finally{running=false;nativeAbort=null;q('#sfAutoRun').disabled=false;q('#sfAutoCancelNative').disabled=true;}return;
+  }catch(error){
+   if(current()){
+    const message=String(error?.message||error);
+    status('Native artwork trial unavailable: '+message+'. No substitute machine file was produced.');
+    window.dispatchEvent(new CustomEvent('stitchforge:native-error',{detail:{message}}));
+   }
+  }finally{
+   running=false;nativeAbort=null;q('#sfAutoRun').disabled=false;q('#sfAutoCancelNative').disabled=true;
+   window.dispatchEvent(new Event('stitchforge:native-idle'));
+  }return;
  }
  if(!window.StitchForgeAutoReconstruct){status("Automatic reconstruction engine missing; no changes made.");return;}
  const diagnostics=window.StitchForgeReconstructionDiagnostics;
