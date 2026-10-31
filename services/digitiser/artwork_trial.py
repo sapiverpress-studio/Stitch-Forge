@@ -227,6 +227,39 @@ def component_axis(component):
     return angle,True
 
 
+def order_source_components(components):
+    """Reorder same-colour components for shorter geometric travel only.
+
+    Each original source component index is retained for repair receipts and
+    decoded audit attribution. No shapes or colours are merged by this step.
+    Nearest-centre is a bounded heuristic, NOT a sew-out routing proof.
+    """
+    todo={}
+    for i,component in enumerate(components):
+        bounds=component['bounds']
+        cx=bounds['x']+bounds['w']/2
+        cy=bounds['y']+bounds['h']/2
+        todo[i]=(component,(cx,cy))
+    result=[];last=(0.,0.)
+    while todo:
+        index=min(todo,key=lambda i:(
+            (todo[i][1][0]-last[0])**2+(todo[i][1][1]-last[1])**2,i))
+        component,centre=todo.pop(index)
+        result.append((index,component));last=centre
+    return result
+
+
+def fill_underlay_eligible(piece,scale):
+    """Stabilise larger, genuinely wide fills; don't underlay feather specks.
+
+    Conservative 8 mm² / 1.4 mm interior threshold. All inset stitching is
+    subsequently checked against the original mask in the native stitch audit.
+    No fabric-specific compensation is implied.
+    """
+    return (piece.area*scale*scale>=8.0 and
+            not piece.buffer(-.7/scale).is_empty)
+
+
 def bounded_fill_parts(poly,scale):
     """Partition only complex native input, retaining its exact polygon union.
 
@@ -282,9 +315,10 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
     ET.SubElement(root, 'use', {'{http://www.w3.org/1999/xlink}href':'#inkstitch_origin',
         'x':f'{width/2:.6f}', 'y':f'{height/2:.6f}'})
     records, path_count, total_vertices = [], 0, 0
+    underlay_count=0;running_branches=0;routed_walks=0
     fill_pieces=[];repaired=[]
-    def add_path(color, points, closed=False, holes=(),angle=0):
-        nonlocal path_count, total_vertices
+    def add_path(color, points, closed=False, holes=(),angle=0,underlay=False):
+        nonlocal path_count, total_vertices,underlay_count
         if partition_fills and not closed:points=without_collinear_steps(points)
         total_vertices += len(points)+sum(map(len, holes))
         path_count += 1
@@ -300,8 +334,15 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
         if closed:
             attrs.update({'fill':color, 'fill-rule':'evenodd','stroke':'none', INK+'fill_method':'tatami_fill',
                 INK+'angle':str(angle), INK+'row_spacing_mm':'0.5', INK+'max_stitch_length_mm':'3.5',
-                INK+'fill_underlay':'false', INK+'underpath':'true', INK+'pull_compensation_mm':'0',
+                INK+'fill_underlay':'true' if underlay else 'false',
+                INK+'fill_underlay_angle':str((angle+90)%180),
+                INK+'fill_underlay_row_spacing_mm':'1.5',
+                INK+'fill_underlay_max_stitch_length_mm':'3.5',
+                INK+'fill_underlay_inset_mm':'0.35',
+                INK+'staggers':'4',
+                INK+'underpath':'true', INK+'pull_compensation_mm':'0',
                 INK+'pull_compensation_percent':'0', INK+'expand_mm':'0'})
+            if underlay:underlay_count+=1
             attrs['d'] += ''.join(' '+commands(ring)+' Z' for ring in holes)
         else:
             attrs.update({'fill':'none','stroke':color,'stroke-width':'0.1',INK+'stroke_method':'running_stitch'})
@@ -309,7 +350,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
     for region in sorted(plan['regions'], key=lambda r:r['color']):
         color = region['color']
         # Bounds/rings are derived independently from runs, not trusted JSON topology.
-        for index, component in enumerate(region['ledger']['components']):
+        for index, component in order_source_components(region['ledger']['components']):
             xs = [x for _, x0, x1 in component['runs'] for x in (x0, x1)]
             ys = [y for y, _, _ in component['runs']]
             x0, y0, x1, y1 = min(xs), min(ys), max(xs), max(ys)+1
@@ -350,15 +391,21 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
                             if before==path_count:raise ValueError('Native repair has no source-supported running path')
                             repaired.append(entry)
                         else:
-                            add_path(color,list(piece.exterior.coords)[:-1],True,[list(r.coords)[:-1] for r in piece.interiors],angle)
-                            fill_pieces.append({**entry,'nativePathId':'artwork-'+str(path_count)})
+                            use_underlay=fill_underlay_eligible(piece,scale)
+                            add_path(color,list(piece.exterior.coords)[:-1],True,[list(r.coords)[:-1] for r in piece.interiors],angle,use_underlay)
+                            fill_pieces.append({**entry,'nativePathId':'artwork-'+str(path_count),
+                                                'fillUnderlay':use_underlay})
                 record['action'] = 'native_fill_trial'
                 record['fillAngleDeg']=angle;record['geometryAxisUsed']=directional;record['semanticDirectionVerified']=False
                 record['contourHausdorffMm'] = shape.hausdorff_distance(smooth)*scale
             else:
                 paths, count, dots = skeleton_paths(local)
                 branch_count=len(paths)
-                if plan.get('textureApproximation'):paths=route_skeleton_branches(paths)
+                # Connect only branches that share EXACT source-skeleton endpoints.
+                # This is geometry-preserving region consolidation: no shortcuts,
+                # no new colour pixels, and each skeleton edge walked at most twice.
+                paths=route_skeleton_branches(paths)
+                running_branches+=branch_count;routed_walks+=len(paths)
                 for points in paths:
                     translated = [(x+x0-1,y+y0-1) for x,y in points]
                     # Small graph branches remain in the manifest; no artificial dot stitches.
@@ -366,7 +413,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
                         add_path(color,translated)
                 record.update(action='native_running_trial' if path_count>previous else 'unresolved_short_detail',
                               skeletonPixels=count,isolatedSkeletonPixels=dots,sourceSkeletonBranches=branch_count,
-                              routedConnectedBranchWalks=bool(plan.get('textureApproximation')))
+                              routedConnectedBranchWalks=True,consolidatedSourceBranches=branch_count-len(paths))
             record['nativePaths'] = path_count-previous
             records.append(record)
     if {o['id'] for o in repaired}!=running_overrides or sum(o['pixels'] for o in repaired)>plan['summary']['sourcePixels']*.02:
@@ -380,15 +427,25 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
         'source':plan['source'],'sourcePlanSignature':plan['sourcePlanSignature'],'scaleMmPerPixel':scale,
         'originMm':[width/2,height/2],'widthMm':width,'heightMm':height,'objects':records,'nativePaths':path_count,
         'nativeFillPieces':fill_pieces,'nativeRepairObjects':repaired,
-        'algorithm':'source_axis_artwork_trial_MD-2.48','settings':{'fillDirection':'component_axis_in_15_degree_steps_or_horizontal_if_isotropic','fillRowSpacingMm':.5,'fillMaxStitchMm':3.5,'fillUnderlay':False,
+        'regionConsolidation':{'method':'connected_skeleton_edge_walk_and_same_colour_nearest_centre',
+            'originalRunningBranches':running_branches,'connectedRunningWalks':routed_walks,
+            'colourPixelsReassigned':0,'sourceGeometryChanged':False},
+        'underlayFillPaths':underlay_count,
+        'algorithm':'source_preserving_routed_tatami_MD-2.55','settings':{'fillDirection':'component_axis_in_15_degree_steps_or_horizontal_if_isotropic',
+                     'fillRowSpacingMm':.5,'fillMaxStitchMm':3.5,'fillUnderlay':'selective_inset_on_wide_fills',
+                     'fillUnderlayMinAreaMm2':8.,'fillUnderlayMinInteriorWidthMm':1.4,
+                     'fillUnderlayInsetMm':.35,'fillUnderlayAngleDeltaDeg':90,
+                     'fillUnderlayRowSpacingMm':1.5,'fillUnderlayMaxStitchMm':3.5,
+                     'tatamiStaggers':4,'connectedSkeletonBranchRouting':True,'sameColourNearestCentreOrdering':True,
                     'runningLengthMm':1.5,'runningToleranceMm':running_tolerance,'contourToleranceMm':contour_tolerance,
                     'collapseJumpBelowMm':0,'minimumStitchMm':.05,'nativeLock':'back_forth','nativeLockScaleMm':.2,
                     'complexFillPartitionEnabled':partition_fills,'complexFillPartitionGridMm':8 if partition_fills else None,
                     'nativeFillInteriorTravel':True,'boundedNativeRepairMaxSourceFraction':.02},
         'limitations':['Shape-based fill/running trials; no AI semantics or satin planning.',
-          'Geometric-axis fill and no underlay are controlled trials, not semantic directions or fabric presets.',
+          'Geometric-axis fill and selective underlay are controlled trials, not semantic directions or fabric presets.',
           'Skeleton branches are not proven feather/vein intent. Unresolved tiny details are explicit.',
-          'Layer, routing, local density, thread palette and physical fabric quality require review.']}
+          'Connected skeleton branches may retrace; colour fragments remain unmodified and unresolved.',
+           'Layer, routing, local density, thread palette and physical fabric quality require review.']}
     return svg, manifest, masks
 
 

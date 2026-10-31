@@ -1,0 +1,167 @@
+name: MD-2.55 source-preserving infill native validation
+
+on:
+  push:
+    branches: ["feature/researched-infill-consolidation-md255"]
+    paths:
+      - "services/digitiser/artwork_trial.py"
+      - "tests/test_artwork_trial.py"
+      - ".github/workflows/validate-infill-routing.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inkstitch-pyembroidery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Check out revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check Cloud Run private-only deploy script (NO GCP writes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n services/digitiser/deploy-cloud-run-staging.sh
+          export GOOGLE_CLOUD_PROJECT=stitch-forge-test CLOUD_RUN_REGION=europe-west2
+          export CLOUD_RUN_REPOSITORY=stitch-forge-staging STITCH_FORGE_CLOUD_SECRET=worker-token
+          export CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT=worker@test-project.iam.gserviceaccount.com
+          export STITCH_FORGE_DEPLOY_COMMIT=0123456789abcdef0123456789abcdef01234567
+          bash services/digitiser/deploy-cloud-run-staging.sh > "$RUNNER_TEMP/cloud-plan.txt"
+          grep -F -- '--no-allow-unauthenticated' "$RUNNER_TEMP/cloud-plan.txt"
+          grep -F -- 'DRY RUN ONLY' "$RUNNER_TEMP/cloud-plan.txt"
+          if grep -F -- '--allow-unauthenticated ' "$RUNNER_TEMP/cloud-plan.txt"; then
+            echo 'Cloud Run staging MUST NOT be public'; exit 1
+          fi
+          if bash services/digitiser/deploy-cloud-run-staging.sh --execute > "$RUNNER_TEMP/cloud-refusal.txt" 2>&1; then
+            echo 'Cloud Run deployed without explicit charge approval'; exit 1
+          fi
+          grep -F -- 'REFUSED' "$RUNNER_TEMP/cloud-refusal.txt"
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pyembroidery and Inkscape
+        run: |
+          python -m pip install pyembroidery==1.5.1
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Run release selector and independent reader tests
+        env:
+          PYTHONPATH: services/digitiser
+        run: |
+          python -m unittest discover -s tests -p 'test_release_asset.py' -v
+          python -m unittest discover -s tests -p 'test_format_audit.py' -v
+      - name: Resolve exact official x86_64 archive
+        env:
+          PYTHONPATH: services/digitiser
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 2 'https://api.github.com/repos/inkstitch/inkstitch/releases/tags/v3.3.0' > "$RUNNER_TEMP/inkstitch-release.json"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from release_asset import select_linux_x64_asset
+          r = Path(os.environ['RUNNER_TEMP'])
+          name, url, digest = select_linux_x64_asset((r / 'inkstitch-release.json').read_bytes())
+          (r / 'asset-url').write_text(url)
+          (r / 'expected-digest').write_text(digest or '')
+          print('Official upstream file:', name)
+          print('Upstream SHA-256 metadata:', 'present' if digest else 'missing — record observed hash only')
+          PY
+      - name: Download and safely extract official engine
+        env:
+          PYTHONPATH: services/digitiser
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 2 --max-time 360 "$(cat "$RUNNER_TEMP/asset-url")" -o "$RUNNER_TEMP/inkstitch.tar.xz"
+          sha256sum "$RUNNER_TEMP/inkstitch.tar.xz"
+          python - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          from release_asset import extract_verified_release
+          root = Path(os.environ['RUNNER_TEMP'])
+          archive = root / 'inkstitch.tar.xz'
+          actual = hashlib.sha256(archive.read_bytes()).hexdigest()
+          expected = (root / 'expected-digest').read_text().strip()
+          if expected and expected != actual:
+              raise SystemExit('Upstream digest verification FAILED')
+          if not expected:
+              print('WARNING: no upstream digest; release tag pinned, asset digest not yet pinned')
+          extract_verified_release(archive, root / 'inkstitch-unpacked')
+          PY
+          find "$RUNNER_TEMP/inkstitch-unpacked" -name inkstitch -type f -perm /111 -print > "$RUNNER_TEMP/inkstitch-executables"
+          cat "$RUNNER_TEMP/inkstitch-executables"
+          test "$(wc -l < "$RUNNER_TEMP/inkstitch-executables")" -eq 1
+          echo "ENGINE_PATH=$(cat "$RUNNER_TEMP/inkstitch-executables")" >> "$GITHUB_ENV"
+      - name: Validate shape routing and selective underlay with actual Ink/Stitch 3.3.0
+        env:
+          STITCH_FORGE_INKSTITCH: ${{ env.ENGINE_PATH }}
+          QT_QPA_PLATFORM: xcb
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_trial.py -v
+          xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_service.py -v
+      - name: Generate PES/DST from actual Ink/Stitch and read back independently
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: xcb
+        run: |
+          set -euo pipefail
+          xvfb-run -a -s "-screen 0 1280x800x24" python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --output "$RUNNER_TEMP/engine-smoke.zip"
+          unzip -t "$RUNNER_TEMP/engine-smoke.zip"
+          xvfb-run -a -s "-screen 0 1280x800x24" python services/digitiser/real_engine_smoke.py --inkstitch "$ENGINE_PATH" --project tests/fixtures/browser_project_v03.json --output "$RUNNER_TEMP/browser-project-smoke.zip"
+          unzip -t "$RUNNER_TEMP/browser-project-smoke.zip"
+          # Exercise the exact JSON geometry -> trusted SVG -> real Ink/Stitch
+          # -> separately decoded PES/DST transaction that the worker invokes.
+          xvfb-run -a -s "-screen 0 1280x800x24" python - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'services/digitiser')
+          from machine_job import run_machine_job
+          p = {'width': 65, 'hoop': 150,
+               'paths': [
+                 [[120,100],[260,100],[260,230],[120,230],[120,100]],
+                 [[180,230],[180,320]]],
+               'pathStyles':['tatami','running'],
+               'pathColors':['#AA3344','#267C5C'],
+               'pathSettings':[{'fillAngleDeg':30,'rowSpacingMm':0.55,
+                                'fillUnderlay':True},
+                               {'runningLengthMm':2.0}]}
+          result = run_machine_job(json.dumps(p).encode(),
+                    executable=Path(os.environ['ENGINE_PATH']), timeout_seconds=90)
+          assert len(result.payload) >= 100
+          assert len(result.summary) == 2
+          assert {x['format'] for x in result.summary} == {'pes','dst'}
+          assert all(x['stitches'] > 10 and x['changes'] == 1 for x in result.summary)
+          print('REAL JSON-TO-INKSTITCH JOB: PASSED, BOTH FORMATS, 1 COLOUR CHANGE')
+          print('AUDITED MACHINE ZIP SHA256:',result.digest)
+          print('PHYSICAL STITCH-OUT: NOT TESTED')
+          PY
+          echo 'ALL THREE ENGINE FIXTURES ARE STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
+      - name: Build isolated staging container and prove real HTTP transaction
+        shell: bash
+        env:
+          STITCH_FORGE_WORKER_TOKEN: synthetic-ci-only-token-never-use-in-hosting
+        run: |
+          set -euo pipefail
+          docker build -f services/digitiser/Dockerfile -t stitch-forge-worker:test .
+          docker run -d --name stitch-worker --read-only --tmpfs /tmp:rw,size=256m,mode=1777 \
+            --memory 2g --cpus 2 --pids-limit 128 --cap-drop ALL \
+            --security-opt no-new-privileges:true -p 127.0.0.1:8080:8080 \
+            -e STITCH_FORGE_WORKER_TOKEN stitch-forge-worker:test
+          trap 'docker inspect --format "{{json .State}}" stitch-worker; docker logs stitch-worker; docker rm -f stitch-worker' EXIT
+          ready=false
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://127.0.0.1:8080/v1/digitise; then ready=true; break; fi
+            sleep 1
+          done
+          test "$ready" = true
+          for fixture in tests/fixtures/synthetic_*.json; do
+            python services/digitiser/http_smoke.py --project "$fixture"
+          done

@@ -13,7 +13,7 @@ sys.path.insert(0,str(ROOT/'services/digitiser'))
 try:
     import numpy as np
     from PIL import Image
-    from artwork_trial import checked_masks, texture_trial, skeleton_paths, route_skeleton_branches, component_axis, bounded_fill_parts, without_collinear_steps, build_trial_svg, run_trial, audit_trial, validate_native_payload
+    from artwork_trial import checked_masks, texture_trial, skeleton_paths, route_skeleton_branches, component_axis, bounded_fill_parts, without_collinear_steps, order_source_components, fill_underlay_eligible, build_trial_svg, run_trial, audit_trial, validate_native_payload
     import pyembroidery
     AVAILABLE=True
 except ImportError:
@@ -71,6 +71,60 @@ class ArtworkTrialTests(unittest.TestCase):
         self.assertTrue(paths)
         for path in paths:
             for x,y in path:self.assertTrue(loop[int(y),int(x)])
+
+    def test_region_consolidation_stays_on_source_skeleton_with_a_bounded_retrace(self):
+        # Benchmark the actual SVG builder, not just the path-routing helper.
+        svg,manifest,masks=build_trial_svg(self.plan,partition_fills=True)
+        summary=manifest['regionConsolidation']
+        self.assertEqual(summary['colourPixelsReassigned'],0)
+        self.assertFalse(summary['sourceGeometryChanged'])
+        self.assertGreaterEqual(summary['originalRunningBranches'],summary['connectedRunningWalks'])
+        self.assertTrue(manifest['settings']['connectedSkeletonBranchRouting'])
+        self.assertEqual(sum(int(m.sum()) for m in masks.values()),self.plan['summary']['sourcePixels'])
+        self.assertFalse(manifest['machineEligible'])
+        self.assertLessEqual(manifest['nativePaths'],1500)
+        from xml.etree import ElementTree as ET
+        root=ET.fromstring(svg)
+        paths=[node for node in root if node.tag.endswith('path')]
+        self.assertEqual(len(paths),manifest['nativePaths'])
+        self.assertTrue(all(node.get('d') for node in paths))
+
+    def test_underlay_is_selective_inset_and_orthogonal_on_wide_fills(self):
+        from shapely.geometry import box
+        self.assertTrue(fill_underlay_eligible(box(0,0,20,20),.5))
+        self.assertFalse(fill_underlay_eligible(box(0,0,2,20),.5))
+        self.assertFalse(fill_underlay_eligible(box(0,0,8,8),.25))
+        svg,manifest,_=build_trial_svg(self.plan,partition_fills=True)
+        from xml.etree import ElementTree as ET
+        attrs='{http://inkstitch.org/namespace}'
+        nodes=[n for n in ET.fromstring(svg) if n.tag.endswith('path') and n.get('fill') not in (None,'none')]
+        self.assertTrue(nodes)
+        enabled=[n for n in nodes if n.get(attrs+'fill_underlay')=='true']
+        self.assertTrue(enabled,'Substantial source fill needs stabilising underlay')
+        self.assertEqual(len(enabled),manifest['underlayFillPaths'])
+        self.assertLess(len(enabled),len(nodes),'Small feather-like fills should remain free of underlay')
+        for node in enabled:
+            angle=float(node.get(attrs+'angle'))
+            self.assertEqual(float(node.get(attrs+'fill_underlay_angle')),(angle+90)%180)
+            self.assertEqual(node.get(attrs+'fill_underlay_inset_mm'),'0.35')
+            self.assertEqual(node.get(attrs+'fill_underlay_row_spacing_mm'),'1.5')
+            self.assertEqual(node.get(attrs+'staggers'),'4')
+
+    def test_same_colour_route_order_keeps_original_ids_and_reduces_naive_travel(self):
+        def part(x,y):
+            return {'bounds':{'x':x,'y':y,'w':3,'h':3},'pixelArea':9,'runs':[[y,x,x+3]]}
+        items=[part(80,80),part(10,10),part(80,10),part(10,80)]
+        order=order_source_components(items)
+        self.assertEqual(sorted(i for i,_ in order),list(range(len(items))))
+        self.assertEqual(order,order_source_components(items))
+        def travel(seq):
+            prev=(0.,0.);total=0.
+            for _,p in seq:
+                b=p['bounds'];current=(b['x']+b['w']/2,b['y']+b['h']/2)
+                total+=sum((x-y)**2 for x,y in zip(prev,current))**.5
+                prev=current
+            return total
+        self.assertLess(travel(order),travel(list(enumerate(items))))
 
     def test_shape_axis_is_physical_geometry_not_semantic_direction(self):
         horizontal={'pixelArea':600,'runs':[[y,5,65] for y in range(5,15)]}
