@@ -37,7 +37,7 @@ const api=require('./site/artwork-pipeline.js');
   const rgba=new Uint8ClampedArray(fs.readFileSync(raw));
   const result=await api.pack(rgba,Number(w),Number(h),{
     imageWidthMm:80,originalWidth:Number(ow),originalHeight:Number(oh),
-    texturePolicy:'if_needed',maxWorkingParts:1500
+    texturePolicy:'if_needed',maxWorkingParts:2800
   });
   fs.writeFileSync(output,JSON.stringify(result.packet),{mode:0o600});
   fs.writeFileSync(meta,JSON.stringify({
@@ -87,11 +87,18 @@ def prepare(original,tmp):
                 meta=json.loads((tmp/"meta.json").read_text())
                 print("PREPARED:",w,"x",h,"working components:",meta["workingParts"],
                       "source pixels:",meta["sourcePixels"],flush=True)
+                if meta["workingParts"]>1500:
+                    print("STAGING ONLY: using bounded 2800 working-component trial; "+
+                          "actual native engine retains its strict 1500-path and stitch-density gates",
+                          flush=True)
                 return packet,meta
             if result.returncode!=14:
                 raise RuntimeError("Cannot prepare source: "+result.stderr[-600:])
-            print("Detail budget at",w,"x",h,"— using next physically suitable analysis size",flush=True)
-    raise RuntimeError("Detailed source exceeds every bounded analysis resolution; no paid test run")
+            print("Detail budget at",w,"x",h,"— "+result.stderr.strip()[-240:]+
+                  "; trying next physically suitable analysis size",flush=True)
+    raise RuntimeError("Even the staging-only 2800-component preparation limit was exceeded. "+
+                       "Do not raise native 1500-path or physical stitch budgets; explicit colour-region "+
+                       "consolidation is required before another run")
 
 def start_proxy():
     with socket.socket() as s:
