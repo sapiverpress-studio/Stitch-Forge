@@ -5,7 +5,9 @@ on:
     branches: ["feature/researched-infill-consolidation-md255"]
     paths:
       - "services/digitiser/artwork_trial.py"
+      - "services/digitiser/artwork_service.py"
       - "tests/test_artwork_trial.py"
+      - "tests/test_artwork_service.py"
       - ".github/workflows/validate-infill-routing.yml"
   workflow_dispatch:
 

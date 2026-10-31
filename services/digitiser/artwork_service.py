@@ -118,11 +118,27 @@ def verify_receipt(obj,identity,svg,secret,now):
     return pes
 
 
+def native_export_timeout():
+    """Bound the private native Ink/Stitch phase, separate from Cloud Run/Netlify.
+
+    Default 40s preserves existing production behavior. A staged revision can
+    explicitly opt into a longer 40–120s limit. Invalid settings fail closed;
+    this is never an unlimited or client-controllable processing budget.
+    """
+    raw=os.environ.get('STITCH_FORGE_ARTWORK_EXPORT_TIMEOUT_SECONDS','40')
+    if not raw.isascii() or not raw.isdecimal() or len(raw)>3:
+        raise ValueError('Invalid native export time budget')
+    seconds=int(raw)
+    if not 40<=seconds<=120:
+        raise ValueError('Native export time budget outside safe limit')
+    return seconds
+
+
 def export_one(svg,directory,executable,fmt):
     path=Path(directory)/'trusted-artwork.svg';path.write_bytes(svg)
     argv=[str(executable),'--extension=output','--format='+fmt]
     if fmt=='pes':argv.append('--version=6')
-    result=_run_engine(argv+[str(path)],timeout_seconds=40)
+    result=_run_engine(argv+[str(path)],timeout_seconds=native_export_timeout())
     if result.returncode:raise DigitiserError('Native artwork phase failed')
     validate_native_payload(fmt,result.stdout)
     return result.stdout

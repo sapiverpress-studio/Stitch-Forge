@@ -18,7 +18,7 @@ sys.path.insert(0,str(ROOT/'services/digitiser'))
 try:
     import numpy as np
     from artwork_packet import decode_packet,foreground,strict_json
-    from artwork_service import process_phase,signature,verify_receipt,repair_signature,repair_objects,source_repair_candidates
+    from artwork_service import process_phase,signature,verify_receipt,repair_signature,repair_objects,source_repair_candidates,native_export_timeout,export_one
     from artwork_trial import checked_masks,build_trial_svg
     import worker_wsgi
     AVAILABLE=True
@@ -105,6 +105,43 @@ class ArtworkServiceTests(unittest.TestCase):
         try:self.assertTrue(self.call_worker()[0][0].startswith('429'))
         finally:worker_wsgi._lock.release()
         self.assertTrue(self.call_worker(packet={**self.packet,'svg':'private-text'})[0][0].startswith('422'))
+
+    def test_native_export_timeout_is_opt_in_and_strictly_bounded(self):
+        with mock.patch.dict(os.environ,{},clear=True):
+            self.assertEqual(native_export_timeout(),40)
+        for value,expected in [('40',40),('75',75),('110',110),('120',120)]:
+            with mock.patch.dict(os.environ,{'STITCH_FORGE_ARTWORK_EXPORT_TIMEOUT_SECONDS':value}):
+                self.assertEqual(native_export_timeout(),expected)
+        for value in ['0','39','121','900','-1','1e9','inf','', ' 110', '0110']:
+            with mock.patch.dict(os.environ,{'STITCH_FORGE_ARTWORK_EXPORT_TIMEOUT_SECONDS':value}):
+                with self.assertRaises(ValueError):
+                    native_export_timeout()
+
+    def test_engine_export_receives_staging_timeout_but_keeps_payload_audit(self):
+        with TemporaryDirectory() as temp:
+            raw=b'#PES0060'+b'0'*100
+            completed=subprocess.CompletedProcess(args=['inkstitch'],returncode=0,stdout=raw,stderr=b'')
+            with mock.patch.dict(os.environ,{'STITCH_FORGE_ARTWORK_EXPORT_TIMEOUT_SECONDS':'110'}):
+                with mock.patch('artwork_service._run_engine',return_value=completed) as run:
+                    with mock.patch('artwork_service.validate_native_payload') as validate:
+                        self.assertEqual(export_one(b'<svg/>',temp,Path('/dev/null'),'pes'),raw)
+                        validate.assert_called_once_with('pes',raw)
+                    self.assertEqual(run.call_args.kwargs['timeout_seconds'],110)
+                    self.assertEqual(run.call_args.args[0][1:4],['--extension=output','--format=pes','--version=6'])
+            with mock.patch.dict(os.environ,{},clear=True):
+                with mock.patch('artwork_service._run_engine',return_value=completed) as run:
+                    with mock.patch('artwork_service.validate_native_payload'):
+                        export_one(b'<svg/>',temp,Path('/dev/null'),'pes')
+                    self.assertEqual(run.call_args.kwargs['timeout_seconds'],40)
+
+    def test_timeout_is_reported_as_fail_closed_http_504_without_fake_files(self):
+        # artwork_wsgi imports process_phase inside application(), so patch
+        # the defining module to catch the actual call.
+        with mock.patch('artwork_service.process_phase',side_effect=subprocess.TimeoutExpired(['inkstitch'],40)):
+            status,body=self.call_worker()
+        self.assertTrue(status[0].startswith('504'))
+        self.assertIn(b'Native phase exceeded its time limit',body)
+        self.assertNotIn(b'artwork-trial.pes',body)
 
     @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Actual local engine not configured')
     def test_two_real_native_phases_complete_source_contained_archive(self):
