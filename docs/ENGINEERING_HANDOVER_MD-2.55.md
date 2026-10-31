@@ -55,3 +55,7 @@ New assertions in `tests/test_artwork_trial.py` cover underlay eligibility, exac
 ## Clarification
 
 The new technique consolidates **connected running-stitch paths and same-colour routing**, not neighbouring thread colours or original pixel masks. Colour simplification remains in the independently checked source preparation. This is deliberate to preserve the user's shape/likeness requirement.
+
+## Final isolated test evidence (31 October 2026)
+
+The official Ink/Stitch 3.3.0 engine, native PES/DST independent decoder, source-bound service tests and isolated worker container/HTTP transaction all passed in **GitHub Actions run [41181114736](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41181114736)**. Earlier two attempted runs failed on fixture assumptions and then on missing client-style bounds in the independently reconstructed worker plan; both were corrected in the actual source. This evidence covers synthetic fixture machine generation and worker integration, **not the new kingfisher stitch count, trim reduction or physical sewout**. Cloud Run has not been redeployed.
