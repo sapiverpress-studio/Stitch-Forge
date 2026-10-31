@@ -220,7 +220,7 @@ q("#sfAutoRun").onclick=async()=>{
      q('#sfAutoAiSummary').textContent=aiNote+'Continuing native digitising without a second paid AI request.';
     }
    }else q('#sfAutoAiSummary').textContent='AI analysis skipped. Native embroidery uses the source image.';
-   const result=await api.generate(packed,{token,signal:nativeAbort.signal,isCurrent:current,onProgress:text=>{if(current())status(text);}});
+   const result=await api.generate(packed,{token,signal:nativeAbort.signal,isCurrent:current,background:true,onProgress:text=>{if(current())status(text);}});
    if(!current())throw Error('Source or size changed; stale result discarded');
    window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
    q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoUndo').disabled=false;

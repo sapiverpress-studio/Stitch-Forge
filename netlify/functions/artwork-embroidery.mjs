@@ -14,7 +14,7 @@ export async function boundedBytes(stream,maximum){
  for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>maximum){await reader.cancel();throw Error('Body exceeds limit');}chunks.push(value);}
  return Buffer.concat(chunks,size);
 }
-export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(...args)}={}){
+export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(...args),upstreamTimeoutMs=55000}={}){
  return async function artworkEmbroidery(request){
   if(request.method!=='POST')return json(405,'POST only');
   if(!authorised(request.headers.get('authorization'),getEnv('STITCH_FORGE_ANALYSIS_TOKEN')))return json(401,'Owner access token required');
@@ -36,7 +36,7 @@ export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(
    try{cloudRunAudience(oldEndpoint);idToken=await acquireCloudRunIdToken(oldEndpoint,credential,{fetchImpl});}
    catch{return json(502,'Private native worker identity is unavailable');}
   }else if(credential)return json(503,'Caller identity requires the approved Cloud Run endpoint');
-  const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),55000);
+  const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),Number.isInteger(upstreamTimeoutMs)&&upstreamTimeoutMs>=10000&&upstreamTimeoutMs<=180000?upstreamTimeoutMs:55000);
   try{
    const upstream=await fetchImpl(oldEndpoint.replace(/\/v1\/digitise$/,'/v1/artwork-trial'),{method:'POST',body:data,redirect:'error',signal:abort.signal,
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+workerToken,...(idToken?{'X-Serverless-Authorization':'Bearer '+idToken}:{})}});

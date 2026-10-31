@@ -102,7 +102,81 @@ function previewPacket(p){
  for(const line of p.segments)if(!Array.isArray(line)||line.length!==5||!line.slice(0,4).every(Number.isFinite)||line[0]<0||line[2]<0||line[1]<0||line[3]<0||line[0]>p.widthMm||line[2]>p.widthMm||line[1]>p.heightMm||line[3]>p.heightMm||!Number.isInteger(line[4])||line[4]<0||line[4]>=p.palette.length)throw Error('Decoded stitch preview leaves its physical bounds');
  return p;
 }
-async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true}={}){
+async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true}={}){
+ if(!token||token.length>512)throw Error('Enter your private access token');
+ const headers={'Content-Type':'application/json','Authorization':'Bearer '+token};
+ if(!isCurrent())throw Error('Source changed before submission');
+ const body=JSON.stringify(packed.packet);
+ if(new TextEncoder().encode(body).length>4000000)throw Error('Artwork job exceeds the private submission limit');
+ onProgress('Submitting private embroidery job…');
+ const submit=await fetchImpl('/api/artwork-job-submit',{method:'POST',headers,body,signal,cache:'no-store'});
+ if(submit.status!==202){
+  let detail;try{detail=await submit.json()}catch{}
+  throw Error(detail?.error||'Background embroidery submission failed (HTTP '+submit.status+')');
+ }
+ const {jobId}=await submit.json();
+ if(typeof jobId!=='string'||!(/^[a-f0-9-]{36}$/i).test(jobId))throw Error('Invalid background job reference');
+ let state=null;
+ const started=Date.now(),maxWait=16*60*1000;
+ for(;;){
+  if(!isCurrent()||signal?.aborted)throw Error('Artwork changed or processing cancelled');
+  if(Date.now()-started>maxWait)throw Error('Background embroidery exceeded the waiting limit; do not automatically charge for another analysis');
+  await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>{signal?.removeEventListener('abort',stop);resolve();},3000);
+   function stop(){clearTimeout(timer);reject(Error('Background wait cancelled'));}
+   if(signal?.aborted)stop();else signal?.addEventListener('abort',stop,{once:true});
+  });
+  const check=await fetchImpl('/api/artwork-job-status?id='+encodeURIComponent(jobId),
+   {headers:{Authorization:'Bearer '+token},signal,cache:'no-store'});
+  if(!check.ok){let detail;try{detail=await check.json()}catch{}
+   throw Error(detail?.error||'Background artwork status unavailable (HTTP '+check.status+')');}
+  state=await check.json();
+  if(state.state==='failed')throw Error(state.error||'Native embroidery failed');
+  if(state.state==='done')break;
+  if(!['queued','running'].includes(state.state))throw Error('Invalid private job state');
+  onProgress(state.state==='queued'?'Waiting for the private embroidery worker…':'Generating and auditing actual machine stitches…');
+ }
+ if(!isCurrent()||signal?.aborted)throw Error('Artwork changed before native result');
+ onProgress('Downloading and independently verifying PES/DST…');
+ const result=await fetchImpl('/api/artwork-job-result?id='+encodeURIComponent(jobId),
+  {headers:{Authorization:'Bearer '+token},signal,cache:'no-store'});
+ if(!result.ok)throw Error('Background native result unavailable (HTTP '+result.status+')');
+ if(result.headers.get('x-stitch-forge-audit')!==AUDIT||
+    !result.headers.get('content-type')?.startsWith('application/zip'))throw Error('Independent native audit missing');
+ const bytes=new Uint8Array(await result.arrayBuffer());
+ if(await digest(bytes)!==result.headers.get('x-stitch-forge-sha256'))throw Error('Native ZIP checksum failed');
+ const files=await readArchive(bytes),receipt=state.receipt;
+ if(!receipt||receipt.requestId!==packed.packet.requestId||
+    !/^[0-9a-f]{64}$/.test(receipt.svgSha256||'')||
+    !/^[0-9a-f]{64}$/.test(receipt.pesSha256||'')||
+    await digest(files['artwork-trial.pes'])!==receipt.pesSha256||
+    await digest(files['native-artwork-input.svg'])!==receipt.svgSha256)throw Error('Background PES receipt/source geometry binding failed');
+ const report=JSON.parse(new TextDecoder().decode(files['machine-report.json']));
+ const preview=previewPacket(JSON.parse(new TextDecoder().decode(files['decoded-preview.json'])));
+ const validCount=(n,limit=125000)=>Number.isInteger(n)&&n>=0&&n<=limit;
+ if(report.requestId!==packed.packet.requestId||report.source?.sha256!==packed.draft.source.sha256||
+    report.source?.width!==packed.draft.source.width||report.source?.height!==packed.draft.source.height||
+    report.imageWidthMm!==packed.draft.physical.imageWidthMm||report.machineEligible!==false||
+    report.physicalQualityVerified!==false||report.sourceBinding?.foregroundIndependentlyVerified!==true||
+    report.workflow!=='TWO_NATIVE_PHASES_NO_AI'||report.nativeInputSha256!==receipt.svgSha256||
+    preview.requestId!==packed.packet.requestId||
+    Math.abs(preview.widthMm-report.imageWidthMm-4)>1e-6||
+    Math.abs(preview.heightMm-packed.draft.physical.imageHeightMm-4)>1e-6||
+    !Array.isArray(report.blockers)||report.blockers.length>30||
+    !report.blockers.every(v=>/^[a-z_]{1,100}$/.test(v))||
+    !validCount(report.unresolvedObjects)||!validCount(report.unresolvedPixels,750000)||
+    !Array.isArray(report.decoded)||report.decoded.length!==2||
+    new Set(report.decoded.map(v=>v.format)).size!==2||
+    !report.decoded.every(v=>['pes','dst'].includes(v.format)&&validCount(v.needleStitches)&&
+      v.needleStitches>=3&&validCount(v.colourChanges)&&v.colourChanges<12&&validCount(v.jumps)&&validCount(v.trims))||
+    report.decoded.some(v=>v.needlePointsOutsideWorkingColour!==0||v.needleSegmentsOutsideWorkingColour!==0)||
+    report.decoded[0].needleStitches!==report.decoded[1].needleStitches)
+   throw Error('Background native report failed independent source, geometry or machine checks');
+ if(!isCurrent()||signal?.aborted)throw Error('Artwork changed before native result acceptance');
+ return {bytes,report,preview,geometry:files['native-artwork-input.svg'],sourceDraft:packed.draft};
+}
+async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true,background=false}={}){
+ if(background)return backgroundGenerate(packed,{token,signal,onProgress,fetchImpl,isCurrent});
  if(!token||token.length>512)throw Error('Enter your private access token');
  const {packet}=packed;
  let repairReceipt=null;

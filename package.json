@@ -1,0 +1,9 @@
+{
+  "name": "stitch-forge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Existing Stitch Forge site and protected native artwork jobs",
+  "dependencies": {
+    "@netlify/blobs": "11.1.7"
+  }
+}

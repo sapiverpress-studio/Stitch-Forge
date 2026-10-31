@@ -1,0 +1,27 @@
+name: MD-2.54 background artwork job validation
+on:
+  push:
+    branches:
+      - feature/async-native-artwork-20261031
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Netlify Blobs dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify source syntax and main browser regressions
+        run: node tools/check_frontend_syntax.cjs
+      - name: Test background job security, dispatch, storage and end-to-end mock
+        run: node --test tests/test_background_artwork_jobs.mjs
+      - name: Test existing browser and source-packet contracts
+        run: node --test tests/test_artwork_pipeline.cjs tests/test_one_button_access.cjs tests/test_simple_workflow.cjs
