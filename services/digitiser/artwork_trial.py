@@ -11,6 +11,7 @@ from dataclasses import asdict
 from hashlib import sha256
 from io import BytesIO
 import json
+import os
 from math import atan2, degrees, hypot, isfinite,ceil
 from pathlib import Path
 import re
@@ -24,6 +25,7 @@ from scipy.ndimage import distance_transform_edt, label, uniform_filter
 from shapely import Polygon, LineString, Point, box, union_all, make_valid, covers, prepare,points as shape_points
 from skimage.morphology import skeletonize
 import pyembroidery
+from running_compaction import consolidate_running_elements
 from inkstitch_cli import export_trusted_svg, _run_engine, DigitiserError
 from format_audit import audit_zip
 
@@ -422,16 +424,27 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
         raise ValueError('Native repair exceeds source area or identity bound')
     if not path_count:
         raise ValueError('No physically resolvable native artwork paths')
+    # Research-only compound running paths. Each original path remains a
+    # distinct M/L subpath: Ink/Stitch controls non-sewn travel between them.
+    # The conservative production default remains unchanged.
+    if os.environ.get('STITCH_FORGE_BETA_COMPACT_RUNNING','0')=='1' and partition_fills:
+        compound=consolidate_running_elements(root)
+    else:
+        compound={'sourceRunningCandidatesMerged':0,'compoundRunningElements':0,
+                  'colourPixelsReassigned':0,'sourceGeometryChanged':False,
+                  'machineQualityVerified':False}
+    actual_elements=path_count-compound['sourceRunningCandidatesMerged']
     svg = ET.tostring(root,encoding='utf-8',xml_declaration=True)
     if len(svg)>2000000:
         raise ValueError('Native SVG exceeds engine input budget')
     manifest = {'status':'LOCAL_ARTWORK_ENGINEERING_TRIAL_NOT_MACHINE_APPROVED','machineEligible':False,
         'source':plan['source'],'sourcePlanSignature':plan['sourcePlanSignature'],'scaleMmPerPixel':scale,
-        'originMm':[width/2,height/2],'widthMm':width,'heightMm':height,'objects':records,'nativePaths':path_count,
+        'originMm':[width/2,height/2],'widthMm':width,'heightMm':height,'objects':records,'nativePaths':actual_elements,'nativeCandidatePaths':path_count,
         'nativeFillPieces':fill_pieces,'nativeRepairObjects':repaired,
         'regionConsolidation':{'method':'connected_skeleton_edge_walk_and_same_colour_nearest_centre',
             'originalRunningBranches':running_branches,'connectedRunningWalks':routed_walks,
-            'colourPixelsReassigned':0,'sourceGeometryChanged':False},
+            'colourPixelsReassigned':0,'sourceGeometryChanged':False,
+            'optionalCompoundRunningPaths':compound},
         'underlayFillPaths':underlay_count,
         'algorithm':'source_preserving_routed_tatami_MD-2.55','settings':{'fillDirection':'component_axis_in_15_degree_steps_or_horizontal_if_isotropic',
                      'fillRowSpacingMm':.5,'fillMaxStitchMm':3.5,'fillUnderlay':'selective_inset_on_wide_fills',
