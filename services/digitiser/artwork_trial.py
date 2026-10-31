@@ -236,9 +236,11 @@ def order_source_components(components):
     """
     todo={}
     for i,component in enumerate(components):
-        bounds=component['bounds']
-        cx=bounds['x']+bounds['w']/2
-        cy=bounds['y']+bounds['h']/2
+        # The worker reconstitutes trusted source components from pixel runs.
+        # It deliberately does not accept browser-supplied bounding boxes.
+        runs=component['runs']
+        cx=(min(x0 for _,x0,_ in runs)+max(x1 for _,_,x1 in runs))/2
+        cy=(min(y for y,_,_ in runs)+max(y for y,_,_ in runs)+1)/2
         todo[i]=(component,(cx,cy))
     result=[];last=(0.,0.)
     while todo:
