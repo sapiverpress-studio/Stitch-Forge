@@ -51,12 +51,40 @@ const api=require('./site/artwork-pipeline.js');
 });
 """
 
-def image_input():
-    paths = sorted(Path.home().glob("file_*.png"),key=lambda p:p.stat().st_mtime,reverse=True)
-    if len(paths)!=1:
-        raise RuntimeError("Expected exactly one uploaded file_*.png; found "+str(len(paths))+
-            ". Files: "+", ".join(p.name for p in paths[:8]))
-    return paths[0]
+def image_input(directory=None):
+    """Select a single source without deleting the user's repeated uploads.
+
+    Identical uploaded copies are safe to collapse by SHA-256, but different
+    images must be explicitly selected (never silently choose newest).
+    """
+    folder = Path(directory) if directory is not None else Path.home()
+    paths = sorted(folder.glob("file_*.png"), key=lambda p: (p.stat().st_mtime, p.name), reverse=True)
+    if not paths:
+        raise RuntimeError("No uploaded file_*.png found in "+str(folder))
+    selected = os.environ.get("STITCH_FORGE_SOURCE_IMAGE")
+    if selected:
+        requested = Path(selected).expanduser().resolve()
+        if requested not in {path.resolve() for path in paths}:
+            raise RuntimeError("Selected source is not an uploaded file_*.png in "+str(folder))
+        print("SOURCE SELECTED EXPLICITLY:",requested.name,flush=True)
+        return requested
+    if len(paths) == 1:
+        return paths[0]
+    digests = set()
+    for path in paths:
+        hasher = hashlib.sha256()
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                hasher.update(chunk)
+        digests.add(hasher.digest())
+    if len(digests) == 1:
+        print("FOUND",len(paths),"identical kingfisher PNG uploads; using",paths[0].name,
+              "without deleting any files.",flush=True)
+        return paths[0]
+    raise RuntimeError(
+        "Found "+str(len(paths))+" PNG uploads with DIFFERENT contents; "+
+        "the script will not guess. Specify STITCH_FORGE_SOURCE_IMAGE=/home/.../filename.png "+
+        "and rerun. Files: "+", ".join(path.name for path in paths[:8]))
 
 def command(*args,**kwargs):
     return subprocess.check_output(list(args),text=True,**kwargs).strip()
