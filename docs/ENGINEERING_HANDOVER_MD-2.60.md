@@ -49,3 +49,24 @@ pull compensation, underlay, trims and anatomical likeness.
 
 No third-party source code was copied or embedded, and no new billable
 services or dependencies were added.
+
+## Verified engineering result — 1 November 2026
+
+Feature code and test commit: `e497a74572ba7619dc098d90b8a056b7f13937ab`.
+GitHub Actions run **41315319265 COMPLETED SUCCESS**, verified against
+that SHA: https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41315319265
+
+The first two CI attempts **failed** on tests that requested a subdivision
+of a fill too narrow to partition and then one larger than the established
+2%-foreground repair limit. Neither safety constraint was weakened.
+The final regression instead builds a real 128×128 source-object packet with
+an isolated 7×18-pixel contrasting region, fits inside the existing repair
+cap and passes actual Ink/Stitch 3.3.0 PES6/DST generation and independent
+source-containment checks. This also covers signed repair receipts,
+source-colour mask preservation, section holes, fail-closed unsuitable
+geometry and worker-container HTTP integration. Synthetic success does
+not mean the original Kingfisher's rejected region has passed.
+
+**Do not promote to main or deploy** until a bit-identical original
+Kingfisher source tests successfully and the generated stitchout is
+evaluated for visible section seams, travel, coverage and fabric behaviour.
