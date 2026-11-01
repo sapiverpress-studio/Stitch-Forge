@@ -64,3 +64,11 @@ generated SVG; never upload private imagery to GitHub.
 
 This is **one verified modular improvement**, not a complete combined
 open-source app or a final professional embroidery digitiser.
+
+## Verified engineering status — 1 November 2026
+
+- Code commit `f4c24fa4b4810e3c293c255d93f5910c4b313d01`.
+- GitHub Actions run `41309507332` completed **success**, including real Ink/Stitch 3.3.0 shape-routing tests, native PES/DST readback, independent worker-container HTTP integration, and refusal of unapproved cloud deployment.
+- Run URL: https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41309507332
+- Feature is server-opt-in only: `STITCH_FORGE_HYBRID_PATH_PLANNER=1` on a source-scanline repair. Main remains at `dfd47381db61839655dd17f93d7b23985bcb664c`; no merge, Cloud Run deployment, Netlify action or Work mode credits.
+- Result is **engineering-verified for synthetic native tests**, **NOT** accepted for source-identical Kingfisher PES/DST generation or physical sewout. Do not advertise machine-ready automatic detailed-art digitising.
