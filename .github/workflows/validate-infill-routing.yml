@@ -10,6 +10,7 @@ on:
       - "tests/test_running_compaction.py"
       - "tools/staged_md255_kingfisher.py"
       - "tools/run_md256_staged_benchmark.sh"
+      - "tools/run_md257_staged_benchmark.sh"
       - "tests/test_artwork_trial.py"
       - "tests/test_artwork_service.py"
       - ".github/workflows/validate-infill-routing.yml"
@@ -55,10 +56,14 @@ jobs:
         run: |
           set -euo pipefail
           bash -n tools/run_md256_staged_benchmark.sh
+          bash -n tools/run_md257_staged_benchmark.sh
           python -m py_compile tools/staged_md255_kingfisher.py
           python -m unittest discover -s tests -p 'test_staged_kingfisher_helper.py' -v
           grep -F -- '--no-traffic' tools/run_md256_staged_benchmark.sh
           grep -F -- 'EXPECTED_ORIGINAL=' tools/run_md256_staged_benchmark.sh
+          grep -F -- '--no-traffic' tools/run_md257_staged_benchmark.sh
+          grep -F -- 'STITCH_FORGE_MD257_BILLING_APPROVED' tools/run_md257_staged_benchmark.sh
+          grep -F -- '--preflight' tools/run_md257_staged_benchmark.sh
           grep -F -- 'STITCH_FORGE_BETA_COMPACT_RUNNING=1' tools/run_md256_staged_benchmark.sh
       - name: Install pyembroidery and Inkscape
         run: |

@@ -13,6 +13,39 @@ spec.loader.exec_module(helper)
 
 
 class UploadSelectionTests(unittest.TestCase):
+    def test_md257_fill_preservation_gate_uses_matched_source_not_svg_count(self):
+        import io,json,contextlib,zipfile
+        with TemporaryDirectory() as d, patch.dict(os.environ, {}, clear=True):
+            def save(path, report):
+                with zipfile.ZipFile(path,'w') as z:
+                    z.writestr('machine-report.json',json.dumps(report))
+            decoded=lambda: [{'format':'pes','needleStitches':1000,'trims':40,
+                'jumps':40,'maxNeedlesInOneMmSquare':20,
+                'needlePointsOutsideWorkingColour':0,'needleSegmentsOutsideWorkingColour':0}]
+            baseline={'requestId':'same-source','machineEligible':False,
+                'decoded':decoded(),'nativePaths':500,'unresolvedObjects':10,
+                'nativeRepairObjects':[{'id':'ORANGE-1-p0','areaMm2':35.0}]}
+            candidate={**baseline,'nativePaths':499,'nativeRepairObjects':[
+                {'id':'ORANGE-1-p0','areaMm2':35.0,'preservedFill':True,
+                 'repairStrategy':'tatami_no_underlay_or_underpath'}]}
+            previous_home=helper.Path.home
+            with patch.object(helper.Path,'home',return_value=Path(d)),patch.object(helper,'TAG','md257'):
+                save(Path(d)/'md256-kingfisher-baseline-NOT-APPROVED.zip',baseline)
+                output=io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    helper.print_baseline_comparison(candidate)
+                self.assertIn('NUMERICAL CANDIDATE ONLY',output.getvalue())
+                bad={**candidate,'nativeRepairObjects':[{'id':'ORANGE-1-p0','areaMm2':35.0,'preservedFill':False}]}
+                output=io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    helper.print_baseline_comparison(bad)
+                self.assertIn('RELEASE GATE: NOT MET',output.getvalue())
+                wrong={**candidate,'requestId':'another-source'}
+                output=io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    helper.print_baseline_comparison(wrong)
+                self.assertIn('MATCHED-SOURCE COMPARISON UNAVAILABLE',output.getvalue())
+
     def test_one_uploaded_image_is_selected(self):
         with TemporaryDirectory() as d, patch.dict(os.environ, {}, clear=True):
             file = Path(d) / "file_original.png"

@@ -27,8 +27,8 @@ ROOT = Path(os.environ.get("STITCH_FORGE_BENCHMARK_SOURCE_ROOT",str(Path.home() 
 PROJECT = "gen-lang-client-0857863712"
 SERVICE = "stitch-forge-worker-staging"
 TAG = os.environ.get("STITCH_FORGE_STAGED_TAG", "md255")
-if TAG not in ("md255", "md256"):
-    raise RuntimeError("Only protected benchmark tags md255/md256 are supported")
+if TAG not in ("md255", "md256", "md257"):
+    raise RuntimeError("Only protected benchmark tags md255/md256/md257 are supported")
 WIDTH_MM = 80
 
 PACK_JS = r"""
@@ -209,10 +209,11 @@ def run_native(packet,port,token):
 
 def print_baseline_comparison(report):
     """A/B only if the exact source-bound request fingerprint matches."""
-    if TAG != "md256":
+    if TAG == "md255":
         print("BASELINE: saved native MD-2.55 engineering result.")
         return
-    candidates=sorted(Path.home().glob("md255-kingfisher-*-NOT-APPROVED.zip"),
+    baseline_version="md256" if TAG=="md257" else "md255"
+    candidates=sorted(Path.home().glob(baseline_version+"-kingfisher-*-NOT-APPROVED.zip"),
                       key=lambda p:p.stat().st_mtime,reverse=True)
     for file in candidates:
         try:
@@ -222,7 +223,7 @@ def print_baseline_comparison(report):
                 continue
             previous=next(d for d in baseline["decoded"] if d["format"]=="pes")
             current=next(d for d in report["decoded"] if d["format"]=="pes")
-            print("\nMATCHED-SOURCE COMPARISON (same exact prepared request ID)")
+            print("\nMATCHED-SOURCE COMPARISON ("+baseline_version+" → "+TAG+", same exact prepared request ID)")
             for label,key in [("stitches","needleStitches"),("PES trims","trims"),
                               ("PES jumps","jumps"),("local mm² max","maxNeedlesInOneMmSquare")]:
                 first=int(previous[key]);second=int(current[key])
@@ -236,13 +237,31 @@ def print_baseline_comparison(report):
             large_repairs=[x for x in report.get("nativeRepairObjects") or []
                            if x.get("areaMm2",0)>=8]
             blockers=[]
-            if current["trims"]>=previous["trims"]:
-                blockers.append("PES trims have not decreased")
+            if TAG == "md257":
+                # This milestone fixes *fill preservation*, not routing. No
+                # unearned requirement that PES trims decrease, but report them.
+                previous_large=[x for x in baseline.get("nativeRepairObjects") or []
+                                if x.get("areaMm2",0)>=8]
+                repaired_ids={x.get("id"):x for x in report.get("nativeRepairObjects") or []}
+                for old in previous_large:
+                    changed=repaired_ids.get(old.get("id"))
+                    if not changed or changed.get("preservedFill") is not True or changed.get("repairStrategy")!="tatami_no_underlay_or_underpath":
+                        blockers.append("previous large fill not demonstrated as preserved: "+str(old.get("id")))
+                if not previous_large:
+                    blockers.append("matched baseline has no large repair to measure")
+                if current["trims"]>previous["trims"]:
+                    blockers.append("PES trims increased")
+                if current["maxNeedlesInOneMmSquare"]>previous["maxNeedlesInOneMmSquare"]:
+                    blockers.append("maximum decoded local needle density increased")
+                if report.get("unresolvedObjects",float("inf"))>baseline.get("unresolvedObjects",-1):
+                    blockers.append("unresolved source detail increased")
+            else:
+                if current["trims"]>=previous["trims"]:
+                    blockers.append("PES trims have not decreased")
+                if large_repairs:
+                    blockers.append("large filled anatomy still replaced by running stitches")
             if current["needleStitches"]>previous["needleStitches"]*1.25:
                 blockers.append("needle count increased over 25%")
-            if large_repairs:
-                blockers.append("large filled anatomy still replaced by running stitches: "+
-                                ", ".join(str(round(x["areaMm2"],2))+" mm²" for x in large_repairs))
             if current.get("needlePointsOutsideWorkingColour",1)!=0 or current.get("needleSegmentsOutsideWorkingColour",1)!=0:
                 blockers.append("source-bound colour containment failed")
             if blockers:
@@ -252,8 +271,8 @@ def print_baseline_comparison(report):
             return
         except (KeyError,ValueError,zipfile.BadZipFile,StopIteration):
             continue
-    print("MATCHED-SOURCE COMPARISON UNAVAILABLE: previous MD-2.55 ZIP with the "+
-          "same requestId was not found. No improvement claim.")
+    print("MATCHED-SOURCE COMPARISON UNAVAILABLE: prior "+baseline_version+
+          " ZIP with the same requestId was not found. No improvement claim.")
 
 def main():
     if not ROOT.is_dir():raise RuntimeError("Missing ~/stitch-forge-md255")
