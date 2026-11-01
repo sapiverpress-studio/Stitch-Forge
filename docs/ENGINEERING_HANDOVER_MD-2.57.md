@@ -22,3 +22,28 @@ The matched MD-2.55/MD-2.56 kingfisher native trial had 40,792 needle stitches, 
 4. Obtain a physical sewout from an embroiderer on intended fabric/stabiliser before machine or commercial approval.
 
 Existing production code, production traffic and Netlify have not been changed. This branch is deliberately not merged.
+
+## 1 November 2026 — actual Kingfisher MD-2.57 staging result (FAIL)
+
+The owner executed the approved single MD-2.57 Google Cloud staging build against the **identical prepared Kingfisher source** (preflight verified same request ID as MD-2.56). The worker image deployed as an isolated `md257` tagged revision with 0% traffic; original worker retained 100% traffic. The initial native PES generation and DST/decoded audit completed far enough to request one bounded native repair. The repair rebuilt native PES and retried DST/decoded audit. Final private worker response:
+
+```text
+TEST FAILED: Staged worker HTTP 422:
+{"error":"Actual needle movements leave prepared source colours","code":"SOURCE_CONTAINMENT_FAILED"}
+```
+
+### Conclusion
+
+The new `tatami_no_underlay_or_underpath` hypothesis **did not satisfy source-colour containment on the real Kingfisher**. No MD-2.57 audited download ZIP or qualifying likeness evidence was delivered. The fail-closed gate must stay enabled. Do not promote this repair, relabel files as machine-ready, adjust boundary tolerance to make it pass, change production traffic, or repeat billable staging without new supporting offline evidence.
+
+The error proves a source-colour stitch crossing remained after the one-shot repair. It does **not** by itself identify which needle segments or whether other regions also failed: the detailed report stayed in the worker's short-lived workspace and no diagnostics directory was configured. Further hypotheses cannot be claimed verified.
+
+### Next engineering step — no paid deployment
+
+1. Obtain the original 1145×1374 Kingfisher PNG used in Cloud Shell, in a private engineering workspace; preserve its checksum, avoid checking it into a public GitHub repository.
+2. Rebuild the identical 320×384 prepared source geometry and inspect the affected `EE8122-21-p0` orange region, holes, fill partition and possible travel paths. Compare to the supplied MD-2.56 editable SVG/decoded preview. Test source-contained fill-preserving subdivisions and internal travel geometry *offline* before an additional native cloud build.
+3. Ensure a **diagnostic-only, authenticated and bounded** method of retaining anonymised failed-segment counts and local geometry for the next staged benchmark. Continue to reject unsafe ZIPs. Do not log raw uploaded artwork, tokens, or full machine data publicly.
+4. Add synthetic tests for difficult concave/holey fills and initial/repair failure so only a source-contained native result can be returned. A green synthetic test is not a substitute for the real Kingfisher.
+5. Perform one controlled identical-input A/B only after offline geometry passes, and require actual fabric sewout before commercial release.
+
+Release gate: **FAIL — HOLD.** CI success applies to synthetic/native infrastructure tests; actual realistic source failed.
