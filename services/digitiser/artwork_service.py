@@ -66,7 +66,7 @@ def repair_objects(receipt,identity,secret,now):
     if (not isinstance(receipt,dict) or
             set(receipt) not in ({'requestId','objectIds','issuedAt','mac'},
                                  {'requestId','objectIds','issuedAt','mac','mode'}) or
-            ('mode' in receipt and receipt['mode'] not in ('fill_preserving','source_scanline'))):
+            ('mode' in receipt and receipt['mode'] not in ('fill_preserving','source_scanline','sectioned_tatami'))):
         raise ValueError('Invalid native repair receipt')
     ids=receipt['objectIds'];unsigned={k:v for k,v in receipt.items() if k!='mac'}
     if (receipt['requestId']!=identity or isinstance(receipt['issuedAt'],bool) or not isinstance(receipt['issuedAt'],int)
@@ -157,10 +157,12 @@ def process_phase(obj,*,executable,secret,epoch=None):
     mode=obj['repairReceipt'].get('mode') if overrides else None
     fill_repair=mode=='fill_preserving'
     scanline_repair=mode=='source_scanline'
+    sectioned_repair=mode=='sectioned_tatami'
     if overrides:
         svg,_,_=build_trial_svg(plan,partition_fills=True,
             fill_repair_overrides=overrides if fill_repair else (),
             scanline_overrides=overrides if scanline_repair else (),
+            section_overrides=overrides if sectioned_repair else (),
             running_overrides=overrides if mode is None else ())
     with local_workspace(identity,plan) as tmp:
         if obj['phase']=='pes':
@@ -175,14 +177,18 @@ def process_phase(obj,*,executable,secret,epoch=None):
         report=run_trial(plan,executable,tmp,native_outputs={'pes':pes,'dst':dst},
             partition_fills=True,fill_repair_overrides=overrides if fill_repair else (),
             scanline_overrides=overrides if scanline_repair else (),
+            section_overrides=overrides if sectioned_repair else (),
             running_overrides=overrides if mode is None else ())
         if any(r['needlePointsOutsideWorkingColour'] or r['needleSegmentsOutsideWorkingColour'] for r in report['decoded']):
             if overrides:raise ValueError('Decoded source-containment audit failed')
             ids=source_repair_candidates(plan,report)
             if os.environ.get('STITCH_FORGE_LOCAL_DIAGNOSTICS_DIR'):
                 (Path(tmp)/'failed-native-pass-report.json').write_text(json.dumps(report,separators=(',',':')))
-            repair_mode=('source_scanline' if os.environ.get(
-                'STITCH_FORGE_SOURCE_SCANLINE_REPAIR','0')=='1' else 'fill_preserving')
+            repair_mode=('sectioned_tatami' if os.environ.get(
+                'STITCH_FORGE_SECTIONED_TATAMI_REPAIR','0')=='1' else
+                'source_scanline' if os.environ.get(
+                'STITCH_FORGE_SOURCE_SCANLINE_REPAIR','0')=='1' else
+                'fill_preserving')
             receipt={'requestId':identity,'objectIds':ids,'issuedAt':now,
                      'mode':repair_mode}
             receipt['mac']=repair_signature(receipt,secret)

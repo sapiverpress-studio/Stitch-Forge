@@ -27,6 +27,7 @@ from skimage.morphology import skeletonize
 import pyembroidery
 from running_compaction import consolidate_running_elements
 from source_scanline_fill import plan_scanline_fill
+from native_tatami_decomposition import decompose_tatami
 from inkstitch_cli import export_trusted_svg, _run_engine, DigitiserError
 from format_audit import audit_zip
 
@@ -300,7 +301,7 @@ def without_collinear_steps(points):
     return result
 
 
-def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=()):
+def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=()):
     """Source-bound native SVG; optional fill repair keeps original tatami geometry.
 
     The new repair only disables underlay and underpath on the selected fill.
@@ -310,10 +311,10 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
     running_overrides=frozenset(running_overrides)
     fill_repair_overrides=frozenset(fill_repair_overrides)
     scanline_overrides=frozenset(scanline_overrides)
-    if (len(running_overrides | fill_repair_overrides | scanline_overrides)>12 or
-            running_overrides & fill_repair_overrides or
-            running_overrides & scanline_overrides or
-            fill_repair_overrides & scanline_overrides):
+    section_overrides=frozenset(section_overrides)
+    groups=(running_overrides,fill_repair_overrides,scanline_overrides,section_overrides)
+    allowed=frozenset().union(*groups)
+    if len(allowed)>12 or sum(map(len,groups))!=len(allowed):
         raise ValueError("Native repair object budget exceeded")
     masks, scale = checked_masks(plan)
     contour_tolerance=.02 if partition_fills else .04
@@ -398,7 +399,22 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                     for piece in pieces:
                         piece_id=identity+'-p'+str(piece_index);piece_index+=1
                         entry={'id':piece_id,'sourceObjectId':identity,'color':color,'pixels':ceil(piece.area),'areaMm2':piece.area*scale*scale}
-                        if piece_id in scanline_overrides:
+                        if piece_id in section_overrides:
+                            # Independently generated polygon coverage: real
+                            # Ink/Stitch tatami paths, not skeleton/running lines.
+                            replacement=decompose_tatami(piece,scale)
+                            for section in replacement['sections']:
+                                add_path(color,list(section.exterior.coords)[:-1],True,
+                                    [list(r.coords)[:-1] for r in section.interiors],
+                                    angle,False,underpath=False)
+                            repaired.append({**entry,
+                                'repairStrategy':'source_preserved_sectioned_tatami',
+                                'preservedFill':True,
+                                'sectionCount':replacement['sectionCount'],
+                                'internalSeamLengthMm':replacement['interiorSeamLengthMm'],
+                                'sourceGeometryChanged':False,
+                                'requiresPhysicalSewout':True})
+                        elif piece_id in scanline_overrides:
                             # Alternative fill *tracks* rather than a sparse
                             # skeleton; stitch plans remain independently audited.
                             hybrid_enabled=os.environ.get('STITCH_FORGE_HYBRID_PATH_PLANNER','0')=='1'
@@ -463,7 +479,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                               routedConnectedBranchWalks=True,consolidatedSourceBranches=branch_count-len(paths))
             record['nativePaths'] = path_count-previous
             records.append(record)
-    if {o['id'] for o in repaired}!=(running_overrides | fill_repair_overrides | scanline_overrides) or sum(o['pixels'] for o in repaired)>plan['summary']['sourcePixels']*.02:
+    if {o['id'] for o in repaired}!=allowed or sum(o['pixels'] for o in repaired)>plan['summary']['sourcePixels']*.02:
         raise ValueError('Native repair exceeds source area or identity bound')
     if not path_count:
         raise ValueError('No physically resolvable native artwork paths')
@@ -501,6 +517,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                     'nativeFillInteriorTravel':True,'boundedNativeRepairMaxSourceFraction':.02},
         'limitations':['Shape-based fill/running trials; no AI semantics or satin planning.',
            'Opt-in scanline tracks are not verified native tatami, satin, underlay or fabric compensation.',
+           'Opt-in sectioned tatami adds internal seams; physical stability requires sewout.',
           'Geometric-axis fill and selective underlay are controlled trials, not semantic directions or fabric presets.',
           'Skeleton branches are not proven feather/vein intent. Unresolved tiny details are explicit.',
           'Connected skeleton branches may retrace; colour fragments remain unmodified and unresolved.',
@@ -590,9 +607,9 @@ def audit_trial(pattern, manifest, masks, fmt, translation):
         'requestedColourOrder':colors,'translationToSourceMm':translation},moves,needle_points
 
 
-def run_trial(plan, executable, output, timeout_seconds=60, native_outputs=None,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=()):
+def run_trial(plan, executable, output, timeout_seconds=60, native_outputs=None,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=()):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    svg,manifest,masks=build_trial_svg(plan,partition_fills=partition_fills,running_overrides=running_overrides,fill_repair_overrides=fill_repair_overrides,scanline_overrides=scanline_overrides)
+    svg,manifest,masks=build_trial_svg(plan,partition_fills=partition_fills,running_overrides=running_overrides,fill_repair_overrides=fill_repair_overrides,scanline_overrides=scanline_overrides,section_overrides=section_overrides)
     (output/'native-artwork-input.svg').write_bytes(svg)
     (output/'native-intent-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     if native_outputs is not None:
@@ -660,8 +677,12 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
     if any(d['attributedLongSegmentMm']>=3 and d['alignedLongSegmentFraction']<.45 for r in reports for d in r['fillDirectionAudit'].values()):blockers.append('fill_direction_dominance_requires_review')
     if any(not o.get('preservedFill',False) for o in manifest.get('nativeRepairObjects',[])):
         blockers.append('repaired_fill_changed_to_running_requires_likeness_review')
-    if any(o.get('preservedFill',False) for o in manifest.get('nativeRepairObjects',[])):
+    if any(o.get('repairStrategy')=='tatami_no_underlay_or_underpath'
+           for o in manifest.get('nativeRepairObjects',[])):
         blockers.append('fill_repair_without_underlay_or_underpath_requires_fabric_review')
+    if any(o.get('repairStrategy')=='source_preserved_sectioned_tatami'
+           for o in manifest.get('nativeRepairObjects',[])):
+        blockers.append('sectioned_tatami_seams_and_no_underlay_require_fabric_review')
     if any(o.get('repairStrategy')=='source_contained_scanline_fill'
            for o in manifest.get('nativeRepairObjects',[])):
         blockers.append('scanline_fill_is_running_stitch_tracks_requires_physical_sewout')
