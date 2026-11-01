@@ -30,10 +30,18 @@ semantic feather detector or physical sewout approval.
 ## Measured local source-identical Kingfisher SVG baseline
 
 The private MD-2.61 SVG has 1,162 native paths, 981 running,
-181 filled. Among eligible contiguous running groups, a conservative
-anchored nearest-endpoint planning analysis identifies potential
-reductions in pen-up travel; metrics are **SVG geometry**, not
-machine trims, and changes must pass actual native PES/DST tests.
+181 filled. The fully bounded MD-2.62 algorithm was independently
+reproduced over this actual owner-supplied source SVG **without uploading
+artwork to GitHub**. It evaluated **57 eligible contiguous same-colour
+running groups**, accepted **15 strictly beneficial group reorderings**,
+moved 167 whole objects, and reduced eligible-group pen-up travel
+**3,963.402 -> 3,877.794 mm** (saving **85.608 mm / 2.16%**).
+The number of potential <=1.5mm adjacent connection pairs increased
+**193 -> 205 (+12)**; none of the existing SVG paths/fills/holes/source
+pixels were changed. This is **SVG geometry only**, not decoded PES
+trims, physical performance or a file recomputation. Private benchmark
+file: `MD262_Kingfisher_Offline_Routing_Benchmark.json` in the
+corresponding ChatGPT session, not publicly published.
 
 Much more remains: 921 unresolved tiny detail objects (1,006 source
 pixels), excessive machine trims and missing feather-aware
