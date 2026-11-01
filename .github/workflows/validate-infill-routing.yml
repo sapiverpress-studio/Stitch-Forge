@@ -2,9 +2,12 @@ name: MD-2.55 source-preserving infill native validation
 
 on:
   push:
-    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258", "feature/hybrid-geometry-routing-md259", "feature/tatami-coverage-decomposition-md260", "feature/automatic-multi-method-release-candidate-md261", "feature/source-detail-safe-running-router-md262", "feature/native-routing-ab-release-gate-md263"]
+    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258", "feature/hybrid-geometry-routing-md259", "feature/tatami-coverage-decomposition-md260", "feature/automatic-multi-method-release-candidate-md261", "feature/source-detail-safe-running-router-md262", "feature/native-routing-ab-release-gate-md263", "feature/visible-artwork-sizing-underlay-audit-md264"]
     paths:
       - "services/digitiser/artwork_trial.py"
+      - "site/artwork-pipeline.js"
+      - "site/auto-reconstruct-ui.js"
+      - "tests/test_artwork_pipeline.cjs"
       - "services/digitiser/source_scanline_fill.py"
       - "services/digitiser/geometry_intelligence.py"
       - "services/digitiser/native_tatami_decomposition.py"
@@ -132,6 +135,11 @@ jobs:
           cat "$RUNNER_TEMP/inkstitch-executables"
           test "$(wc -l < "$RUNNER_TEMP/inkstitch-executables")" -eq 1
           echo "ENGINE_PATH=$(cat "$RUNNER_TEMP/inkstitch-executables")" >> "$GITHUB_ENV"
+      - name: Verify signed foreground-fit sizing through the browser code
+        run: |
+          node --check site/artwork-pipeline.js
+          node --check site/auto-reconstruct-ui.js
+          node --test tests/test_artwork_pipeline.cjs
       - name: Validate shape routing and selective underlay with actual Ink/Stitch 3.3.0
         env:
           STITCH_FORGE_INKSTITCH: ${{ env.ENGINE_PATH }}

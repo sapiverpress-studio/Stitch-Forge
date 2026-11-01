@@ -282,6 +282,20 @@ class ArtworkTrialTests(unittest.TestCase):
                             ('pes',b'#PES0060'+bytes(600)),('pes',b'broken'*100)]:
             with self.subTest(fmt=fmt),self.assertRaises(ValueError):validate_native_payload(fmt,payload)
 
+    def test_fill_underlay_audit_matches_genuine_svg_paths_and_never_grants_sewout_approval(self):
+        from xml.etree import ElementTree as ET
+        from unittest.mock import patch
+        with patch.dict(os.environ,{'K_REVISION':'stitch-forge-worker-staging-00009-biz'}):
+            svg,manifest,_=build_trial_svg(self.plan,partition_fills=True)
+        tree=ET.fromstring(svg)
+        ink='{http://inkstitch.org/namespace}'
+        native_fill=[n for n in tree if n.tag.endswith('path') and
+                     n.get(ink+'fill_method')=='tatami_fill']
+        enabled=sum(n.get(ink+'fill_underlay')=='true' for n in native_fill)
+        self.assertEqual(manifest['underlayFillPaths'],enabled)
+        self.assertEqual(manifest['underlayAudit']['nativeTatamiPathsWithUnderlay'],enabled)
+        self.assertFalse(manifest['underlayAudit']['nativeTatamiUnderlayConfirmedByPhysicalSewout'])
+
     def test_texture_trial_preserves_foreground_reports_lost_eye_and_never_grants_approval(self):
         # A one-pixel eye in a 0.2mm-radius window is deliberately difficult.
         p=copy.deepcopy(self.small_plan)
@@ -399,6 +413,17 @@ class ArtworkTrialTests(unittest.TestCase):
                 for decoded in report['decoded']:
                     self.assertEqual(decoded['needlePointsOutsideWorkingColour'],0)
                     self.assertEqual(decoded['needleSegmentsOutsideWorkingColour'],0)
+
+    @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
+    def test_native_report_identifies_cloud_worker_and_underlay_without_sewout_claim(self):
+        from unittest.mock import patch
+        with TemporaryDirectory() as folder, patch.dict(os.environ,{'K_REVISION':'stitch-forge-worker-staging-00009-biz'}):
+            r=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],folder)
+            self.assertEqual(r['workerRevision'],'stitch-forge-worker-staging-00009-biz')
+            self.assertFalse(r['detailedArtworkBenchmarkVerified'])
+            self.assertFalse(r['physicalQualityVerified'])
+            self.assertIn('nativeFillUnderlayAudit',r['stitchPlanning'])
+            self.assertEqual(r['releaseEvidenceScope'],'source_bound_machine_file_only_not_sewn')
 
     @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
     def test_real_native_trial_preserves_pes6_rgb_and_cross_format_needles(self):

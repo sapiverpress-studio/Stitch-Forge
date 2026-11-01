@@ -68,5 +68,7 @@ test('visible-fit refuses oversized padded artwork and never silently crops colo
  for(let y=40;y<80;y++)for(let x=48;x<80;x++)picture.set([180,70,30,255],(y*128+x)*4);
  assert.throws(()=>api.visibleArtworkFrame(picture,128,128,100),/trim transparent margins|choose a smaller/);
  assert.throws(()=>api.visibleArtworkFrame(picture,128,128,0),/Invalid requested/);
- assert.throws(()=>api.visibleArtworkFrame(picture,128,128,30),/296 mm/);
+ const tall=new Uint8ClampedArray(96*160*4);
+ for(let y=20;y<140;y++)for(let x=16;x<76;x++)tall.set([180,70,30,255],(y*96+x)*4);
+ assert.throws(()=>api.visibleArtworkFrame(tall,96,160,120),/250 × 296 mm/);
 });

@@ -704,16 +704,24 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
            for o in manifest.get('nativeRepairObjects',[])):
         blockers.append('scanline_fill_is_running_stitch_tracks_requires_physical_sewout')
     if plan.get('textureApproximation'):blockers.append('texture_simplification_requires_likeness_and_feature_review')
+    if manifest['underlayFillPaths']==0 and any(o.get('action')=='native_fill_trial' for o in manifest['objects']):
+        blockers.append('native_fill_underlay_absent_requires_fabric_review')
     result={'status':'REAL_ARTWORK_ENGINE_TRIAL_NOT_MACHINE_APPROVED','engine':'Ink/Stitch 3.3.0','reader':'pyembroidery 1.5.1',
         'source':plan['source'],'imageWidthMm':plan['physical']['imageWidthMm'],'objectSummary':plan['summary'],'nativePaths':manifest['nativePaths'],'pesVersion':6,
         'nativeRepairObjects':manifest.get('nativeRepairObjects',[]),
         'stitchPlanning':{'settings':manifest['settings'],
+            'nativeFillUnderlayAudit':manifest['underlayAudit'],
             'families':'native_fill_and_source_skeleton_running','semanticStitchIntentVerified':False},
+        'detailedArtworkBenchmarkVerified':False,
+        'releaseEvidenceScope':'source_bound_machine_file_only_not_sewn',
         'unresolvedObjects':len(unresolved)+sum(o.get('unresolvedDetailObjects',0) for o in manifest['objects']),
         'unresolvedPixels':sum(o['pixels'] for o in unresolved)+sum(o.get('unresolvedDetailPixels',0) for o in manifest['objects']),
         'decoded':reports,'structuralAudit':[asdict(r) for r in structural],'blockers':blockers,
         'machineEligible':False,'physicalQualityVerified':False,'automaticAISemanticsVerified':False,
         'limitations':manifest['limitations']}
+    cloud_revision=os.environ.get('K_REVISION','')
+    if cloud_revision and re.fullmatch(r'[a-z][a-z0-9-]{1,100}',cloud_revision):
+        result['workerRevision']=cloud_revision
     if plan.get('textureApproximation'):result['textureApproximation']=plan['textureApproximation']
     (output/'machine-report.json').write_text(json.dumps(result,indent=2)+'\n')
     return result
