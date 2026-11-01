@@ -2,9 +2,10 @@ name: MD-2.55 source-preserving infill native validation
 
 on:
   push:
-    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257"]
+    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258"]
     paths:
       - "services/digitiser/artwork_trial.py"
+      - "services/digitiser/source_scanline_fill.py"
       - "services/digitiser/artwork_service.py"
       - "services/digitiser/running_compaction.py"
       - "tests/test_running_compaction.py"
@@ -12,6 +13,7 @@ on:
       - "tools/run_md256_staged_benchmark.sh"
       - "tools/run_md257_staged_benchmark.sh"
       - "tests/test_artwork_trial.py"
+      - "tests/test_source_scanline_fill.py"
       - "tests/test_artwork_service.py"
       - ".github/workflows/validate-infill-routing.yml"
   workflow_dispatch:
@@ -129,6 +131,8 @@ jobs:
           xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_trial.py -v
           xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_service.py -v
           python -m unittest discover -s tests -p test_running_compaction.py -v
+          python -m unittest discover -s tests -p test_source_scanline_fill.py -v
+          STITCH_FORGE_SOURCE_SCANLINE_REPAIR=1 xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_service.py -v
           STITCH_FORGE_BETA_COMPACT_RUNNING=1 xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_service.py -v
       - name: Generate PES/DST from actual Ink/Stitch and read back independently
         shell: bash

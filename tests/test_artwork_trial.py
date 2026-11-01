@@ -90,6 +90,29 @@ class ArtworkTrialTests(unittest.TestCase):
         self.assertTrue(all(node.get('d') for node in paths))
 
 
+    def test_source_scanline_repair_retains_colour_and_reports_actual_track_limits(self):
+        from shapely.geometry import LineString
+        from xml.etree import ElementTree as ET
+        svg,manifest,masks=build_trial_svg(self.plan,partition_fills=True)
+        piece=next(p for p in manifest['nativeFillPieces']
+                   if p['areaMm2']>=8)
+        changed,m2,after=build_trial_svg(
+            self.plan,partition_fills=True,scanline_overrides=[piece['id']])
+        r=m2['nativeRepairObjects'][0]
+        self.assertEqual(r['repairStrategy'],'source_contained_scanline_fill')
+        self.assertGreater(r['scanlineTrackCoverageProxy'],.70)
+        self.assertLessEqual(r['scanlineRouteCount'],120)
+        self.assertTrue(r['requiresPhysicalSewout'])
+        self.assertFalse(m2['machineEligible'])
+        self.assertTrue(all(np.array_equal(masks[c],after[c]) for c in masks))
+        paths=[n for n in ET.fromstring(changed)
+               if n.tag.endswith('path') and n.get('fill')=='none']
+        self.assertTrue(paths)
+        with self.assertRaises(ValueError):
+            build_trial_svg(self.plan,partition_fills=True,
+                scanline_overrides=[piece['id']],
+                fill_repair_overrides=[piece['id']])
+
     def test_fill_preserving_repair_never_substitutes_a_running_skeleton(self):
         """A bounded native repair is an actual tatami with exact same geometry."""
         from xml.etree import ElementTree as ET

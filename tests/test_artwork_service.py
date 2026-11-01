@@ -78,6 +78,19 @@ class ArtworkServiceTests(unittest.TestCase):
             with self.assertRaises(ValueError):repair_objects(bad,self.packet['requestId'],SECRET,1001)
 
 
+    def test_alternative_scanline_receipt_is_signed_and_bounded(self):
+        r={'requestId':self.packet['requestId'],
+           'objectIds':['050505-0-p0'], 'issuedAt':1000,'mode':'source_scanline'}
+        r['mac']=repair_signature(r,SECRET)
+        self.assertEqual(repair_objects(r,self.packet['requestId'],SECRET,1001),('050505-0-p0',))
+        for mutate in [lambda x:x.update(mode='source_scanline_bypass'),
+                       lambda x:x.update(mode='fill_preserving'),
+                       lambda x:x.update(objectIds=['different']),
+                       lambda x:x.update(issuedAt=10)]:
+            bad=copy.deepcopy(r);mutate(bad)
+            with self.assertRaises(ValueError):
+                repair_objects(bad,self.packet['requestId'],SECRET,1001)
+
     def test_fill_preserving_receipt_mode_is_signed_and_cannot_be_escalated(self):
         r={'requestId':self.packet['requestId'],'objectIds':['050505-0-p0'],
            'issuedAt':1000,'mode':'fill_preserving'}
