@@ -23,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Install the application's pinned Netlify dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Verify frontend source syntax
         run: node tools/check_frontend_syntax.cjs
       - name: Run exactly the Netlify static/function test command
