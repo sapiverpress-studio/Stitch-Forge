@@ -264,6 +264,31 @@ class ArtworkTrialTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'colour order'):audit_trial(pattern,manifest,masks,'pes',[0,0])
 
     @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
+    def test_source_scanline_routes_are_independently_decoded_from_real_native_files(self):
+        """Exercise the NEW alternative path through actual Ink/Stitch, not just SVG."""
+        _,manifest,_=build_trial_svg(self.plan,partition_fills=True)
+        piece=next(p for p in manifest['nativeFillPieces'] if p['areaMm2']>=8)
+        with TemporaryDirectory() as output:
+            report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],output,
+                partition_fills=True,scanline_overrides=[piece['id']])
+            self.assertFalse(report['machineEligible'])
+            self.assertFalse(report['physicalQualityVerified'])
+            self.assertEqual(report['nativeRepairObjects'][0]['repairStrategy'],
+                'source_contained_scanline_fill')
+            self.assertIn('scanline_fill_is_running_stitch_tracks_requires_physical_sewout',
+                report['blockers'])
+            self.assertEqual(len(report['decoded']),2)
+            self.assertEqual(report['decoded'][0]['needleStitches'],
+                             report['decoded'][1]['needleStitches'])
+            for fmt in ('pes','dst'):
+                from pathlib import Path
+                raw=(Path(output)/('ENGINEERING-TRIAL-NOT-APPROVED.'+fmt)).read_bytes()
+                validate_native_payload(fmt,raw)
+            for decoded in report['decoded']:
+                self.assertEqual(decoded['needlePointsOutsideWorkingColour'],0)
+                self.assertEqual(decoded['needleSegmentsOutsideWorkingColour'],0)
+
+    @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
     def test_real_native_trial_preserves_pes6_rgb_and_cross_format_needles(self):
         with TemporaryDirectory() as output:
             report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],output)
