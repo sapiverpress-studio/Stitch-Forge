@@ -113,6 +113,47 @@ class ArtworkTrialTests(unittest.TestCase):
                 scanline_overrides=[piece['id']],
                 fill_repair_overrides=[piece['id']])
 
+    def test_sectioned_tatami_preserves_masks_and_generates_native_fill_objects(self):
+        from xml.etree import ElementTree as ET
+        _,original,source_masks=build_trial_svg(self.plan,partition_fills=True)
+        piece=next(p for p in original['nativeFillPieces'] if p['areaMm2']>=8)
+        svg,manifest,masks=build_trial_svg(self.plan,partition_fills=True,
+            section_overrides=[piece['id']])
+        repair=manifest['nativeRepairObjects'][0]
+        self.assertEqual(repair['repairStrategy'],'source_preserved_sectioned_tatami')
+        self.assertTrue(repair['preservedFill'])
+        self.assertGreater(repair['sectionCount'],1)
+        self.assertFalse(manifest['machineEligible'])
+        self.assertTrue(all(np.array_equal(masks[c],source_masks[c]) for c in masks))
+        ink='{http://inkstitch.org/namespace}'
+        fills=[n for n in ET.fromstring(svg)
+               if n.tag.endswith('path') and n.get('fill')==piece['color']
+               and n.get(ink+'fill_method')=='tatami_fill']
+        self.assertGreaterEqual(len(fills),repair['sectionCount'])
+        with self.assertRaises(ValueError):
+            build_trial_svg(self.plan,partition_fills=True,
+                section_overrides=[piece['id']],
+                scanline_overrides=[piece['id']])
+
+    @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
+    def test_sectioned_tatami_is_actual_pes_dst_and_source_contained(self):
+        _,original,_=build_trial_svg(self.plan,partition_fills=True)
+        piece=next(p for p in original['nativeFillPieces'] if p['areaMm2']>=8)
+        with TemporaryDirectory() as target:
+            report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],target,
+                partition_fills=True,section_overrides=[piece['id']])
+            self.assertEqual(report['nativeRepairObjects'][0]['repairStrategy'],
+                'source_preserved_sectioned_tatami')
+            self.assertFalse(report['machineEligible'])
+            self.assertIn('sectioned_tatami_seams_and_no_underlay_require_fabric_review',
+                          report['blockers'])
+            for fmt in ('pes','dst'):
+                raw=(Path(target)/('ENGINEERING-TRIAL-NOT-APPROVED.'+fmt)).read_bytes()
+                validate_native_payload(fmt,raw)
+            for decoded in report['decoded']:
+                self.assertEqual(decoded['needlePointsOutsideWorkingColour'],0)
+                self.assertEqual(decoded['needleSegmentsOutsideWorkingColour'],0)
+
     def test_fill_preserving_repair_never_substitutes_a_running_skeleton(self):
         """A bounded native repair is an actual tatami with exact same geometry."""
         from xml.etree import ElementTree as ET

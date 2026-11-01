@@ -78,6 +78,17 @@ class ArtworkServiceTests(unittest.TestCase):
             with self.assertRaises(ValueError):repair_objects(bad,self.packet['requestId'],SECRET,1001)
 
 
+    def test_sectioned_tatami_receipt_must_be_signed_for_exact_source(self):
+        receipt={'requestId':self.packet['requestId'],
+                 'objectIds':['050505-0-p0'],'issuedAt':1000,'mode':'sectioned_tatami'}
+        receipt['mac']=repair_signature(receipt,SECRET)
+        self.assertEqual(repair_objects(receipt,self.packet['requestId'],SECRET,1001),
+                         ('050505-0-p0',))
+        changed=copy.deepcopy(receipt)
+        changed['mode']='source_scanline'
+        with self.assertRaises(ValueError):
+            repair_objects(changed,self.packet['requestId'],SECRET,1001)
+
     def test_alternative_scanline_receipt_is_signed_and_bounded(self):
         r={'requestId':self.packet['requestId'],
            'objectIds':['050505-0-p0'], 'issuedAt':1000,'mode':'source_scanline'}
