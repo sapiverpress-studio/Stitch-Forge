@@ -69,8 +69,10 @@ if [[ ! -x "$PYTHON" ]]; then
 fi
 "$PYTHON" - <<'PY'
 from pathlib import Path
-from io import BytesIO
-import json,zipfile
+from tempfile import TemporaryDirectory
+import json,zipfile,sys
+sys.path.insert(0,str(Path.cwd()/'tools'))
+from staged_md255_kingfisher import image_input,prepare
 p=sorted(Path.home().glob('md256-kingfisher-*-NOT-APPROVED.zip'),
          key=lambda x:x.stat().st_mtime,reverse=True)[0]
 with zipfile.ZipFile(p) as z:
@@ -80,7 +82,13 @@ with zipfile.ZipFile(p) as z:
         raise SystemExit("REFUSED: baseline approval flag unexpected")
     if not report.get('requestId') or not report.get('decoded'):
         raise SystemExit("REFUSED: invalid source evidence")
-    print("BASELINE:",p.name,"requestId:",report['requestId'])
+    expected=report['requestId']
+    print("BASELINE:",p.name,"requestId:",expected)
+with TemporaryDirectory(prefix='md257-source-preflight-') as work:
+    packet,meta=prepare(image_input(),Path(work))
+if packet['requestId']!=expected:
+    raise SystemExit('REFUSED: prepared source is not the exact same MD-2.56 request; no billable build')
+print("SAFE: prepared artwork requestId matches the MD-2.56 baseline EXACTLY")
 PY
 IMAGE="$REGION-docker.pkg.dev/$PROJECT/stitch-forge-staging/stitch-forge-worker:md257-$SHORT_SHA"
 echo "REVIEWED BRANCH: $BRANCH"
