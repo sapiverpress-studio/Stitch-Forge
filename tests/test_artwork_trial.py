@@ -113,11 +113,31 @@ class ArtworkTrialTests(unittest.TestCase):
                 scanline_overrides=[piece['id']],
                 fill_repair_overrides=[piece['id']])
 
+    def _sectionable_trial_fixture(self):
+        """Elongated isolated fill <=2% of true foreground; no policy bypass."""
+        folder=Path(self.tmp.name)/'sectioned-real-fill'
+        folder.mkdir(exist_ok=True)
+        rgba=np.zeros((128,128,4),np.uint8)
+        rgba[10:107,10:95]=[190,50,30,255]
+        rgba[95:113,108:115]=[20,110,190,255]
+        raw=folder/'sectioned.rgba'
+        raw.write_bytes(rgba.tobytes())
+        subprocess.run(['node',str(ROOT/'tools/prepare_artwork_trial.cjs'),
+                        str(raw),'128','128','80',str(folder)],
+                       cwd=ROOT,check=True,capture_output=True)
+        plan=json.loads((folder/'source-object-plan.json').read_text())
+        _,manifest,_=build_trial_svg(plan,partition_fills=True)
+        section=next(p for p in manifest['nativeFillPieces']
+                     if p['color']=='#146EBE')
+        self.assertLessEqual(section['pixels'],plan['summary']['sourcePixels']*.02)
+        self.assertGreater(section['areaMm2'],3)
+        return plan,section
+
     def test_sectioned_tatami_preserves_masks_and_generates_native_fill_objects(self):
         from xml.etree import ElementTree as ET
-        _,original,source_masks=build_trial_svg(self.plan,partition_fills=True)
-        piece=max(original['nativeFillPieces'],key=lambda p:p['areaMm2'])
-        svg,manifest,masks=build_trial_svg(self.plan,partition_fills=True,
+        plan,piece=self._sectionable_trial_fixture()
+        _,_,source_masks=build_trial_svg(plan,partition_fills=True)
+        svg,manifest,masks=build_trial_svg(plan,partition_fills=True,
             section_overrides=[piece['id']])
         repair=manifest['nativeRepairObjects'][0]
         self.assertEqual(repair['repairStrategy'],'source_preserved_sectioned_tatami')
@@ -131,16 +151,15 @@ class ArtworkTrialTests(unittest.TestCase):
                and n.get(ink+'fill_method')=='tatami_fill']
         self.assertGreaterEqual(len(fills),repair['sectionCount'])
         with self.assertRaises(ValueError):
-            build_trial_svg(self.plan,partition_fills=True,
+            build_trial_svg(plan,partition_fills=True,
                 section_overrides=[piece['id']],
                 scanline_overrides=[piece['id']])
 
     @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
     def test_sectioned_tatami_is_actual_pes_dst_and_source_contained(self):
-        _,original,_=build_trial_svg(self.plan,partition_fills=True)
-        piece=max(original['nativeFillPieces'],key=lambda p:p['areaMm2'])
+        plan,piece=self._sectionable_trial_fixture()
         with TemporaryDirectory() as target:
-            report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],target,
+            report=run_trial(plan,os.environ['STITCH_FORGE_INKSTITCH'],target,
                 partition_fills=True,section_overrides=[piece['id']])
             self.assertEqual(report['nativeRepairObjects'][0]['repairStrategy'],
                 'source_preserved_sectioned_tatami')
