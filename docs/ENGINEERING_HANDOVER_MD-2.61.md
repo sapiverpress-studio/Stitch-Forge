@@ -124,3 +124,75 @@ trims alone are not an adequate physical quality score. Inspect actual
 machine-report, decoded preview and retained orange fill region in the ZIP,
 then assess travel, thread density and realistic sewout before considering
 a gated rollout. Do not rerun or rebuild paid Cloud Run on the same evidence.
+
+## Direct MD-2.56 versus MD-2.61 decoded machine-file comparison — 1 November 2026
+
+Two source-identical owner-supplied private ZIPs inspected side-by-side,
+including the full decoded segment arrays, source native SVG path families,
+machine report and unchanged source/request fingerprint:
+- MD-2.56 baseline `md256-kingfisher-20261101-065059-NOT-APPROVED.zip`
+- MD-2.61 candidate `md261-kingfisher-20261101-161846-NOT-APPROVED.zip`
+
+Both ZIP CRC checks passed. Same exact `requestId`
+`f8f648c18cc5cd9c30dba3d4d0d77aeb59008490586ddfe785e9b0ba8335c391`.
+The decoded path arrays show **329 newly present orange line segments and
+151 removed orange line segments** in MD-2.61 relative to MD-2.56
+(segments compared as value tuples and multisets); every added/removed
+decoded line is colour-index 11, `#EE8122`, and lies within
+SVG coordinates approximately `x=48.5–63.0 mm, y=62.8–67.5 mm`.
+No other colour's decoded line segments changed.
+
+The specific `EE8122-21-p0` source fill is **561 analysis pixels / 35.0625
+mm²**, or **1.18% of foreground**. The old skeleton's complex running path
+was replaced with seven genuine native tatami_fill input paths at an angle
+of 0 degrees, row spacing 0.5 mm, underlay false, underpath false,
+and total calculated internal seam length **10.75 mm**.
+This segmentation preserves the source shape but may cause visible sewing
+seams and fabric instability; the file has not been physically sewn.
+
+MD-2.56 -> MD-2.61:
+- Decoded stitches: **40,792 -> 40,976 (+184)**.
+- Orange decoded source-path proximity at 0.25mm radius:
+  **3,812 / 4,248 (89.74%) -> 3,966 / 4,248 (93.36%)**, +154 nearby
+  selected orange pixels, +3.63 percentage points. The proximity metric
+  is **not physical sewn-thread coverage**.
+- Overall proximity: **42,105 / 47,687 (88.29%) ->
+  42,259 / 47,687 (88.62%)**, +0.32 percentage points; all increase
+  attributable to the orange repair.
+- Unresolved: **921 components / 1,006 pixels** (about 2.11% of
+  selected foreground) on both.
+- PES trims: **1,348 -> 1,353**; PES jumps: **1,350 -> 1,355**.
+  DST reports 18 trims in both and jumps 1,472 -> 1,473;
+  PES/DST encoding of trim and travel differs.
+- Original/source palette uses 12 colours. Six thousand ninety-six
+  source foreground pixels have an RGB distance greater than 60 from
+  the assigned working palette colour (12.8%). This is a palette
+  reconstruction concern, not a machine safety fault.
+- Max audited needles in any 1mm² is 52 for both versions.
+- Both machine files pass source-colour stitch containment but remain
+  `machineEligible=false` and `physicalQualityVerified=false`.
+
+A private engineering image was generated in the original ChatGPT
+workspace from **real decoded segments**, displaying full bird side by
+side and a magnified orange underwing ROI. No uploaded bird artwork or
+private machine-file bytes added to public GitHub.
+
+### Release-critical engineering interpretation
+
+**MD-2.61 produces genuine PES/DST, but this is a very local improvement.**
+It did not materially improve the main wing, beak, eye, feather structures,
+colour texture or routing, because decoded segments outside the small
+orange patch are unchanged. Do not claim an end-to-end detailed-artwork
+digitiser is finished or advise selling/sending these files for product
+fulfilment without professionally supervised sewout review.
+
+Prioritise **semantic feature protection and fragment consolidation
+before native stitch generation**, plus a calibrated, fabric-aware
+stitch-coverage/underlay/trim strategy. Preserve the source pixel ledger
+and object identities. Separate stitch containment (audited) from
+semantic feature likeness and actual sewn-thread coverage (unverified).
+Benchmark at least varied licensed complex artwork and the source-identical
+Kingfisher before another paid Cloud Run rebuild.
+
+**Production decision: HOLD current 0%-traffic MD-2.61 tag; do not
+promote live worker traffic or publish a new Netlify build on this evidence.**
