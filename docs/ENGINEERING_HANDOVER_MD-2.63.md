@@ -30,3 +30,32 @@ When passing, a fast-forward main merge is authorised by the user,
 but **Netlify and Cloud Run deployments require a separate step
 and actual source-identical Kingfisher sewout is still unverified**.
 No metric is a substitute for physical fabric review.
+
+## Actual source-matched CC0 rose native A/B — 1 November 2026
+
+GitHub Actions run `41329987140`, code commit
+`2e55d24d1bbcb1a4a9a8597cda54f3739aa67138`.
+Two actual native PES/DST sets were generated at identical physical
+dimensions, with the only change being the optional MD-2.62
+source-detail router. Independent pyembroidery audits passed both.
+Results are in `routing-ab/native-ab-results.json` of the native
+GitHub artifact `13092404818`:
+
+- 4 eligible contiguous running groups, 1 improved group, 19 reordered
+  original objects. **16.5068mm estimated SVG pen-up saving**.
+- PES actual trims **227 → 227**; PES jumps **229 → 229**;
+  PES needles **18,096 → 18,096**.
+- DST actual trims **8 → 8**; DST jumps **270 → 271**;
+  DST needles **18,096 → 18,096**.
+- Independently audited source-colour stitch proximity, source object
+  accounting, working colours and max per-mm² needle density did not
+  regress in this fixture.
+
+**Conclusion**: native safety and data preservation verified, but
+**NO actual machine-trim reduction demonstrated**. The extra DST jump
+is recorded explicitly. Keep `STITCH_FORGE_DETAIL_SAFE_ROUTING=0`
+in all existing live workers; do not make a physical or commercial
+quality claim. This is suitable to retain as an optional engineering
+module behind a feature flag, pending a real source-identical Kingfisher
+native A/B and a supervised fabric sewout. A green CI result here does
+not authorise a Cloud Run traffic switch or Netlify publication.
