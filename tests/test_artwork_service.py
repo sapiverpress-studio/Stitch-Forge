@@ -194,6 +194,38 @@ class ArtworkServiceTests(unittest.TestCase):
         self.assertNotIn(b'artwork-trial.pes',body)
 
     @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Actual local engine not configured')
+    def test_visible_width_source_binding_survives_real_pes_dst_needle_dimensions(self):
+        """Actual source -> client-fit -> both worker phases -> decoded 30mm width."""
+        rgba=np.zeros((128,128,4),np.uint8)
+        rgba[20:100,40:80]=[190,50,30,255]
+        with TemporaryDirectory() as temp:
+            f=Path(temp)/'visible.rgba'
+            f.write_bytes(rgba.tobytes())
+            code=("const fs=require('fs'),A=require('./site/artwork-pipeline.js');"
+                  "(async()=>{const p=await A.pack(new Uint8ClampedArray(fs.readFileSync(process.argv[1])),"
+                  "128,128,{imageWidthMm:30,sizeMode:'visible',texturePolicy:'off'});"
+                  "console.log(JSON.stringify({...p.packet,phase:'pes'}));})()"
+                  ".catch(e=>{console.error(e);process.exitCode=1});")
+            packet=json.loads(subprocess.check_output(['node','-e',code,str(f)],cwd=ROOT))
+        plan,meta,identity,evidence=decode_packet(packet)
+        self.assertAlmostEqual(plan['physical']['imageWidthMm'],96,places=4)
+        self.assertTrue(evidence['sourcePixelsVerified'])
+        first=process_phase(packet,executable=os.environ['STITCH_FORGE_INKSTITCH'],secret=SECRET,epoch=1000)
+        second={**packet,'phase':'dst','pesBase64':first['pesBase64'],'receipt':first['receipt']}
+        payload=process_phase(second,executable=os.environ['STITCH_FORGE_INKSTITCH'],secret=SECRET,epoch=1001)
+        with zipfile.ZipFile(BytesIO(payload)) as z:
+            self.assertIsNone(z.testzip())
+            report=json.loads(z.read('machine-report.json'))
+            self.assertEqual(report['requestId'],identity)
+            self.assertAlmostEqual(report['imageWidthMm'],96,places=4)
+            self.assertGreater(report['stitchPlanning']['nativeFillUnderlayAudit']['nativeTatamiPathsWithUnderlay'],0)
+            self.assertFalse(report['detailedArtworkBenchmarkVerified'])
+            for result in report['decoded']:
+                self.assertAlmostEqual(result['boundsMm'][0],30,delta=3.0)
+                self.assertEqual(result['needlePointsOutsideWorkingColour'],0)
+                self.assertEqual(result['needleSegmentsOutsideWorkingColour'],0)
+
+    @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Actual local engine not configured')
     def test_two_real_native_phases_complete_source_contained_archive(self):
         first=process_phase(self.packet,executable=os.environ['STITCH_FORGE_INKSTITCH'],secret=SECRET,epoch=1000)
         second={**self.packet,'phase':'dst','pesBase64':first['pesBase64'],'receipt':first['receipt']}
