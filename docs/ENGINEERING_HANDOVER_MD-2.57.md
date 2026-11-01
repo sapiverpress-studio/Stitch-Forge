@@ -47,3 +47,20 @@ The error proves a source-colour stitch crossing remained after the one-shot rep
 5. Perform one controlled identical-input A/B only after offline geometry passes, and require actual fabric sewout before commercial release.
 
 Release gate: **FAIL — HOLD.** CI success applies to synthetic/native infrastructure tests; actual realistic source failed.
+
+## Offline source-image overlay analysis — 1 November 2026 (no cloud calls)
+
+The user supplied a visually matching Kingfisher PNG in chat, dimensions **1280×1536**. The exact MD-2.56 benchmark report says its original input was **1145×1374**, resampled to **320×384** analysis pixels. Consequently the newly provided image cannot serve as a bit-exact replacement for the original Cloud Shell input or reproduce the benchmark request hash; use it only for anatomical/visual overlay until the original file is available.
+
+An offline inspection of the already delivered `md256-kingfisher-20261101-065059-NOT-APPROVED.zip` finds:
+- Reported repaired source object: `EE8122-21-p0`, orange `#EE8122`, **561 analysis pixels = 35.0625 mm²**. This was converted to running strokes in MD-2.56.
+- SVG path `artwork-1139` is the longest orange running stitch input path: 136 vertices and **82.99 mm of input polyline travel**, within SVG physical bounds **x=48.625–62.875 mm, y=63.125–67.125 mm**. These are SVG path segments, **not decoded machine stitch counts, trim counts or coverage measurements**.
+- Overlay after mapping SVG origin 2 mm and 80×96 mm artwork extents to the visually corresponding 1280×1536 image places this orange path **beneath the extended right wing**, not in the large main chest fill. Overlaid image remains a private chat diagnostic; do not add source image or overlay to public GitHub.
+- The MD-2.56 report has 40,792 decoded needles, 1,348 PES trims and 921 unresolved objects, while its colour-containment audit passed **after converting** the offending fill to running. MD-2.57's attempted tatami-preserving repair failed containment, so there is no safe MD-2.57 decoded result or proven culprit segment.
+
+**Engineering hypothesis (not verified):** a complex/slender orange fill with internal section transitions can cause Ink/Stitch auto-fill to put needle stitching outside the strict colour mask; merely disabling underlay and underpath did not eliminate it. A more promising experiment is to split the problematic fill into source-contained simple pieces and independently audit the actual rendered needles, retaining fill stitch where geometrically and physically valid. Never treat this hypothesis as demonstrated cause.
+
+Next offline gate: reconstruct the exact 320×384 palette geometry from the original Cloud Shell source, identify the affected fill polygon and all holes/sections, then evaluate source-contained subfills without relaxing the .11 mm audit buffer or automatically downgrading large filled anatomy to running skeleton. Store no uploaded source or full machine files in the public repo. Do not repeat paid cloud deploy without a robust offline passing candidate.
+
+Relevant upstream Ink/Stitch docs: https://inkstitch.org/docs/stitches/fill-stitch/ and https://inkstitch.org/docs/fill-tools/ (official fill break-apart/simplification guidance).
+
