@@ -116,7 +116,7 @@ class ArtworkTrialTests(unittest.TestCase):
     def test_sectioned_tatami_preserves_masks_and_generates_native_fill_objects(self):
         from xml.etree import ElementTree as ET
         _,original,source_masks=build_trial_svg(self.plan,partition_fills=True)
-        piece=next(p for p in original['nativeFillPieces'] if p['areaMm2']>=8)
+        piece=max(original['nativeFillPieces'],key=lambda p:p['areaMm2'])
         svg,manifest,masks=build_trial_svg(self.plan,partition_fills=True,
             section_overrides=[piece['id']])
         repair=manifest['nativeRepairObjects'][0]
@@ -138,7 +138,7 @@ class ArtworkTrialTests(unittest.TestCase):
     @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
     def test_sectioned_tatami_is_actual_pes_dst_and_source_contained(self):
         _,original,_=build_trial_svg(self.plan,partition_fills=True)
-        piece=next(p for p in original['nativeFillPieces'] if p['areaMm2']>=8)
+        piece=max(original['nativeFillPieces'],key=lambda p:p['areaMm2'])
         with TemporaryDirectory() as target:
             report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],target,
                 partition_fills=True,section_overrides=[piece['id']])
