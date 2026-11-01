@@ -2,7 +2,7 @@ name: MD-2.55 source-preserving infill native validation
 
 on:
   push:
-    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256"]
+    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257"]
     paths:
       - "services/digitiser/artwork_trial.py"
       - "services/digitiser/artwork_service.py"

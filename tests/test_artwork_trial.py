@@ -89,6 +89,36 @@ class ArtworkTrialTests(unittest.TestCase):
         self.assertEqual(len(paths),manifest['nativePaths'])
         self.assertTrue(all(node.get('d') for node in paths))
 
+
+    def test_fill_preserving_repair_never_substitutes_a_running_skeleton(self):
+        """A bounded native repair is an actual tatami with exact same geometry."""
+        from xml.etree import ElementTree as ET
+        svg,manifest,masks=build_trial_svg(self.plan,partition_fills=True)
+        piece=next(p for p in manifest['nativeFillPieces'] if p['areaMm2']>=8)
+        revised,changed,after=build_trial_svg(self.plan,partition_fills=True,
+            fill_repair_overrides=[piece['id']])
+        original=ET.fromstring(svg);repaired=ET.fromstring(revised)
+        original_path=next(n for n in original if n.get('id')==piece['nativePathId'])
+        repaired_path=next(n for n in repaired if n.get('id')==piece['nativePathId'])
+        ink='{http://inkstitch.org/namespace}'
+        self.assertEqual(original_path.get('d'),repaired_path.get('d'))
+        self.assertEqual(original_path.get('fill'),repaired_path.get('fill'))
+        self.assertEqual(repaired_path.get(ink+'fill_method'),'tatami_fill')
+        self.assertEqual(repaired_path.get(ink+'underpath'),'false')
+        self.assertEqual(repaired_path.get(ink+'fill_underlay'),'false')
+        self.assertEqual(len(original),len(repaired))
+        self.assertEqual(manifest['nativePaths'],changed['nativePaths'])
+        self.assertTrue(changed['nativeRepairObjects'][0]['preservedFill'])
+        self.assertEqual(changed['nativeRepairObjects'][0]['repairStrategy'],
+            'tatami_no_underlay_or_underpath')
+        self.assertFalse(changed['machineEligible'])
+        self.assertTrue(all(np.array_equal(masks[c],after[c]) for c in masks))
+        with self.assertRaises(ValueError):
+            build_trial_svg(self.plan,partition_fills=True,
+                running_overrides=[piece['id']],fill_repair_overrides=[piece['id']])
+        with self.assertRaises(ValueError):
+            build_trial_svg(self.plan,partition_fills=True,fill_repair_overrides=['invented'])
+
     def test_underlay_is_selective_inset_and_orthogonal_on_wide_fills(self):
         from shapely.geometry import box
         self.assertTrue(fill_underlay_eligible(box(0,0,20,20),.5))

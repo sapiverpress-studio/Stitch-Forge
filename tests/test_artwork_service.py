@@ -77,6 +77,18 @@ class ArtworkServiceTests(unittest.TestCase):
             bad=copy.deepcopy(r);mutate(bad)
             with self.assertRaises(ValueError):repair_objects(bad,self.packet['requestId'],SECRET,1001)
 
+
+    def test_fill_preserving_receipt_mode_is_signed_and_cannot_be_escalated(self):
+        r={'requestId':self.packet['requestId'],'objectIds':['050505-0-p0'],
+           'issuedAt':1000,'mode':'fill_preserving'}
+        r['mac']=repair_signature(r,SECRET)
+        self.assertEqual(repair_objects(r,self.packet['requestId'],SECRET,1001),('050505-0-p0',))
+        for mutate in [lambda x:x.update(mode='running'),
+                       lambda x:x.pop('mode'),lambda x:x.update(mode='fill_preserving '),
+                       lambda x:x.update(objectIds=['050505-0-p0','050505-1-p0'])]:
+            bad=copy.deepcopy(r);mutate(bad)
+            with self.assertRaises(ValueError):repair_objects(bad,self.packet['requestId'],SECRET,1001)
+
     def test_repair_uses_source_ids_and_refuses_large_or_ambiguous_omissions(self):
         plan,_,_,_=decode_packet(self.packet);scale=80/128
         fault={'color':'#050505','fromMm':[2+86*scale,2+26*scale],'toMm':[2+88*scale,2+28*scale]}

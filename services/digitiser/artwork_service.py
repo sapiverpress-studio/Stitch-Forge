@@ -63,7 +63,11 @@ def repair_signature(receipt,secret):
 
 def repair_objects(receipt,identity,secret,now):
     if receipt is None:return ()
-    if not isinstance(receipt,dict) or set(receipt)!={'requestId','objectIds','issuedAt','mac'}:raise ValueError('Invalid native repair receipt')
+    if (not isinstance(receipt,dict) or
+            set(receipt) not in ({'requestId','objectIds','issuedAt','mac'},
+                                 {'requestId','objectIds','issuedAt','mac','mode'}) or
+            ('mode' in receipt and receipt['mode']!='fill_preserving')):
+        raise ValueError('Invalid native repair receipt')
     ids=receipt['objectIds'];unsigned={k:v for k,v in receipt.items() if k!='mac'}
     if (receipt['requestId']!=identity or isinstance(receipt['issuedAt'],bool) or not isinstance(receipt['issuedAt'],int)
             or not 0<=now-receipt['issuedAt']<=900 or not isinstance(ids,list) or not 1<=len(ids)<=12
@@ -148,7 +152,13 @@ def process_phase(obj,*,executable,secret,epoch=None):
     plan,meta,identity,evidence=decode_packet(obj)
     plan,svg=prepared(plan,meta['texturePolicy']);now=int(time.time() if epoch is None else epoch)
     overrides=repair_objects(obj.get('repairReceipt'),identity,secret,now)
-    if overrides:svg,_,_=build_trial_svg(plan,partition_fills=True,running_overrides=overrides)
+    # Legacy signed receipts remain readable for an in-flight request; new
+    # repairs preserve the original fill rather than replacing it with linework.
+    fill_repair=bool(overrides and obj['repairReceipt'].get('mode')=='fill_preserving')
+    if overrides:
+        svg,_,_=build_trial_svg(plan,partition_fills=True,
+            fill_repair_overrides=overrides if fill_repair else (),
+            running_overrides=() if fill_repair else overrides)
     with local_workspace(identity,plan) as tmp:
         if obj['phase']=='pes':
             pes=export_one(svg,tmp,executable,'pes')
@@ -159,13 +169,17 @@ def process_phase(obj,*,executable,secret,epoch=None):
         dst=export_one(svg,tmp,executable,'dst')
         if os.environ.get('STITCH_FORGE_LOCAL_DIAGNOSTICS_DIR'):
             (Path(tmp)/'native-phase.pes').write_bytes(pes);(Path(tmp)/'native-phase.dst').write_bytes(dst)
-        report=run_trial(plan,executable,tmp,native_outputs={'pes':pes,'dst':dst},partition_fills=True,running_overrides=overrides)
+        report=run_trial(plan,executable,tmp,native_outputs={'pes':pes,'dst':dst},
+            partition_fills=True,fill_repair_overrides=overrides if fill_repair else (),
+            running_overrides=() if fill_repair else overrides)
         if any(r['needlePointsOutsideWorkingColour'] or r['needleSegmentsOutsideWorkingColour'] for r in report['decoded']):
             if overrides:raise ValueError('Decoded source-containment audit failed')
             ids=source_repair_candidates(plan,report)
             if os.environ.get('STITCH_FORGE_LOCAL_DIAGNOSTICS_DIR'):
                 (Path(tmp)/'failed-native-pass-report.json').write_text(json.dumps(report,separators=(',',':')))
-            receipt={'requestId':identity,'objectIds':ids,'issuedAt':now};receipt['mac']=repair_signature(receipt,secret)
+            receipt={'requestId':identity,'objectIds':ids,'issuedAt':now,
+                     'mode':'fill_preserving'}
+            receipt['mac']=repair_signature(receipt,secret)
             return {'status':'BOUNDED_NATIVE_REPAIR_REQUIRED','requestId':identity,'repairReceipt':receipt}
         report.update(requestId=identity,sourceBinding=evidence,nativePasses=2 if overrides else 1,maxNativePasses=2,
             nativeInputSha256=sha256(svg).hexdigest(),workflow='TWO_NATIVE_PHASES_NO_AI',machineEligible=False)

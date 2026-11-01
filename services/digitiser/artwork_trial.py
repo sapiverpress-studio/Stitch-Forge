@@ -299,9 +299,18 @@ def without_collinear_steps(points):
     return result
 
 
-def build_trial_svg(plan,partition_fills=False,running_overrides=()):
+def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=()):
+    """Source-bound native SVG; optional fill repair keeps original tatami geometry.
+
+    The new repair only disables underlay and underpath on the selected fill.
+    It never changes source masks, pixel ownership, outlines or fill family.
+    Native containment audit must still pass after the full fresh export.
+    """
     running_overrides=frozenset(running_overrides)
-    if len(running_overrides)>12:raise ValueError("Native repair object budget exceeded")
+    fill_repair_overrides=frozenset(fill_repair_overrides)
+    if (len(running_overrides | fill_repair_overrides)>12 or
+            running_overrides & fill_repair_overrides):
+        raise ValueError("Native repair object budget exceeded")
     masks, scale = checked_masks(plan)
     contour_tolerance=.02 if partition_fills else .04
     running_tolerance=.01 if partition_fills else .03
@@ -321,7 +330,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
     records, path_count, total_vertices = [], 0, 0
     underlay_count=0;running_branches=0;routed_walks=0
     fill_pieces=[];repaired=[]
-    def add_path(color, points, closed=False, holes=(),angle=0,underlay=False):
+    def add_path(color, points, closed=False, holes=(),angle=0,underlay=False,underpath=True):
         nonlocal path_count, total_vertices,underlay_count
         if partition_fills and not closed:points=without_collinear_steps(points)
         total_vertices += len(points)+sum(map(len, holes))
@@ -344,7 +353,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
                 INK+'fill_underlay_max_stitch_length_mm':'3.5',
                 INK+'fill_underlay_inset_mm':'0.35',
                 INK+'staggers':'4',
-                INK+'underpath':'true', INK+'pull_compensation_mm':'0',
+                INK+'underpath':'true' if underpath else 'false', INK+'pull_compensation_mm':'0',
                 INK+'pull_compensation_percent':'0', INK+'expand_mm':'0'})
             if underlay:underlay_count+=1
             attrs['d'] += ''.join(' '+commands(ring)+' Z' for ring in holes)
@@ -393,12 +402,20 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
                                 if sum(hypot(b[0]-a[0],b[1]-a[1])*scale for a,b in zip(points,points[1:]))>=.2:
                                     add_path(color,[(x+x0-1,y+y0-1) for x,y in points])
                             if before==path_count:raise ValueError('Native repair has no source-supported running path')
-                            repaired.append(entry)
+                            repaired.append({**entry,'repairStrategy':'source_skeleton_running','preservedFill':False})
                         else:
-                            use_underlay=fill_underlay_eligible(piece,scale)
-                            add_path(color,list(piece.exterior.coords)[:-1],True,[list(r.coords)[:-1] for r in piece.interiors],angle,use_underlay)
+                            # Prefer retaining an anatomically significant fill over
+                            # silently downgrading it to a running skeleton.
+                            fill_repair=piece_id in fill_repair_overrides
+                            use_underlay=fill_underlay_eligible(piece,scale) and not fill_repair
+                            add_path(color,list(piece.exterior.coords)[:-1],True,
+                                [list(r.coords)[:-1] for r in piece.interiors],angle,
+                                use_underlay,underpath=not fill_repair)
                             fill_pieces.append({**entry,'nativePathId':'artwork-'+str(path_count),
                                                 'fillUnderlay':use_underlay})
+                            if fill_repair:
+                                repaired.append({**entry,'repairStrategy':'tatami_no_underlay_or_underpath',
+                                                 'preservedFill':True})
                 record['action'] = 'native_fill_trial'
                 record['fillAngleDeg']=angle;record['geometryAxisUsed']=directional;record['semanticDirectionVerified']=False
                 record['contourHausdorffMm'] = shape.hausdorff_distance(smooth)*scale
@@ -420,7 +437,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=()):
                               routedConnectedBranchWalks=True,consolidatedSourceBranches=branch_count-len(paths))
             record['nativePaths'] = path_count-previous
             records.append(record)
-    if {o['id'] for o in repaired}!=running_overrides or sum(o['pixels'] for o in repaired)>plan['summary']['sourcePixels']*.02:
+    if {o['id'] for o in repaired}!=(running_overrides | fill_repair_overrides) or sum(o['pixels'] for o in repaired)>plan['summary']['sourcePixels']*.02:
         raise ValueError('Native repair exceeds source area or identity bound')
     if not path_count:
         raise ValueError('No physically resolvable native artwork paths')
@@ -546,9 +563,9 @@ def audit_trial(pattern, manifest, masks, fmt, translation):
         'requestedColourOrder':colors,'translationToSourceMm':translation},moves,needle_points
 
 
-def run_trial(plan, executable, output, timeout_seconds=60, native_outputs=None,partition_fills=False,running_overrides=()):
+def run_trial(plan, executable, output, timeout_seconds=60, native_outputs=None,partition_fills=False,running_overrides=(),fill_repair_overrides=()):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    svg,manifest,masks=build_trial_svg(plan,partition_fills=partition_fills,running_overrides=running_overrides)
+    svg,manifest,masks=build_trial_svg(plan,partition_fills=partition_fills,running_overrides=running_overrides,fill_repair_overrides=fill_repair_overrides)
     (output/'native-artwork-input.svg').write_bytes(svg)
     (output/'native-intent-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     if native_outputs is not None:
@@ -614,7 +631,10 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
     if unresolved or any(o.get('unresolvedDetailObjects',0) for o in manifest['objects']):blockers.append('unresolved_small_source_details')
     if any(r['needlePointsOutsideWorkingColour'] or r['needleSegmentsOutsideWorkingColour'] for r in reports):blockers.append('decoded_movements_outside_working_colour')
     if any(d['attributedLongSegmentMm']>=3 and d['alignedLongSegmentFraction']<.45 for r in reports for d in r['fillDirectionAudit'].values()):blockers.append('fill_direction_dominance_requires_review')
-    if manifest.get('nativeRepairObjects'):blockers.append('repaired_fill_changed_to_running_requires_likeness_review')
+    if any(not o.get('preservedFill',False) for o in manifest.get('nativeRepairObjects',[])):
+        blockers.append('repaired_fill_changed_to_running_requires_likeness_review')
+    if any(o.get('preservedFill',False) for o in manifest.get('nativeRepairObjects',[])):
+        blockers.append('fill_repair_without_underlay_or_underpath_requires_fabric_review')
     if plan.get('textureApproximation'):blockers.append('texture_simplification_requires_likeness_and_feature_review')
     result={'status':'REAL_ARTWORK_ENGINE_TRIAL_NOT_MACHINE_APPROVED','engine':'Ink/Stitch 3.3.0','reader':'pyembroidery 1.5.1',
         'source':plan['source'],'imageWidthMm':plan['physical']['imageWidthMm'],'objectSummary':plan['summary'],'nativePaths':manifest['nativePaths'],'pesVersion':6,
