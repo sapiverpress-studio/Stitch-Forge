@@ -53,3 +53,39 @@ end-to-end test and careful review before commercial release.
    Do not deploy through a source commit.
 4. Conduct actual physical sewout: no digital-only evidence can
    establish that products can safely be produced.
+
+## Actual CI native evidence — 1 November 2026
+
+Commit `054768fc0b8d4a4e64f580cc0b0a368f451a84a8` verified by GitHub
+Actions **run 41319198236**, status **completed/success**:
+https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41319198236
+
+All synthetic/native tests, independently decoded PES/DST, actual local
+source-to-native licensed rose, artifact retention, and isolated
+worker-container HTTP integration passed. Source and machine files are
+downloadable as a short-retention GitHub Actions artifact
+`stitch-forge-rose-native-sewout-EVALUATION-NOT-APPROVED`
+(artifact id **13088657045**), not as a publicly hosted live app.
+
+Downloaded ZIP independently inspected; contained valid separate PES and
+DST, decoded SVG preview, machine report, original CC0 source PNG.
+A handover-friendly ZIP was then prepared in the chat session:
+`Stitch-Forge-Rose-80mm-SEWOUT-TRIAL-ONLY.zip`.
+
+**Measured original rose result**: 15,454 needle stitches in both decoders;
+PES 183 trims / 185 jumps; DST 7 trims / 231 jumps (different format
+semantics); 12 proposed sRGB working colours; 115 unresolved small
+source objects (118 pixels); decoded stitch bounds 76×75.5 mm for an
+80mm source scale. Zero needle points or segments outside source-colour
+mask with the existing 0.11mm tolerance. These are machine-file diagnostics,
+NOT sewn-product approval or complete artwork fidelity.
+
+The new automatic repair selection was unit-tested against real
+client-bound source geometry; the resulting *selection policy on actual
+Kingfisher* has **not** been exercised by this rose run. Do not confuse the
+rose result with Kingfisher release readiness.
+
+**Deployment status:** Main not updated. Production worker not updated.
+Netlify not updated. Before a hosted release, the owner must authorise
+the separate worker rollout and site deployment, acknowledging potential
+Google Cloud charges and safe traffic/version matching.
