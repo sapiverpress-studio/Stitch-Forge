@@ -16,7 +16,11 @@ app.innerHTML=[
  '<header class="sf-simple-head"><h1>Image to embroidery</h1><p>Upload a picture, then press Generate. AI analysis, stitches and a ZIP are handled automatically.</p></header>',
  '<div class="sf-simple-step"><span class="sf-step">1</span><div class="sf-step-body"><button type="button" class="btn primary" id="sfQuickUpload">Upload image</button>',
  '<p class="sf-small" id="sfQuickFilename">Choose a PNG, JPG or WebP image.</p><img id="sfQuickOriginal" alt="Uploaded source artwork" hidden></div></div>',
- '<div class="sf-simple-step"><span class="sf-step">2</span><div class="sf-step-body"><button type="button" class="btn primary" id="sfQuickGenerate" disabled>Generate embroidery</button>',
+ '<div class="sf-simple-step"><span class="sf-step">2</span><div class="sf-step-body">',
+ '<label class="sf-small" for="sfQuickWidth">Visible embroidery width (mm)</label>',
+ '<input id="sfQuickWidth" type="number" min="10" max="250" step="1" value="80" inputmode="decimal">',
+ '<p class="sf-small">Measured across the visible artwork, excluding transparent margins. The decoded needle dimensions are shown after generation.</p>',
+ '<button type="button" class="btn primary" id="sfQuickGenerate" disabled>Generate embroidery</button>',
  '<div id="sfQuickAuth" hidden><label for="sfQuickToken">Private access token — enter once on this device</label>',
  '<input id="sfQuickToken" type="password" autocomplete="off" placeholder="Stitch Forge access token">',
  '<p class="sf-small">Saved in this browser if Remember token is enabled. This is not your OpenAI API key.</p></div>',
@@ -54,6 +58,7 @@ const css=document.createElement('style');css.textContent=[
  '#sfQuickOriginal[hidden],#sfQuickCanvas[hidden],#sfQuickAuth[hidden]{display:none!important}',
  '#sfQuickAuth{margin-top:12px;padding:10px;background:#eff5f3;border-radius:9px}',
  '#sfQuickAuth input{width:100%;height:45px;margin-top:7px;padding:10px;border:1px solid #abbfba;border-radius:8px}',
+ '#sfQuickWidth{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px}',
  '#sfQuickStatus{font-weight:600;white-space:pre-wrap}',
  '.sf-playback{border-radius:11px;min-height:170px;background:#f7faf9;border:1px solid #dfe9e6;display:flex;align-items:center;justify-content:center;overflow:hidden}',
  '.sf-playback canvas{display:block;width:auto;height:auto;max-width:100%;max-height:65vh;object-fit:contain}',
@@ -128,6 +133,18 @@ window.addEventListener('stitchforge:design-changed',()=>{
 });
 generate.addEventListener('click',()=>{
  if(busy||!hasImage)return;
+ const wantedWidth=$('#sfQuickWidth'),advancedWidth=$('#sfNativeWidth');
+ if(wantedWidth&&advancedWidth){
+  const requested=Number(wantedWidth.value);
+  if(!wantedWidth.value.trim()||!Number.isFinite(requested)||requested<10||requested>250){
+   status.textContent='Enter a visible embroidery width between 10 and 250 mm.';
+   wantedWidth.focus();return;
+  }
+  if(Number(advancedWidth.value)!==requested){
+   advancedWidth.value=String(requested);
+   advancedWidth.dispatchEvent(new Event('change'));
+  }
+ }
  const underlying=$('#sfAutoToken');if(!underlying)return;
  if(!underlying.value.trim()&&token.value.trim())underlying.value=token.value.trim();
  if(!underlying.value.trim()){
@@ -160,7 +177,7 @@ window.addEventListener('stitchforge:native-ready',e=>{
  ready=true;preview=p;zip.disabled=false;replay.disabled=false;
  auth.hidden=true;token.value='';
  const d=e.detail?.report?.decoded?.find(x=>x.format==='pes');
- status.textContent='Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes':'')+'. ZIP ready; physical stitch quality not approved.';
+ status.textContent='Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes, actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':'')+'. ZIP ready; physical stitch quality not approved.';
  play();
 });
 window.addEventListener('stitchforge:native-error',e=>{
