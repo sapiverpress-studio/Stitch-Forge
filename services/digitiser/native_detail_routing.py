@@ -11,9 +11,9 @@ about actual machine trims, tissue/fabric behaviour or semantic likeness.
 import math
 import re
 
-_NUM=r'[-+]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)'
+_NUM=r'[-+]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)'
 _PAIR=re.compile(r'('+_NUM+r'),('+_NUM+r')')
-_COMMAND=re.compile(r'\\s*M\\s+P(?:\\s+L\\s+P)+\\s*')
+_COMMAND=re.compile(r'\s*M\s+P(?:\s+L\s+P)+\s*')
 
 
 def _points(node):
