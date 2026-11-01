@@ -13,6 +13,7 @@ from math import cos, sin, radians, isfinite
 from shapely.affinity import rotate
 from shapely.geometry import LineString
 from shapely.ops import unary_union
+from geometry_intelligence import shape_axis, order_open_routes
 
 
 def _lines(geom):
@@ -34,7 +35,7 @@ def _rot(point, degrees, origin):
 
 
 def plan_scanline_fill(poly, scale, *, row_spacing_mm=.45, inset_mm=.09,
-                       angles=(0, 30, 60, 90, 120, 150), max_routes=120):
+                       angles=(0, 30, 60, 90, 120, 150), max_routes=120, adaptive=False):
     """Choose a contained back-and-forth row plan (not an embroidery approval).
 
     Returns paths in artwork-pixel coordinates. Each separate path is a
@@ -53,9 +54,19 @@ def plan_scanline_fill(poly, scale, *, row_spacing_mm=.45, inset_mm=.09,
     active = poly.buffer(-inset_mm / scale)
     if active.is_empty:
         raise ValueError('Insetting removed too-narrow fill geometry')
+    if not isinstance(adaptive, bool):
+        raise ValueError('Hybrid planner flag must be boolean')
+    if not angles:
+        raise ValueError('At least one baseline fill angle is required')
     origin = (poly.centroid.x, poly.centroid.y)
+    axis = shape_axis(poly, scale) if adaptive else None
+    all_angles = list(angles)
+    if axis is not None:
+        proposed = axis['crossFillAngleDeg']
+        if all(min(abs(proposed-a),180-abs(proposed-a))>7 for a in all_angles):
+            all_angles.append(proposed)
     candidates = []
-    for deg in angles:
+    for deg in all_angles:
         if not isinstance(deg, (int, float)) or not isfinite(deg) or not 0 <= deg < 180:
             raise ValueError('Invalid scanline direction')
         rotated = rotate(active, -deg, origin=origin)
@@ -98,11 +109,31 @@ def plan_scanline_fill(poly, scale, *, row_spacing_mm=.45, inset_mm=.09,
         candidates.append((len(paths), -fraction, length, deg, paths, fraction))
     if not candidates:
         raise ValueError('No source-contained scanline candidate met coverage/path bounds')
-    _, _, length, angle, paths, fraction = min(candidates, key=lambda row: row[:4])
-    return {
+    baseline = min((c for c in candidates if c[3] in angles),key=lambda c:c[:4])
+    selected = baseline
+    if adaptive:
+        # Do not trade away source-region coverage or raise trim path count
+        # merely to achieve a new geometric angle.
+        permitted = [c for c in candidates
+                     if c[0] <= baseline[0] and c[5] >= baseline[5]-.02]
+        selected = min(permitted,key=lambda c:(c[0],-c[5],c[2],c[3]))
+    _, _, length, angle, paths, fraction = selected
+    stats = {}
+    if adaptive:
+        paths,stats = order_open_routes(paths,scale)
+    result = {
         'angleDeg': angle, 'routes': paths,
         'interiorProxyFraction': round(fraction, 5),
         'routeCount': len(paths), 'trackLengthMm': round(length, 4),
         'underlayVerified': False, 'physicalQualityVerified': False,
         'sourceGeometryChanged': False,
     }
+    if adaptive:
+        result.update(stats)
+        result.update({
+            'geometryAxis':axis,'hybridPlanning':True,
+            'derivedAngleUsed':bool(axis is not None and angle not in angles),
+            'noWorseGeometricCoverage':fraction >= baseline[5]-.02,
+            'semanticDirectionVerified':False,
+        })
+    return result
