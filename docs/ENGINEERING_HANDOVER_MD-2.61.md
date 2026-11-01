@@ -89,3 +89,38 @@ rose result with Kingfisher release readiness.
 Netlify not updated. Before a hosted release, the owner must authorise
 the separate worker rollout and site deployment, acknowledging potential
 Google Cloud charges and safe traffic/version matching.
+
+## Source-identical Kingfisher staging outcome — 1 November 2026, 16:18 GMT
+
+Evidence: owner-supplied Cloud Shell screenshot of successful protected
+`tools/deploy_md261_tag.sh --execute`, followed by a source-identical
+Kingfisher A/B. The isolated `md261` worker revision was deployed at 0%
+traffic; the original worker stayed at 100%, and Netlify was unchanged.
+
+- Source: original uploaded PNG, prepared at **320×384** pixels; prepared
+  source fingerprint matched the MD-2.56 baseline exactly.
+- Independent **PES6/DST generation and decoded source-colour audit PASSED**.
+- Needle stitches: **40,792 → 40,976 (+184)**.
+- PES trims: **1,348 → 1,353 (+5)**.
+- PES jumps: **1,350 → 1,355 (+5)**.
+- Maximum needles in one mm²: **52 → 52**.
+- Native SVG elements: **956 → 1,162 (+206)**.
+- Unresolved small objects: **921 → 921**.
+- Old repair blocker: `repaired_fill_changed_to_running_requires_likeness_review`.
+- New repair blocker: `sectioned_tatami_seams_and_no_underlay_require_fabric_review`.
+  Thus the once-skeletonised repair is now output as sectioned **native tatami**
+  geometry. This is a genuine stitch-type change but **not** proof of sewout
+  or visual quality.
+- Release gate explicitly: **NOT MET — PES trims increased**.
+- Local private files on user's authenticated Cloud Shell:
+  `/home/callighanjames/md261-kingfisher-20261101-161846-NOT-APPROVED.zip`
+  and corresponding `.json`. These reports contain the detailed diagnostics
+  needed for deciding how to minimise travel without losing tatami anatomy.
+  Do not add user's source artwork or machine payloads to public GitHub.
+
+**Safety/release decision: HOLD live worker traffic and Netlify changes.**
+The policy tradeoff is five additional PES trims for preserved fill anatomy;
+trims alone are not an adequate physical quality score. Inspect actual
+machine-report, decoded preview and retained orange fill region in the ZIP,
+then assess travel, thread density and realistic sewout before considering
+a gated rollout. Do not rerun or rebuild paid Cloud Run on the same evidence.
