@@ -2,13 +2,14 @@ name: MD-2.55 source-preserving infill native validation
 
 on:
   push:
-    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258", "feature/hybrid-geometry-routing-md259", "feature/tatami-coverage-decomposition-md260", "feature/automatic-multi-method-release-candidate-md261"]
+    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258", "feature/hybrid-geometry-routing-md259", "feature/tatami-coverage-decomposition-md260", "feature/automatic-multi-method-release-candidate-md261", "feature/source-detail-safe-running-router-md262"]
     paths:
       - "services/digitiser/artwork_trial.py"
       - "services/digitiser/source_scanline_fill.py"
       - "services/digitiser/geometry_intelligence.py"
       - "services/digitiser/native_tatami_decomposition.py"
       - "services/digitiser/repair_policy.py"
+      - "services/digitiser/native_detail_routing.py"
       - "services/digitiser/artwork_service.py"
       - "services/digitiser/running_compaction.py"
       - "tests/test_running_compaction.py"
@@ -16,6 +17,7 @@ on:
       - "tools/run_md256_staged_benchmark.sh"
       - "tools/run_md257_staged_benchmark.sh"
       - "tests/test_artwork_trial.py"
+      - "tests/test_native_detail_routing.py"
       - "tests/test_source_scanline_fill.py"
       - "tests/test_geometry_intelligence.py"
       - "tests/test_native_tatami_decomposition.py"
@@ -140,6 +142,7 @@ jobs:
           python -m unittest discover -s tests -p test_source_scanline_fill.py -v
           python -m unittest discover -s tests -p test_geometry_intelligence.py -v
           python -m unittest discover -s tests -p test_native_tatami_decomposition.py -v
+          python -m unittest discover -s tests -p test_native_detail_routing.py -v
           STITCH_FORGE_SOURCE_SCANLINE_REPAIR=1 xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_service.py -v
           STITCH_FORGE_BETA_COMPACT_RUNNING=1 xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_service.py -v
       - name: Generate PES/DST from actual Ink/Stitch and read back independently

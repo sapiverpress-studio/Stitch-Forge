@@ -26,6 +26,7 @@ from shapely import Polygon, LineString, Point, box, union_all, make_valid, cove
 from skimage.morphology import skeletonize
 import pyembroidery
 from running_compaction import consolidate_running_elements
+from native_detail_routing import optimise_running_groups
 from source_scanline_fill import plan_scanline_fill
 from native_tatami_decomposition import decompose_tatami
 from inkstitch_cli import export_trusted_svg, _run_engine, DigitiserError
@@ -483,6 +484,17 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         raise ValueError('Native repair exceeds source area or identity bound')
     if not path_count:
         raise ValueError('No physically resolvable native artwork paths')
+    # Source-detail-safe routing runs before optional path grouping, but
+    # changes neither individual stitch tracks nor fill/colour barriers.
+    if os.environ.get('STITCH_FORGE_DETAIL_SAFE_ROUTING','0')=='1' and partition_fills:
+        detail_routing=optimise_running_groups(root)
+    else:
+        detail_routing={'strategy':'disabled','evaluatedGroups':0,'acceptedGroups':0,
+            'movedObjects':0,'baselinePenUpProxyMm':0,'plannedPenUpProxyMm':0,
+            'estimatedPenUpSavingMm':0,'nearConnectionsBefore':0,'nearConnectionsAfter':0,
+            'unchangedInternalStitchOrder':True,'unchangedFillOrColourBoundaries':True,
+            'sourcePixelLedgerChanged':False,'sourceDetailOmitted':False,
+            'nativeStitchCountsVerified':False,'machineSewoutVerified':False}
     # Research-only compound running paths. Each original path remains a
     # distinct M/L subpath: Ink/Stitch controls non-sewn travel between them.
     # The conservative production default remains unchanged.
@@ -503,7 +515,8 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         'regionConsolidation':{'method':'connected_skeleton_edge_walk_and_same_colour_nearest_centre',
             'originalRunningBranches':running_branches,'connectedRunningWalks':routed_walks,
             'colourPixelsReassigned':0,'sourceGeometryChanged':False,
-            'optionalCompoundRunningPaths':compound},
+            'optionalCompoundRunningPaths':compound,
+            'optionalSourceDetailRouting':detail_routing},
         'underlayFillPaths':underlay_count,
         'algorithm':'source_preserving_routed_tatami_with_opt_in_scanline_MD-2.58','settings':{'fillDirection':'component_axis_in_15_degree_steps_or_horizontal_if_isotropic',
                      'fillRowSpacingMm':.5,'fillMaxStitchMm':3.5,'fillUnderlay':'selective_inset_on_wide_fills',
