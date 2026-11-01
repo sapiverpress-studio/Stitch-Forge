@@ -373,6 +373,34 @@ class ArtworkTrialTests(unittest.TestCase):
                     self.assertEqual(decoded['needleSegmentsOutsideWorkingColour'],0)
 
     @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
+    def test_opt_in_detail_routing_preserves_native_pes_dst_and_source_masks(self):
+        """The new routing must survive actual Ink/Stitch export and decoded audit."""
+        from unittest.mock import patch
+        _,baseline,original_masks=build_trial_svg(self.plan,partition_fills=True)
+        with patch.dict(os.environ,{'STITCH_FORGE_DETAIL_SAFE_ROUTING':'1'}):
+            svg,manifest,masks=build_trial_svg(self.plan,partition_fills=True)
+            detail=manifest['regionConsolidation']['optionalSourceDetailRouting']
+            self.assertEqual(detail['strategy'],
+                             'anchored_original_running_detail_reordering')
+            self.assertFalse(detail['sourcePixelLedgerChanged'])
+            self.assertFalse(detail['sourceDetailOmitted'])
+            self.assertGreaterEqual(detail['nearConnectionsAfter'],detail['nearConnectionsBefore'])
+            self.assertGreaterEqual(detail['estimatedPenUpSavingMm'],0)
+            self.assertEqual(manifest['nativePaths'],baseline['nativePaths'])
+            self.assertTrue(all(np.array_equal(masks[c],original_masks[c])
+                                for c in masks))
+            with TemporaryDirectory() as target:
+                report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],target,
+                                 partition_fills=True)
+                self.assertFalse(report['machineEligible'])
+                for fmt in ('pes','dst'):
+                    raw=(Path(target)/('ENGINEERING-TRIAL-NOT-APPROVED.'+fmt)).read_bytes()
+                    validate_native_payload(fmt,raw)
+                for decoded in report['decoded']:
+                    self.assertEqual(decoded['needlePointsOutsideWorkingColour'],0)
+                    self.assertEqual(decoded['needleSegmentsOutsideWorkingColour'],0)
+
+    @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
     def test_real_native_trial_preserves_pes6_rgb_and_cross_format_needles(self):
         with TemporaryDirectory() as output:
             report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],output)
