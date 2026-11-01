@@ -15,15 +15,18 @@ function page(owner='saved-owner-token'){
     const node=new Element();node.id=match[1];
     node.disabled=/\sdisabled(?:\s|>)/.test(match[0]);
     node.hidden=/\shidden(?:\s|>)/.test(match[0]);
+    node.value=match[0].match(/\svalue="([^"]*)"/)?.[1]||'';
    }
   }
   addEventListener(name,fn){const list=this.handlers.get(name)||[];list.push(fn);this.handlers.set(name,list);}
+  dispatchEvent(event){for(const fn of this.handlers.get(event.type)||[])fn(event);}
   click(){this.clicks=(this.clicks||0)+1;for(const fn of this.handlers.get('click')||[])fn();}
   focus(){this.focused=true;}before(){}appendChild(){}
   querySelector(query){return query==='.workspace'?nodes.get('workspace'):query==='.note'?nodes.get('note'):nodes.get(query.slice(1));}
   getContext(){return {fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){strokes++;}};}
  }
- for(const id of ['main','workspace','note','sfAutoRun','importFile','sfAutoToken','sfAutoWorkflow','sfAutoDownload'])new Element().id=id;
+ for(const id of ['main','workspace','note','sfAutoRun','importFile','sfAutoToken','sfAutoWorkflow','sfAutoDownload','sfNativeWidth'])new Element().id=id;
+ nodes.get('sfNativeWidth').value='80';
  nodes.get('sfAutoToken').value=owner;
  nodes.get('sfAutoWorkflow').value='native';
  const window={StitchForgeAIContext:{getImage:()=> 'data:image/png;base64,fixture',getSourceStatus:()=> 'original'},
@@ -75,4 +78,19 @@ test('integration dispatches ready only after native validation; uses original a
  assert.ok(native.indexOf("const result=await api.generate(packed")<native.indexOf("new CustomEvent('stitchforge:native-ready'"));
  assert.match(native,/saveBytes\(result\.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED\.zip'/);
  assert.match(html,/\/simple-workflow\.js/);
+});
+
+test('simple width control is visible, synchronises into signed native workflow and rejects invalid size',()=>{
+ const p=page();p.window.dispatch('stitchforge:image-imported');
+ assert.match(p.get('sfSimpleFlow').markup,/Visible embroidery width/);
+ assert.equal(p.get('sfQuickWidth').value,'80');
+ p.get('sfQuickWidth').value='120';
+ p.get('sfQuickGenerate').click();
+ assert.equal(p.get('sfNativeWidth').value,'120');
+ assert.equal(p.get('sfAutoRun').clicks,1);
+ const invalid=page();invalid.window.dispatch('stitchforge:image-imported');
+ invalid.get('sfQuickWidth').value='400';
+ invalid.get('sfQuickGenerate').click();
+ assert.equal(invalid.get('sfAutoRun').clicks||0,0);
+ assert.match(invalid.get('sfQuickStatus').textContent,/between 10 and 250 mm/);
 });

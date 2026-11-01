@@ -7,6 +7,8 @@ on:
       - "services/digitiser/artwork_trial.py"
       - "site/artwork-pipeline.js"
       - "site/auto-reconstruct-ui.js"
+      - "site/simple-workflow.js"
+      - "tests/test_simple_workflow.cjs"
       - "tests/test_artwork_pipeline.cjs"
       - "services/digitiser/source_scanline_fill.py"
       - "services/digitiser/geometry_intelligence.py"
@@ -139,7 +141,8 @@ jobs:
         run: |
           node --check site/artwork-pipeline.js
           node --check site/auto-reconstruct-ui.js
-          node --test tests/test_artwork_pipeline.cjs
+          node --check site/simple-workflow.js
+          node --test tests/test_artwork_pipeline.cjs tests/test_simple_workflow.cjs
       - name: Validate shape routing and selective underlay with actual Ink/Stitch 3.3.0
         env:
           STITCH_FORGE_INKSTITCH: ${{ env.ENGINE_PATH }}

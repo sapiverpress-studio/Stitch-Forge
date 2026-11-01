@@ -177,7 +177,7 @@ window.addEventListener('stitchforge:native-ready',e=>{
  ready=true;preview=p;zip.disabled=false;replay.disabled=false;
  auth.hidden=true;token.value='';
  const d=e.detail?.report?.decoded?.find(x=>x.format==='pes');
- status.textContent='Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes, actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':'')+'. ZIP ready; physical stitch quality not approved.';
+ status.textContent='Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes'+(Array.isArray(d.boundsMm)&&d.boundsMm.length===2?', actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':''):'')+'. ZIP ready; physical stitch quality not approved.';
  play();
 });
 window.addEventListener('stitchforge:native-error',e=>{
