@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the actual uploaded Cloud Shell kingfisher against staged MD-2.55 only.
+"""Run the actual uploaded Cloud Shell kingfisher against a protected tagged worker.
 
 Reads one file_*.png from the Cloud Shell home directory. Uses the same
 source-bound browser packet builder and protected two-phase worker protocol.
@@ -23,10 +23,12 @@ import urllib.error
 import urllib.request
 import zipfile
 
-ROOT = Path.home() / "stitch-forge-md255"
+ROOT = Path(os.environ.get("STITCH_FORGE_BENCHMARK_SOURCE_ROOT",str(Path.home() / "stitch-forge-md255"))).expanduser()
 PROJECT = "gen-lang-client-0857863712"
 SERVICE = "stitch-forge-worker-staging"
-TAG = "md255"
+TAG = os.environ.get("STITCH_FORGE_STAGED_TAG", "md255")
+if TAG not in ("md255", "md256"):
+    raise RuntimeError("Only protected benchmark tags md255/md256 are supported")
 WIDTH_MM = 80
 
 PACK_JS = r"""
@@ -132,19 +134,19 @@ def start_proxy():
     with socket.socket() as s:
         s.bind(("127.0.0.1",0))
         port=s.getsockname()[1]
-    log=open("/tmp/md255-kingfisher-proxy.log","w")
+    log=open("/tmp/"+TAG+"-kingfisher-proxy.log","w")
     process=subprocess.Popen(["gcloud","run","services","proxy",SERVICE,
         "--project="+PROJECT,"--region=europe-west2","--tag="+TAG,
         "--port="+str(port)],stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
     for _ in range(45):
         if process.poll() is not None:
-            raise RuntimeError("Google Cloud staging proxy stopped unexpectedly; see /tmp/md255-kingfisher-proxy.log")
+            raise RuntimeError("Google Cloud staging proxy stopped unexpectedly; see /tmp/"+TAG+"-kingfisher-proxy.log")
         try:
             with socket.create_connection(("127.0.0.1",port),timeout=1):
                 return process,log,port
         except OSError:time.sleep(1)
     process.terminate()
-    raise RuntimeError("Cannot reach md255 proxy; see /tmp/md255-kingfisher-proxy.log")
+    raise RuntimeError("Cannot reach md255 proxy; see /tmp/"+TAG+"-kingfisher-proxy.log")
 
 def run_native(packet,port,token):
     def send(payload):
@@ -205,12 +207,49 @@ def run_native(packet,port,token):
         return body,report
     raise RuntimeError("Native repair did not complete; no ZIP saved")
 
+def print_baseline_comparison(report):
+    """A/B only if the exact source-bound request fingerprint matches."""
+    if TAG != "md256":
+        print("BASELINE: saved native MD-2.55 engineering result.")
+        return
+    candidates=sorted(Path.home().glob("md255-kingfisher-*-NOT-APPROVED.zip"),
+                      key=lambda p:p.stat().st_mtime,reverse=True)
+    for file in candidates:
+        try:
+            with zipfile.ZipFile(file) as archive:
+                baseline=json.loads(archive.read("machine-report.json"))
+            if baseline.get("requestId") != report.get("requestId"):
+                continue
+            previous=next(d for d in baseline["decoded"] if d["format"]=="pes")
+            current=next(d for d in report["decoded"] if d["format"]=="pes")
+            print("\nMATCHED-SOURCE COMPARISON (same exact prepared request ID)")
+            for label,key in [("stitches","needleStitches"),("PES trims","trims"),
+                              ("PES jumps","jumps"),("local mm² max","maxNeedlesInOneMmSquare")]:
+                first=int(previous[key]);second=int(current[key])
+                print(label+":",first,"→",second,"(change",f"{second-first:+d}",")")
+            print("native SVG elements:",baseline.get("nativePaths"),"→",
+                  report.get("nativePaths"))
+            for label,r in [("Old",baseline),("New",report)]:
+                print(label,"repair regions:",len(r.get("nativeRepairObjects") or []),
+                      "unresolved:",r.get("unresolvedObjects"),
+                      "blockers:",", ".join(r.get("blockers") or []))
+            if (current["trims"]>=previous["trims"] or
+                    current["needleStitches"]>previous["needleStitches"]*1.25):
+                print("RELEASE GATE: NOT MET — no verified trim improvement, or excessive stitch growth")
+            else:
+                print("RELEASE GATE: NUMERICAL CANDIDATE ONLY — compare actual decoded likeness and sewout")
+            return
+        except (KeyError,ValueError,zipfile.BadZipFile,StopIteration):
+            continue
+    print("MATCHED-SOURCE COMPARISON UNAVAILABLE: previous MD-2.55 ZIP with the "+
+          "same requestId was not found. No improvement claim.")
+
 def main():
     if not ROOT.is_dir():raise RuntimeError("Missing ~/stitch-forge-md255")
     image=image_input()
     with TemporaryDirectory(prefix="sf-md255-") as tmpdir:
         packet,meta=prepare(image,Path(tmpdir))
-        print("Using protected MD-2.55 tag. Normal Cloud Run traffic unchanged.",flush=True)
+        print("Using protected "+TAG+" tag. Normal Cloud Run traffic unchanged.",flush=True)
         token=command("gcloud","secrets","versions","access","latest",
             "--secret=stitch-forge-worker-token","--project="+PROJECT)
         if not token:raise RuntimeError("Worker secret unavailable")
@@ -225,7 +264,7 @@ def main():
                 except ProcessLookupError:pass
             if log is not None:log.close()
         stamp=datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-        out=Path.home()/("md255-kingfisher-"+stamp+"-NOT-APPROVED.zip")
+        out=Path.home()/(TAG+"-kingfisher-"+stamp+"-NOT-APPROVED.zip")
         out.write_bytes(data)
         reportout=out.with_suffix(".json")
         reportout.write_text(json.dumps(report,indent=2)+"\n")
@@ -237,7 +276,7 @@ def main():
             print(item.get("format"),"stitches:",item.get("needleStitches"),
                   "PES/DST trims:",item.get("trims"),"jumps:",item.get("jumps"),
                   "colour changes:",item.get("colourChanges"))
-        print("PREVIOUS KINGFISHER BASELINE: 30,289 stitches, 1,055 PES trims")
+        print_baseline_comparison(report)
         print("ZIP:",out)
         print("REPORT:",reportout)
         print("ENGINEERING TRIAL ONLY — physical stitch quality not approved",flush=True)
