@@ -13,7 +13,8 @@ panel.innerHTML=[
  '<div class="ai-detail-head"><strong>Automatic artwork digitising</strong><small>Engineering trial</small></div>',
  '<p class="tiny">One button runs AI feature analysis, then native multicolour PES/DST. AI advice does not yet change stitch geometry or guarantee likeness.</p>',
  '<p class="tiny">Prepare colour shapes from the original pixels, generate real Ink/Stitch files and inspect independently decoded stitches. Trial files require review and have not been physically sewn.</p>',
- '<label class="tiny" for="sfNativeWidth">Full artwork image width (mm)</label><input id="sfNativeWidth" type="number" min="10" max="250" value="80" step="1" inputmode="decimal">',
+ '<label class="tiny" for="sfNativeWidth">Visible embroidered design width (mm)</label><input id="sfNativeWidth" type="number" min="10" max="250" value="80" step="1" inputmode="decimal">',
+ '<p class="tiny">Width refers to visible artwork, not transparent margins. If it cannot fit within the 250 × 296 mm source-frame limit, generation stops with an explanation. The final needle width will be measured in the machine report.</p>',
  '<label for="sfAutoToken" class="tiny">Private Stitch Forge access token (not your OpenAI API key)</label>',
  '<input id="sfAutoToken" type="password" autocomplete="off" placeholder="Enter once on this device">',
  '<label class="tiny"><input id="sfRememberToken" type="checkbox" checked> Remember token on this device</label>',
@@ -182,7 +183,14 @@ q("#sfAutoRun").onclick=async()=>{
    // many unsewable working parts. Never resize the physical embroidery width.
    // Raw analysis pixels and the exact foreground remain independently bound
    // in each source packet; the reference image stays untouched in the editor.
-   const attempts=api.analysisSizes(width,original.naturalWidth,original.naturalHeight,texturePolicy);
+   // Establish source-foreground proportions before choosing analysis detail.
+   // No geometry is cropped or discarded: the signed server still receives
+   // the entire original-sized reduced source frame.
+   const preliminary=await decoded(source,768);
+   const fitted=api.visibleArtworkFrame(preliminary.ctx.getImageData(0,0,
+    preliminary.canvas.width,preliminary.canvas.height).data,
+    preliminary.canvas.width,preliminary.canvas.height,width);
+   const attempts=api.analysisSizes(fitted.imageWidthMm,original.naturalWidth,original.naturalHeight,texturePolicy);
    let packed=null,analysisPixels=null;
    for(const size of [...new Set(attempts)]){
     if(!current()||nativeAbort.signal.aborted)throw Error('Cancelled: original artwork or settings changed');
@@ -191,7 +199,7 @@ q("#sfAutoRun").onclick=async()=>{
     try{
      packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,
       {imageWidthMm:width,originalWidth:original.naturalWidth,originalHeight:original.naturalHeight,
-       texturePolicy,maxWorkingParts:1500});
+       texturePolicy,maxWorkingParts:1500,sizeMode:'visible'});
      analysisPixels=canvas.width+' × '+canvas.height;
      break;
     }catch(error){
@@ -225,7 +233,7 @@ q("#sfAutoRun").onclick=async()=>{
    window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
    q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoUndo').disabled=false;
    const r=result.report,d=r.decoded.find(x=>x.format==='pes');
-   status(aiNote+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
+   status(aiNote+'Requested visible width '+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
    window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview:result.preview,report:result.report}}));
    // Preserve verified ZIP auto-download, and expose a re-download button.
    saveBytes(result.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED.zip','application/zip');

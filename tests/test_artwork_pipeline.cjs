@@ -42,3 +42,31 @@ test('a worker-requested native repair is source-bound and limited to one comple
  }}),/one-pass bound/);
  assert.deepEqual(calls.map(c=>c.phase),['pes','dst','pes','dst']);assert.ok(!calls[0].repairReceipt);assert.deepEqual(calls[2].repairReceipt,repair);
 });
+
+test('visible artwork width is measured from the SAME original foreground, not transparent canvas',async()=>{
+ const picture=new Uint8ClampedArray(128*128*4);
+ for(let y=20;y<100;y++)for(let x=40;x<80;x++)
+  picture.set([180,70,30,255],(y*128+x)*4);
+ const fit=api.visibleArtworkFrame(picture,128,128,30);
+ assert.equal(fit.mode,'visible');
+ assert.deepEqual(fit.sourceForegroundBounds,{x:40,y:20,width:40,height:80});
+ assert.equal(fit.imageWidthMm,96);
+ assert.equal(fit.estimatedVisibleHeightMm,60);
+ const packed=await api.pack(picture,128,128,{imageWidthMm:30,sizeMode:'visible',texturePolicy:'off'});
+ const meta=JSON.parse(packed.packet.header);
+ assert.equal(meta.imageWidthMm,96);
+ assert.equal(packed.draft.physical.imageWidthMm,96);
+ assert.equal(packed.sizing.requestedDesignWidthMm,30);
+ const original=zlib.gunzipSync(Buffer.from(packed.packet.rgbaGzip,'base64'));
+ assert.deepEqual(original,Buffer.from(picture));
+ const legacy=await api.pack(picture,128,128,{imageWidthMm:30,sizeMode:'canvas',texturePolicy:'off'});
+ assert.equal(JSON.parse(legacy.packet.header).imageWidthMm,30);
+ assert.notEqual(packed.packet.requestId,legacy.packet.requestId);
+});
+test('visible-fit refuses oversized padded artwork and never silently crops colour details',()=>{
+ const picture=new Uint8ClampedArray(128*128*4);
+ for(let y=40;y<80;y++)for(let x=48;x<80;x++)picture.set([180,70,30,255],(y*128+x)*4);
+ assert.throws(()=>api.visibleArtworkFrame(picture,128,128,100),/trim transparent margins|choose a smaller/);
+ assert.throws(()=>api.visibleArtworkFrame(picture,128,128,0),/Invalid requested/);
+ assert.throws(()=>api.visibleArtworkFrame(picture,128,128,30),/296 mm/);
+});

@@ -7,6 +7,7 @@
 const dep=(name,path)=>root[name]||(typeof require==='function'?require(path):null);
 const P=dep('StitchForgeSourceRegionProject','./source-region-project.js');
 const A=dep('StitchForgeSourceObjectPlan','./source-object-plan.js');
+const R=dep('StitchForgeAutoReconstruct','./auto-reconstruct.js');
 const SCHEMA='stitch-forge-artwork-request-v1',AUDIT='SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED';
 const cryptoAPI=()=>root.crypto||(typeof require==='function'?require('node:crypto').webcrypto:null);
 async function digest(...parts){const size=parts.reduce((n,p)=>n+p.length,0),bytes=new Uint8Array(size);let at=0;for(const p of parts){bytes.set(p,at);at+=p.length;}return [...new Uint8Array(await cryptoAPI().subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');}
@@ -32,12 +33,51 @@ function analysisSizes(imageWidthMm,originalWidth,originalHeight,texturePolicy='
  return [...new Set([4,3.2,2.4,1.8].map(rate=>
   Math.min(768,Math.max(120,Math.round(longMm*rate)))))];
 }
-async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0}={}){
+/** Treat the REQUESTED width as the visible foreground, not transparent canvas.
+ * The existing source mask (not a secondary alpha-only heuristic) owns the
+ * geometry. Keep source pixels, coordinates and whole-canvas proportions.
+ * Explicitly reject unhoopable/small silhouettes instead of silently clipping.
+ */
+function visibleArtworkFrame(rgba,w,h,designWidthMm){
+ if(!Number.isInteger(w)||!Number.isInteger(h)||w<48||h<48||w*h>750000||
+    !rgba||rgba.length!==w*h*4||
+    typeof designWidthMm!=='number'||!Number.isFinite(designWidthMm)||
+    designWidthMm<10||designWidthMm>250)
+  throw Error('Invalid requested visible-artwork dimensions');
+ const mask=R.sourceForegroundMask(rgba,w,h);
+ if(!mask||mask.length!==w*h)throw Error('Source foreground geometry unavailable');
+ let x0=w,y0=h,x1=-1,y1=-1,pixels=0;
+ for(let k=0;k<mask.length;k++)if(mask[k]){
+  const x=k%w,y=Math.floor(k/w);
+  if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+  pixels++;
+ }
+ if(!pixels)throw Error('No visible foreground to size');
+ const contentW=x1-x0+1,contentH=y1-y0+1;
+ if(contentW<3||contentH<3)throw Error('Artwork is too narrow for a reliable physical-width measurement');
+ const frameWidthMm=Number((designWidthMm*w/contentW).toFixed(6));
+ if(frameWidthMm>250||frameWidthMm*h/w>296)
+  throw Error('Visible design width '+designWidthMm+
+   ' mm would make the complete embroidery frame larger than 250 × 296 mm; trim transparent margins or choose a smaller design width.');
+ return {mode:'visible',requestedDesignWidthMm:designWidthMm,
+  sourceForegroundBounds:{x:x0,y:y0,width:contentW,height:contentH},
+  sourceForegroundPixels:pixels,
+  imageWidthMm:frameWidthMm,
+  estimatedVisibleHeightMm:Number((designWidthMm*contentH/contentW).toFixed(3)),
+  estimatedVisibleWidthMm:designWidthMm,
+  unmodifiedSourcePixels:true,
+  physicalSewoutVerified:false};
+}
+async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas'}={}){
  if(!['if_needed','off'].includes(texturePolicy))throw Error('Invalid texture policy');
- if(Number.isFinite(imageWidthMm)&&imageWidthMm*h/w>296)throw Error('Artwork height exceeds 296mm at this width; reduce the width before generating');
+ if(!['visible','canvas'].includes(sizeMode))throw Error('Invalid physical artwork width mode');
+ const sizing=sizeMode==='visible'?visibleArtworkFrame(rgba,w,h,imageWidthMm):
+    {mode:'canvas',imageWidthMm,unmodifiedSourcePixels:true};
+ const frameWidthMm=sizing.imageWidthMm;
+ if(Number.isFinite(frameWidthMm)&&frameWidthMm*h/w>296)throw Error('Artwork height exceeds 296mm at this width; reduce the width before generating');
  if(!Number.isInteger(maxWorkingParts)||maxWorkingParts<0||maxWorkingParts>10000)
   throw Error('Invalid maximum working-part budget');
- let draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm,originalWidth,originalHeight});
+ let draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
  let plan;
  try{plan=await A.build(draft);}
  catch(error){
@@ -45,7 +85,7 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
   // when its region masks are valid. Fall back to a bounded, source-fingerprinted
   // palette partition; never truncate graph nodes or silently discard pixels.
   if(!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
-  draft=await P.createApproximationDraft(rgba,w,h,{imageWidthMm,originalWidth,originalHeight,
+  draft=await P.createApproximationDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight,
    reasonCode:'source_graph_serialisation_budget'});
   plan=await A.build(draft);
  }
@@ -67,11 +107,11 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
  const labels=new Uint8Array(w*h),palette=plan.regions.map(r=>r.color);
  for(const [i,r] of plan.regions.entries())for(const c of r.ledger.components)for(const [y,x0,x1] of c.runs)labels.fill(i+1,y*w+x0,y*w+x1);
  const {sha256,width,height}=plan.source;
- const header=JSON.stringify({schema:SCHEMA,source:{sha256,width,height,originalWidth,originalHeight},imageWidthMm,palette,
+ const header=JSON.stringify({schema:SCHEMA,source:{sha256,width,height,originalWidth,originalHeight},imageWidthMm:frameWidthMm,palette,
   foregroundPixels:plan.summary.sourcePixels,preparationSignature:plan.sourcePlanSignature,texturePolicy});
  const requestId=await digest(new TextEncoder().encode(header),new Uint8Array(rgba.buffer,rgba.byteOffset,rgba.byteLength),labels);
  const rgbaGzip=b64(await transform(rgba,'gzip',true,3100000)),labelsGzip=b64(await transform(labels,'gzip',true,800000));
- return {packet:{header,rgbaGzip,labelsGzip,requestId},draft,plan};
+ return {packet:{header,rgbaGzip,labelsGzip,requestId},draft,plan,sizing};
 }
 function crc32(bytes){let value=-1;for(const b of bytes){value^=b;for(let j=0;j<8;j++)value=(value>>>1)^(value&1?0xedb88320:0);}return (value^-1)>>>0;}
 async function readArchive(bytes){
@@ -212,6 +252,6 @@ async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fe
  }
  throw Error('Native source repair did not complete');
 }
-const api=Object.freeze({pack,analysisSizes,generate,readArchive,previewPacket,digest,AUDIT});root.StitchForgeArtworkPipeline=api;
+const api=Object.freeze({pack,visibleArtworkFrame,analysisSizes,generate,readArchive,previewPacket,digest,AUDIT});root.StitchForgeArtworkPipeline=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
