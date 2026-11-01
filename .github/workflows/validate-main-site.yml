@@ -1,0 +1,33 @@
+name: Verify Stitch Forge website on main
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "netlify/**"
+      - "tests/**"
+      - "tools/check_frontend_syntax.cjs"
+      - "netlify.toml"
+      - ".github/workflows/validate-main-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify frontend source syntax
+        run: node tools/check_frontend_syntax.cjs
+      - name: Run exactly the Netlify static/function test command
+        run: node --test tests/*.cjs tests/*.mjs
+      - name: Confirm publication remains a separate owner-controlled action
+        run: |
+          echo "Main frontend CI PASS does not perform a Netlify deploy."
+          echo "The native Cloud Run worker must be validated before the website is published."
