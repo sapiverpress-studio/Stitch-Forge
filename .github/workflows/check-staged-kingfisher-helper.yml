@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - feature/researched-infill-consolidation-md255
+      - main
     paths:
       - tools/staged_md255_kingfisher.py
+      - tools/deploy_md261_tag.sh
       - tests/test_staged_kingfisher_helper.py
       - .github/workflows/check-staged-kingfisher-helper.yml
   workflow_dispatch:
@@ -23,5 +25,7 @@ jobs:
           python-version: '3.11'
       - name: Validate standalone Cloud Shell script syntax
         run: python -m py_compile tools/staged_md255_kingfisher.py
+      - name: Check zero-traffic main deployment helper shell syntax (NO cloud access)
+        run: bash -n tools/deploy_md261_tag.sh
       - name: Verify duplicate-upload selection and safe ambiguity handling
         run: python -m unittest discover -s tests -p 'test_staged_kingfisher_helper.py' -v

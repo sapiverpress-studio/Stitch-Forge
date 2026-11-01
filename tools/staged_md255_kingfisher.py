@@ -27,7 +27,7 @@ ROOT = Path(os.environ.get("STITCH_FORGE_BENCHMARK_SOURCE_ROOT",str(Path.home() 
 PROJECT = "gen-lang-client-0857863712"
 SERVICE = "stitch-forge-worker-staging"
 TAG = os.environ.get("STITCH_FORGE_STAGED_TAG", "md255")
-if TAG not in ("md255", "md256", "md257"):
+if TAG not in ("md255", "md256", "md257", "md261"):
     raise RuntimeError("Only protected benchmark tags md255/md256/md257 are supported")
 WIDTH_MM = 80
 
@@ -212,7 +212,7 @@ def print_baseline_comparison(report):
     if TAG == "md255":
         print("BASELINE: saved native MD-2.55 engineering result.")
         return
-    baseline_version="md256" if TAG=="md257" else "md255"
+    baseline_version="md256" if TAG in ("md257","md261") else "md255"
     candidates=sorted(Path.home().glob(baseline_version+"-kingfisher-*-NOT-APPROVED.zip"),
                       key=lambda p:p.stat().st_mtime,reverse=True)
     for file in candidates:
@@ -237,7 +237,7 @@ def print_baseline_comparison(report):
             large_repairs=[x for x in report.get("nativeRepairObjects") or []
                            if x.get("areaMm2",0)>=8]
             blockers=[]
-            if TAG == "md257":
+            if TAG in ("md257","md261"):
                 # This milestone fixes *fill preservation*, not routing. No
                 # unearned requirement that PES trims decrease, but report them.
                 previous_large=[x for x in baseline.get("nativeRepairObjects") or []
@@ -245,7 +245,8 @@ def print_baseline_comparison(report):
                 repaired_ids={x.get("id"):x for x in report.get("nativeRepairObjects") or []}
                 for old in previous_large:
                     changed=repaired_ids.get(old.get("id"))
-                    if not changed or changed.get("preservedFill") is not True or changed.get("repairStrategy")!="tatami_no_underlay_or_underpath":
+                    if not changed or changed.get("preservedFill") is not True or changed.get("repairStrategy") not in (
+                            "tatami_no_underlay_or_underpath","source_preserved_sectioned_tatami"):
                         blockers.append("previous large fill not demonstrated as preserved: "+str(old.get("id")))
                 if not previous_large:
                     blockers.append("matched baseline has no large repair to measure")
