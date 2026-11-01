@@ -289,6 +289,30 @@ class ArtworkTrialTests(unittest.TestCase):
                 self.assertEqual(decoded['needleSegmentsOutsideWorkingColour'],0)
 
     @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
+    def test_hybrid_opt_in_uses_real_native_pes_dst_and_independent_containment(self):
+        """New geometry planner through real Ink/Stitch, not SVG-only benchmark."""
+        from unittest.mock import patch
+        _,manifest,_=build_trial_svg(self.plan,partition_fills=True)
+        piece=next(p for p in manifest['nativeFillPieces'] if p['areaMm2']>=8)
+        with patch.dict(os.environ,{'STITCH_FORGE_HYBRID_PATH_PLANNER':'1'}):
+            with TemporaryDirectory() as output:
+                report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],output,
+                    partition_fills=True,scanline_overrides=[piece['id']])
+                self.assertFalse(report['machineEligible'])
+                self.assertFalse(report['physicalQualityVerified'])
+                r=report['nativeRepairObjects'][0]
+                self.assertTrue(r['hybridGeometryPlanner'])
+                self.assertIsNotNone(r['scanlinePenUpProxyMm'])
+                self.assertGreaterEqual(r['scanlinePenUpSavedProxyMm'],0)
+                self.assertFalse(r['semanticDirectionVerified'])
+                for fmt in ('pes','dst'):
+                    raw=(Path(output)/('ENGINEERING-TRIAL-NOT-APPROVED.'+fmt)).read_bytes()
+                    validate_native_payload(fmt,raw)
+                for decoded in report['decoded']:
+                    self.assertEqual(decoded['needlePointsOutsideWorkingColour'],0)
+                    self.assertEqual(decoded['needleSegmentsOutsideWorkingColour'],0)
+
+    @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Real local engine not configured')
     def test_real_native_trial_preserves_pes6_rgb_and_cross_format_needles(self):
         with TemporaryDirectory() as output:
             report=run_trial(self.plan,os.environ['STITCH_FORGE_INKSTITCH'],output)

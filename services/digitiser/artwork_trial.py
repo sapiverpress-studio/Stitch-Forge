@@ -401,7 +401,8 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                         if piece_id in scanline_overrides:
                             # Alternative fill *tracks* rather than a sparse
                             # skeleton; stitch plans remain independently audited.
-                            proposal=plan_scanline_fill(piece,scale)
+                            hybrid_enabled=os.environ.get('STITCH_FORGE_HYBRID_PATH_PLANNER','0')=='1'
+                            proposal=plan_scanline_fill(piece,scale,adaptive=hybrid_enabled)
                             before=path_count
                             for route in proposal['routes']:
                                 add_path(color,route)
@@ -413,6 +414,11 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                                 'scanlineTrackCoverageProxy':proposal['interiorProxyFraction'],
                                 'scanlineRouteCount':proposal['routeCount'],
                                 'scanlineDirectionDeg':proposal['angleDeg'],
+                                'hybridGeometryPlanner':hybrid_enabled,
+                                'scanlinePenUpProxyMm':proposal.get('plannedPenUpMm'),
+                                'scanlinePenUpSavedProxyMm':proposal.get('penUpReductionMm'),
+                                'scanlineGeometryAxis':proposal.get('geometryAxis'),
+                                'semanticDirectionVerified':False,
                                 'requiresPhysicalSewout':True})
                         elif piece_id in running_overrides:
                             yy,xx=np.nonzero(local);selected=covers(piece,shape_points(xx+x0-.5,yy+y0-.5))
