@@ -58,3 +58,28 @@ deleting micro-details is permitted just to lower counts.
   on the decoded PES and DST files.
 - Physical sewout with experienced machine operator is required
   before authorising product production.
+
+## Verified native-engine CI — 1 November 2026
+
+GitHub Actions run **41327557569**, status **completed / success**,
+tested actual code SHA
+`4e70afc8d46045ef61cd70ba7e99e94b8decb07b`:
+https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41327557569
+
+Evidence:
+- All bounded source-detail route tests passed, including unaltered path
+  IDs/geometry/colour, fixed fill boundaries and fail-closed malformed
+  routing configurations.
+- The server-only opt-in path completed **actual Ink/Stitch 3.3.0
+  PES6/DST** export with independent pyembroidery source-colour audits
+  on controlled source-bound fixture geometry.
+- Existing file-format readback, licensed rose source-to-native trial,
+  and isolated container HTTP transaction also passed.
+
+The private real-Kingfisher comparison is **SVG-only**; no one should
+infer a 2.16% reduction in real machine trim count from it.
+The actual user Kingfisher is not shipped as a public test fixture.
+No physical sewout; no commercial endorsement or product approval.
+
+Production `main`, Netlify and Cloud Run remain unchanged.
+Do not deploy or switch the existing md261 0% tag on this evidence.
