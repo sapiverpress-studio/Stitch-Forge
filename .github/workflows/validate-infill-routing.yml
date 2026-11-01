@@ -2,12 +2,13 @@ name: MD-2.55 source-preserving infill native validation
 
 on:
   push:
-    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258", "feature/hybrid-geometry-routing-md259", "feature/tatami-coverage-decomposition-md260"]
+    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258", "feature/hybrid-geometry-routing-md259", "feature/tatami-coverage-decomposition-md260", "feature/automatic-multi-method-release-candidate-md261"]
     paths:
       - "services/digitiser/artwork_trial.py"
       - "services/digitiser/source_scanline_fill.py"
       - "services/digitiser/geometry_intelligence.py"
       - "services/digitiser/native_tatami_decomposition.py"
+      - "services/digitiser/repair_policy.py"
       - "services/digitiser/artwork_service.py"
       - "services/digitiser/running_compaction.py"
       - "tests/test_running_compaction.py"
@@ -19,6 +20,7 @@ on:
       - "tests/test_geometry_intelligence.py"
       - "tests/test_native_tatami_decomposition.py"
       - "tests/test_artwork_service.py"
+      - "tools/run_artwork_trial.py"
       - ".github/workflows/validate-infill-routing.yml"
   workflow_dispatch:
 
@@ -177,6 +179,52 @@ jobs:
           print('PHYSICAL STITCH-OUT: NOT TESTED')
           PY
           echo 'ALL THREE ENGINE FIXTURES ARE STRUCTURAL ONLY: no physical embroidery stitch-out performed.'
+      - name: Generate licensed rose source-to-native sewout evaluation pack
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: xcb
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rose-evaluation"
+          xvfb-run -a -s "-screen 0 1280x800x24" python tools/run_artwork_trial.py \
+            --image tests/fixtures/artwork-evaluation/rose.png \
+            --engine "$ENGINE_PATH" --engine-timeout 120 --width-mm 80 \
+            --output "$RUNNER_TEMP/rose-evaluation"
+          python - <<'PY'
+          import json,os,zipfile
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'rose-evaluation'
+          report=json.loads((p/'machine-report.json').read_text())
+          with zipfile.ZipFile(p/'ENGINEERING-TRIAL-NOT-APPROVED.zip') as z:
+              assert z.testzip() is None
+              assert any(n.endswith('.pes') for n in z.namelist())
+              assert any(n.endswith('.dst') for n in z.namelist())
+          for fmt in report['decoded']:
+              if fmt['needlePointsOutsideWorkingColour'] or fmt['needleSegmentsOutsideWorkingColour']:
+                  raise SystemExit('REFUSED: decoded source containment failed')
+          assert not report['machineEligible']
+          print('ROSE REAL SOURCE -> NATIVE PES/DST: independently decoded, NOT sewn')
+          print('Unresolved source objects:',report['unresolvedObjects'])
+          print('Blockers:',report['blockers'])
+          PY
+          cp tests/fixtures/artwork-evaluation/rose.png "$RUNNER_TEMP/rose-evaluation/original-rose-CC0.png"
+          cat > "$RUNNER_TEMP/rose-evaluation/START-HERE-NOT-SEWOUT-VERIFIED.txt" <<'EOF'
+          STITCH FORGE REAL NATIVE EMBROIDERY EVALUATION
+          Source: CC0 Rose with leafs raster from the repo artwork fixtures.
+          PES / DST output is REAL Ink/Stitch output, NOT a visual mock-up.
+          NOT physically sewn. NOT approved for products or customer sale.
+          Inspect machine-report.json for unresolved features, trims, density,
+          colour assignments and limitations. Before a sewout, ask a machine
+          operator to confirm machine format, hoop, size, thread chart,
+          fabric, stabiliser and safe machine motion.
+          EOF
+      - name: Retain trial native files for a human sewout tester
+        uses: actions/upload-artifact@v4
+        with:
+          name: stitch-forge-rose-native-sewout-EVALUATION-NOT-APPROVED
+          path: ${{ runner.temp }}/rose-evaluation/
+          if-no-files-found: error
+          retention-days: 7
       - name: Build isolated staging container and prove real HTTP transaction
         shell: bash
         env:

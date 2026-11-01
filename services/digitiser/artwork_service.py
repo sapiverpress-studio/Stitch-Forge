@@ -20,6 +20,7 @@ from contextlib import contextmanager
 
 from artwork_packet import decode_packet,encoded
 from artwork_trial import build_trial_svg,texture_trial,run_trial,validate_native_payload,checked_masks
+from repair_policy import choose_source_preserving_repair
 from inkstitch_cli import _run_engine,DigitiserError
 
 AUDIT='SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED'
@@ -184,11 +185,13 @@ def process_phase(obj,*,executable,secret,epoch=None):
             ids=source_repair_candidates(plan,report)
             if os.environ.get('STITCH_FORGE_LOCAL_DIAGNOSTICS_DIR'):
                 (Path(tmp)/'failed-native-pass-report.json').write_text(json.dumps(report,separators=(',',':')))
-            repair_mode=('sectioned_tatami' if os.environ.get(
-                'STITCH_FORGE_SECTIONED_TATAMI_REPAIR','0')=='1' else
-                'source_scanline' if os.environ.get(
-                'STITCH_FORGE_SOURCE_SCANLINE_REPAIR','0')=='1' else
-                'fill_preserving')
+            repair_mode=(choose_source_preserving_repair(plan,ids)
+                if os.environ.get('STITCH_FORGE_AUTO_SOURCE_REPAIR','0')=='1'
+                else 'sectioned_tatami' if os.environ.get(
+                    'STITCH_FORGE_SECTIONED_TATAMI_REPAIR','0')=='1'
+                else 'source_scanline' if os.environ.get(
+                    'STITCH_FORGE_SOURCE_SCANLINE_REPAIR','0')=='1'
+                else 'fill_preserving')
             receipt={'requestId':identity,'objectIds':ids,'issuedAt':now,
                      'mode':repair_mode}
             receipt['mac']=repair_signature(receipt,secret)

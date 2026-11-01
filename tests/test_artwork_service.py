@@ -19,6 +19,7 @@ try:
     import numpy as np
     from artwork_packet import decode_packet,foreground,strict_json
     from artwork_service import process_phase,signature,verify_receipt,repair_signature,repair_objects,source_repair_candidates,native_export_timeout,export_one
+    from repair_policy import choose_source_preserving_repair
     from artwork_trial import checked_masks,build_trial_svg
     import worker_wsgi
     AVAILABLE=True
@@ -77,6 +78,19 @@ class ArtworkServiceTests(unittest.TestCase):
             bad=copy.deepcopy(r);mutate(bad)
             with self.assertRaises(ValueError):repair_objects(bad,self.packet['requestId'],SECRET,1001)
 
+
+    def test_automatic_policy_uses_source_preserving_fallback_for_small_eye(self):
+        # Actual client-bound source packet and tiny eye: no sectioned sliver
+        # and no automatic skeleton replacement of a contrasting feature.
+        plan,_,_,_=decode_packet(self.packet)
+        choice=choose_source_preserving_repair(plan,['050505-0-p0'])
+        self.assertEqual(choice,'fill_preserving')
+
+    def test_automatic_policy_refuses_untrusted_or_large_repair_requests(self):
+        plan,_,_,_=decode_packet(self.packet)
+        for ids in ([],['invented-piece'],['050505-0-p0']*13):
+            with self.assertRaises(ValueError):
+                choose_source_preserving_repair(plan,ids)
 
     def test_sectioned_tatami_receipt_must_be_signed_for_exact_source(self):
         receipt={'requestId':self.packet['requestId'],
