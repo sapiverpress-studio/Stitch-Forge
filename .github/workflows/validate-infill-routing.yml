@@ -2,7 +2,7 @@ name: MD-2.55 source-preserving infill native validation
 
 on:
   push:
-    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258", "feature/hybrid-geometry-routing-md259", "feature/tatami-coverage-decomposition-md260", "feature/automatic-multi-method-release-candidate-md261", "feature/source-detail-safe-running-router-md262"]
+    branches: ["feature/researched-infill-consolidation-md255", "feature/beta-running-compaction-md256", "feature/fill-preserving-native-repair-md257", "feature/source-aware-scanline-engine-md258", "feature/hybrid-geometry-routing-md259", "feature/tatami-coverage-decomposition-md260", "feature/automatic-multi-method-release-candidate-md261", "feature/source-detail-safe-running-router-md262", "feature/native-routing-ab-release-gate-md263"]
     paths:
       - "services/digitiser/artwork_trial.py"
       - "services/digitiser/source_scanline_fill.py"
@@ -18,6 +18,8 @@ on:
       - "tools/run_md257_staged_benchmark.sh"
       - "tests/test_artwork_trial.py"
       - "tests/test_native_detail_routing.py"
+      - "tools/bench_native_detail_routing_ab.py"
+      - "tests/test_native_routing_ab.py"
       - "tests/test_source_scanline_fill.py"
       - "tests/test_geometry_intelligence.py"
       - "tests/test_native_tatami_decomposition.py"
@@ -143,6 +145,7 @@ jobs:
           python -m unittest discover -s tests -p test_geometry_intelligence.py -v
           python -m unittest discover -s tests -p test_native_tatami_decomposition.py -v
           python -m unittest discover -s tests -p test_native_detail_routing.py -v
+          python -m unittest discover -s tests -p test_native_routing_ab.py -v
           STITCH_FORGE_SOURCE_SCANLINE_REPAIR=1 xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_service.py -v
           STITCH_FORGE_BETA_COMPACT_RUNNING=1 xvfb-run -a -s "-screen 0 1280x800x24" python -m unittest discover -s tests -p test_artwork_service.py -v
       - name: Generate PES/DST from actual Ink/Stitch and read back independently
@@ -221,6 +224,17 @@ jobs:
           operator to confirm machine format, hoop, size, thread chart,
           fabric, stabiliser and safe machine motion.
           EOF
+      - name: Native MD-2.63 source-identical A/B routing gate on CC0 rose
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: xcb
+        run: |
+          set -euo pipefail
+          xvfb-run -a -s "-screen 0 1280x800x24" python tools/bench_native_detail_routing_ab.py \
+            --plan "$RUNNER_TEMP/rose-evaluation/source-object-plan.json" \
+            --engine "$ENGINE_PATH" \
+            --out "$RUNNER_TEMP/rose-evaluation/routing-ab"
+          cat "$RUNNER_TEMP/rose-evaluation/routing-ab/native-ab-results.json"
       - name: Retain trial native files for a human sewout tester
         uses: actions/upload-artifact@v4
         with:
