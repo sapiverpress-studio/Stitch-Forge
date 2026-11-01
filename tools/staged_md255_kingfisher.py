@@ -233,11 +233,22 @@ def print_baseline_comparison(report):
                 print(label,"repair regions:",len(r.get("nativeRepairObjects") or []),
                       "unresolved:",r.get("unresolvedObjects"),
                       "blockers:",", ".join(r.get("blockers") or []))
-            if (current["trims"]>=previous["trims"] or
-                    current["needleStitches"]>previous["needleStitches"]*1.25):
-                print("RELEASE GATE: NOT MET — no verified trim improvement, or excessive stitch growth")
+            large_repairs=[x for x in report.get("nativeRepairObjects") or []
+                           if x.get("areaMm2",0)>=8]
+            blockers=[]
+            if current["trims"]>=previous["trims"]:
+                blockers.append("PES trims have not decreased")
+            if current["needleStitches"]>previous["needleStitches"]*1.25:
+                blockers.append("needle count increased over 25%")
+            if large_repairs:
+                blockers.append("large filled anatomy still replaced by running stitches: "+
+                                ", ".join(str(round(x["areaMm2"],2))+" mm²" for x in large_repairs))
+            if current.get("needlePointsOutsideWorkingColour",1)!=0 or current.get("needleSegmentsOutsideWorkingColour",1)!=0:
+                blockers.append("source-bound colour containment failed")
+            if blockers:
+                print("RELEASE GATE: NOT MET — "+"; ".join(blockers))
             else:
-                print("RELEASE GATE: NUMERICAL CANDIDATE ONLY — compare actual decoded likeness and sewout")
+                print("RELEASE GATE: NUMERICAL CANDIDATE ONLY — compare decoded likeness and physical sewout")
             return
         except (KeyError,ValueError,zipfile.BadZipFile,StopIteration):
             continue
