@@ -22,7 +22,7 @@ from xml.etree import ElementTree as ET
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy.ndimage import distance_transform_edt, label, uniform_filter
-from shapely import Polygon, LineString, Point, box, union_all, make_valid, covers, prepare,points as shape_points
+from shapely import Polygon, LineString, Point, box, union_all, make_valid, set_precision, covers, prepare,points as shape_points
 from skimage.morphology import skeletonize
 import pyembroidery
 from running_compaction import consolidate_running_elements
@@ -302,6 +302,39 @@ def without_collinear_steps(points):
     return result
 
 
+def safe_native_svg_fill_path(points,holes,scale,precision):
+    """Return an SVG fill path only when emitted-precision healing is source-safe.
+
+    Precision formatting can close a sub-0.0001 mm gap between a clipped hole
+    and an exterior edge. The resulting even-odd SVG self-intersects and can
+    encourage Ink/Stitch to sew across the notch. Snap that *already formatted*
+    contour with GEOS valid_output only if the original polygon is valid,
+    the repair remains one valid polygon, and the source symmetric difference
+    is at most 0.001 mm². Otherwise return None (original unapproved trial).
+    """
+    if precision!=4:
+        return None
+    def physical(ring):
+        return [(2+x*scale,2+y*scale) for x,y in ring]
+    original=Polygon(physical(points),[physical(r) for r in holes])
+    if original.is_empty or not original.is_valid:
+        return None
+    def formatted(ring):
+        return [(float(f'{x:.4f}'),float(f'{y:.4f}')) for x,y in ring]
+    rendered=Polygon(formatted(original.exterior.coords),
+                     [formatted(r.coords) for r in original.interiors])
+    if rendered.is_valid and rendered.area>0:
+        return None
+    fixed=set_precision(rendered,grid_size=.0001,mode='valid_output')
+    if (fixed.geom_type!='Polygon' or fixed.is_empty or not fixed.is_valid
+            or original.symmetric_difference(fixed).area>.001):
+        return None
+    def commands(ring):
+        return 'M '+' L '.join(f'{x:.4f},{y:.4f}' for x,y in ring)
+    return commands(list(fixed.exterior.coords)[:-1])+' Z'+''.join(
+        ' '+commands(list(h.coords)[:-1])+' Z' for h in fixed.interiors)
+
+
 def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=()):
     """Source-bound native SVG; optional fill repair keeps original tatami geometry.
 
@@ -363,6 +396,10 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                 INK+'pull_compensation_percent':'0', INK+'expand_mm':'0'})
             if underlay:underlay_count+=1
             attrs['d'] += ''.join(' '+commands(ring)+' Z' for ring in holes)
+            if partition_fills:
+                safe_path=safe_native_svg_fill_path(points,holes,scale,precision)
+                if safe_path is not None:
+                    attrs['d']=safe_path
         else:
             attrs.update({'fill':'none','stroke':color,'stroke-width':'0.1',INK+'stroke_method':'running_stitch'})
         ET.SubElement(root,'path',attrs)

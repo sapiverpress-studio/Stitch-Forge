@@ -1,0 +1,48 @@
+name: MD-2.66 real native hybrid smoke test - synthetic only
+on:
+  push:
+    branches: [feature/md266-home-hybrid-segmentation-no-deploy]
+    paths:
+      - "tools/verify_home_hybrid_native.py"
+      - ".github/workflows/md266-hybrid-native-smoke.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-native-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing pinned analysis and native audit dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Install exact official Ink/Stitch v3.3.0 with pinned SHA-256
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Generate and independently validate SYNTHETIC hybrid PES/DST
+        env:
+          STITCH_FORGE_CI_DIAGNOSTICS: synthetic-only
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/md266-output"
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          xvfb-run -a python tools/verify_home_hybrid_native.py --engine "$ENGINE" --output "$RUNNER_TEMP/md266-output"
+          test -s "$RUNNER_TEMP/md266-output/hybrid-native-synthetic-evidence.json"
+      - name: Preserve synthetic trial evidence (never machine-approved)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md266-synthetic-hybrid-native-NOT-APPROVED
+          path: |
+            ${{ runner.temp }}/md266-output/hybrid-native-synthetic-evidence.json
+            ${{ runner.temp }}/md266-output/machine-report.json
+            ${{ runner.temp }}/md266-output/native-artwork-input.svg
+          retention-days: 2
+          if-no-files-found: ignore

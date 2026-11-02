@@ -1,0 +1,50 @@
+name: MD-2.66 licensed macaw hybrid native A/B acceptance (isolated)
+on:
+  push:
+    branches: [feature/md266-home-hybrid-segmentation-no-deploy]
+    paths:
+      - "tools/verify_home_hybrid_native.py"
+      - "services/digitiser/artwork_trial.py"
+      - ".github/workflows/md266-macaw-native-review.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macaw-native-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing pinned native analysis dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Install verified official Ink/Stitch 3.3.0
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Process licensed complex-artwork macaw and independently validate real PES/DST
+        env:
+          STITCH_FORGE_CI_DIAGNOSTICS: synthetic-only
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/md266-macaw"
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          xvfb-run -a python tools/verify_home_hybrid_native.py --engine "$ENGINE" --output "$RUNNER_TEMP/md266-macaw" --fixture macaw
+          test -s "$RUNNER_TEMP/md266-macaw/ENGINEERING-TRIAL-NOT-APPROVED.pes"
+          test -s "$RUNNER_TEMP/md266-macaw/ENGINEERING-TRIAL-NOT-APPROVED.dst"
+      - name: Preserve reports, not native trial products
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md266-licensed-macaw-engineering-evidence-NOT-APPROVED
+          path: |
+            ${{ runner.temp }}/md266-macaw/hybrid-native-synthetic-evidence.json
+            ${{ runner.temp }}/md266-macaw/machine-report.json
+            ${{ runner.temp }}/md266-macaw/native-artwork-input.svg
+          retention-days: 2
+          if-no-files-found: ignore

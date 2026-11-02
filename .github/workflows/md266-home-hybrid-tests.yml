@@ -1,0 +1,53 @@
+name: MD-2.66 offline Home hybrid candidate regression
+on:
+  push:
+    branches:
+      - feature/md266-home-hybrid-segmentation-no-deploy
+    paths:
+      - "services/digitiser/artwork_trial.py"
+      - "tests/test_native_fill_precision.py"
+      - "services/digitiser/hybrid_home.py"
+      - "services/digitiser/source_detail_guard.py"
+      - "services/digitiser/feature_edge_audit.py"
+      - "services/digitiser/compact_edge_recovery.py"
+      - "tests/test_compact_edge_recovery.py"
+      - "tests/test_feature_edge_audit.py"
+      - "services/digitiser/hybrid_packet_bridge.py"
+      - "tests/test_hybrid_packet_bridge.py"
+      - "tools/private_home_native_trial.py"
+      - "tests/test_private_home_native_trial.py"
+      - "tests/test_source_detail_guard.py"
+      - "tests/test_home_hybrid.py"
+      - ".github/workflows/md266-home-hybrid-tests.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned existing source-analysis dependencies
+        run: python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+      - name: Verify isolated analysis compiles
+        run: python -m py_compile services/digitiser/hybrid_home.py services/digitiser/source_detail_guard.py services/digitiser/hybrid_packet_bridge.py services/digitiser/feature_edge_audit.py services/digitiser/compact_edge_recovery.py
+      - name: Test source preservation, determinism and approval barriers
+        run: |
+          python -m unittest discover -s tests -p test_home_hybrid.py -v
+          python -m unittest discover -s tests -p test_source_detail_guard.py -v
+          python -m unittest discover -s tests -p test_feature_edge_audit.py -v
+          python -m unittest discover -s tests -p test_compact_edge_recovery.py -v
+          python -m unittest discover -s tests -p test_hybrid_packet_bridge.py -v
+          python -m unittest discover -s tests -p test_private_home_native_trial.py -v
+          python -m unittest discover -s tests -p test_native_fill_precision.py -v
+      - name: Confirm CI neither deploys nor generates production output
+        run: |
+          echo "Isolated colour-shape reconstruction only. No Cloud Build, no Netlify deployment."
+          test -f services/digitiser/hybrid_home.py
+          ! grep -q 'gcloud run deploy' services/digitiser/hybrid_home.py

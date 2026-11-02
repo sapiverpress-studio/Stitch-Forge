@@ -8,19 +8,19 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.65 main-code baseline; MD-2.66 isolated hybrid engineering evidence (not merged or deployed) |
+| Document version | MD-2.66 Home hybrid source integrated into main as experimental and NOT RELEASE-APPROVED; Kingfisher and real sew-outs HOLD |
 | Last updated | 2026-11-02 (Europe/London) |
-| Last independently checked source | Main implementation baseline prior to documentation updates: 95dcb001f3f35d0b7c8704eeabe21be411bdfa14 (MD-2.65 logo and named downloads). Isolated Home engine baseline: 389650a257835e9d7e38dee262ea5bb3470e6db7. Native GitHub Actions 41439326194 (butterfly + rose), 41439326236 (macaw) and offline 41439467534 PASS. Actual live worker/site revision and physical stitch quality were not independently verified. See docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md. |
+| Last independently checked source | Isolated feature branch native engine commit `2a966a347b123e4f12c9d8110c9db5461ac71cf1`; offline regression commit `127a54eafef3d32289482037849aa7d6704d75ac`. GitHub Actions `41439326194`, `41439326236` and `41439467534` passed. Three CC0 source designs have genuine independently decoded PES/DST passes, but no Kingfisher likeness/physical stitch-out approval. Main/hosted builds were not promoted or tested in this continuation. |
 | Default branch | `main` |
-| Development branch | Current experimental MD-2.66 Home work is isolated at `feature/md266-home-hybrid-segmentation-no-deploy`; main implementation is MD-2.65 baseline. Do NOT merge experimental code because this documentation mentions it. Historical branches are retained. |
+| Development branch | MD-2.66 source/tests added to main by owner instruction; feature/md266-home-hybrid-segmentation-no-deploy preserved for history. Existing live app and worker do not automatically enable the experimental hybrid. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Deployment | Deployment state **UNKNOWN** until actual Netlify SHA and Cloud Run worker revision/traffic are checked. Current documentation edits do not authorise or initiate deployments. MD-2.66 is not recorded as deployed, and no physical stitch-out has passed. |
+| Deployment | Source integration only; no Netlify deploy, no Cloud Run build/traffic update, no Home production enablement. Latest observed Netlify live commit 3cd91d895b864f034528c0ee8f119e629f7ea794 (2026-11-02 07:30 UTC). Current Cloud Run traffic unverified. |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
-| External Ink/Stitch or pyembroidery integration | **Verified native integration in isolated engineering tests:** Ink/Stitch 3.3.0 PES/DST generation and independent decoded geometry/format audit for licensed macaw, butterfly and rose. The Home hybrid runs only on an experimental branch; authentic Kingfisher native A/B and physical sew-out remain unverified. |
+| External Ink/Stitch or pyembroidery integration | Real pinned Ink/Stitch 3.3.0 and independent native PES/DST audit passed on licensed macaw, butterfly and rose in isolated GitHub CI; no physical stitch-out or source-identical Kingfisher test. No hosted worker called by this continuation. |
 
-**Current cross-branch progress and phase-by-phase release gates:** [STITCH FORGE — Verified Progress and Roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md). This document preserves historical records; do not treat old entries as the current release status.
+**Full verified progress, known blockers and gated next-action plan:** [STITCH FORGE — Verified Progress and Roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md). The Home hybrid remains isolated; passing PES/DST CI does not constitute sewn-product approval.
 
 ## 0. How to read and maintain this MD
 
@@ -1556,6 +1556,21 @@ The previous Netlify foreground bridge timed out at around 30 seconds although t
 ## 2026-10-31 — MD-2.55 source-preserving routed tatami (isolated)
 Research and implementation are on `feature/researched-infill-consolidation-md255`. Connected source-skeleton branches are routed into walks, same-colour component routing uses independently derived pixel-run centroids, and larger/wider Tatami regions get conservative perpendicular inset underlay (0.35 mm inset, 1.5 mm row spacing, 8 mm² area gate, 1.4 mm interior-width gate) with a four-row stagger. No colour masks are changed and `machineEligible=false` remains. The flying-kingfisher local geometry experiment reduced 859 native paths to 780 at 144x173 analysis px without changing foreground. **This is geometry evidence, not yet evidence of fewer PES trims or safe sewout.** Real Ink/Stitch 3.3.0/PES/DST and two-phase transaction tests are a required promotion gate. See [MD-2.55 engineering handover](docs/ENGINEERING_HANDOVER_MD-2.55.md). Do not change Cloud Run traffic on these claims alone.
 
+## 2026-11-02 — MD-2.66 source-preserving native contour repair
+
+The previous licensed butterfly CI test failed with exactly one unchanged black PES/DST stitch segment outside the working-colour containment geometry, after default, sectioned-tatami and no-underpath repairs. Diagnosed a sub-0.0001 mm gap between internal hole and clipped tile exterior collapsing into a self-intersecting SVG path after four-decimal serialization. The original failed `artwork-67` was invalid at (34, 61.871) mm. A broad GEOS rounding strategy failed strict source-cover checks and was withdrawn. The final isolated `safe_native_svg_fill_path` operates on invalid *formatted SVG* contours only, and accepts a repair only when it is a valid single polygon within **0.001 mm²** symmetric-difference area of the original valid physical polygon. All existing independent pixel-mask and PES/DST source-containment checks, including their 0.11 mm engineering tolerance, remain unchanged. No source recolouring, new paid analysis or deployment.
+
+Exact GitHub Actions passes: [offline regression 41439467534](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439467534) at `127a54eafef3d32289482037849aa7d6704d75ac`; [licensed butterfly/rose native 41439326194](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326194) and [macaw native 41439326236](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326236) at `2a966a347b123e4f12c9d8110c9db5461ac71cf1`. Independently decoded matching stitch totals per PES/DST: butterfly **14,348** with **0** outside-colour needle points/segments (205 PES trims, 39 unresolved objects); rose **11,623** with **0** outside (68 PES trims, no unresolved objects); macaw **13,031** with **0** outside (98 PES trims, one unresolved object). Native output remains engineering **NOT APPROVED**, with unverified semantic stitch intent, density, underlay/routing and all fabric tests. Full evidence and next gates: [MD-2.66 handover](docs/ENGINEERING_HANDOVER_MD-2.66.md).
+
+**Next hard gate:** run the owner's private 1312 × 1199 RGBA Kingfisher through source-identical MD-2.64 and MD-2.66 local trusted Ink/Stitch comparisons; judge eyes/beak/feather details, original colours, dimensional limits, trims and density. Private source must not enter public CI. Fabric sew-out is required before enabling Home mode; Professional Detail remains deferred. No Netlify/Cloud Run changes this session.
+
+
+## 2026-11-02 — Cross-branch project-wide handover and next engineering programme
+
+This experimental branch's master ledger has been reconciled with the independently checked [full project roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md), also committed on main. The main code baseline remains MD-2.65 at commit **95dcb001f3f35d0b7c8704eeabe21be411bdfa14** before documentation-only commits; Home hybrid engineering native baseline was commit **389650a257835e9d7e38dee262ea5bb3470e6db7** before documentation-only commits. The full roadmap records exact pass/fail evidence, 3 CC0 native file controls, remaining 39 butterfly unresolved details, Kingfisher feature/likeness HOLD, privacy precautions, owner/CI/deployment distinction, incremental release gates and future Home beta/Professional boundaries.
+
+**Do not confuse publication of this status document with deployment or approval of the hybrid.** No code merge, paid Google Cloud build, Netlify publish or owner artwork upload was undertaken by the documentation task. Next work is exact private Kingfisher source-identical MD-2.64/MD-2.66 native export, engineering comparison and controlled sew-out; see full acceptance checklist in the roadmap.
+
 
 ## 2026-11-02 — Cross-branch reality check, detailed progress report and engineering gates
 
@@ -1567,3 +1582,8 @@ Research and implementation are on `feature/researched-infill-consolidation-md25
 - **Next steps, in strict dependency order:** (A) capture exact source/dependency CI baseline; (B) private original Kingfisher native MD-2.64/MD-2.66 A/B; (C) address source-specific feature loss and routing with general algorithm changes, re-run all licences; (D) documented physical home-machine sew-outs; (E) explicit-owner-approved guarded hosted deployment and rollback; (F) consent-based small Home beta/commercial assessment; (G) professional texture/directional detail only after Home passes.
 - **Boundaries:** no main code merge, Cloud Build, Cloud Run traffic change, Netlify deploy, private-artwork publication or unapproved spend as part of this documentation update. Use standard ChatGPT/GitHub for ordinary work; no Work credits authorised.
 - **Canonical detailed specification, exit gates, test references and owner actions:** [docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md). Preserve earlier versioned handovers for historical provenance.
+
+
+## 2026-11-02 — Explicit owner-authorised main source integration (no production deployment)
+
+Owner requested incorporation of all MD-2.66 code into main. Git merge includes hybrid reconstruction, source geometry safety repair, native offline trial tools, CI and documentation. Before integration main HEAD was `69de3a0661accc1407c7f27cd1f22727edcbc90e` and feature HEAD was `0f287977ebc903ef07ad323e76f7eca011fff754`. The released website files and Netlify functions are unchanged by this source integration; existing native worker behaviour is not automatically changed until a separately approved, tested Cloud Run release. The hybrid Home profile is **experimental and NOT enabled for customers**. This merge does NOT claim the private Kingfisher native A/B or physical fabric sew-out has passed, and does not grant machine or commercial approval. Review [progress and release roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md) before deploying. No private Kingfisher art was committed.
