@@ -55,6 +55,7 @@ def run(source,engine,output,*,colours=9,width_mm=80,timeout=165):
         'imageUploadedToRemote':False
     }
     output.mkdir(parents=True,exist_ok=True,mode=0o700)
+    os.chmod(output,0o700)  # Keep source-derived artwork local to owner
     # Standard source-bound, independently decoded *real* Ink/Stitch execution.
     # Fail closed on source-colour containment violations. No trial is approved.
     report=run_trial(plan,engine,output,timeout_seconds=timeout,partition_fills=True)
