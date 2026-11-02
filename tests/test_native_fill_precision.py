@@ -4,6 +4,7 @@ import re
 import sys
 import unittest
 from shapely.geometry import Polygon
+from shapely.affinity import translate
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'services'/'digitiser'))
 from artwork_trial import safe_native_svg_fill_path
@@ -25,7 +26,7 @@ class NativeFillPrecisionTests(unittest.TestCase):
         repaired=safe_native_svg_fill_path(border,holes,1,4)
         self.assertIsNotNone(repaired)
         polygon=parse_single_polygon(repaired)
-        source=Polygon(border,holes)
+        source=translate(Polygon(border,holes),xoff=2,yoff=2)
         self.assertTrue(polygon.is_valid)
         self.assertLess(polygon.symmetric_difference(source).area,.001)
         self.assertAlmostEqual(polygon.area,15.5,places=3)
