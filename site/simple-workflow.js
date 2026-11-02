@@ -17,6 +17,9 @@ app.innerHTML=[
  '<div class="sf-simple-step"><span class="sf-step">1</span><div class="sf-step-body"><button type="button" class="btn primary" id="sfQuickUpload">Upload image</button>',
  '<p class="sf-small" id="sfQuickFilename">Choose a PNG, JPG or WebP image.</p><img id="sfQuickOriginal" alt="Uploaded source artwork" hidden></div></div>',
  '<div class="sf-simple-step"><span class="sf-step">2</span><div class="sf-step-body">',
+ '<label class="sf-small" for="sfQuickProductName">Product / design name</label>',
+ '<input id="sfQuickProductName" type="text" maxlength="80" autocomplete="off" placeholder="e.g. Kingfisher on Ivy">',
+ '<p class="sf-small">Used for your ZIP, PES and DST download names, independently of the uploaded image filename. Does not alter stitches.</p>',
  '<label class="sf-small" for="sfQuickWidth">Visible embroidery width (mm)</label>',
  '<input id="sfQuickWidth" type="number" min="10" max="250" step="1" value="80" inputmode="decimal">',
  '<p class="sf-small">Measured across the visible artwork, excluding transparent margins. The decoded needle dimensions are shown after generation.</p>',
@@ -30,7 +33,8 @@ app.innerHTML=[
  '<canvas id="sfQuickCanvas" aria-label="Animation of independently decoded PES needle stitches" hidden></canvas></div>',
  '<button type="button" class="btn" id="sfQuickReplay" disabled>▶ Replay stitches</button><p class="sf-small">Playback of decoded machine stitches, not a recorded physical sew-out or MP4 file.</p></div></div>',
  '<div class="sf-simple-step"><span class="sf-step">4</span><div class="sf-step-body"><button type="button" class="btn primary" id="sfQuickZip" disabled>Download ZIP</button>',
- '<p class="sf-small">PES, DST and the machine audit. Trial output must be reviewed and physically stitched before use.</p></div></div>'
+ '<div class="sf-embroidery-individual"><button type="button" class="btn" id="sfQuickPES" disabled>Download named PES</button><button type="button" class="btn" id="sfQuickDST" disabled>Download named DST</button></div>',
+ '<p class="sf-small">The ZIP keeps its audited internal filenames; individual PES/DST files use your chosen name. Review and physically sew before production.</p></div></div>'
 ].join('');
 workspace.before(app);
 const advanced=document.createElement('details');
@@ -58,7 +62,9 @@ const css=document.createElement('style');css.textContent=[
  '#sfQuickOriginal[hidden],#sfQuickCanvas[hidden],#sfQuickAuth[hidden]{display:none!important}',
  '#sfQuickAuth{margin-top:12px;padding:10px;background:#eff5f3;border-radius:9px}',
  '#sfQuickAuth input{width:100%;height:45px;margin-top:7px;padding:10px;border:1px solid #abbfba;border-radius:8px}',
- '#sfQuickWidth{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px}',
+ '#sfQuickWidth,#sfQuickProductName{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
+ '.sf-embroidery-individual{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.sf-embroidery-individual .btn{min-width:0;white-space:normal}',
+ '@media(max-width:340px){.sf-embroidery-individual{grid-template-columns:1fr}}',
  '#sfQuickStatus{font-weight:600;white-space:pre-wrap}',
  '.sf-playback{border-radius:11px;min-height:170px;background:#f7faf9;border:1px solid #dfe9e6;display:flex;align-items:center;justify-content:center;overflow:hidden}',
  '.sf-playback canvas{display:block;width:auto;height:auto;max-width:100%;max-height:65vh;object-fit:contain}',
@@ -71,11 +77,12 @@ const css=document.createElement('style');css.textContent=[
 const upload=$('#sfQuickUpload'),generate=$('#sfQuickGenerate'),zip=$('#sfQuickZip');
 const status=$('#sfQuickStatus'),auth=$('#sfQuickAuth'),token=$('#sfQuickToken');
 const canvas=$('#sfQuickCanvas'),replay=$('#sfQuickReplay');
+const pesButton=$('#sfQuickPES'),dstButton=$('#sfQuickDST'),productName=$('#sfQuickProductName'),advancedName=$('#sfAutoProductName');
 const image=$('#sfQuickOriginal'),empty=$('#sfQuickEmpty'),filename=$('#sfQuickFilename');
 let preview=null,frame=0,run=0,ready=false,busy=false,hasImage=false,failed=false;
 function stop(){run++;if(frame)cancelAnimationFrame(frame);frame=0;}
 function reset(text){
- stop();preview=null;ready=false;zip.disabled=true;replay.disabled=true;
+ stop();preview=null;ready=false;zip.disabled=true;pesButton.disabled=true;dstButton.disabled=true;replay.disabled=true;
  canvas.hidden=true;empty.hidden=false;empty.textContent='Actual stitches will animate here after generation.';
  if(text)status.textContent=text;
 }
@@ -145,6 +152,7 @@ generate.addEventListener('click',()=>{
    advancedWidth.dispatchEvent(new Event('change'));
   }
  }
+ if(advancedName)advancedName.value=productName.value;
  const underlying=$('#sfAutoToken');if(!underlying)return;
  if(!underlying.value.trim()&&token.value.trim())underlying.value=token.value.trim();
  if(!underlying.value.trim()){
@@ -161,6 +169,7 @@ generate.addEventListener('click',()=>{
  // The source workflow emits completion and failure events. The ZIP is NEVER
  // enabled by a preview, AI proposal or legacy outline export.
 });
+productName.addEventListener('input',()=>{if(advancedName)advancedName.value=productName.value;});
 token.addEventListener('input',()=>{if(token.value.trim())status.textContent='Token entered. Tap Generate embroidery.';});
 window.addEventListener('stitchforge:workflow-status',e=>{
  if(!busy||typeof e.detail?.message!=='string')return;
@@ -174,7 +183,7 @@ window.addEventListener('stitchforge:workflow-status',e=>{
 window.addEventListener('stitchforge:native-ready',e=>{
  const p=e.detail?.preview;
  if(!busy||!p||!Array.isArray(p.segments)||!Array.isArray(p.palette))return;
- ready=true;preview=p;zip.disabled=false;replay.disabled=false;
+ ready=true;preview=p;zip.disabled=false;pesButton.disabled=false;dstButton.disabled=false;replay.disabled=false;
  auth.hidden=true;token.value='';
  const d=e.detail?.report?.decoded?.find(x=>x.format==='pes');
  status.textContent='Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes'+(Array.isArray(d.boundsMm)&&d.boundsMm.length===2?', actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':''):'')+'. ZIP ready; physical stitch quality not approved.';
@@ -193,6 +202,8 @@ replay.addEventListener('click',play);
 zip.addEventListener('click',()=>{
  if(ready&&!zip.disabled)$('#sfAutoDownload')?.click();
 });
+pesButton.addEventListener('click',()=>{if(ready&&!pesButton.disabled)$('#sfAutoPES')?.click();});
+dstButton.addEventListener('click',()=>{if(ready&&!dstButton.disabled)$('#sfAutoDST')?.click();});
 window.addEventListener('beforeunload',stop);
 requestAuth();
 })();
