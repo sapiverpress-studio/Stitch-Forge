@@ -1,4 +1,9 @@
-# MD-2.66 — Home hybrid reconstruction foundation (HOLD for native export)
+# MD-2.66 — Home hybrid reconstruction: native PES/DST passes, release HOLD
+
+> **Current status, 2 November 2026:** Licensed Macaw, Butterfly and Rose real Ink/Stitch 3.3.0 native PES/DST acceptance **PASS** in isolated CI; private source-identical Kingfisher native A/B, source-detail likeness and all physical fabric sew-outs remain **NOT VERIFIED**. Initial sections below describe earlier development stages and are preserved as history; read the later dated continuations for subsequent results.
+>
+> **Full cross-branch progress and next engineering programme:** [STITCH FORGE — Verified Progress and Roadmap](STITCH_FORGE_PROGRESS_AND_ROADMAP.md). This is the start point for all future development work. The Home hybrid branch is **not** merged into main, live deployed or approved for customers.
+
 
 ## Purpose
 A Home profile should preserve important **shape and colour** while reducing
@@ -218,3 +223,14 @@ evaluated offline at 320 x 292, 80mm requested visible width.
 3. Preserve strict source containment on all three licensed controls after every engine change, and continue to HOLD any out-of-source stitches.
 4. Obtain a documented physical sample sew-out (machine, stabiliser, fabric, hoop, threads) before approving Home or considering Professional Detail overlays.
 
+
+
+## 2026-11-02 — Current handover for the next engineering session
+
+**Snapshot:** main source code MD-2.65 baseline SHA **95dcb001f3f35d0b7c8704eeabe21be411bdfa14**; MD-2.66 isolated source baseline SHA **389650a257835e9d7e38dee262ea5bb3470e6db7** (both before documentation-only commits). Full ongoing plan: [docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md](STITCH_FORGE_PROGRESS_AND_ROADMAP.md).
+
+**Engine evidence:** macaw 13,031 matching PES/DST stitches; rose 11,623; butterfly 14,348. Zero decoded out-of-colour stitch points/segments on each, with 98/68/205 PES trims respectively. Butterfly still has 39 unresolved small-detail objects. [Native macaw CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326236); [native rose/butterfly CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326194); [final offline CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439467534). Valid binaries and native geometry are necessary, **not sufficient**, for likeness or real-machine stitch safety.
+
+**Priority:** No new unrelated UI or speculative Professional features. First reproduce the King's original image (private 1312×1199 RGBA) in both MD-2.64 and MD-2.66 native pipelines at identical visible width; compare decoded stitch geometry, physical dimensions, pupil/beak/feather/foliage retention, source-thread colour error, unresolved fine details, travel/trims and density. Keep private input/output off public GitHub. Hold release on failed features. Then fix general failure modes across the complete three-illustration regression matrix; obtain documented professional home-machine sew-outs; only afterwards prepare a rollback-safe owner-approved Cloud Run/Netlify release and small beta.
+
+**Explicit non-actions:** No merge into main, no hosting/traffic/deployment changes, no user artwork publication, no commercial or production-readiness claim, no Work-credit use, no new paid infrastructure. The next engineer must record exact source SHA, commands, independent CI/artifact evidence and any missing runtime prerequisites rather than reporting future tests as complete.
