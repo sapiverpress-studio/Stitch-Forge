@@ -72,6 +72,19 @@ def verify(engine, destination, *, fixture=None):
              fill_repair_overrides=ids if mode=='fill_preserving' else ())
         repair={'nativePasses':2,'sourcePreservingRepair':True,
                 'repairMode':mode,'repairObjectIds':ids}
+        # Isolated CI can compare one more source-preserving method only.
+        # Production's bounded two-phase service remains completely unchanged.
+        if (mode=='sectioned_tatami' and
+                any(d['needlePointsOutsideWorkingColour'] or
+                    d['needleSegmentsOutsideWorkingColour'] for d in report['decoded'])):
+            (destination/'native-sectioned-repair-still-failed.json').write_text(
+                json.dumps(report,indent=2)+'\n')
+            report=run_trial(plan,engine,destination,timeout_seconds=165,
+                partition_fills=True,fill_repair_overrides=ids)
+            repair={'nativePasses':3,'sourcePreservingRepair':True,
+                    'repairMode':'fill_preserving',
+                    'repairAttemptedModes':['sectioned_tatami','fill_preserving'],
+                    'repairObjectIds':ids}
     if (report['machineEligible'] is not False or report['physicalQualityVerified'] is not False
             or len(report['decoded']) != 2
             or {d['format'] for d in report['decoded']} != {'pes','dst'}
