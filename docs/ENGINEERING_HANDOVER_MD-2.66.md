@@ -129,3 +129,66 @@ evaluated offline at 320 x 292, 80mm requested visible width.
 - Only GitHub Actions isolated CI ran; it can consume GitHub Actions
   minutes according to account billing.
 - The existing MD-2.64 worker at 100% and existing frontend are unchanged.
+
+## MD-2.66 continuation — bounded eye recovery and licensed macaw native test (2026-11-02)
+
+### Implementation
+- `compact_edge_recovery.py` adds Canny-guided, source-CIELAB local detail
+  recovery on up to 12 compact source-derived candidates. Every change must
+  decrease source-colour error by a fixed margin and improve source edge
+  retention. Global budgets limit changed pixels (640), added connected
+  components (48) and per-candidate colour fragments (38). Nothing paints
+  eye circles or invents colours; accepted candidates are independently logged.
+- Existing `hybrid_home.py` runs original source-supported detail guard,
+  then bounded edge-recovery and `feature_edge_audit`. The latter remains
+  a visual-review gate, not semantic recognition.
+- Dedicated regression tests prove a legitimate source eye can be recovered,
+  a uniform source cannot acquire a synthetic eye, source alpha/background
+  and palette cannot change, and malformed input fails closed.
+- GitHub CI: MD-2.66 offline candidate regression run **41427228493 PASS**.
+
+### Original private Kingfisher — *offline local prototype, not native*
+- Original user image retained privately in ChatGPT container; NOT committed
+  to GitHub and never uploaded to public GitHub Actions.
+- At 320-pixel width, nine-colour prototype with source-anchored compact
+  edge recovery measured approximately **87%** edge retention within the
+  selected compact eye candidate region versus **44%** immediately before
+  this refinement (different local variant/prototype stage from earlier
+  28% acceptance-gate reading; do not compare the percentages as identical).
+- It added around 43 colour components over a 126-component local
+  prototype and changed approximately 261 working pixels across three
+  accepted candidate features. These are algorithm-development indicators,
+  not a matched native stitch benchmark.
+- The rendered eye is still not proven to match the original sufficiently.
+  Human appearance approval and physical sewout remain HOLD.
+
+### Licensed macaw (CC0 vector-origin raster) native PES/DST SUCCESS
+- GitHub Actions **41427589660 PASS**, pinned official Ink/Stitch 3.3.0.
+- Independent existing worker source fingerprint, mask accounting,
+  stitch-command containment, PES/DST framing and needle-count checks passed.
+- 9 working colours; 52 connected colour regions; 51 native paths.
+- **13,031 matching PES and DST needle stitches**, **98 PES trims**.
+- Native report blockers: semantic stitch intent unverified, underlay/density/
+  fabric/routing unverified, physical sewout unverified, unresolved fine
+  source details.
+- This is NOT the photo-realistic user's Kingfisher and not a matched
+  A/B against MD-2.64 using the same original image.
+- Machine files were intentionally not retained as approved artifacts,
+  and no claims of commercial embroiderability are warranted.
+
+### Next non-negotiable requirements
+1. Obtain a **source-identical Kingfisher** native hybrid and MD-2.64
+   comparison with actual PES/DST exports. Private source must not enter
+   the public repo or public CI artifacts.
+2. Verify preservation of actual eye, beak, feather groupings, orange/blue
+   and ivy shape semantics and calculate realistic thread-color fidelity.
+3. Compare needle counts, trims, source colour containment, stitch density,
+   underlay, travelling and original feature likeness side by side.
+4. Obtain a physical sample sewout (fabric, stabiliser, machine and thread
+   documented) before public Home production release.
+
+### Operational hold
+- **Do not deploy** the hybrid worker or enable Home profile for real users.
+- Existing MD-2.64 main Cloud Run traffic and Netlify frontend unchanged.
+- User intervention will only be needed if a private native test cannot
+  run locally, or for physical sample sewouts. No paid Cloud build used.
