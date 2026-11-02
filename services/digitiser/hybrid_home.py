@@ -20,6 +20,7 @@ from skimage.filters import gaussian
 from skimage.feature import blob_log
 from skimage.measure import find_contours
 from source_detail_guard import protect_candidates
+from feature_edge_audit import audit_compact_edges
 
 
 def deterministic_palette(pixels, colours, iterations=20):
@@ -154,6 +155,7 @@ def reconstruct(image, *, colours=9, max_side=320, superpixels=460,
     # This source-grounded guard instead reassigns individual *real source
     # pixels* only when an existing palette colour is objectively closer.
     labels, detail_evidence = protect_candidates(labels, lab, foreground, centres, proposed)
+    feature_edge_evidence = audit_compact_edges(rgb,foreground,labels,proposed)
     # This comparison uses *the same nine-colour palette* without superpixels.
     raw = np.full((h,w),255,dtype=np.uint8)
     raw[foreground] = np.argmin(np.sum((lab[foreground,None,:]-centres[None,:,:])**2,axis=2),axis=1)
@@ -180,6 +182,7 @@ def reconstruct(image, *, colours=9, max_side=320, superpixels=460,
         'geometricDarkMarksProposed':len(proposed),
         'geometricDarkMarksPreserved':detail_evidence['sourceSupportedDetailRegions'],
         'detailRefinement':detail_evidence,
+        'featureEdgeRetention':feature_edge_evidence,
         'detailReleaseGate':'HOLD_LIKENESS_AND_NATIVE_EXPORT_NOT_VERIFIED',
         'semanticsVerified':False,
         'nativeFileGenerated':False,
