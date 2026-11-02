@@ -318,9 +318,12 @@ def bounded_fill_parts(poly,scale):
             normalised.append(piece)
             continue
         normalised.extend(pieces)
-    if (not normalised or len(normalised)>1500
-            or union_all(normalised).symmetric_difference(poly).area*scale*scale>.001):
-        raise ValueError('Native coordinate rounding changed source fill coverage')
+    if not normalised or len(normalised)>1500:
+        raise ValueError('Native precision repair exceeded geometry budget')
+    if union_all(normalised).symmetric_difference(poly).area*scale*scale>.001:
+        # Aggregate drift is unsafe even when every individual change is
+        # tiny. Fall back to unmodified source polygons, not lossy repairs.
+        return parts
     return normalised
 
 
