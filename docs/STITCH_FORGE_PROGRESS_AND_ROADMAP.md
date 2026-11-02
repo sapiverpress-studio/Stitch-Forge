@@ -1,5 +1,7 @@
 # SAPIVER STITCH FORGE — VERIFIED PROGRESS, BLOCKERS AND ENGINEERING ROADMAP
 
+> **UPDATE — source merged into main, 2 November 2026:** By explicit owner instruction, MD-2.66 hybrid code/tests and all prior documentation were integrated into `main` in merge commit [26a87131](https://github.com/sapiverpress-studio/Stitch-Forge/commit/26a87131a0cc507ddb4d9a9314cd9e9c9d25b99f). This did **not** deploy or activate the hybrid: current Netlify production was independently observed on older source `3cd91d895b864f034528c0ee8f119e629f7ea794` (07:30 UTC), while Cloud Run active traffic remains unverified. The branch tables and "not merged" statements below describe the earlier **pre-merge snapshot** and should be interpreted historically. The original Kingfisher native A/B, fine detail quality and physical sew-out are STILL **HOLD**.
+
 **Snapshot:** 2 November 2026 (UK)  
 **Repository:** https://github.com/sapiverpress-studio/Stitch-Forge  
 **Audience:** owner, future engineering sessions, embroidery testers and release reviewers  
