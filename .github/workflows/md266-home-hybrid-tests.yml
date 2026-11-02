@@ -12,6 +12,8 @@ on:
       - "tests/test_feature_edge_audit.py"
       - "services/digitiser/hybrid_packet_bridge.py"
       - "tests/test_hybrid_packet_bridge.py"
+      - "tools/private_home_native_trial.py"
+      - "tests/test_private_home_native_trial.py"
       - "tests/test_source_detail_guard.py"
       - "tests/test_home_hybrid.py"
       - ".github/workflows/md266-home-hybrid-tests.yml"
@@ -40,6 +42,7 @@ jobs:
           python -m unittest discover -s tests -p test_feature_edge_audit.py -v
           python -m unittest discover -s tests -p test_compact_edge_recovery.py -v
           python -m unittest discover -s tests -p test_hybrid_packet_bridge.py -v
+          python -m unittest discover -s tests -p test_private_home_native_trial.py -v
       - name: Confirm CI neither deploys nor generates production output
         run: |
           echo "Isolated colour-shape reconstruction only. No Cloud Build, no Netlify deployment."
