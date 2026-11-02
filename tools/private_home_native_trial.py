@@ -22,8 +22,14 @@ from hybrid_home import reconstruct
 
 
 def run(source,engine,output,*,colours=9,width_mm=80,timeout=165):
-    source=Path(source).expanduser().resolve(strict=True)
-    engine=Path(engine).expanduser().resolve(strict=True)
+    requested_source=Path(source).expanduser()
+    requested_engine=Path(engine).expanduser()
+    if not requested_source.is_file():
+        raise ValueError('Private source image does not exist locally')
+    if not requested_engine.is_file():
+        raise ValueError('Verified local Ink/Stitch executable is required')
+    source=requested_source.resolve(strict=True)
+    engine=requested_engine.resolve(strict=True)
     output=Path(output).expanduser().resolve()
     if not source.is_file() or source.suffix.lower() not in {'.png','.jpg','.jpeg','.webp'}:
         raise ValueError('Expected private local PNG/JPG/WebP source')
