@@ -296,6 +296,17 @@ def bounded_fill_parts(poly,scale):
     grid=.0001/scale
     normalised=[]
     for piece in parts:
+        # Do not re-tesselate good paths: tiny valid shapes can legitimately
+        # lose measurable area on the native grid. Repair only when the actual
+        # four-decimal SVG contour would otherwise be invalid.
+        def printed_ring(ring):
+            return [(float(f'{2+x*scale:.4f}'),float(f'{2+y*scale:.4f}'))
+                    for x,y in ring.coords]
+        as_printed=Polygon(printed_ring(piece.exterior),
+                           [printed_ring(hole) for hole in piece.interiors])
+        if as_printed.is_valid and not as_printed.is_empty and as_printed.area>0:
+            normalised.append(piece)
+            continue
         snapped=set_precision(piece,grid_size=grid,mode='valid_output')
         pieces=[snapped] if snapped.geom_type=='Polygon' else list(snapped.geoms) if snapped.geom_type=='MultiPolygon' else []
         if (not pieces or len(pieces)>16 or any(p.is_empty or not p.is_valid or p.area<=0 for p in pieces)
