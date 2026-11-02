@@ -4,6 +4,7 @@ on:
     branches: [feature/md266-home-hybrid-segmentation-no-deploy]
     paths:
       - ".github/workflows/md266-cross-art-native-review.yml"
+      - "tools/verify_home_hybrid_native.py"
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,5 +46,6 @@ jobs:
           path: |
             ${{ runner.temp }}/md266-review/hybrid-native-synthetic-evidence.json
             ${{ runner.temp }}/md266-review/machine-report.json
+            ${{ runner.temp }}/md266-review/native-first-pass-containment-report.json
           retention-days: 2
           if-no-files-found: ignore
