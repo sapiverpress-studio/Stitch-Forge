@@ -268,63 +268,22 @@ def fill_underlay_eligible(piece,scale):
 
 
 def bounded_fill_parts(poly,scale):
-    """Partition complex native fills without creating rounded, self-touching holes.
+    """Partition only complex native input, retaining its exact polygon union.
 
-    Ink/Stitch receives SVG coordinates rounded to 0.0001 mm in the partitioned
-    trial. A sliver separating a clipped hole from a tile boundary can vanish
-    on that grid, turning an otherwise valid polygon into a self-intersecting
-    SVG path. Snap with GEOS valid_output *before* writing SVG, retain the hole
-    as a notch where appropriate, and reject measurable geometry drift. This
-    never changes the independent source mask or acceptance tolerance.
+    8mm source-frame grid and >500-vertex threshold bound native routing work;
+    they are not stitch density/fabric settings. No manually emitted stitches.
     """
     vertices=len(poly.exterior.coords)+sum(len(r.coords) for r in poly.interiors)
-    if vertices<=500:
-        parts=[poly]
-    else:
-        step=8/scale;x0,y0,x1,y1=poly.bounds;parts=[]
-        for y in np.arange(np.floor(y0/step)*step,y1,step):
-            for x in np.arange(np.floor(x0/step)*step,x1,step):
-                piece=poly.intersection(box(x,y,x+step,y+step))
-                candidates=[piece] if piece.geom_type=='Polygon' else list(piece.geoms) if hasattr(piece,'geoms') else []
-                parts.extend(p for p in candidates if p.geom_type=='Polygon' and not p.is_empty and p.area>0)
-        if not parts or abs(sum(p.area for p in parts)-poly.area)>max(1e-7,poly.area*1e-10) or union_all(parts).symmetric_difference(poly).area>1e-7:
-            raise ValueError('Native fill partition changed source geometry')
-
-    # SVG's +2 mm origin offset is also an exact multiple of this grid.
-    # Pre-normalising at the same precision ensures SVG formatting cannot
-    # collapse a very thin strip into a touching hole/outer boundary.
-    grid=.0001/scale
-    normalised=[]
-    for piece in parts:
-        # Do not re-tesselate good paths: tiny valid shapes can legitimately
-        # lose measurable area on the native grid. Repair only when the actual
-        # four-decimal SVG contour would otherwise be invalid.
-        def printed_ring(ring):
-            return [(float(f'{2+x*scale:.4f}'),float(f'{2+y*scale:.4f}'))
-                    for x,y in ring.coords]
-        as_printed=Polygon(printed_ring(piece.exterior),
-                           [printed_ring(hole) for hole in piece.interiors])
-        if as_printed.is_valid and not as_printed.is_empty and as_printed.area>0:
-            normalised.append(piece)
-            continue
-        snapped=set_precision(piece,grid_size=grid,mode='valid_output')
-        pieces=[snapped] if snapped.geom_type=='Polygon' else list(snapped.geoms) if snapped.geom_type=='MultiPolygon' else []
-        drift_mm2=snapped.symmetric_difference(piece).area*scale*scale
-        if (not pieces or len(pieces)>16 or any(p.is_empty or not p.is_valid or p.area<=0 for p in pieces)
-                or drift_mm2>.001):
-            # No destructive "repair": retain the source polygon exactly as
-            # before this experiment. The independent native decoder will
-            # still HOLD any disallowed needle/segment outside the mask.
-            normalised.append(piece)
-            continue
-        normalised.extend(pieces)
-    if not normalised or len(normalised)>1500:
-        raise ValueError('Native precision repair exceeded geometry budget')
-    if union_all(normalised).symmetric_difference(poly).area*scale*scale>.001:
-        # Aggregate drift is unsafe even when every individual change is
-        # tiny. Fall back to unmodified source polygons, not lossy repairs.
-        return parts
-    return normalised
+    if vertices<=500:return [poly]
+    step=8/scale;x0,y0,x1,y1=poly.bounds;parts=[]
+    for y in np.arange(np.floor(y0/step)*step,y1,step):
+        for x in np.arange(np.floor(x0/step)*step,x1,step):
+            piece=poly.intersection(box(x,y,x+step,y+step))
+            candidates=[piece] if piece.geom_type=='Polygon' else list(piece.geoms) if hasattr(piece,'geoms') else []
+            parts.extend(p for p in candidates if p.geom_type=='Polygon' and not p.is_empty and p.area>0)
+    if not parts or abs(sum(p.area for p in parts)-poly.area)>max(1e-7,poly.area*1e-10) or union_all(parts).symmetric_difference(poly).area>1e-7:
+        raise ValueError('Native fill partition changed source geometry')
+    return parts
 
 
 def without_collinear_steps(points):
@@ -341,6 +300,39 @@ def without_collinear_steps(points):
             result.pop()
         result.append(point)
     return result
+
+
+def safe_native_svg_fill_path(points,holes,scale,precision):
+    """Return an SVG fill path only when emitted-precision healing is source-safe.
+
+    Precision formatting can close a sub-0.0001 mm gap between a clipped hole
+    and an exterior edge. The resulting even-odd SVG self-intersects and can
+    encourage Ink/Stitch to sew across the notch. Snap that *already formatted*
+    contour with GEOS valid_output only if the original polygon is valid,
+    the repair remains one valid polygon, and the source symmetric difference
+    is at most 0.001 mm². Otherwise return None (original unapproved trial).
+    """
+    if precision!=4:
+        return None
+    def physical(ring):
+        return [(2+x*scale,2+y*scale) for x,y in ring]
+    original=Polygon(physical(points),[physical(r) for r in holes])
+    if original.is_empty or not original.is_valid:
+        return None
+    def formatted(ring):
+        return [(float(f'{x:.4f}'),float(f'{y:.4f}')) for x,y in ring]
+    rendered=Polygon(formatted(original.exterior.coords),
+                     [formatted(r.coords) for r in original.interiors])
+    if rendered.is_valid and rendered.area>0:
+        return None
+    fixed=set_precision(rendered,grid_size=.0001,mode='valid_output')
+    if (fixed.geom_type!='Polygon' or fixed.is_empty or not fixed.is_valid
+            or original.symmetric_difference(fixed).area>.001):
+        return None
+    def commands(ring):
+        return 'M '+' L '.join(f'{x:.4f},{y:.4f}' for x,y in ring)
+    return commands(list(fixed.exterior.coords)[:-1])+' Z'+''.join(
+        ' '+commands(list(h.coords)[:-1])+' Z' for h in fixed.interiors)
 
 
 def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=()):
@@ -404,6 +396,10 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                 INK+'pull_compensation_percent':'0', INK+'expand_mm':'0'})
             if underlay:underlay_count+=1
             attrs['d'] += ''.join(' '+commands(ring)+' Z' for ring in holes)
+            if partition_fills:
+                safe_path=safe_native_svg_fill_path(points,holes,scale,precision)
+                if safe_path is not None:
+                    attrs['d']=safe_path
         else:
             attrs.update({'fill':'none','stroke':color,'stroke-width':'0.1',INK+'stroke_method':'running_stitch'})
         ET.SubElement(root,'path',attrs)
