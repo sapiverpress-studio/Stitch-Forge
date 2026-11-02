@@ -123,3 +123,13 @@ test('new logo and named ZIP helper load before the native editor',()=>{
  assert.match(native,/saveNativeMachineFile\('pes'\)/);
  assert.match(native,/saveNativeMachineFile\('dst'\)/);
 });
+
+test('supplied logo is a compact, verified WebP derivative, not a placeholder',()=>{
+ const {createHash}=require('node:crypto');
+ const logo=fs.readFileSync(path.join(__dirname,'../site/assets/sapiver-press-logo.webp'));
+ assert.equal(logo.toString('ascii',0,4),'RIFF');
+ assert.equal(logo.toString('ascii',8,12),'WEBP');
+ assert.ok(logo.length>=1500&&logo.length<15000);
+ const object=Buffer.concat([Buffer.from('blob '+logo.length+'\\0'),logo]);
+ assert.equal(createHash('sha1').update(object).digest('hex'),'ba422bf43d23563e48bdd2f92fe827707f01786a');
+});
