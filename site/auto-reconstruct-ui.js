@@ -13,6 +13,9 @@ panel.innerHTML=[
  '<div class="ai-detail-head"><strong>Automatic artwork digitising</strong><small>Engineering trial</small></div>',
  '<p class="tiny">One button runs AI feature analysis, then native multicolour PES/DST. AI advice does not yet change stitch geometry or guarantee likeness.</p>',
  '<p class="tiny">Prepare colour shapes from the original pixels, generate real Ink/Stitch files and inspect independently decoded stitches. Trial files require review and have not been physically sewn.</p>',
+ '<label class="tiny" for="sfAutoProductName">Product / design name for downloads</label>',
+ '<input id="sfAutoProductName" type="text" maxlength="80" autocomplete="off" placeholder="e.g. Kingfisher on Ivy">',
+ '<p class="tiny">Independent of the uploaded image filename. Changes to this label do not change machine stitches.</p>',
  '<label class="tiny" for="sfNativeWidth">Visible embroidered design width (mm)</label><input id="sfNativeWidth" type="number" min="10" max="250" value="80" step="1" inputmode="decimal">',
  '<p class="tiny">Width refers to visible artwork, not transparent margins. If it cannot fit within the 250 × 296 mm source-frame limit, generation stops with an explanation. The final needle width will be measured in the machine report.</p>',
  '<label for="sfAutoToken" class="tiny">Private Stitch Forge access token (not your OpenAI API key)</label>',
@@ -29,7 +32,9 @@ panel.innerHTML=[
  '<button class="btn" type="button" id="sfAutoDownload" disabled>Download editable colour SVG</button>',
  '<button class="btn" type="button" id="sfAutoUndo" disabled>Undo reconstruction</button>',
  '<button class="btn" type="button" id="sfAutoNativeReport" disabled>Download actual machine report</button></div>',
- '<div class="ai-actions"><button class="btn" type="button" id="sfAutoNativeGeometry" disabled>Download editable Ink/Stitch SVG</button></div>',
+ '<div class="ai-actions"><button class="btn" type="button" id="sfAutoNativeGeometry" disabled>Download editable Ink/Stitch SVG</button>',
+ '<button class="btn" type="button" id="sfAutoPES" disabled>Download named PES</button>',
+ '<button class="btn" type="button" id="sfAutoDST" disabled>Download named DST</button></div>',
  '<div class="ai-actions"><button class="btn" type="button" id="sfAutoDiagnostic" disabled>Download private diagnostic</button>',
  '<button class="btn" type="button" id="sfAutoReplay">Replay saved diagnostic locally</button></div>',
  '<input type="file" id="sfAutoReplayFile" accept="application/json,.json" hidden>',
@@ -53,7 +58,8 @@ const css=document.createElement("style");css.textContent=[
  "#sfAutoStatus{border-left:3px solid #187a82;background:#edf7f5;padding:10px;margin:12px 0}",
  "#sfAutoOverlay path{stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;pointer-events:none}",
  "#sfAutoPanel strong{font-size:1.05em}"
- ,"#sfAutoWorkflow,#sfNativeWidth{max-width:100%;box-sizing:border-box}"
+ ,"#sfAutoWorkflow,#sfNativeWidth,#sfAutoProductName{max-width:100%;box-sizing:border-box}"
+ ,"#sfAutoProductName{display:block;width:100%;min-height:44px;padding:8px 10px;margin:7px 0 8px;background:#fff;border:1px solid #a7c4bd;border-radius:8px;font-size:16px;color:#173d45}"
  ,"#sfAutoAdvanced{border:1px solid #b9d0cb;border-radius:9px;padding:10px;margin:10px 0}"
  ,"#sfAutoAdvanced summary{cursor:pointer;font-weight:650}"
  ,"#sfRememberToken{width:auto;min-height:0;display:inline;margin:0 6px 0 0}"
@@ -109,13 +115,28 @@ function paint(){
   overlay.appendChild(path);
  }
 }
-function clearNative(){if(nativeResult)context.setSourceRegionInspectionActive(false);nativeResult=null;nativeOverlay.replaceChildren();q('#sfAutoNativeReport').disabled=true;q('#sfAutoNativeGeometry').disabled=true;}
+function clearNative(){if(nativeResult)context.setSourceRegionInspectionActive(false);nativeResult=null;nativeOverlay.replaceChildren();q('#sfAutoNativeReport').disabled=true;q('#sfAutoNativeGeometry').disabled=true;q('#sfAutoPES').disabled=true;q('#sfAutoDST').disabled=true;}
 function saveBytes(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+const fileName=ext=>window.StitchForgeDownloadNaming.filename(q('#sfAutoProductName').value,ext);
+const namedReport=()=>window.StitchForgeDownloadNaming.reportName(q('#sfAutoProductName').value);
+async function saveNativeMachineFile(ext){
+ if(!nativeResult)return;
+ try{
+  // The same strict archive CRC/entry parser validates the already-audited ZIP.
+  // Re-exporting the bytes never changes the machine-file payload or source receipt.
+  const files=await window.StitchForgeArtworkPipeline.readArchive(nativeResult.bytes);
+  const data=files['artwork-trial.'+ext];
+  if(!data)throw Error('Verified '+ext.toUpperCase()+' file missing');
+  saveBytes(data,fileName(ext),'application/octet-stream');
+ }catch(error){status('Named '+ext.toUpperCase()+' download unavailable: '+String(error?.message||error));}
+}
 function invalidateNative(){revision++;nativeAbort?.abort();clearNative();q('#sfAutoDownload').disabled=!last;q('#sfAutoUndo').disabled=!last;q('#sfAutoDownload').textContent='Download editable colour SVG';status('Artwork settings changed. Previous native result cleared; generate again when ready.');}
 q('#sfAutoWorkflow').onchange=()=>{invalidateNative();q('#sfAutoRun').textContent=q('#sfAutoWorkflow').value==='native'?'Generate embroidery':'Generate AI proposal (not machine stitches)';status(q('#sfAutoWorkflow').value==='native'?'Automatic AI feature analysis and native PES/DST trial. AI is advisory and uses a paid API call when enabled.':'AI proposal is an experimental geometry draft; it is not machine embroidery.');};
 q('#sfNativeWidth').onchange=invalidateNative;q('#sfNativeTexture').onchange=invalidateNative;q('#sfAutoUseAI').onchange=invalidateNative;
 q('#sfAutoCancelNative').onclick=()=>{invalidateNative();status('Native generation cancelled. No further phase will be requested.');};
-q('#sfAutoNativeReport').onclick=()=>{if(nativeResult)saveBytes(JSON.stringify(nativeResult.report,null,2),'stitch-forge-machine-report-PRIVATE-NOT-APPROVED.json','application/json');};
+q('#sfAutoNativeReport').onclick=()=>{if(nativeResult)saveBytes(JSON.stringify(nativeResult.report,null,2),namedReport(),'application/json');};
+q('#sfAutoPES').onclick=()=>saveNativeMachineFile('pes');
+q('#sfAutoDST').onclick=()=>saveNativeMachineFile('dst');
 q('#sfAutoNativeGeometry').onclick=()=>{if(nativeResult)saveBytes(nativeResult.geometry,'stitch-forge-editable-native-TRIAL-NOT-APPROVED.svg','image/svg+xml');};
 q("#sfAutoShow").onchange=paint;
 async function decoded(src,maxDim){
@@ -231,12 +252,12 @@ q("#sfAutoRun").onclick=async()=>{
    const result=await api.generate(packed,{token,signal:nativeAbort.signal,isCurrent:current,background:true,onProgress:text=>{if(current())status(text);}});
    if(!current())throw Error('Source or size changed; stale result discarded');
    window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
-   q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoUndo').disabled=false;
+   q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoPES').disabled=false;q('#sfAutoDST').disabled=false;q('#sfAutoUndo').disabled=false;
    const r=result.report,d=r.decoded.find(x=>x.format==='pes');
    status(aiNote+'Requested visible width '+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
    window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview:result.preview,report:result.report}}));
    // Preserve verified ZIP auto-download, and expose a re-download button.
-   saveBytes(result.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED.zip','application/zip');
+   saveBytes(result.bytes,fileName('zip'),'application/zip');
   }catch(error){
    if(current()){
     const message=String(error?.message||error);
@@ -372,7 +393,7 @@ q("#sfAutoRun").onclick=async()=>{
  }finally{running=false;q("#sfAutoRun").disabled=false;}
 };
 q("#sfAutoDownload").onclick=()=>{
- if(nativeResult){saveBytes(nativeResult.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED.zip','application/zip');return;}
+ if(nativeResult){saveBytes(nativeResult.bytes,fileName('zip'),'application/zip');return;}
  if(!last)return;
  try{
   const svg=context.exportEditableSvg();
