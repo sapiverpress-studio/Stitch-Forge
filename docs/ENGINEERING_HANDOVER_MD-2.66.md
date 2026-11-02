@@ -192,3 +192,29 @@ evaluated offline at 320 x 292, 80mm requested visible width.
 - Existing MD-2.64 main Cloud Run traffic and Netlify frontend unchanged.
 - User intervention will only be needed if a private native test cannot
   run locally, or for physical sample sewouts. No paid Cloud build used.
+
+## MD-2.66 continuation — verified native butterfly containment fix (2026-11-02)
+
+### Root cause and narrow repair
+- The licensed CC0 butterfly previously generated one identical black stitch segment outside the independently reconstructed working-colour mask in both PES and DST. It survived default native export, sectioned tatami and underlay/underpath-disabled fill repair; **no safety tolerance was relaxed**.
+- The first outside segment was from (32.6903225, 62.11612896) to (33.9903225, 61.81612896) mm. Of its 1.334 mm length, about 0.0426 mm lay outside the existing **0.11 mm** dilated source mask.
+- The failed fill input at native SVG path `artwork-67` contained a rounded self-intersection at (34, 61.871) mm: a near-touching internal hole was serialized to four decimal places and touched the external boundary.
+- Broad geometric precision snapping was tried **and rejected** in isolated CI because it could change source coverage. Final implementation restores original fill partition behaviour and adds `safe_native_svg_fill_path`, which operates only on invalid *already-formatted* SVG fill contours. GEOS `set_precision(..., mode='valid_output')` is accepted only when the original physical source polygon was valid, the result is one valid polygon, and full symmetric-difference area is at most **0.001 mm²**. Unsafe/ambiguous candidates retain the original unapproved trial geometry; they are never silently replaced.
+- Corrected butterfly input path `artwork-67` is now a valid polygon with its hole represented as a notch. Independently decoded native PES/DST no longer contains the crossing stitch. The source pixel packet, working palette and mask auditor remain unchanged; real machine-file audit is still mandatory.
+
+### Final test evidence (all on isolated feature branch)
+- Offline source-preservation/precision tests **PASS**: [GitHub Actions 41439467534](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439467534), commit `127a54eafef3d32289482037849aa7d6704d75ac`.
+- Licensed butterfly + rose native Ink/Stitch 3.3.0 PES/DST **PASS**: [GitHub Actions 41439326194](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326194), engine commit `2a966a347b123e4f12c9d8110c9db5461ac71cf1`.
+  - Butterfly: 9 colours, 79 source working parts, 139 native paths, **14,348** matching PES/DST stitches; **205 PES trims**; 0 outside-colour needle points and 0 outside-colour stitched segments in each format; 39 unresolved small details; no repair pass.
+  - Rose: 6 colours, 38 source working parts, 38 native paths, **11,623** matching PES/DST stitches; **68 PES trims**; 0 outside-colour points and segments; 0 unresolved objects; no repair pass.
+- Licensed macaw native PES/DST **PASS**: [GitHub Actions 41439326236](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326236), engine commit `2a966a347b123e4f12c9d8110c9db5461ac71cf1`. 9 colours, 52 working parts, 51 native paths, **13,031** matching stitches; **98 PES trims**; zero outside-colour points/segments; one unresolved object.
+- The passing files are **isolated engineering trial files only**. They were not declared machine-approved, and the reported quality blockers remain: semantic stitch design, fabric underlay/density/routing and all physical sew-outs.
+- A genuine private Kingfisher source (1312 x 1199 RGBA) has been located in the owner's ChatGPT Library but must **not** be put into public Git or CI artifacts. A source-identical MD-2.64/MD-2.66 native A/B on that image and home-machine sew-out are still **NOT VERIFIED**.
+- No Cloud Run build/worker deployment, Netlify deployment, public release or production traffic change. GitHub Actions consumed CI runner resources only.
+
+### Next gates
+1. Run the private original Kingfisher through the local trusted pinned Ink/Stitch executable using `tools/private_home_native_trial.py`, then compare with the same-source MD-2.64 result. This requires local engine execution and explicit private source control; do not copy the private image into public CI.
+2. Compare eyes, beak, individual wing/feather-group boundaries and greenery against original; quantify unresolved/omitted marks, thread fidelity, PES trims, underlay and machine dimensions. Never treat machine-file validity as visual likeness.
+3. Preserve strict source containment on all three licensed controls after every engine change, and continue to HOLD any out-of-source stitches.
+4. Obtain a documented physical sample sew-out (machine, stabiliser, fabric, hoop, threads) before approving Home or considering Professional Detail overlays.
+
