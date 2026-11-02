@@ -19,6 +19,7 @@ from skimage.segmentation import slic
 from skimage.filters import gaussian
 from skimage.feature import blob_log
 from skimage.measure import find_contours
+from source_detail_guard import protect_candidates
 
 
 def deterministic_palette(pixels, colours, iterations=20):
@@ -149,18 +150,10 @@ def reconstruct(image, *, colours=9, max_side=320, superpixels=460,
         if contrast > .20 and darkness < .20 and sigma >= 3.5:
             proposed.append((contrast*(.3-darkness), y, x, sigma))
     proposed.sort(reverse=True)
-    kept_marks = 0
-    for _, y, x, sigma in proposed[:12]:
-        radius = int(np.ceil(sigma*.8))
-        y0, y1 = max(0,y-radius), min(h,y+radius+1)
-        x0, x1 = max(0,x-radius), min(w,x+radius+1)
-        yy, xx = np.ogrid[y0:y1,x0:x1]
-        disk = (np.hypot(yy-y,xx-x) <= sigma*.72) & foreground[y0:y1,x0:x1]
-        if disk.sum() < 3:
-            continue
-        window = labels[y0:y1,x0:x1]
-        window[disk] = int(np.argmin(centres[:,0]))
-        kept_marks += 1
+    # Previous prototype painted dark circular disks into candidate locations.
+    # This source-grounded guard instead reassigns individual *real source
+    # pixels* only when an existing palette colour is objectively closer.
+    labels, detail_evidence = protect_candidates(labels, lab, foreground, centres, proposed)
     # This comparison uses *the same nine-colour palette* without superpixels.
     raw = np.full((h,w),255,dtype=np.uint8)
     raw[foreground] = np.argmin(np.sum((lab[foreground,None,:]-centres[None,:,:])**2,axis=2),axis=1)
@@ -185,7 +178,9 @@ def reconstruct(image, *, colours=9, max_side=320, superpixels=460,
         'p95LabColourError':float(np.percentile(delta,95)),
         'smallObjectThresholdPixels':int(min_pixels),
         'geometricDarkMarksProposed':len(proposed),
-        'geometricDarkMarksPreserved':kept_marks,
+        'geometricDarkMarksPreserved':detail_evidence['sourceSupportedDetailRegions'],
+        'detailRefinement':detail_evidence,
+        'detailReleaseGate':'HOLD_LIKENESS_AND_NATIVE_EXPORT_NOT_VERIFIED',
         'semanticsVerified':False,
         'nativeFileGenerated':False,
         'physicallyStitched':False
