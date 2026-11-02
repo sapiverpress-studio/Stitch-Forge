@@ -14,6 +14,7 @@ from PIL import Image
 import numpy as np
 from artwork_packet import decode_packet
 from hybrid_home import reconstruct
+from artwork_trial import build_trial_svg, checked_masks
 
 
 def prepare_verified_packet(image, *, colours=9, visible_width_mm=80):
@@ -92,4 +93,37 @@ def prepare_verified_packet(image, *, colours=9, visible_width_mm=80):
         'machineFileGenerated':False,
         'physicalQualityVerified':False,
         'approval':'HOLD_FOR_DETAIL_LIKENESS_NATIVE_STITCH_AUDIT_AND_SEWOUT'
+    }
+
+
+def prepare_native_input_candidate(image, *, colours=9, visible_width_mm=80):
+    """Create auditable Ink/Stitch SVG input. DOES NOT run the native executable.
+
+    Uses the same tested builder as MD-2.64 after independent source-binding
+    verification. Machine PES/DST and physical stitch quality remain unverified.
+    """
+    packet, proof=prepare_verified_packet(
+        image, colours=colours, visible_width_mm=visible_width_mm)
+    plan, meta, identity, binding=decode_packet(packet)
+    # Existing native code independently rebuilds geometries from the source
+    # run ledger, never from a browser-provided SVG or untrusted contour.
+    svg, manifest, masks=build_trial_svg(plan,partition_fills=True)
+    check, scale=checked_masks(plan)
+    if (manifest['source']['sha256']!=proof['sourceSha256']
+            or manifest['sourcePlanSignature']!=identity
+            or not manifest['nativePaths']
+            or set(masks)!=set(check)
+            or any(not np.array_equal(masks[c],check[c]) for c in check)
+            or manifest.get('machineEligible') is not False):
+        raise ValueError('Native SVG input failed source-bound geometry audit')
+    return svg, {
+        **proof,
+        'nativeSvgInputGenerated': True,
+        'nativeCandidatePaths': manifest['nativeCandidatePaths'],
+        'nativePaths': manifest['nativePaths'],
+        'underlayFillCandidates': manifest['underlayFillPaths'],
+        'nativePaletteCount': len(masks),
+        'nativeFileGenerated': False,
+        'physicalQualityVerified': False,
+        'approval': 'HOLD_FOR_NATIVE_PES_DST_EXPORT_SOURCE_COLOUR_AUDIT_AND_SEWOUT'
     }
