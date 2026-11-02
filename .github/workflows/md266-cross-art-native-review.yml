@@ -1,0 +1,49 @@
+name: MD-2.66 licensed butterfly and rose Home native acceptance (isolated)
+on:
+  push:
+    branches: [feature/md266-home-hybrid-segmentation-no-deploy]
+    paths:
+      - ".github/workflows/md266-cross-art-native-review.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-artwork-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        artwork: [butterfly, rose]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned native image and auditing dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Install checksum-verified Ink/Stitch 3.3.0
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Validate SHA-verified CC0 artwork as genuine native PES/DST
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md266-review"
+          xvfb-run -a python tools/verify_home_hybrid_native.py --engine "$ENGINE" --output "$RUNNER_TEMP/md266-review" --fixture "${{ matrix.artwork }}"
+          test -s "$RUNNER_TEMP/md266-review/ENGINEERING-TRIAL-NOT-APPROVED.pes"
+          test -s "$RUNNER_TEMP/md266-review/ENGINEERING-TRIAL-NOT-APPROVED.dst"
+      - name: Preserve evidence for inspection, never publish machine products
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md266-${{ matrix.artwork }}-audit-NOT-APPROVED
+          path: |
+            ${{ runner.temp }}/md266-review/hybrid-native-synthetic-evidence.json
+            ${{ runner.temp }}/md266-review/machine-report.json
+          retention-days: 2
+          if-no-files-found: ignore
