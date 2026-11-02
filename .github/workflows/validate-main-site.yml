@@ -2,7 +2,7 @@ name: Verify Stitch Forge website on main
 
 on:
   push:
-    branches: [main, "feature/sapiver-logo-and-product-names-20261102"]
+    branches: [main]
     paths:
       - "site/**"
       - "netlify/**"
