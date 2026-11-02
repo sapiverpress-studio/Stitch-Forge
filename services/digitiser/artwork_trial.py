@@ -22,7 +22,7 @@ from xml.etree import ElementTree as ET
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy.ndimage import distance_transform_edt, label, uniform_filter
-from shapely import Polygon, LineString, Point, box, union_all, make_valid, covers, prepare,points as shape_points
+from shapely import Polygon, LineString, Point, box, union_all, make_valid, set_precision, covers, prepare,points as shape_points
 from skimage.morphology import skeletonize
 import pyembroidery
 from running_compaction import consolidate_running_elements
@@ -268,22 +268,44 @@ def fill_underlay_eligible(piece,scale):
 
 
 def bounded_fill_parts(poly,scale):
-    """Partition only complex native input, retaining its exact polygon union.
+    """Partition complex native fills without creating rounded, self-touching holes.
 
-    8mm source-frame grid and >500-vertex threshold bound native routing work;
-    they are not stitch density/fabric settings. No manually emitted stitches.
+    Ink/Stitch receives SVG coordinates rounded to 0.0001 mm in the partitioned
+    trial. A sliver separating a clipped hole from a tile boundary can vanish
+    on that grid, turning an otherwise valid polygon into a self-intersecting
+    SVG path. Snap with GEOS valid_output *before* writing SVG, retain the hole
+    as a notch where appropriate, and reject measurable geometry drift. This
+    never changes the independent source mask or acceptance tolerance.
     """
     vertices=len(poly.exterior.coords)+sum(len(r.coords) for r in poly.interiors)
-    if vertices<=500:return [poly]
-    step=8/scale;x0,y0,x1,y1=poly.bounds;parts=[]
-    for y in np.arange(np.floor(y0/step)*step,y1,step):
-        for x in np.arange(np.floor(x0/step)*step,x1,step):
-            piece=poly.intersection(box(x,y,x+step,y+step))
-            candidates=[piece] if piece.geom_type=='Polygon' else list(piece.geoms) if hasattr(piece,'geoms') else []
-            parts.extend(p for p in candidates if p.geom_type=='Polygon' and not p.is_empty and p.area>0)
-    if not parts or abs(sum(p.area for p in parts)-poly.area)>max(1e-7,poly.area*1e-10) or union_all(parts).symmetric_difference(poly).area>1e-7:
-        raise ValueError('Native fill partition changed source geometry')
-    return parts
+    if vertices<=500:
+        parts=[poly]
+    else:
+        step=8/scale;x0,y0,x1,y1=poly.bounds;parts=[]
+        for y in np.arange(np.floor(y0/step)*step,y1,step):
+            for x in np.arange(np.floor(x0/step)*step,x1,step):
+                piece=poly.intersection(box(x,y,x+step,y+step))
+                candidates=[piece] if piece.geom_type=='Polygon' else list(piece.geoms) if hasattr(piece,'geoms') else []
+                parts.extend(p for p in candidates if p.geom_type=='Polygon' and not p.is_empty and p.area>0)
+        if not parts or abs(sum(p.area for p in parts)-poly.area)>max(1e-7,poly.area*1e-10) or union_all(parts).symmetric_difference(poly).area>1e-7:
+            raise ValueError('Native fill partition changed source geometry')
+
+    # SVG's +2 mm origin offset is also an exact multiple of this grid.
+    # Pre-normalising at the same precision ensures SVG formatting cannot
+    # collapse a very thin strip into a touching hole/outer boundary.
+    grid=.0001/scale
+    normalised=[]
+    for piece in parts:
+        snapped=set_precision(piece,grid_size=grid,mode='valid_output')
+        pieces=[snapped] if snapped.geom_type=='Polygon' else list(snapped.geoms) if snapped.geom_type=='MultiPolygon' else []
+        if (not pieces or len(pieces)>16 or any(p.is_empty or not p.is_valid or p.area<=0 for p in pieces)
+                or snapped.symmetric_difference(piece).area*scale*scale>.001):
+            raise ValueError('Native coordinate rounding changed source fill geometry')
+        normalised.extend(pieces)
+    if (not normalised or len(normalised)>1500
+            or union_all(normalised).symmetric_difference(poly).area*scale*scale>.001):
+        raise ValueError('Native coordinate rounding changed source fill coverage')
+    return normalised
 
 
 def without_collinear_steps(points):
