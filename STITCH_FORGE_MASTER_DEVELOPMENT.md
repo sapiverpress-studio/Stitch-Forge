@@ -20,6 +20,8 @@
 | Physical embroidery stitch-out passed | **NO — not performed** |
 | External Ink/Stitch or pyembroidery integration | Real pinned Ink/Stitch 3.3.0 and independent native PES/DST audit passed on licensed macaw, butterfly and rose in isolated GitHub CI; no physical stitch-out or source-identical Kingfisher test. No hosted worker called by this continuation. |
 
+**Full verified progress, known blockers and gated next-action plan:** [STITCH FORGE — Verified Progress and Roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md). The Home hybrid remains isolated; passing PES/DST CI does not constitute sewn-product approval.
+
 ## 0. How to read and maintain this MD
 
 **Status vocabulary is mandatory:**
@@ -1561,3 +1563,10 @@ The previous licensed butterfly CI test failed with exactly one unchanged black 
 Exact GitHub Actions passes: [offline regression 41439467534](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439467534) at `127a54eafef3d32289482037849aa7d6704d75ac`; [licensed butterfly/rose native 41439326194](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326194) and [macaw native 41439326236](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326236) at `2a966a347b123e4f12c9d8110c9db5461ac71cf1`. Independently decoded matching stitch totals per PES/DST: butterfly **14,348** with **0** outside-colour needle points/segments (205 PES trims, 39 unresolved objects); rose **11,623** with **0** outside (68 PES trims, no unresolved objects); macaw **13,031** with **0** outside (98 PES trims, one unresolved object). Native output remains engineering **NOT APPROVED**, with unverified semantic stitch intent, density, underlay/routing and all fabric tests. Full evidence and next gates: [MD-2.66 handover](docs/ENGINEERING_HANDOVER_MD-2.66.md).
 
 **Next hard gate:** run the owner's private 1312 × 1199 RGBA Kingfisher through source-identical MD-2.64 and MD-2.66 local trusted Ink/Stitch comparisons; judge eyes/beak/feather details, original colours, dimensional limits, trims and density. Private source must not enter public CI. Fabric sew-out is required before enabling Home mode; Professional Detail remains deferred. No Netlify/Cloud Run changes this session.
+
+
+## 2026-11-02 — Cross-branch project-wide handover and next engineering programme
+
+This experimental branch's master ledger has been reconciled with the independently checked [full project roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md), also committed on main. The main code baseline remains MD-2.65 at commit **95dcb001f3f35d0b7c8704eeabe21be411bdfa14** before documentation-only commits; Home hybrid engineering native baseline was commit **389650a257835e9d7e38dee262ea5bb3470e6db7** before documentation-only commits. The full roadmap records exact pass/fail evidence, 3 CC0 native file controls, remaining 39 butterfly unresolved details, Kingfisher feature/likeness HOLD, privacy precautions, owner/CI/deployment distinction, incremental release gates and future Home beta/Professional boundaries.
+
+**Do not confuse publication of this status document with deployment or approval of the hybrid.** No code merge, paid Google Cloud build, Netlify publish or owner artwork upload was undertaken by the documentation task. Next work is exact private Kingfisher source-identical MD-2.64/MD-2.66 native export, engineering comparison and controlled sew-out; see full acceptance checklist in the roadmap.
