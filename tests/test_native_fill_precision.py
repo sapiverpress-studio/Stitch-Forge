@@ -34,7 +34,7 @@ class NativeFillPrecisionTests(unittest.TestCase):
     def test_unbounded_rounding_loss_is_rejected(self):
         # A sub-grid strip with substantial total coverage cannot be
         # silently discarded; it must produce HOLD, never a format pass.
-        very_narrow=Polygon([(0,0),(40,0),(40,.00001),(0,.00001)])
+        very_narrow=Polygon([(0,0),(200,0),(200,.00001),(0,.00001)])
         with self.assertRaisesRegex(ValueError,'rounding changed source'):
             bounded_fill_parts(very_narrow,scale=1)
 
