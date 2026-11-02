@@ -130,6 +130,6 @@ test('supplied logo is a compact, verified WebP derivative, not a placeholder',(
  assert.equal(logo.toString('ascii',0,4),'RIFF');
  assert.equal(logo.toString('ascii',8,12),'WEBP');
  assert.ok(logo.length>=1500&&logo.length<15000);
- const object=Buffer.concat([Buffer.from('blob '+logo.length+'\\0'),logo]);
+ const object=Buffer.concat([Buffer.from('blob '+logo.length+String.fromCharCode(0)),logo]);
  assert.equal(createHash('sha1').update(object).digest('hex'),'ba422bf43d23563e48bdd2f92fe827707f01786a');
 });
