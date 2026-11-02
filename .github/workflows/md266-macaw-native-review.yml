@@ -4,6 +4,7 @@ on:
     branches: [feature/md266-home-hybrid-segmentation-no-deploy]
     paths:
       - "tools/verify_home_hybrid_native.py"
+      - "services/digitiser/artwork_trial.py"
       - ".github/workflows/md266-macaw-native-review.yml"
   workflow_dispatch:
 permissions:
