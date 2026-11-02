@@ -1,4 +1,6 @@
-# MD-2.66 — Home hybrid reconstruction: native PES/DST passes, release HOLD
+# MD-2.66 — Home hybrid source integrated, native PES/DST passes, production release HOLD
+
+> **Source integration update, 2 November 2026:** The experimental MD-2.66 hybrid source, tests, native geometry correction and this handover were merged into `main` with [merge commit 26a87131](https://github.com/sapiverpress-studio/Stitch-Forge/commit/26a87131a0cc507ddb4d9a9314cd9e9c9d25b99f). Historical "isolated branch" notes below refer to when the work was tested. **No Netlify or Cloud Run deployment was performed; current public UI/worker is not proven to run the hybrid.** Private Kingfisher native A/B and physical sew-out remain unverified. Read [the current project roadmap](STITCH_FORGE_PROGRESS_AND_ROADMAP.md) before further changes.
 
 > **Current status, 2 November 2026:** Licensed Macaw, Butterfly and Rose real Ink/Stitch 3.3.0 native PES/DST acceptance **PASS** in isolated CI; private source-identical Kingfisher native A/B, source-detail likeness and all physical fabric sew-outs remain **NOT VERIFIED**. Initial sections below describe earlier development stages and are preserved as history; read the later dated continuations for subsequent results.
 >
