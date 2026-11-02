@@ -8,17 +8,17 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.49 (recovered original source; actual app-to-native PES6/DST workflow verified locally; hosted upgrade pending) |
-| Last updated | 2026-10-30 (Europe/London) |
-| Last independently checked source | Recovered original MD-2.48 local 9d19230e9245aae86b47d9db37a0c62c8f004ede; merged GitHub main 8648bf736a261737c969cb932133811b8034be64. MD-2.49: 161 Node, 89 Python, 19 browser regressions + four real app/native artwork workflows pass. Read final Git main SHA/release record for publication. No Netlify deploy or paid AI request. |
+| Document version | MD-2.66 isolated Home hybrid precision acceptance (licensed native PES/DST tests passed; Kingfisher and physical sew-out still HOLD) |
+| Last updated | 2026-11-02 (Europe/London) |
+| Last independently checked source | Isolated feature branch native engine commit `2a966a347b123e4f12c9d8110c9db5461ac71cf1`; offline regression commit `127a54eafef3d32289482037849aa7d6704d75ac`. GitHub Actions `41439326194`, `41439326236` and `41439467534` passed. Three CC0 source designs have genuine independently decoded PES/DST passes, but no Kingfisher likeness/physical stitch-out approval. Main/hosted builds were not promoted or tested in this continuation. |
 | Default branch | `main` |
-| Development branch | Integration tested on `feature/recovered-native-workflow-md249`; owner explicitly authorised bringing main up to date and later updating the existing worker. Original branches preserved. |
+| Development branch | Current MD-2.66 hybrid evidence on `feature/md266-home-hybrid-segmentation-no-deploy`; main and live worker unchanged by this continuation. Earlier historical integration branch records below are preserved. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Deployment | Website deployment remains manual by owner. Local native flow verified; matching private worker update and enabled feature flags required. Last published Netlify source read: 597547e3f7f6a1e92eab846fd3ffe55842710fb4. |
+| Deployment | **No Netlify or Cloud Run deployment in this MD-2.66 continuation.** Verified local/isolated GitHub Actions exports only. Current hosted app-to-worker compatibility and Home-profile availability must be checked separately before any authorised rollout. |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
-| External Ink/Stitch or pyembroidery integration | This session ran the pinned official Ink/Stitch v3.3.0 binary and pyembroidery 1.5.1 locally on synthetic satin geometry. No hosted worker or paid service was called. Physical stitch-out NOT VERIFIED. |
+| External Ink/Stitch or pyembroidery integration | Real pinned Ink/Stitch 3.3.0 and independent native PES/DST audit passed on licensed macaw, butterfly and rose in isolated GitHub CI; no physical stitch-out or source-identical Kingfisher test. No hosted worker called by this continuation. |
 
 ## 0. How to read and maintain this MD
 
@@ -1553,3 +1553,11 @@ The previous Netlify foreground bridge timed out at around 30 seconds although t
 
 ## 2026-10-31 — MD-2.55 source-preserving routed tatami (isolated)
 Research and implementation are on `feature/researched-infill-consolidation-md255`. Connected source-skeleton branches are routed into walks, same-colour component routing uses independently derived pixel-run centroids, and larger/wider Tatami regions get conservative perpendicular inset underlay (0.35 mm inset, 1.5 mm row spacing, 8 mm² area gate, 1.4 mm interior-width gate) with a four-row stagger. No colour masks are changed and `machineEligible=false` remains. The flying-kingfisher local geometry experiment reduced 859 native paths to 780 at 144x173 analysis px without changing foreground. **This is geometry evidence, not yet evidence of fewer PES trims or safe sewout.** Real Ink/Stitch 3.3.0/PES/DST and two-phase transaction tests are a required promotion gate. See [MD-2.55 engineering handover](docs/ENGINEERING_HANDOVER_MD-2.55.md). Do not change Cloud Run traffic on these claims alone.
+
+## 2026-11-02 — MD-2.66 source-preserving native contour repair
+
+The previous licensed butterfly CI test failed with exactly one unchanged black PES/DST stitch segment outside the working-colour containment geometry, after default, sectioned-tatami and no-underpath repairs. Diagnosed a sub-0.0001 mm gap between internal hole and clipped tile exterior collapsing into a self-intersecting SVG path after four-decimal serialization. The original failed `artwork-67` was invalid at (34, 61.871) mm. A broad GEOS rounding strategy failed strict source-cover checks and was withdrawn. The final isolated `safe_native_svg_fill_path` operates on invalid *formatted SVG* contours only, and accepts a repair only when it is a valid single polygon within **0.001 mm²** symmetric-difference area of the original valid physical polygon. All existing independent pixel-mask and PES/DST source-containment checks, including their 0.11 mm engineering tolerance, remain unchanged. No source recolouring, new paid analysis or deployment.
+
+Exact GitHub Actions passes: [offline regression 41439467534](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439467534) at `127a54eafef3d32289482037849aa7d6704d75ac`; [licensed butterfly/rose native 41439326194](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326194) and [macaw native 41439326236](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326236) at `2a966a347b123e4f12c9d8110c9db5461ac71cf1`. Independently decoded matching stitch totals per PES/DST: butterfly **14,348** with **0** outside-colour needle points/segments (205 PES trims, 39 unresolved objects); rose **11,623** with **0** outside (68 PES trims, no unresolved objects); macaw **13,031** with **0** outside (98 PES trims, one unresolved object). Native output remains engineering **NOT APPROVED**, with unverified semantic stitch intent, density, underlay/routing and all fabric tests. Full evidence and next gates: [MD-2.66 handover](docs/ENGINEERING_HANDOVER_MD-2.66.md).
+
+**Next hard gate:** run the owner's private 1312 × 1199 RGBA Kingfisher through source-identical MD-2.64 and MD-2.66 local trusted Ink/Stitch comparisons; judge eyes/beak/feather details, original colours, dimensional limits, trims and density. Private source must not enter public CI. Fabric sew-out is required before enabling Home mode; Professional Detail remains deferred. No Netlify/Cloud Run changes this session.
