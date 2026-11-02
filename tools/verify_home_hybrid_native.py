@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import json
 import sys
+from hashlib import sha256
 from PIL import Image, ImageDraw
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'services'/'digitiser'))
@@ -29,10 +30,25 @@ def synthetic_source():
     return img
 
 
-def verify(engine, destination):
+def licensed_fixture(name):
+    if name not in {'macaw','butterfly','rose'}:
+        raise ValueError('Unsupported licensed fixture')
+    root=Path(__file__).resolve().parents[1]/'tests'/'fixtures'/'artwork-evaluation'
+    manifest=json.loads((root/'manifest.json').read_text())
+    record=next((i for i in manifest['samples'] if i['id']==name),None)
+    if not record or record['licence']!='CC0-1.0':
+        raise ValueError('Fixture must have a known CC0 source')
+    image_file=root/record['raster_file']
+    if sha256(image_file.read_bytes()).hexdigest()!=record['raster_sha256']:
+        raise ValueError('Licensed fixture source hash mismatch')
+    return Image.open(image_file).copy()
+
+
+def verify(engine, destination, *, fixture=None):
     destination=Path(destination)
     destination.mkdir(parents=True,exist_ok=True)
-    packet,proof=prepare_verified_packet(synthetic_source(),colours=8)
+    original=licensed_fixture(fixture) if fixture else synthetic_source()
+    packet,proof=prepare_verified_packet(original,colours=9 if fixture else 8)
     plan,meta,identity,binding=decode_packet(packet)
     if identity!=proof['requestId'] or not binding['foregroundIndependentlyVerified']:
         raise RuntimeError('Hybrid source binding invalid')
@@ -50,8 +66,10 @@ def verify(engine, destination):
         if not path.is_file() or path.stat().st_size < 515:
             raise RuntimeError('Missing independently audited native '+extension.upper())
     evidence={
-        'schema':'md266-home-native-synthetic-ci-v1',
-        'syntheticFixtureOnly':True,'inputPacketRequestId':identity,
+        'schema':'md266-home-native-isolated-ci-v2',
+        'fixture':fixture or 'synthetic-bird',
+        'syntheticFixtureOnly':fixture is None,
+        'sourceArtworkClass':'CC0-vector-origin-raster' if fixture else 'generated-synthetic','inputPacketRequestId':identity,
         'sourceForegroundVerified':True,'homePaletteColours':proof['threadColourCount'],
         'sourceWorkingParts':plan['summary']['workingParts'],
         'nativePathCount':report['nativePaths'],
@@ -60,7 +78,7 @@ def verify(engine, destination):
         'blockers':report['blockers'],
         'realPESDST':True,'physicalSewoutVerified':False,
         'kingfisherLikenessVerified':False,
-        'approval':'SYNTHETIC_ENGINEERING_TRIAL_ONLY_NOT_MACHINE_APPROVED'
+        'approval':'ISOLATED_ENGINEERING_TRIAL_ONLY_NOT_MACHINE_APPROVED'
     }
     (destination/'hybrid-native-synthetic-evidence.json').write_text(
         json.dumps(evidence,indent=2)+'\n')
@@ -71,5 +89,6 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--engine',required=True)
     parser.add_argument('--output',required=True)
+    parser.add_argument('--fixture',choices=['macaw','butterfly','rose'])
     args=parser.parse_args()
-    print(json.dumps(verify(args.engine,args.output),indent=2))
+    print(json.dumps(verify(args.engine,args.output,fixture=args.fixture),indent=2))
