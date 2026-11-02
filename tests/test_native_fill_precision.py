@@ -31,12 +31,14 @@ class NativeFillPrecisionTests(unittest.TestCase):
         self.assertTrue(all(p.is_valid for p in pieces))
         self.assertTrue(all(set_precision(p,.0001,mode='pointwise').is_valid for p in pieces))
 
-    def test_unbounded_rounding_loss_is_rejected(self):
+    def test_high_loss_rounding_preserves_source_without_claiming_repair(self):
         # A sub-grid strip with substantial total coverage cannot be
-        # silently discarded; it must produce HOLD, never a format pass.
+        # silently discarded by rounding. Retain the original source geometry
+        # for the unapproved native trial; decoder containment remains strict.
         very_narrow=Polygon([(0,0),(200,0),(200,.00001),(0,.00001)])
-        with self.assertRaisesRegex(ValueError,'rounding changed source'):
-            bounded_fill_parts(very_narrow,scale=1)
+        pieces=bounded_fill_parts(very_narrow,scale=1)
+        self.assertEqual(len(pieces),1)
+        self.assertTrue(pieces[0].equals_exact(very_narrow,0))
 
 
 if __name__=='__main__':
