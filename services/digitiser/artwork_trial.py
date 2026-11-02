@@ -309,9 +309,14 @@ def bounded_fill_parts(poly,scale):
             continue
         snapped=set_precision(piece,grid_size=grid,mode='valid_output')
         pieces=[snapped] if snapped.geom_type=='Polygon' else list(snapped.geoms) if snapped.geom_type=='MultiPolygon' else []
+        drift_mm2=snapped.symmetric_difference(piece).area*scale*scale
         if (not pieces or len(pieces)>16 or any(p.is_empty or not p.is_valid or p.area<=0 for p in pieces)
-                or snapped.symmetric_difference(piece).area*scale*scale>.001):
-            raise ValueError('Native coordinate rounding changed source fill geometry')
+                or drift_mm2>.001):
+            raise ValueError(
+                'Native coordinate rounding changed source fill geometry '
+                f'(driftMm2={drift_mm2:.6f}, pieceAreaMm2={piece.area*scale*scale:.6f}, '
+                f'printedValid={as_printed.is_valid}, snappedType={snapped.geom_type}, '
+                f'parts={len(pieces)}, pieceBoundsPx={tuple(round(v,3) for v in piece.bounds)})')
         normalised.extend(pieces)
     if (not normalised or len(normalised)>1500
             or union_all(normalised).symmetric_difference(poly).area*scale*scale>.001):
