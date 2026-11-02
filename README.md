@@ -1,45 +1,45 @@
 # Sapiver Stitch Forge
 
-**Status as of 2 November 2026: experimental embroidery digitising system; machine-file format tests have passed, but physical stitch quality and detailed artwork likeness are NOT yet approved.**
+**Current engineering status: MD-2.66 hybrid source is integrated into GitHub main, but Home embroidery is still experimental and NOT approved for customer use.** Latest status check: 2 November 2026.
 
-Stitch Forge aims to turn original artwork into usable, source-faithful machine embroidery. The near-term target is a practical **Home** workflow with accurate shapes and a manageable palette. A higher-detail **Professional** workflow is a separate later research target, **not a current released capability**.
+Stitch Forge is a mobile-friendly image-to-embroidery digitiser. The practical target is a Home profile which preserves recognisable shapes and thread colours for real machine embroidery. Advanced Professional Detail is a separate later development target.
 
-## Start here — current authoritative project status
+## Start here
 
-1. **[Verified progress and engineering roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md)** — current branch/CI evidence, real results, problems, privacy and spending limits, step-by-step work plan, acceptance criteria and release blockers. **Read this first in new development sessions.**
-2. **[Master Development Document](STITCH_FORGE_MASTER_DEVELOPMENT.md)** — historical engineering ledger and updated branch-status header. Retain dated results rather than rewriting old milestones as though they were today's result.
-3. **[MD-2.66 hybrid engineering handover](https://github.com/sapiverpress-studio/Stitch-Forge/blob/feature/md266-home-hybrid-segmentation-no-deploy/docs/ENGINEERING_HANDOVER_MD-2.66.md)** — experimental Home segmentation, detail recovery, exact CI evidence and native butterfly containment repair.
-4. **[MD-2.64 sizing and native acceptance](docs/ENGINEERING_HANDOVER_MD-2.64.md)** and **[MD-2.65 branding and named output](docs/ENGINEERING_HANDOVER_MD-2.65.md)** — previous/main code milestones.
-5. **[Contributor and documentation rules](CONTRIBUTING.md)** — repository change, regression and handover standards.
+- **[Complete verified progress, risks and next-action roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md)** — read first in another AI engineering session; includes exact CI, rollout gates, costs, security and private-artwork restrictions.
+- **[Master Development Document](STITCH_FORGE_MASTER_DEVELOPMENT.md)** — current engineering status and the complete historical ledger.
+- **[MD-2.66 hybrid handover](docs/ENGINEERING_HANDOVER_MD-2.66.md)** — source segmentation, eye/edge recovery, native PES/DST validation, butterfly defect and remaining blockers.
+- **[MD-2.64 dimensional/native acceptance](docs/ENGINEERING_HANDOVER_MD-2.64.md)**; **[MD-2.65 logo and named downloads](docs/ENGINEERING_HANDOVER_MD-2.65.md)**; **[Contributor rules](CONTRIBUTING.md)**.
 
-## What has been verified
+## Actual implementation
 
-- The pinned genuine **Ink/Stitch 3.3.0** runtime generates real **PES/DST** in isolated tests. An independent audit decodes stitch commands, verifies source-bound colour masks and checks output validity.
-- A detailed-art **Home hybrid** candidate exists on a **separate feature branch**: source-grounded segmentation, limited CIELAB colour palette, guarded edge recovery, source-identity checks and a native path.
-- Three CC0 illustrations passed real PES/DST native acceptance on that experimental branch: **macaw 13,031 stitches**, **butterfly 14,348**, **rose 11,623** (counts per file format, PES/DST matching). Source containment passed with **zero out-of-colour needle points and segments**. This says nothing by itself about sew-out quality.
-- Butterfly's previously failing crossing stitch was fixed by repairing an eligible invalid rounded SVG fill contour *without relaxing* independent containment checks. **39** source-detail objects remain unresolved in the butterfly.
-- The current **main** branch includes a mobile-first artwork workflow, visible embroidered-width semantics, the supplied Sapiver Press logo and a product/design name independent of the upload filename; named ZIP/PES/DST downloads retain original native stitch bytes.
+The existing website has a mobile-friendly generation workflow, the supplied Sapiver Press logo, a separately editable product filename, named ZIP/PES/DST downloads, and visible-design-width sizing. Native file bytes retain their independent validation and signed source binding.
 
-**Independent evidence:** [macaw native CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326236) · [butterfly and rose native CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326194) · [offline regression](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439467534).
+The repository also includes real Ink/Stitch 3.3.0 PES/DST generation and source-colour containment auditing, plus MD-2.66 experimental SLIC/CIELAB segmentation, source-grounded detail guards and precision-safe SVG fill repairs. **The MD-2.66 code is now on main, but there is no evidence that the current public website or Cloud Run entrypoints invoke this hybrid automatically. A GitHub merge alone does not activate it.**
 
-## Branch and release separation
+### Genuine native test evidence — isolated engineering trials
 
-| Code stream | Responsibility | Current position |
-| --- | --- | --- |
-| **main** | Existing website/native integration baseline, including MD-2.65 UI updates | Hybrid Home code **not merged**; live deployed revision not established by this README |
-| **feature/md266-home-hybrid-segmentation-no-deploy** | Experimental Home image reconstruction and native tests | Three artwork controls PASS; Kingfisher source-identical native A/B and fabric sew-out **HOLD** |
+| Licensed fixture | PES / DST stitches (matching per format) | PES trims | Unresolved detail | Colour containment |
+| --- | ---: | ---: | ---: | --- |
+| Macaw | 13,031 | 98 | 1 | 0 outside-colour points/segments |
+| Butterfly | 14,348 | 205 | 39 | 0 outside-colour points/segments |
+| Rose | 11,623 | 68 | 0 | 0 outside-colour points/segments |
 
-**Do not infer that a GitHub commit or green CI workflow proves a Netlify deploy, Cloud Run traffic shift, safe sew-out, product release or paid-market readiness.**
+Reports: [Macaw](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326236) · [Butterfly and Rose](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439326194) · [Final offline regression](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41439467534).
 
-## Next engineering move
+These are genuine machine files but **not approved as safe or satisfactory on fabric**. The Kingfisher source-identical MD-2.64/MD-2.66 native comparison and controlled physical stitch-outs remain unverified. No sale/free-public-release quality claim is supported.
 
-Run the **owner's original private Kingfisher** through both MD-2.64 and MD-2.66 genuine native PES/DST at the same physical size. Compare actual decoded stitches and likeness of the eye, beak, feather groups, feet and foliage; measure trims, colour fidelity, unresolved details, density and source containment. Preserve the private source outside public GitHub. Then arrange controlled expert **physical sew-outs**. Only after those gates should a guarded worker/site rollout and a small Home beta be considered.
+## Main is not the same as live deployment
 
-## Non-negotiable controls
+**GitHub main source has been updated at owner request. Neither Netlify nor Google Cloud was deployed as part of this merge.** The last independently observed Netlify production deploy on 2 November 2026 ran source commit `3cd91d895b864f034528c0ee8f119e629f7ea794` (07:30 UTC), predating the current code. Current Cloud Run traffic/revision must be checked in the owner's Google Cloud account; historic 95/5 traffic documentation is not proof of the present state.
 
-- **No merge to main, Netlify deployment, Cloud Run build/traffic change, paid service, release or publication of private owner artwork without explicit authorisation.**
-- Native files remain **ENGINEERING-TRIAL-NOT-APPROVED** until physical testing and appropriate review.
-- Do not weaken source-containment, byte integrity, input limits, independent auditing or original-source privacy merely to pass CI.
-- Prefer standard ChatGPT, pinned open-source tooling and small reversible experiments. Commercial pricing/claims and Professional Detail are deferred until Home quality and demand are measured.
+The MD-2.66 feature branch remains available for provenance: [feature/md266-home-hybrid-segmentation-no-deploy](../../tree/feature/md266-home-hybrid-segmentation-no-deploy).
 
-**Full status, risks, test evidence and prioritized phase-by-phase acceptance gates: [Stitch Forge progress and roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md).**
+## Next hard gates before deploying the hybrid to users
+
+1. Trusted local private original Kingfisher PES/DST on MD-2.64 and MD-2.66 at identical physical size, comparing actual decoded stitches, eyes, beak, feathers, greenery, colour matching and trim/density.
+2. Address detail losses without creating fake source features or weakening independent audit; rerun macaw, butterfly and rose native CI.
+3. Expert, documented fabric stitch-outs on specified home machines and materials.
+4. Owner-approved 0%-traffic Cloud Run release candidate and confirmed Netlify site SHA, with rollback; then a small supervised Home beta. Professional Detail comes after Home quality is independently demonstrated.
+
+**No automatic deploy, traffic promotion, experimental Home activation, paid cloud build, public customer release or publication of private source art is authorised by the GitHub merge.** All outputs remain engineering trials until the above quality gates.
