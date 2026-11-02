@@ -7,7 +7,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'services'/'digitiser'))
-from hybrid_packet_bridge import prepare_verified_packet
+from hybrid_packet_bridge import prepare_verified_packet, prepare_native_input_candidate
 from artwork_packet import decode_packet
 
 
@@ -56,6 +56,17 @@ class HybridPacketBridgeTests(unittest.TestCase):
         self.assertNotIn('pesBase64',self.packet)
         self.assertNotIn('dstBase64',self.packet)
         self.assertEqual(self.proof['schema'],'stitch-forge-hybrid-worker-compatibility-v1')
+
+    def test_hybrid_source_geometry_builds_real_native_input_without_fake_pes(self):
+        svg, evidence=prepare_native_input_candidate(fixture(),colours=8)
+        self.assertTrue(svg.startswith(b'<?xml'))
+        self.assertIn(b'xmlns:inkstitch',svg)
+        self.assertGreater(evidence['nativePaths'],0)
+        self.assertTrue(evidence['nativeSvgInputGenerated'])
+        self.assertTrue(evidence['foregroundIndependentlyVerified'])
+        self.assertFalse(evidence['nativeFileGenerated'])
+        self.assertFalse(evidence['physicalQualityVerified'])
+        self.assertIn('HOLD',evidence['approval'])
 
 
 if __name__=='__main__':
