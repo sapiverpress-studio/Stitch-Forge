@@ -25,7 +25,7 @@ function page(owner='saved-owner-token'){
   querySelector(query){return query==='.workspace'?nodes.get('workspace'):query==='.note'?nodes.get('note'):nodes.get(query.slice(1));}
   getContext(){return {fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){strokes++;}};}
  }
- for(const id of ['main','workspace','note','sfAutoRun','importFile','sfAutoToken','sfAutoWorkflow','sfAutoDownload','sfNativeWidth'])new Element().id=id;
+ for(const id of ['main','workspace','note','sfAutoRun','importFile','sfAutoToken','sfAutoWorkflow','sfAutoDownload','sfAutoPES','sfAutoDST','sfAutoProductName','sfNativeWidth'])new Element().id=id;
  nodes.get('sfNativeWidth').value='80';
  nodes.get('sfAutoToken').value=owner;
  nodes.get('sfAutoWorkflow').value='native';
@@ -76,7 +76,7 @@ test('integration dispatches ready only after native validation; uses original a
  assert.match(native,/new CustomEvent\('stitchforge:native-ready'/);
  assert.match(native,/new CustomEvent\('stitchforge:native-error'/);
  assert.ok(native.indexOf("const result=await api.generate(packed")<native.indexOf("new CustomEvent('stitchforge:native-ready'"));
- assert.match(native,/saveBytes\(result\.bytes,'stitch-forge-artwork-TRIAL-NOT-APPROVED\.zip'/);
+ assert.match(native,/saveBytes\(result\.bytes,fileName\('zip'\)/);
  assert.match(html,/\/simple-workflow\.js/);
 });
 
@@ -93,4 +93,33 @@ test('simple width control is visible, synchronises into signed native workflow 
  invalid.get('sfQuickGenerate').click();
  assert.equal(invalid.get('sfAutoRun').clicks||0,0);
  assert.match(invalid.get('sfQuickStatus').textContent,/between 10 and 250 mm/);
+});
+
+test('product name is independent of input filename and exposes verified PES/DST',()=>{
+ const p=page();
+ p.get('importFile').files=[{name:'camera_887.png'}];
+ p.window.dispatch('stitchforge:image-imported');
+ p.get('sfQuickProductName').value='Kingfisher on Ivy';
+ p.get('sfQuickProductName').dispatchEvent({type:'input'});
+ assert.equal(p.get('sfAutoProductName').value,'Kingfisher on Ivy');
+ p.get('sfQuickGenerate').click();assert.equal(p.get('sfAutoRun').clicks,1);
+ p.window.dispatch('stitchforge:native-ready',{
+  preview:{widthMm:80,heightMm:60,palette:['#123456'],segments:[[1,2,3,4,0]]},
+  report:{decoded:[{format:'pes',needleStitches:1,colourChanges:0}]}
+ });
+ assert.equal(p.get('sfQuickPES').disabled,false);
+ assert.equal(p.get('sfQuickDST').disabled,false);
+ p.get('sfQuickPES').click();p.get('sfQuickDST').click();
+ assert.equal(p.get('sfAutoPES').clicks,1);
+ assert.equal(p.get('sfAutoDST').clicks,1);
+ p.window.dispatch('stitchforge:design-changed');
+ assert.equal(p.get('sfQuickPES').disabled,true);
+ assert.equal(p.get('sfQuickDST').disabled,true);
+});
+test('new logo and named ZIP helper load before the native editor',()=>{
+ assert.match(html,/src="\/assets\/sapiver-press-logo\.webp"/);
+ assert.match(html,/<img class="logo"/);
+ assert.match(html,/\/download-naming\.js" defer><\/script><script src="\/auto-reconstruct-ui\.js"/);
+ assert.match(native,/saveNativeMachineFile\('pes'\)/);
+ assert.match(native,/saveNativeMachineFile\('dst'\)/);
 });
