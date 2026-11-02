@@ -67,3 +67,65 @@ evaluated offline at 320 x 292, 80mm requested visible width.
   after cost and licensing assessment.
 - Keep Ink/Stitch GPL-3.0 licence obligations under review before
   distributing any combined software binary.
+
+## MD-2.66 continuation — native integration and source-grounded detail (2026-11-02)
+
+### Implemented, tested, on isolated feature branch
+- `source_detail_guard.py`: removes the earlier synthetic dark-disk painting;
+  makes at most 640 bounded colour changes, each backed by a closer
+  pre-existing palette colour at an actual source pixel. No synthetic
+  feature geometry and no additional thread colours.
+- `feature_edge_audit.py`: uses source Canny edges, working-colour
+  boundaries and one-pixel tolerance to detect loss of compact
+  contrasting features. A missing or low-recall candidate is **HOLD**;
+  this is not semantic eye recognition.
+- `hybrid_packet_bridge.py`: builds a deterministic hybrid source packet
+  and rechecks it using the original worker's independent
+  `artwork_packet.decode_packet` contract, including the complete original
+  alpha foreground, RGBA SHA-256, colour labels and request identity.
+- `prepare_native_input_candidate` invokes the existing
+  `artwork_trial.build_trial_svg` with the independent source ledger;
+  neither this offline operation nor its tests claims PES/DST.
+- Real Ink/Stitch 3.3.0 **synthetic artwork** native smoke test passed in
+  GitHub Actions run 41420850538, using the pinned official engine:
+  7 working colours, 8 connected working parts, 54 native paths,
+  8,297 independently decoded PES and DST stitches each,
+  89 PES trims, zero reported source-containment exceptions.
+  Machine file format checks pass; the files are not sewn-approved.
+- Tests under `md266-home-hybrid-tests.yml` verify deterministic
+  source binding, no synthetic dark circles, bounded source-supported
+  colour improvement, native SVG construction and feature-edge HOLD.
+
+### Actual supplied Kingfisher — still fails likeness gate
+- Offline nine-colour SLIC candidate: 120 components in original
+  prototype, strong overall shape silhouette and colour blocking.
+- Source-supported detail refinement (separate local comparison): 411
+  working pixels changed, ~149 colour components versus 126 in its
+  local baseline. These values concern an earlier local prototype
+  variant and **must not be represented as a matched build benchmark**.
+- Original Kingfisher image's strongest compact-dark region near the
+  eye had approximately 0.28 source-edge retention under the local
+  colour-preview analysis. That correctly activates HOLD. The eye
+  is visibly insufficiently distinct even though its source RGB values
+  remain available. This remains a blocking defect.
+
+### Next hard gates
+1. Improve automatic semantic-protected details for eye, beak, feet,
+   feather-group boundaries and foliage without inventing source shapes
+   or exceeding the Home palette/density budget.
+2. Run the real hybrid **Kingfisher** (not merely synthetic CI artwork)
+   through the full native PES/DST pipeline. User source stays private.
+3. Audit decoded stitch geometry, source colour similarity, trim count,
+   underlay/fill directions, machine sizes, and per-feature likeness
+   against source-identical MD-2.64.
+4. Obtain third-party home-machine sew-outs before describing the output
+   as commercially usable.
+5. Do not merge this branch into main or deploy the Cloud Run worker
+   until the above gates are met.
+
+### Deployment/cost constraints
+- No Google Cloud build, live traffic change, Netlify deploy, or Work
+  credit was used in this development continuation.
+- Only GitHub Actions isolated CI ran; it can consume GitHub Actions
+  minutes according to account billing.
+- The existing MD-2.64 worker at 100% and existing frontend are unchanged.
