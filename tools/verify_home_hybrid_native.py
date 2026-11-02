@@ -15,6 +15,8 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'services'/'digitiser'
 from artwork_packet import decode_packet
 from artwork_trial import run_trial
 from hybrid_packet_bridge import prepare_verified_packet
+from artwork_service import source_repair_candidates
+from repair_policy import choose_source_preserving_repair
 
 
 def synthetic_source():
@@ -53,6 +55,23 @@ def verify(engine, destination, *, fixture=None):
     if identity!=proof['requestId'] or not binding['foregroundIndependentlyVerified']:
         raise RuntimeError('Hybrid source binding invalid')
     report=run_trial(plan,engine,destination,timeout_seconds=165,partition_fills=True)
+    repair={'nativePasses':1,'sourcePreservingRepair':False,'repairMode':None,'repairObjectIds':[]}
+    if any(d['needlePointsOutsideWorkingColour'] or
+           d['needleSegmentsOutsideWorkingColour'] for d in report['decoded']):
+        # Exactly the same bounded attribution and repair selection already
+        # used by the production worker. No mask, palette or segment edits.
+        # An exception means HOLD; we must never weaken source containment.
+        (destination/'native-first-pass-containment-report.json').write_text(
+            json.dumps(report,indent=2)+'\n')
+        ids=source_repair_candidates(plan,report)
+        mode=choose_source_preserving_repair(plan,ids)
+        if mode not in {'sectioned_tatami','fill_preserving'}:
+            raise RuntimeError('Unsupported source repair method')
+        report=run_trial(plan,engine,destination,timeout_seconds=165,
+             partition_fills=True,section_overrides=ids if mode=='sectioned_tatami' else (),
+             fill_repair_overrides=ids if mode=='fill_preserving' else ())
+        repair={'nativePasses':2,'sourcePreservingRepair':True,
+                'repairMode':mode,'repairObjectIds':ids}
     if (report['machineEligible'] is not False or report['physicalQualityVerified'] is not False
             or len(report['decoded']) != 2
             or {d['format'] for d in report['decoded']} != {'pes','dst'}
@@ -72,6 +91,7 @@ def verify(engine, destination, *, fixture=None):
         'sourceArtworkClass':'CC0-vector-origin-raster' if fixture else 'generated-synthetic','inputPacketRequestId':identity,
         'sourceForegroundVerified':True,'homePaletteColours':proof['threadColourCount'],
         'sourceWorkingParts':plan['summary']['workingParts'],
+        'nativeRepair':repair,
         'nativePathCount':report['nativePaths'],
         'stitches':{d['format']:d['needleStitches'] for d in report['decoded']},
         'trims':{d['format']:d['trims'] for d in report['decoded']},
