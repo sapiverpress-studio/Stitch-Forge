@@ -1,0 +1,66 @@
+name: MD-2.72 curved tapered source satin native A-B (NO DEPLOY)
+on:
+  push:
+    branches: [feature/md272-curved-tapered-source-satin-no-deploy]
+    paths:
+      - ".github/workflows/md272-curved-satin-no-deploy.yml"
+      - "services/digitiser/auto_curved_satin_object.py"
+      - "services/digitiser/artwork_trial.py"
+      - "tests/test_auto_curved_satin_object.py"
+      - "tools/bench_md272_curved_satin.py"
+      - "tools/bench_md272_licensed_curved.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-geometry-and-native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install verified existing native requirements
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Validate source geometry and existing native fill/straight-satin invariants
+        run: |
+          python -m compileall -q services/digitiser/auto_curved_satin_object.py services/digitiser/artwork_trial.py tools/bench_md272_curved_satin.py
+          python -m unittest discover -s tests -p test_auto_curved_satin_object.py -v
+          python -m unittest discover -s tests -p test_auto_satin_object.py -v
+          python -m unittest discover -s tests -p test_native_fill_precision.py -v
+          python -m unittest discover -s tests -p test_original_png_transport.py -v
+      - name: Install exact checksum-verified Ink/Stitch 3.3.0
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Generate source-identical real PES/DST curves and verify actual decoded needles
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md272-control"
+          xvfb-run -a python tools/bench_md272_curved_satin.py --engine "$ENGINE" --output "$RUNNER_TEMP/md272-control"
+          test -s "$RUNNER_TEMP/md272-control/md272-curved-satin-AB-NOT-APPROVED.json"
+      - name: Recheck complete licensed source-bound macaw and rose PES/DST phases
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md272-licensed"
+          xvfb-run -a python tools/bench_md272_licensed_curved.py --engine "$ENGINE" --output "$RUNNER_TEMP/md272-licensed"
+          test -s "$RUNNER_TEMP/md272-licensed/md272-licensed-curved-AB-NOT-APPROVED.json"
+      - name: Save report-only CI evidence (no user-private image)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md272-real-native-curved-PES-DST-AUDITS-NOT-APPROVED
+          path: |
+            ${{ runner.temp }}/md272-control/md272-curved-satin-AB-NOT-APPROVED.json
+            ${{ runner.temp }}/md272-licensed/md272-licensed-curved-AB-NOT-APPROVED.json
+          if-no-files-found: ignore
+          retention-days: 4
+      - name: Confirm no production release
+        run: |
+          echo "Offline native tests only. No Netlify or Cloud Run build, deploy or traffic modification."
