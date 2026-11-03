@@ -32,7 +32,7 @@ def compare(engine, folder, fixture):
             'variant':label,'fullHighResolutionTrial':hires,
             'sourceRequestId':result['sourceRequestId'],
             'sourceWorkingSha256':report['source']['sha256'],
-            'originalSourceSha256':source['sourceToReducedMeanAbsoluteRgb'],
+            'sourceToReducedMeanAbsoluteRgb':source['sourceToReducedMeanAbsoluteRgb'],
             'sourcePixelDimensions':source['originalPixelDimensionsVerified'],
             'workingSourceDimensions':[report['source']['width'],report['source']['height']],
             'meanSourceToPaletteRGB':source['sourceMeanRgbDistance'],
