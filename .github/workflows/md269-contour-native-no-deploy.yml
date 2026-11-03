@@ -1,0 +1,59 @@
+name: MD-2.69 real native contour-vs-tatami A-B (NO DEPLOY)
+on:
+  push:
+    branches: [feature/md269-fullsource-feature-gates-no-deploy]
+    paths:
+      - "services/digitiser/artwork_trial.py"
+      - "tools/bench_md269_contour.py"
+      - ".github/workflows/md269-contour-native-no-deploy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-ab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [synthetic, macaw, butterfly, rose]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned local native test requirements
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Compile and ensure default worker regressions unchanged
+        run: |
+          python -m compileall -q services/digitiser tools/bench_md269_contour.py
+          python -m unittest discover -s tests -p test_home_live_bridge.py -v
+          python -m unittest discover -s tests -p test_native_fill_precision.py -v
+      - name: Install checksum-verified Ink/Stitch engine
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Generate and independently audit real PES/DST under both fill families
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md269-contour"
+          xvfb-run -a python tools/bench_md269_contour.py --engine "$ENGINE" --fixture "${{ matrix.fixture }}" --output "$RUNNER_TEMP/md269-contour"
+          test -s "$RUNNER_TEMP/md269-contour/contour-AB-NOT-APPROVED.json"
+      - name: Publish evidence only, never private artwork or machine products
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md269-${{ matrix.fixture }}-contour-AB-REPORTS-NOT-APPROVED
+          path: |
+            ${{ runner.temp }}/md269-contour/contour-AB-NOT-APPROVED.json
+            ${{ runner.temp }}/md269-contour/*/md267-worker-native-verification.json
+            ${{ runner.temp }}/md269-contour/*/md267-machine-report-NOT-APPROVED.json
+          retention-days: 4
+          if-no-files-found: ignore
+      - name: Confirm this CI cannot deploy
+        run: |
+          echo "Offline Ink/Stitch validation ONLY. No Netlify or Google Cloud changes."
