@@ -86,6 +86,16 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         raise ValueError("Hybrid reconstruction changed original source foreground")
     if np.any(native_labels[mask] > len(palette)):
         raise ValueError("Hybrid produced an unknown thread colour")
+    palette_refit_evidence={'trialEnabled':False,'selectedByErrorAndPaletteGuard':False}
+    if (os.environ.get('STITCH_FORGE_SOURCE_PALETTE_REFIT_TRIAL','0')=='1'
+            and 'originalPngBase64' in packet
+            and original_binding.get('originalSourceSha256Verified') is True):
+        from source_palette_refit import refit_palette_from_original
+        raw=base64.b64decode(packet['originalPngBase64'],validate=True)
+        with Image.open(BytesIO(raw)) as source_png:
+            rgba_full=np.asarray(source_png.convert('RGBA'),dtype=np.uint8)
+        palette,palette_refit_evidence=refit_palette_from_original(
+            rgba_full,original,native_labels,palette)
     # The browser and native code require sorted, unique, used palette colours.
     # A reduced palette cannot silently create a 13th machine colour.
     used = sorted(int(i) for i in np.unique(native_labels[mask]))
@@ -139,6 +149,7 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         "highResolutionSourcePlanTrial": trial_source_dimensions is not None,
         "sourceFullResolutionDimensionsForPlan": trial_source_dimensions,
         "sourceOriginalWorkingMaskUnchanged": True,
+        "sourcePaletteRefit": palette_refit_evidence,
         "nativeCanvasWidth": w,
         "nativeCanvasHeight": h,
         "sourceMeanRgbDistance": float(np.mean(distance)),
