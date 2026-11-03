@@ -1,0 +1,56 @@
+name: MD-2.71 physical-source straight satin native A-B (NO DEPLOY)
+on:
+  push:
+    branches: [feature/md271-physical-satin-object-trial-no-deploy]
+    paths:
+      - ".github/workflows/md271-source-satin-native-no-deploy.yml"
+      - "services/digitiser/auto_satin_object.py"
+      - "services/digitiser/artwork_trial.py"
+      - "tests/test_auto_satin_object.py"
+      - "tools/bench_md271_source_satin.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-and-audit-real-satin:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing trusted native dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Prove original mask is preserved and unsuitable shapes refused
+        run: |
+          python -m compileall -q services/digitiser/auto_satin_object.py services/digitiser/artwork_trial.py
+          python -m unittest discover -s tests -p test_auto_satin_object.py -v
+          python -m unittest discover -s tests -p test_native_fill_precision.py -v
+          python -m unittest discover -s tests -p test_original_png_transport.py -v
+      - name: Install SHA-verified Ink/Stitch 3.3.0
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Real Ink/Stitch PES6 and DST two-method comparison
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md271"
+          xvfb-run -a python tools/bench_md271_source_satin.py --engine "$ENGINE" --output "$RUNNER_TEMP/md271"
+          test -s "$RUNNER_TEMP/md271/md271-satin-native-AB-NOT-APPROVED.json"
+      - name: Retain derived public synthetic audit only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md271-satin-native-source-audit-NOT-APPROVED
+          path: |
+            ${{ runner.temp }}/md271/md271-satin-native-AB-NOT-APPROVED.json
+            ${{ runner.temp }}/md271/*/machine-report.json
+          retention-days: 3
+          if-no-files-found: ignore
+      - name: No customer release or live change
+        run: echo "Offline source geometry acceptance only; no Netlify/Google Cloud deployment."
