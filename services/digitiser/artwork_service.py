@@ -151,6 +151,14 @@ def export_one(svg,directory,executable,fmt):
 
 def process_phase(obj,*,executable,secret,epoch=None):
     plan,meta,identity,evidence=decode_packet(obj)
+    hybrid_profile=None
+    if os.environ.get("STITCH_FORGE_HOME_HYBRID_ENABLED","0")=="1":
+        # The browser supplies a source-verified pixel packet. The private
+        # worker reconstructs the actual Home plan from those SAME bytes,
+        # retaining browser-visible request/source/physical identity.
+        from home_live_bridge import derive_hybrid_plan
+        plan,evidence,hybrid_profile=derive_hybrid_plan(
+            obj,plan,meta,identity,evidence)
     plan,svg=prepared(plan,meta['texturePolicy']);now=int(time.time() if epoch is None else epoch)
     overrides=repair_objects(obj.get('repairReceipt'),identity,secret,now)
     # Legacy signed receipts remain readable for an in-flight request; new
@@ -198,6 +206,10 @@ def process_phase(obj,*,executable,secret,epoch=None):
             return {'status':'BOUNDED_NATIVE_REPAIR_REQUIRED','requestId':identity,'repairReceipt':receipt}
         report.update(requestId=identity,sourceBinding=evidence,nativePasses=2 if overrides else 1,maxNativePasses=2,
             nativeInputSha256=sha256(svg).hexdigest(),workflow='TWO_NATIVE_PHASES_NO_AI',machineEligible=False)
+        if hybrid_profile is not None:
+            report['homeHybrid']=hybrid_profile
+            if 'home_hybrid_likeness_unverified' not in report['blockers']:
+                report['blockers'].append('home_hybrid_likeness_unverified')
         preview=json.loads((Path(tmp)/'decoded-preview.json').read_text());preview['requestId']=identity
         readme=('STITCH FORGE — ENGINEERING TRIAL, NOT MACHINE APPROVED\n\n'
             'Actual native Ink/Stitch PES6 and DST, independently decoded and checked against prepared source colours.\n'
