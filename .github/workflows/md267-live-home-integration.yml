@@ -10,6 +10,7 @@ on:
       - "services/digitiser/artwork_trial.py"
       - "tests/test_home_live_bridge.py"
       - "tools/verify_live_home_hybrid.py"
+      - "tools/deploy_md267_one_release.sh"
       - ".github/workflows/md267-live-home-integration.yml"
   workflow_dispatch:
 permissions:
@@ -37,6 +38,11 @@ jobs:
           python -m unittest discover -s tests -p test_home_hybrid.py -v
           python -m unittest discover -s tests -p test_hybrid_packet_bridge.py -v
           python -m unittest discover -s tests -p test_native_fill_precision.py -v
+      - name: Validate the single-build release helper without executing it
+        run: |
+          bash -n tools/deploy_md267_one_release.sh
+          grep -q -- "--no-traffic" tools/deploy_md267_one_release.sh
+          grep -q -- "--to-revisions" tools/deploy_md267_one_release.sh
       - name: Install SHA-verified Ink/Stitch 3.3.0
         run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
       - name: Run the current website's browser packet through BOTH real native worker phases
