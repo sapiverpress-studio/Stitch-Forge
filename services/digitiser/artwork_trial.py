@@ -32,6 +32,7 @@ from native_tatami_decomposition import decompose_tatami
 from inkstitch_cli import export_trusted_svg, _run_engine, DigitiserError
 from format_audit import audit_zip
 from auto_satin_object import propose_straight_satin
+from auto_curved_satin_object import propose_curved_satin
 from satin_native import validate_column
 
 INK = '{http://inkstitch.org/namespace}'
@@ -369,8 +370,8 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
     ET.SubElement(root, 'use', {'{http://www.w3.org/1999/xlink}href':'#inkstitch_origin',
         'x':f'{width/2:.6f}', 'y':f'{height/2:.6f}'})
     records, path_count, total_vertices = [], 0, 0
-    underlay_count=0;running_branches=0;routed_walks=0;auto_satin_count=0
-    fill_pieces=[];repaired=[];satin_objects=[]
+    underlay_count=0;running_branches=0;routed_walks=0;auto_satin_count=0;curved_satin_count=0
+    fill_pieces=[];repaired=[];satin_objects=[];curved_satin_objects=[]
     def add_path(color, points, closed=False, holes=(),angle=0,underlay=False,underpath=True):
         nonlocal path_count, total_vertices,underlay_count
         if partition_fills and not closed:points=without_collinear_steps(points)
@@ -438,18 +439,31 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
             record = {'id':identity,'color':color,'pixels':component['pixelArea'],'areaMm2':area,'nativePaths':0}
             previous = path_count
             satin_choice=None
-            if (partition_fills and area>=12 and auto_satin_count<35
-                    and os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1'
-                    and not allowed):
-                satin_choice=propose_straight_satin(component,scale,color)
+            satin_family=None
+            if (partition_fills and area>=12 and
+                    auto_satin_count+curved_satin_count<35 and not allowed):
+                if os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1':
+                    satin_choice=propose_straight_satin(component,scale,color)
+                    if satin_choice is not None:
+                        satin_family='source_verified_straight_satin'
+                if (satin_choice is None and
+                        os.environ.get('STITCH_FORGE_CURVED_SATIN_TRIAL','0')=='1'):
+                    satin_choice=propose_curved_satin(component,scale,color)
+                    if satin_choice is not None:
+                        satin_family='source_verified_curved_tapered_satin'
             if satin_choice is not None:
                 column,source_evidence=satin_choice
                 add_satin(column)
-                auto_satin_count+=1
-                satin_objects.append({'sourceObjectId':identity,
-                    'nativePathId':f'artwork-{path_count}',**source_evidence})
+                if satin_family=='source_verified_curved_tapered_satin':
+                    curved_satin_count+=1
+                    curved_satin_objects.append({'sourceObjectId':identity,
+                        'nativePathId':f'artwork-{path_count}',**source_evidence})
+                else:
+                    auto_satin_count+=1
+                    satin_objects.append({'sourceObjectId':identity,
+                        'nativePathId':f'artwork-{path_count}',**source_evidence})
                 record.update(action='native_satin_trial',
-                              stitchFamily='source_verified_straight_satin',
+                              stitchFamily=satin_family,
                               geometricRailsStrictlyInsideSource=True,
                               sourceSemanticFeatureRecognised=False)
             elif area < .025:
@@ -591,6 +605,15 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
             'actualNativeExportAndSourceContainmentRequired':True,
             'physicalSewoutVerified':False,
             'objects':satin_objects},
+        'sourceCurvedSatinTrial':{
+            'enabled':os.environ.get('STITCH_FORGE_CURVED_SATIN_TRIAL','0')=='1',
+            'acceptedObjects':curved_satin_count,
+            'sourceGeometryChanged':False,
+            'sourcePaletteChanged':False,
+            'semanticFeatherIdentificationVerified':False,
+            'actualNativeExportAndSourceContainmentRequired':True,
+            'physicalSewoutVerified':False,
+            'objects':curved_satin_objects},
         'regionConsolidation':{'method':'connected_skeleton_edge_walk_and_same_colour_nearest_centre',
             'originalRunningBranches':running_branches,'connectedRunningWalks':routed_walks,
             'colourPixelsReassigned':0,'sourceGeometryChanged':False,
@@ -791,7 +814,8 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
         'stitchPlanning':{'settings':manifest['settings'],
             'nativeFillUnderlayAudit':manifest['underlayAudit'],
             'sourceSatinTrial':manifest['sourceSatinTrial'],
-            'families':'native_fill_source_skeleton_running_and_optin_source_satin' if manifest['sourceSatinTrial']['acceptedObjects'] else 'native_fill_and_source_skeleton_running',
+            'sourceCurvedSatinTrial':manifest['sourceCurvedSatinTrial'],
+            'families':'native_fill_source_skeleton_running_and_optin_curved_satin' if manifest['sourceCurvedSatinTrial']['acceptedObjects'] else 'native_fill_source_skeleton_running_and_optin_source_satin' if manifest['sourceSatinTrial']['acceptedObjects'] else 'native_fill_and_source_skeleton_running',
             'semanticStitchIntentVerified':False},
         'detailedArtworkBenchmarkVerified':False,
         'releaseEvidenceScope':'source_bound_machine_file_only_not_sewn',
