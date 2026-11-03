@@ -31,7 +31,7 @@ jobs:
           python-version: "3.12"
       - name: Install existing Node and Python dependencies
         run: |
-          npm ci --ignore-scripts
+          npm install --ignore-scripts --no-audit --no-fund
           python -m pip install -r services/digitiser/requirements-artwork-trial.txt
       - name: Test original JPEG/PNG browser script syntax, SHA identity and envelope
         run: |
