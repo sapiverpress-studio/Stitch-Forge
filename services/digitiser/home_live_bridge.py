@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
+import os
 import numpy as np
 from PIL import Image
 
@@ -94,6 +95,16 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         + bytes(remapped.ravel()) + "|".join(sorted_colours).encode("ascii")
     ).hexdigest()
     new_plan["machineEligible"] = False
+    # Source-led optical fill angle is a separate, opt-in engineering hypothesis.
+    # Do not turn it on in production just by merging source. It can change
+    # needle routes and must pass independently audited genuine PES/DST A/B.
+    direction_proposals={}
+    if os.environ.get("STITCH_FORGE_OPTICAL_FILL_DIRECTION","0")=="1":
+        from source_stitch_orientation import texture_fill_candidates
+        scale_mm=new_plan["physical"]["scaleMmPerPixel"]
+        direction_proposals=texture_fill_candidates(
+            original,remapped,sorted_colours,mm_per_pixel=scale_mm)
+        new_plan["sourceTextureFillCandidates"]=direction_proposals
     palette_rgb = np.asarray(
         [[int(c[k:k+2], 16) for k in (1, 3, 5)] for c in sorted_colours], dtype=float)
     original_rgb = original[:, :, :3][mask].astype(float)
@@ -123,5 +134,9 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         "unresolvedSemanticDetail": True,
         "physicalSewoutVerified": False,
         "machineApproved": False,
+        "sourceTextureFillDirectionTrialEnabled": os.environ.get(
+            "STITCH_FORGE_OPTICAL_FILL_DIRECTION","0")=="1",
+        "sourceTextureFillCandidates": len(direction_proposals),
+        "sourceTextureFillDirectionsPhysicallyValidated": False,
     }
     return new_plan, binding, info
