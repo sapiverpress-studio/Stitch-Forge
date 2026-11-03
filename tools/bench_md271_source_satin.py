@@ -56,6 +56,7 @@ def compare(engine,out):
     root=Path(out);root.mkdir(parents=True,exist_ok=True)
     plan=synthetic_source_plan()
     findings=[]
+    bar_paths=[]
     for kind,enabled in [('tatami',False),('bounded_satin',True)]:
         os.environ['STITCH_FORGE_AUTO_SATIN_TRIAL']='1' if enabled else '0'
         os.environ['STITCH_FORGE_CONTOUR_FILL_TRIAL']='0'
@@ -68,6 +69,19 @@ def compare(engine,out):
             raise RuntimeError('No real source colour object was converted to satin')
         if not enabled and audit['acceptedObjects']!=0:
             raise RuntimeError('Baseline accidentally contains source satin')
+        preview=json.loads((dest/'decoded-preview.json').read_text())
+        bar=[]
+        for ax,ay,bx,by,index in preview['segments']:
+            if (index!=0 or not 8<=(ax+bx)/2<=32
+                    or not 14<=(ay+by)/2<=16.6):
+                continue
+            dx,dy=bx-ax,by-ay
+            length=(dx*dx+dy*dy)**.5
+            if length>.25:bar.append((round(dx,4),round(dy,4)))
+        if len(bar)<6:
+            raise RuntimeError('Cannot attribute enough REAL decoded needles to satin candidate')
+        bar_paths.append(bar)
+        transverse=sum(abs(dy)>1.5*abs(dx) for dx,dy in bar)/len(bar)
         formats={x['format']:x for x in report['decoded']}
         if set(formats)!={'pes','dst'} or any(
             v['needlePointsOutsideWorkingColour'] or
@@ -81,6 +95,8 @@ def compare(engine,out):
             'physicalWidthMm':plan['physical']['imageWidthMm'],
             'nativePaths':report['nativePaths'],
             'nativeSatinObjects':audit['acceptedObjects'],
+            'barNeedleMoves':len(bar),
+            'barTransverseMoveFraction':round(transverse,4),
             'pesNeedles':formats['pes']['needleStitches'],
             'pesTrims':formats['pes']['trims'],
             'pesJumps':formats['pes']['jumps'],
@@ -93,10 +109,18 @@ def compare(engine,out):
     a,b=findings
     if a['originalSourceSha256']!=b['originalSourceSha256'] or a['sourceParts']!=b['sourceParts']:
         raise RuntimeError('Comparison changed original source geometry')
+    if bar_paths[0]==bar_paths[1]:
+        raise RuntimeError('Satin intent was ignored: actual decoded needle paths did not change')
+    # A real satin object must produce more CROSS-WIDTH movement than the
+    # longitudinal Tatami fill it replaced, not just different trim metadata.
+    if b['barTransverseMoveFraction']<=a['barTransverseMoveFraction']+.15:
+        raise RuntimeError('Satin candidate did not change actual stitch direction as intended')
     result={'schema':'stitch-forge-md271-source-satin-real-PES-DST-ab',
             'result':'REAL_NATIVE_SOURCE_AUDITED_NOT_SEWOUT_APPROVED',
             'testIllustration':'synthetic-straight-colour-bar-and-ellipse',
             'comparison':findings,'nativeSourceContainmentPassed':True,
+            'decodedNeedlePathReallyChanged':True,
+            'actualBarTransverseStitchDirectionGatePassed':True,
             'sourceSemanticsVerified':False,'physicalSewoutVerified':False,
             'recommendsProductionDeployment':False}
     (root/'md271-satin-native-AB-NOT-APPROVED.json').write_text(json.dumps(result,indent=2)+'\n')
