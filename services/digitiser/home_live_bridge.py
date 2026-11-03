@@ -11,7 +11,10 @@ deployment, source upload outside the existing private worker, or product approv
 from __future__ import annotations
 
 from hashlib import sha256
+from io import BytesIO
+import base64
 import json
+import os
 import numpy as np
 from PIL import Image
 
@@ -49,6 +52,22 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
     # resolution. Working masks are then reconciled to *all* original pixels.
     reduced, palette, evidence = reconstruct(analysis, colours=9, max_side=320,
                                             design_width_mm=80)
+    trial_source_dimensions=None
+    if (os.environ.get('STITCH_FORGE_HIGH_RES_PLAN_TRIAL','0')=='1'
+            and 'originalPngBase64' in packet
+            and original_binding.get('originalSourceSha256Verified') is True):
+        # Explicit offline A/B only. The original PNG was independently
+        # verified by decode_packet before we use its source pixels here.
+        raw=base64.b64decode(packet['originalPngBase64'],validate=True)
+        with Image.open(BytesIO(raw)) as original_png:
+            full=original_png.convert('RGBA')
+            trial_source_dimensions=list(full.size)
+        # This tests whether high-resolution source segmentation survives
+        # quantisation to the existing *unchanged* native source frame.
+        # It is NOT an assertion that the result looks better on fabric.
+        reduced,palette,evidence=reconstruct(
+            full,colours=9,max_side=640,superpixels=920,
+            design_width_mm=float(original_plan['physical']['imageWidthMm']))
     if not evidence["foregroundPreserved"]:
         raise ValueError("Hybrid candidate changed its analysis foreground")
     native_labels = np.asarray(Image.fromarray(reduced, "L").resize(
@@ -117,6 +136,9 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         "hybridWorkingParts": components,
         "hybridThreadColours": len(sorted_colours),
         "analysisLongestSide": max(reduced.shape),
+        "highResolutionSourcePlanTrial": trial_source_dimensions is not None,
+        "sourceFullResolutionDimensionsForPlan": trial_source_dimensions,
+        "sourceOriginalWorkingMaskUnchanged": True,
         "nativeCanvasWidth": w,
         "nativeCanvasHeight": h,
         "sourceMeanRgbDistance": float(np.mean(distance)),
