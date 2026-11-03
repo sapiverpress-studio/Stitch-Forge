@@ -42,3 +42,22 @@ New isolated source module: `services/digitiser/full_source_flow.py`, with tests
 This work proves a useful component of the alternative architecture, **not the target product**. It is intentionally isolated on `feature/md269-fullsource-feature-gates-no-deploy`. No main code, Netlify, Cloud Run worker/traffic, commercial pricing or machine-safety claim was changed. If the source-aware guides cannot be connected to real stitch planning and yield a verified aesthetic improvement, stop rather than continue promising a finished digitiser.
 
 **Owner objective unchanged:** A user supplies one PNG and gets back machine-ready, visually faithful embroidery automatically, with no customer-side or human correction. That full outcome is still **unproven**.
+
+## 3 November 2026 — Real native contour-fill selection experiment
+
+**Evidence:** [MD-2.69 real Ink/Stitch contour-versus-Tatami A/B CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41607482002). Real two-format native exports were attempted on four synthetic or licensed examples with identical source bytes, dimensions, colour plans and independently audited decoded stitch paths.
+
+An opt-in, source-mask-preserving contour family selector was added only on this isolated feature branch (flag `STITCH_FORGE_CONTOUR_FILL_TRIAL=1`), alongside `tools/bench_md269_contour.py` and its no-deploy CI workflow. The selector targets broad elongated components and otherwise retains existing Tatami fills. **Production's default remains Tatami.**
+
+| Real native fixture | Baseline PES stitches | Contour PES stitches | Baseline→contour PES trims | Native verdict |
+| --- | ---: | ---: | --- | --- |
+| Synthetic bird | 7,680 | 8,938 | 83→83 | PASS source containment, no routing benefit |
+| Rose | 11,217 | 16,725 | 68→68 | PASS source containment, excessive additional stitches |
+| Macaw | Baseline generated | No final approved contour output | Not comparable | FAIL independent decoded source containment |
+| Butterfly | Baseline generated | No final approved contour output | Not comparable | FAIL independent decoded source containment |
+
+**Decision:** REJECT experimental contour conversion as a generic upgrade. The failures were correctly stopped by the original strict audit, and the successful examples did not reduce trims. We did not and will not weaken the source-colour tolerance to manufacture a passing result. This test does **not** validate the user's private Kingfisher: no private source was uploaded to GitHub.
+
+**Actual new working capability:** The full-source analysis module reads and fingerprints the untouched original PNG and derives bounded local orientation observations (201 on the private Kingfisher at 80mm) without inventing semantic features. This is one prerequisite for real source-guided digitisation, but it is **not** connected to the browser, native stitch generator or any live service. Accurate model-based source-object segmentation, source-authenticated full-resolution transfer, controlled layered stitch planning and real sew-out quality remain unimplemented.
+
+**Release position:** Keep `main` and all live Netlify/Cloud Run revisions unchanged. No more costs or deployments based on this experiment. Do not claim the user has received a visually better Kingfisher PES/DST.
