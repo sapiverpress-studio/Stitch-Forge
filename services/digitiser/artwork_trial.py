@@ -367,10 +367,10 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
     ET.SubElement(root, 'use', {'{http://www.w3.org/1999/xlink}href':'#inkstitch_origin',
         'x':f'{width/2:.6f}', 'y':f'{height/2:.6f}'})
     records, path_count, total_vertices = [], 0, 0
-    underlay_count=0;running_branches=0;routed_walks=0
+    underlay_count=0;running_branches=0;routed_walks=0;contour_count=0
     fill_pieces=[];repaired=[]
-    def add_path(color, points, closed=False, holes=(),angle=0,underlay=False,underpath=True):
-        nonlocal path_count, total_vertices,underlay_count
+    def add_path(color, points, closed=False, holes=(),angle=0,underlay=False,underpath=True,contour=False):
+        nonlocal path_count, total_vertices,underlay_count,contour_count
         if partition_fills and not closed:points=without_collinear_steps(points)
         total_vertices += len(points)+sum(map(len, holes))
         path_count += 1
@@ -384,7 +384,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
             INK+'lock_start':'back_forth', INK+'lock_end':'back_forth',
             INK+'lock_start_scale_mm':'0.2', INK+'lock_end_scale_mm':'0.2'}
         if closed:
-            attrs.update({'fill':color, 'fill-rule':'evenodd','stroke':'none', INK+'fill_method':'tatami_fill',
+            attrs.update({'fill':color, 'fill-rule':'evenodd','stroke':'none', INK+'fill_method':'contour_fill' if contour else 'tatami_fill',
                 INK+'angle':str(angle), INK+'row_spacing_mm':'0.5', INK+'max_stitch_length_mm':'3.5',
                 INK+'fill_underlay':'true' if underlay else 'false',
                 INK+'fill_underlay_angle':str((angle+90)%180),
@@ -395,6 +395,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                 INK+'underpath':'true' if underpath else 'false', INK+'pull_compensation_mm':'0',
                 INK+'pull_compensation_percent':'0', INK+'expand_mm':'0'})
             if underlay:underlay_count+=1
+            if contour:contour_count+=1
             attrs['d'] += ''.join(' '+commands(ring)+' Z' for ring in holes)
             if partition_fills:
                 safe_path=safe_native_svg_fill_path(points,holes,scale,precision)
@@ -488,11 +489,17 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                             # silently downgrading it to a running skeleton.
                             fill_repair=piece_id in fill_repair_overrides
                             use_underlay=fill_underlay_eligible(piece,scale) and not fill_repair
+                            use_contour=(partition_fills and not fill_repair
+                                and os.environ.get('STITCH_FORGE_CONTOUR_FILL_TRIAL','0')=='1'
+                                and directional and not piece.interiors
+                                and 8<=piece.area*scale*scale<=120
+                                and fill_underlay_eligible(piece,scale))
                             add_path(color,list(piece.exterior.coords)[:-1],True,
                                 [list(r.coords)[:-1] for r in piece.interiors],angle,
-                                use_underlay,underpath=not fill_repair)
+                                use_underlay,underpath=not fill_repair,contour=use_contour)
                             fill_pieces.append({**entry,'nativePathId':'artwork-'+str(path_count),
-                                                'fillUnderlay':use_underlay})
+                                                'fillUnderlay':use_underlay,
+                                                'fillFamily':'contour' if use_contour else 'tatami'})
                             if fill_repair:
                                 repaired.append({**entry,'repairStrategy':'tatami_no_underlay_or_underpath',
                                                  'preservedFill':True})
@@ -549,6 +556,9 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         'source':plan['source'],'sourcePlanSignature':plan['sourcePlanSignature'],'scaleMmPerPixel':scale,
         'originMm':[width/2,height/2],'widthMm':width,'heightMm':height,'objects':records,'nativePaths':actual_elements,'nativeCandidatePaths':path_count,
         'nativeFillPieces':fill_pieces,'nativeRepairObjects':repaired,
+        'sourceContourFillTrial':{'enabled':os.environ.get('STITCH_FORGE_CONTOUR_FILL_TRIAL','0')=='1',
+                                 'selectedFillPaths':contour_count,'sourceRegionsUnchanged':True,
+                                 'actualNativeAcceptanceRequired':True,'physicalQualityVerified':False},
         'regionConsolidation':{'method':'connected_skeleton_edge_walk_and_same_colour_nearest_centre',
             'originalRunningBranches':running_branches,'connectedRunningWalks':routed_walks,
             'colourPixelsReassigned':0,'sourceGeometryChanged':False,
@@ -748,6 +758,7 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
         'nativeRepairObjects':manifest.get('nativeRepairObjects',[]),
         'stitchPlanning':{'settings':manifest['settings'],
             'nativeFillUnderlayAudit':manifest['underlayAudit'],
+            'sourceContourFillTrial':manifest['sourceContourFillTrial'],
             'families':'native_fill_and_source_skeleton_running','semanticStitchIntentVerified':False},
         'detailedArtworkBenchmarkVerified':False,
         'releaseEvidenceScope':'source_bound_machine_file_only_not_sewn',
