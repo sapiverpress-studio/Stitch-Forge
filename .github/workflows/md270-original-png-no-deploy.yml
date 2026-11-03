@@ -13,6 +13,8 @@ on:
       - "tests/test_original_png_transport.py"
       - "tests/test_original_png_transport.cjs"
       - "tools/verify_live_home_hybrid.py"
+      - "tools/bench_md270_highres.py"
+      - "services/digitiser/home_live_bridge.py"
   workflow_dispatch:
 permissions:
   contents: read
@@ -53,25 +55,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
           python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
-      - name: Run two native source-bound V2 acceptance trials on public-licensed artwork
+      - name: Run source-identical V2 coarse versus full-resolution native PES/DST A/B
         run: |
           set -euo pipefail
           ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
           for fixture in macaw rose; do
             mkdir -p "$RUNNER_TEMP/md270-$fixture"
-            xvfb-run -a python tools/verify_live_home_hybrid.py \
-              --engine "$ENGINE" --fixture "$fixture" --full-original \
+            xvfb-run -a python tools/bench_md270_highres.py \
+              --engine "$ENGINE" --fixture "$fixture" \
               --output "$RUNNER_TEMP/md270-$fixture"
-            test -s "$RUNNER_TEMP/md270-$fixture/md267-worker-native-verification.json"
+            test -s "$RUNNER_TEMP/md270-$fixture/md270-highres-native-ab-NOT-APPROVED.json"
           done
-      - name: Publish only the source-binding native audit summaries, not images
+      - name: Publish source-bound native audit summaries only (NO ORIGINAL PNGS)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: md270-original-png-native-AUDIT-NOT-APPROVED
+          name: md270-original-png-highres-AB-REPORTS-ONLY
           path: |
-            ${{ runner.temp }}/md270-*/md267-worker-native-verification.json
-            ${{ runner.temp }}/md270-*/md267-machine-report-NOT-APPROVED.json
+            ${{ runner.temp }}/md270-*/md270-highres-native-ab-NOT-APPROVED.json
+            ${{ runner.temp }}/md270-*/*/md267-worker-native-verification.json
+            ${{ runner.temp }}/md270-*/*/md267-machine-report-NOT-APPROVED.json
           if-no-files-found: ignore
           retention-days: 3
       - name: No customer output or deployment
