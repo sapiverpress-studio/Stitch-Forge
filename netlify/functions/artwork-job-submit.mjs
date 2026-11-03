@@ -10,8 +10,9 @@ export function createSubmit({jobs=getJobs,dispatch=(...args)=>fetch(...args),en
   try{body=await bodyText(request);if(!validPacket(body))return json(422,{error:'Invalid bounded native artwork packet'});}
   catch{return json(413,{error:'Artwork exceeds submission budget'});}
   const id=generateId(),createdAt=now();
+  let store=null;
   try{
-   const store=jobs();
+   store=jobs();
    await store.set('input/'+id,body);
    await store.setJSON('state/'+id,{status:'queued',createdAt});
    const target=new URL('/api/artwork-job-work',request.url);
@@ -20,10 +21,13 @@ export function createSubmit({jobs=getJobs,dispatch=(...args)=>fetch(...args),en
     signal:AbortSignal.timeout(9000)});
    if(response.status!==202){
     await store.setJSON('state/'+id,{status:'failed',createdAt,error:'Background worker could not start'});
+    await store.delete('input/'+id).catch(()=>{});
     return json(502,{error:'Background worker could not start'});
    }
    return json(202,{jobId:id,status:'queued'});
   }catch{
+   // Private original PNG must not linger if background dispatch fails.
+   if(store)await store.delete('input/'+id).catch(()=>{});
    return json(503,{error:'Private artwork job storage or dispatch unavailable'});
   }
  };
