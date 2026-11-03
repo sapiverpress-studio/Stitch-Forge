@@ -14,9 +14,9 @@ from verify_live_home_hybrid import native_acceptance
 def compare(engine, folder, fixture):
     root=Path(folder);root.mkdir(parents=True,exist_ok=True)
     records=[]
-    for label,hires in [('baseline',False),('fullres',True)]:
+    for label,hires,palette_refit in [('baseline',False,False),('fullres',True,False),('palette_only',False,True)]:
         result=native_acceptance(engine,root/label,fixture,
-                                 full_original=True,high_res=hires)
+                                 full_original=True,high_res=hires,palette_refit=palette_refit)
         path=root/label/'md267-machine-report-NOT-APPROVED.json'
         report=json.loads(path.read_text())
         source=report['sourceBinding']
@@ -30,6 +30,8 @@ def compare(engine, folder, fixture):
             raise RuntimeError('Unbound original PNG')
         records.append({
             'variant':label,'fullHighResolutionTrial':hires,
+            'originalPaletteRefitTrial':palette_refit,
+            'paletteRefitSelected':bool(report['homeHybrid']['sourcePaletteRefit']['selectedByErrorAndPaletteGuard']),
             'sourceRequestId':result['sourceRequestId'],
             'sourceWorkingSha256':report['source']['sha256'],
             'sourceToReducedMeanAbsoluteRgb':source['sourceToReducedMeanAbsoluteRgb'],
@@ -46,11 +48,12 @@ def compare(engine, folder, fixture):
             'unresolvedSmallDetailObjects':report['unresolvedObjects'],
             'machineApproved':False,
         })
-    a,b=records
-    for k in ['sourceRequestId','sourceWorkingSha256','sourcePixelDimensions',
-              'workingSourceDimensions']:
-        if a[k]!=b[k]:
-            raise RuntimeError('Not a source-identical two-mode comparison: '+k)
+    a,b,c=records
+    for candidate in records[1:]:
+        for k in ['sourceRequestId','sourceWorkingSha256','sourcePixelDimensions',
+                  'workingSourceDimensions']:
+            if a[k]!=candidate[k]:
+                raise RuntimeError('Not a source-identical comparison: '+k)
     result={
         'schema':'stitch-forge-md270-original-source-segmentation-native-ab-v1',
         'fixture':fixture,'sourceIdentical':True,
@@ -58,6 +61,11 @@ def compare(engine, folder, fixture):
         'models':records,
         'highresMinusBaseline':{
             k:round(b[k]-a[k],3) for k in (
+             'meanSourceToPaletteRGB','workingPixelsBeyondRgb60',
+             'hybridWorkingParts','nativePaths','pesStitches','pesTrims',
+             'pesJumps','unresolvedSmallDetailObjects')},
+        'paletteOnlyMinusBaseline':{
+            k:round(c[k]-a[k],3) for k in (
              'meanSourceToPaletteRGB','workingPixelsBeyondRgb60',
              'hybridWorkingParts','nativePaths','pesStitches','pesTrims',
              'pesJumps','unresolvedSmallDetailObjects')},
