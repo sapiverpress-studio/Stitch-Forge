@@ -44,6 +44,25 @@ A separate, optional `source_palette_refit.py` uses original RGB only to recalib
 
 A private **rasterised existing-SVG proxy** for the original Kingfisher suggests ~3.7% mean RGB error improvement from the original PNG; this is an analytic colour comparison, **not machine-rendered output or a real sew-out**. Actual PES/DST tests and exact source/object/trim counts must gate this change.
 
+## 3 November 2026 — Final actual native palette-only A/B
+
+**[MD-2.70 three-way original PNG real PES/DST CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41612336667): PASS.** This run covers baseline native, high-resolution segmentation and source-RGB-only colour refit on the same SHA-bound public artwork; no synthetic success replaces actual PES/DST auditing.
+
+| Tested art | Mean RGB error baseline → refit | Native parts baseline → refit | PES trims | Unresolved details | Decision |
+| --- | --- | --- | --- | --- | --- |
+| Macaw | 41.561 → 38.309 (7.8% lower) | 52 → 52 | 100 → 100 | 1 → 1 | The source-only palette change was selected by conservative error guards; native geometry is not fragmented |
+| Rose | 13.153 → 13.153 | 38 → 38 | 68 → 68 | 0 → 0 | The candidate was rejected by guard; original plan retained |
+
+For macaw the PES stitch count changed **12,438 → 12,458**, but the source working regions, 51 native paths, trims and jumps remained unchanged. These are independently decoded **real** Ink/Stitch results. The modification is colour-only and **does not claim a fix for lost eyes, feather texture or physically sewn quality**.
+
+A separate **private** rasterised-svg Kingfisher proxy estimated RGB error **49.967 → 48.116 (3.7% lower)** from original PNG pixels when using the same existing colour region masks. That was **not** a real native PES/DST A/B for the Kingfisher and no private PNG was uploaded to GitHub.
+
+**Keep:** `services/digitiser/source_palette_refit.py` and its tests as a guarded, opt-in candidate for future controlled comparison.
+
+**Reject:** deploying indiscriminate high-resolution segmentation: it adds excessive colour components, trims and omissions despite colour accuracy gains.
+
+**Mandatory next development:** full-res segmentation of semantically coherent artwork layers and dynamic physically feasible stitch-family planning. Colour-only correction is not an alternative to the missing embroidery-object model. A fully automatic finished product remains **unverified**.
+
 ## What remains unsolved
 
 1. Full-original bytes must feed a **semantic/source-layer object planner** (eye, beak, feather groups, overlapping leaf veins), not just a colour-partitioner. Source-bound regions and physically viable satin/running/tatami/contour decisions remain unproven for detailed photo-like work.
