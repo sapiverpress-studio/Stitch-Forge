@@ -15,6 +15,10 @@ on:
       - "tools/verify_live_home_hybrid.py"
       - "tools/bench_md270_highres.py"
       - "services/digitiser/home_live_bridge.py"
+      - "services/digitiser/source_palette_refit.py"
+      - "tests/test_source_palette_refit.py"
+      - "netlify/functions/artwork-job-submit.mjs"
+      - "tests/test_background_artwork_jobs.mjs"
   workflow_dispatch:
 permissions:
   contents: read
@@ -49,6 +53,7 @@ jobs:
         run: |
           python -m compileall -q services/digitiser/original_png_contract.py services/digitiser/artwork_packet.py
           python -m unittest discover -s tests -p test_original_png_transport.py -v
+          python -m unittest discover -s tests -p test_source_palette_refit.py -v
           python -m unittest discover -s tests -p test_home_live_bridge.py -v
       - name: Install SHA-verified Ink/Stitch 3.3.0 for genuine PES/DST V2 acceptance
         run: |
