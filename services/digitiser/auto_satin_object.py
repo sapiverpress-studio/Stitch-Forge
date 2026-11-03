@@ -55,7 +55,7 @@ def propose_straight_satin(component, scale, colour, *, origin=(2.,2.),
     rectangle_ratio=source.area/outline.area
     if (rectangle_ratio<min_rectangle_fraction
             or native_length<min_length_mm or native_length>70
-            or native_width<2.15 or native_width>5.30
+            or native_width<2.15 or native_width>3.95
             or native_length/max(native_width,.001)<3.8
             or source.area*scale*scale<12):
         return None
@@ -92,7 +92,7 @@ def propose_straight_satin(component, scale, colour, *, origin=(2.,2.),
                       round(origin[1]+y*scale,4)) for x,y in points)
     l,r=mm(left),mm(right)
     column=SatinColumn(l,r,tuple(zip(l,r)),colour,
-                       zigzag_spacing_mm=.4,max_stitch_length_mm=5.0)
+                       zigzag_spacing_mm=.4,max_stitch_length_mm=3.5)
     try:
         validate_column(column,source.bounds[2]*scale+origin[0]+2,
                        source.bounds[3]*scale+origin[1]+2)
