@@ -22,12 +22,13 @@ from verify_home_hybrid_native import licensed_fixture
 from PIL import Image
 
 
-def native_acceptance(engine, output, fixture=None, *, full_original=False, high_res=False):
+def native_acceptance(engine, output, fixture=None, *, full_original=False, high_res=False, palette_refit=False):
     os.environ["STITCH_FORGE_HOME_HYBRID_ENABLED"] = "1"
     os.environ["STITCH_FORGE_ARTWORK_EXPORT_TIMEOUT_SECONDS"] = "110"
     os.environ["STITCH_FORGE_AUTO_SOURCE_REPAIR"] = "1"
     os.environ['STITCH_FORGE_HIGH_RES_PLAN_TRIAL'] = '1' if high_res else '0'
-    if high_res and not full_original:
+    os.environ['STITCH_FORGE_SOURCE_PALETTE_REFIT_TRIAL'] = '1' if palette_refit else '0'
+    if (high_res or palette_refit) and not full_original:
         raise ValueError('High-resolution native trial requires original SHA-bound V2 packet')
     full_image = licensed_fixture(fixture) if fixture else illustration().resize((464,400),Image.Resampling.NEAREST)
     original = full_image
@@ -74,6 +75,8 @@ def native_acceptance(engine, output, fixture=None, *, full_original=False, high
         proof = report.get("homeHybrid")
         if not proof or proof.get("enabledForThisNativeJob") is not True or not proof.get("sourceForegroundPreserved"):
             raise RuntimeError("Native export did NOT actually use the hybrid plan")
+        if palette_refit and not report.get('homeHybrid',{}).get('sourcePaletteRefit',{}).get('trialEnabled'):
+            raise RuntimeError('Full-original colour-refit did not reach native export')
         if high_res and not report.get('homeHybrid',{}).get('highResolutionSourcePlanTrial'):
             raise RuntimeError('Original source did not alter working native plan')
         if full_original and (not report['sourceBinding'].get('originalSourceSha256Verified')
@@ -104,6 +107,7 @@ def native_acceptance(engine, output, fixture=None, *, full_original=False, high
             "schema": "md270-fullsource-browser-packet-to-real-native-pesdst-CI-v2" if full_original else "md267-full-browser-packet-to-real-native-pesdst-CI-v1",
             "fullOriginalSourceVerifiedInBothNativePhases": full_original,
             "highResolutionOriginalSegmentationTrial": high_res,
+            "sourcePaletteRefitTrial": palette_refit,
             "result": "PASS_NATIVE_SOURCE_CONTAINED_NOT_SEWOUT_APPROVED",
             "fixture": fixture or "synthetic-bird",
             "clientSourceSha256": browser_plan["source"]["sha256"],
@@ -132,5 +136,6 @@ if __name__ == "__main__":
     p.add_argument("--fixture", choices=["macaw", "butterfly", "rose"])
     p.add_argument('--full-original',action='store_true')
     p.add_argument('--high-res',action='store_true')
+    p.add_argument('--palette-refit',action='store_true')
     arguments = p.parse_args()
-    print(json.dumps(native_acceptance(arguments.engine, arguments.output, arguments.fixture,full_original=arguments.full_original,high_res=arguments.high_res), indent=2))
+    print(json.dumps(native_acceptance(arguments.engine, arguments.output, arguments.fixture,full_original=arguments.full_original,high_res=arguments.high_res,palette_refit=arguments.palette_refit), indent=2))
