@@ -70,13 +70,14 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
     # The browser and native code require sorted, unique, used palette colours.
     # A reduced palette cannot silently create a 13th machine colour.
     used = sorted(int(i) for i in np.unique(native_labels[mask]))
-    if not 4 <= len(used) <= 12:
-        raise ValueError("Hybrid lacks a usable Home thread palette")
+    if not 1 <= len(used) <= 12:
+        raise ValueError("Hybrid has no usable thread colours")
     colours = ["#" + "".join(f"{int(x):02X}" for x in palette[i-1])
                for i in used]
-    if len(set(colours)) != len(colours):
-        raise ValueError("Hybrid output contains duplicate thread colours")
-    sorted_colours = sorted(colours)
+    # Flat illustrations can legitimately have fewer than nine distinct
+    # thread colours; merge identical quantised colours instead of inventing
+    # different threads or failing the entire ordinary-image workflow.
+    sorted_colours = sorted(set(colours))
     remapped = np.zeros((h, w), dtype=np.uint8)
     for index, colour in zip(used, colours):
         remapped[native_labels == index] = sorted_colours.index(colour) + 1
