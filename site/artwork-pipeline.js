@@ -68,7 +68,7 @@ function visibleArtworkFrame(rgba,w,h,designWidthMm){
   unmodifiedSourcePixels:true,
   physicalSewoutVerified:false};
 }
-async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas'}={}){
+async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null}={}){
  if(!['if_needed','off'].includes(texturePolicy))throw Error('Invalid texture policy');
  if(!['visible','canvas'].includes(sizeMode))throw Error('Invalid physical artwork width mode');
  const sizing=sizeMode==='visible'?visibleArtworkFrame(rgba,w,h,imageWidthMm):
@@ -107,11 +107,21 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
  const labels=new Uint8Array(w*h),palette=plan.regions.map(r=>r.color);
  for(const [i,r] of plan.regions.entries())for(const c of r.ledger.components)for(const [y,x0,x1] of c.runs)labels.fill(i+1,y*w+x0,y*w+x1);
  const {sha256,width,height}=plan.source;
- const header=JSON.stringify({schema:SCHEMA,source:{sha256,width,height,originalWidth,originalHeight},imageWidthMm:frameWidthMm,palette,
-  foregroundPixels:plan.summary.sourcePixels,preparationSignature:plan.sourcePlanSignature,texturePolicy});
+ if(originalPngBytes!==null&&(!(originalPngBytes instanceof Uint8Array)||
+    originalPngBytes.length<100||originalPngBytes.length>2450000||
+    ![137,80,78,71,13,10,26,10].every((n,i)=>originalPngBytes[i]===n)))
+  throw Error('Original PNG must fit inside the bounded private source budget (2.45MB)');
+ const fullSource=originalPngBytes?{sha256:await digest(originalPngBytes),bytes:originalPngBytes.length}:null;
+ const header=JSON.stringify({schema:fullSource?'stitch-forge-artwork-request-v2':SCHEMA,
+   source:{sha256,width,height,originalWidth,originalHeight},imageWidthMm:frameWidthMm,palette,
+  foregroundPixels:plan.summary.sourcePixels,preparationSignature:plan.sourcePlanSignature,texturePolicy,...(fullSource?{originalPng:fullSource}:{})});
  const requestId=await digest(new TextEncoder().encode(header),new Uint8Array(rgba.buffer,rgba.byteOffset,rgba.byteLength),labels);
  const rgbaGzip=b64(await transform(rgba,'gzip',true,3100000)),labelsGzip=b64(await transform(labels,'gzip',true,800000));
- return {packet:{header,rgbaGzip,labelsGzip,requestId},draft,plan,sizing};
+ const packet={header,rgbaGzip,labelsGzip,requestId,
+   ...(fullSource?{originalPngBase64:b64(originalPngBytes)}:{})};
+ if(new TextEncoder().encode(JSON.stringify(packet)).length>3900000)
+  throw Error('Full-resolution PNG exceeds the current private submission budget; source data was not truncated');
+ return {packet,draft,plan,sizing};
 }
 function crc32(bytes){let value=-1;for(const b of bytes){value^=b;for(let j=0;j<8;j++)value=(value>>>1)^(value&1?0xedb88320:0);}return (value^-1)>>>0;}
 async function readArchive(bytes){
