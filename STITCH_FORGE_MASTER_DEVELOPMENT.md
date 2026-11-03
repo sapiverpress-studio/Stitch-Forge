@@ -8,8 +8,8 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.66 Home hybrid source integrated into main as experimental and NOT RELEASE-APPROVED; Kingfisher and real sew-outs HOLD |
-| Last updated | 2026-11-02 (Europe/London) |
+| Document version | MD-2.67 server-integrated Home hybrid (four real native worker E2E controls PASS; single Cloud Run release pending; physical quality HOLD) |
+| Last updated | 2026-11-03 (Europe/London) |
 | Last independently checked source | Isolated feature branch native engine commit `2a966a347b123e4f12c9d8110c9db5461ac71cf1`; offline regression commit `127a54eafef3d32289482037849aa7d6704d75ac`. GitHub Actions `41439326194`, `41439326236` and `41439467534` passed. Three CC0 source designs have genuine independently decoded PES/DST passes, but no Kingfisher likeness/physical stitch-out approval. Main/hosted builds were not promoted or tested in this continuation. |
 | Default branch | `main` |
 | Development branch | MD-2.66 source/tests added to main by owner instruction; feature/md266-home-hybrid-segmentation-no-deploy preserved for history. Existing live app and worker do not automatically enable the experimental hybrid. |
@@ -1587,3 +1587,15 @@ This experimental branch's master ledger has been reconciled with the independen
 ## 2026-11-02 — Explicit owner-authorised main source integration (no production deployment)
 
 Owner requested incorporation of all MD-2.66 code into main. Git merge includes hybrid reconstruction, source geometry safety repair, native offline trial tools, CI and documentation. Before integration main HEAD was `69de3a0661accc1407c7f27cd1f22727edcbc90e` and feature HEAD was `0f287977ebc903ef07ad323e76f7eca011fff754`. The released website files and Netlify functions are unchanged by this source integration; existing native worker behaviour is not automatically changed until a separately approved, tested Cloud Run release. The hybrid Home profile is **experimental and NOT enabled for customers**. This merge does NOT claim the private Kingfisher native A/B or physical fabric sew-out has passed, and does not grant machine or commercial approval. Review [progress and release roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md) before deploying. No private Kingfisher art was committed.
+
+## 2026-11-03 — MD-2.67 actual Home hybrid connection and single worker release plan
+
+The owner correctly identified a release failure: the previous MD-2.66 website + staged worker builds did not connect `hybrid_home.reconstruct` to the actual browser-to-native-generation path. Simply switching MD-2.66 Cloud Run traffic would still serve the old source-labelled native algorithm.
+
+MD-2.67 resolves this at the existing **private worker endpoint**, with no new Netlify code deploy required. Source-bound browser packet is first independently decoded, then the worker calls source-grounded SLIC/CIELAB Home hybrid before native SVG/PES/DST generation; browser request ID, source fingerprint, physical sizing, HMAC two-phase receipts and independent source-containment audit remain enforced. Output machine report now records `homeHybrid` details and retains explicit NOT MACHINE APPROVED status. Feature flag: `STITCH_FORGE_HOME_HYBRID_ENABLED=1` on a newly deployed worker revision.
+
+Native CI [41590375479](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41590375479) PASSED actual two-phase `artwork_service.process_phase` for synthetic bird (7 colours, 8 parts, 83 PES trims, 0 unresolved), licensed CC0 macaw (9/52/100/1), butterfly (9/79/211/39), rose (6/38/68/0). All returned audited PES/DST, original browser packet identity and zero outside-working-colour needle paths. CI is not a machine sew-out or proof of private Kingfisher likeness.
+
+**Release not yet performed:** Current public Netlify version already has the necessary functions and production keys; staged MD-2.66 Cloud Run image remains separate and cannot invoke MD-2.67 logic. The owner must execute the pinned one-build `tools/deploy_md267_one_release.sh` helper once from Cloud Shell to create the new worker revision and switch normal traffic to it. The script records previous revision and prints a zero-build rollback. The connected Netlify app masks the full production worker URL, so whether it uses the canonical service endpoint or an old pinned tag remains **unverified until a live file's `machine-report.json` contains `homeHybrid.enabledForThisNativeJob=true`**. No further Netlify build should be launched without diagnosing that exact fact.
+
+Detailed scope, controls, non-actions and acceptance sequence: [MD-2.67 release handover](docs/MD-2.67_LIVE_HYBRID_RELEASE.md). Home release quality, private Kingfisher fidelity and physical sew-outs remain HOLD; do not assert commercial/machine safety.
