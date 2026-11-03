@@ -41,7 +41,17 @@ export function validPacket(body){
   !/^[0-9a-f]{64}$/.test(obj.requestId||'')||
   typeof obj.rgbaGzip!=='string'||typeof obj.labelsGzip!=='string'||
   obj.rgbaGzip.length>3200000||obj.labelsGzip.length>1000000)return false;
+ let schema;
+ try{schema=JSON.parse(obj.header)?.schema;}catch{return false;}
+ if(schema!=='stitch-forge-artwork-request-v1'&&schema!=='stitch-forge-artwork-request-v2')
+  return false;
  const keys=['header','rgbaGzip','labelsGzip','requestId'];
+ if(schema==='stitch-forge-artwork-request-v2'){
+  if(typeof obj.originalPngBase64!=='string'||obj.originalPngBase64.length>3266672||
+     !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(obj.originalPngBase64))
+   return false;
+  keys.push('originalPngBase64');
+ }
  return Object.keys(obj).sort().join(',')===keys.sort().join(',');
 }
 export async function bodyText(request,max=MAX_BYTES){
