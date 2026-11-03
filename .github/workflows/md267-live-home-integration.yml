@@ -57,4 +57,5 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
       - name: Confirm no Netlify/Cloud Run production change
-        run: echo "CI only: no website redeploy, Cloud Build, Cloud Run release or traffic switch."
+        run: |
+          echo "CI only: no website redeploy, Cloud Build, Cloud Run release or traffic switch."
