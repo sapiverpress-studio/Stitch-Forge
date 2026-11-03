@@ -1,5 +1,8 @@
 # Sapiver Stitch Forge
 
+> **MD-2.67 release candidate, 3 November 2026:** The server Home hybrid is now wired to the **existing published browser packet flow** and passed real two-phase native Ink/Stitch PES/DST CI on four synthetic/CC0 artworks. **Not yet live:** Cloud Run needs the ONE owner-executed worker release; no additional Netlify code deployment is required if its existing production worker URL uses the standard service endpoint. Source fidelity on the private Kingfisher and physical sew-outs remain HOLD. [MD-2.67 implementation, evidence, single-release and rollback](docs/MD-2.67_LIVE_HYBRID_RELEASE.md).
+
+
 **Current engineering status: MD-2.66 hybrid source is integrated into GitHub main, but Home embroidery is still experimental and NOT approved for customer use.** Latest status check: 2 November 2026.
 
 Stitch Forge is a mobile-friendly image-to-embroidery digitiser. The practical target is a Home profile which preserves recognisable shapes and thread colours for real machine embroidery. Advanced Professional Detail is a separate later development target.
