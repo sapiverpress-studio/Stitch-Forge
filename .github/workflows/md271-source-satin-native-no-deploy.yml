@@ -9,6 +9,8 @@ on:
       - "tests/test_auto_satin_object.py"
       - "tools/bench_md271_source_satin.py"
       - "tools/bench_md271_licensed_satin.py"
+      - "site/auto-reconstruct-ui.js"
+      - "tests/test_original_png_transport.cjs"
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,6 +22,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -28,6 +33,11 @@ jobs:
           python -m pip install -r services/digitiser/requirements-artwork-trial.txt
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Check browser safety and V1/V2 transport compatibility
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          node tools/check_frontend_syntax.cjs
+          node --test tests/test_original_png_transport.cjs tests/test_background_artwork_jobs.mjs
       - name: Prove original mask is preserved and unsuitable shapes refused
         run: |
           python -m compileall -q services/digitiser/auto_satin_object.py services/digitiser/artwork_trial.py
