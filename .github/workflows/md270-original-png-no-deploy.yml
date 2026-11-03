@@ -12,13 +12,14 @@ on:
       - "netlify/functions/artwork-embroidery.mjs"
       - "tests/test_original_png_transport.py"
       - "tests/test_original_png_transport.cjs"
+      - "tools/verify_live_home_hybrid.py"
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   test-original-source-protocol:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,6 +48,32 @@ jobs:
           python -m compileall -q services/digitiser/original_png_contract.py services/digitiser/artwork_packet.py
           python -m unittest discover -s tests -p test_original_png_transport.py -v
           python -m unittest discover -s tests -p test_home_live_bridge.py -v
+      - name: Install SHA-verified Ink/Stitch 3.3.0 for genuine PES/DST V2 acceptance
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+          python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Run two native source-bound V2 acceptance trials on public-licensed artwork
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          for fixture in macaw rose; do
+            mkdir -p "$RUNNER_TEMP/md270-$fixture"
+            xvfb-run -a python tools/verify_live_home_hybrid.py \
+              --engine "$ENGINE" --fixture "$fixture" --full-original \
+              --output "$RUNNER_TEMP/md270-$fixture"
+            test -s "$RUNNER_TEMP/md270-$fixture/md267-worker-native-verification.json"
+          done
+      - name: Publish only the source-binding native audit summaries, not images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md270-original-png-native-AUDIT-NOT-APPROVED
+          path: |
+            ${{ runner.temp }}/md270-*/md267-worker-native-verification.json
+            ${{ runner.temp }}/md270-*/md267-machine-report-NOT-APPROVED.json
+          if-no-files-found: ignore
+          retention-days: 3
       - name: No customer output or deployment
         run: |
           echo "Contract tests only; no source or private user art in artifacts."
