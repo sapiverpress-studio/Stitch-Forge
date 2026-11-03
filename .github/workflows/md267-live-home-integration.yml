@@ -43,17 +43,23 @@ jobs:
         run: |
           set -euo pipefail
           ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
-          mkdir -p "$RUNNER_TEMP/md267-native"
-          xvfb-run -a python tools/verify_live_home_hybrid.py --engine "$ENGINE" --output "$RUNNER_TEMP/md267-native"
-          test -s "$RUNNER_TEMP/md267-native/md267-worker-native-verification.json"
+          for fixture in synthetic macaw butterfly rose; do
+            mkdir -p "$RUNNER_TEMP/md267-native/$fixture"
+            if [ "$fixture" = synthetic ]; then
+              xvfb-run -a python tools/verify_live_home_hybrid.py --engine "$ENGINE" --output "$RUNNER_TEMP/md267-native/$fixture"
+            else
+              xvfb-run -a python tools/verify_live_home_hybrid.py --engine "$ENGINE" --output "$RUNNER_TEMP/md267-native/$fixture" --fixture "$fixture"
+            fi
+            test -s "$RUNNER_TEMP/md267-native/$fixture/md267-worker-native-verification.json"
+          done
       - name: Publish reports only; no customer source or native products
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: md267-both-phases-engineering-report-NOT-APPROVED
           path: |
-            ${{ runner.temp }}/md267-native/md267-worker-native-verification.json
-            ${{ runner.temp }}/md267-native/md267-machine-report-NOT-APPROVED.json
+            ${{ runner.temp }}/md267-native/*/md267-worker-native-verification.json
+            ${{ runner.temp }}/md267-native/*/md267-machine-report-NOT-APPROVED.json
           if-no-files-found: ignore
           retention-days: 3
       - name: Confirm no Netlify/Cloud Run production change
