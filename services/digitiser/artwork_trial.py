@@ -31,6 +31,8 @@ from source_scanline_fill import plan_scanline_fill
 from native_tatami_decomposition import decompose_tatami
 from inkstitch_cli import export_trusted_svg, _run_engine, DigitiserError
 from format_audit import audit_zip
+from auto_satin_object import propose_straight_satin
+from satin_native import validate_column
 
 INK = '{http://inkstitch.org/namespace}'
 ET.register_namespace('inkstitch', INK[1:-1])
@@ -367,8 +369,8 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
     ET.SubElement(root, 'use', {'{http://www.w3.org/1999/xlink}href':'#inkstitch_origin',
         'x':f'{width/2:.6f}', 'y':f'{height/2:.6f}'})
     records, path_count, total_vertices = [], 0, 0
-    underlay_count=0;running_branches=0;routed_walks=0
-    fill_pieces=[];repaired=[]
+    underlay_count=0;running_branches=0;routed_walks=0;auto_satin_count=0
+    fill_pieces=[];repaired=[];satin_objects=[]
     def add_path(color, points, closed=False, holes=(),angle=0,underlay=False,underpath=True):
         nonlocal path_count, total_vertices,underlay_count
         if partition_fills and not closed:points=without_collinear_steps(points)
@@ -403,6 +405,22 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         else:
             attrs.update({'fill':'none','stroke':color,'stroke-width':'0.1',INK+'stroke_method':'running_stitch'})
         ET.SubElement(root,'path',attrs)
+    def add_satin(column):
+        nonlocal path_count,total_vertices
+        validate_column(column,width,height)
+        lines=[column.left,column.right,*column.rungs]
+        vertices=sum(len(line) for line in lines)
+        if path_count+1>1500 or total_vertices+vertices>150000:
+            raise ValueError('Native satin path/vertex budget exceeded')
+        path_count+=1;total_vertices+=vertices
+        d=' '.join('M '+' L '.join(
+            f'{x:.4f},{y:.4f}' for x,y in line) for line in lines)
+        attrs={'id':f'artwork-{path_count}','d':d,
+            'fill':'none','stroke':column.thread_color,'stroke-width':'0.2',
+            INK+'satin_column':'true', INK+'satin_method':'satin_column',
+            INK+'zigzag_spacing_mm':f'{column.zigzag_spacing_mm:.3f}',
+            INK+'max_stitch_length_mm':f'{column.max_stitch_length_mm:.3f}'}
+        ET.SubElement(root,'path',attrs)
     for region in sorted(plan['regions'], key=lambda r:r['color']):
         color = region['color']
         # Bounds/rings are derived independently from runs, not trusted JSON topology.
@@ -419,7 +437,22 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
             identity = color[1:]+'-'+str(index)
             record = {'id':identity,'color':color,'pixels':component['pixelArea'],'areaMm2':area,'nativePaths':0}
             previous = path_count
-            if area < .025:
+            satin_choice=None
+            if (partition_fills and area>=12 and auto_satin_count<35
+                    and os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1'
+                    and not allowed):
+                satin_choice=propose_straight_satin(component,scale,color)
+            if satin_choice is not None:
+                column,source_evidence=satin_choice
+                add_satin(column)
+                auto_satin_count+=1
+                satin_objects.append({'sourceObjectId':identity,
+                    'nativePathId':f'artwork-{path_count}',**source_evidence})
+                record.update(action='native_satin_trial',
+                              stitchFamily='source_verified_straight_satin',
+                              geometricRailsStrictlyInsideSource=True,
+                              sourceSemanticFeatureRecognised=False)
+            elif area < .025:
                 record['action'] = 'unresolved_subneedle_texture'
             elif area >= .8 and max(0.,float(distance_transform_edt(local).max())-2**-.5)*scale >= .4:
                 shape = union_all(rectangles)
@@ -549,6 +582,15 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         'source':plan['source'],'sourcePlanSignature':plan['sourcePlanSignature'],'scaleMmPerPixel':scale,
         'originMm':[width/2,height/2],'widthMm':width,'heightMm':height,'objects':records,'nativePaths':actual_elements,'nativeCandidatePaths':path_count,
         'nativeFillPieces':fill_pieces,'nativeRepairObjects':repaired,
+        'sourceSatinTrial':{
+            'enabled':os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1',
+            'acceptedObjects':auto_satin_count,
+            'sourceGeometryChanged':False,
+            'sourcePaletteChanged':False,
+            'semanticFeatherIdentificationVerified':False,
+            'actualNativeExportAndSourceContainmentRequired':True,
+            'physicalSewoutVerified':False,
+            'objects':satin_objects},
         'regionConsolidation':{'method':'connected_skeleton_edge_walk_and_same_colour_nearest_centre',
             'originalRunningBranches':running_branches,'connectedRunningWalks':routed_walks,
             'colourPixelsReassigned':0,'sourceGeometryChanged':False,
@@ -748,7 +790,9 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
         'nativeRepairObjects':manifest.get('nativeRepairObjects',[]),
         'stitchPlanning':{'settings':manifest['settings'],
             'nativeFillUnderlayAudit':manifest['underlayAudit'],
-            'families':'native_fill_and_source_skeleton_running','semanticStitchIntentVerified':False},
+            'sourceSatinTrial':manifest['sourceSatinTrial'],
+            'families':'native_fill_source_skeleton_running_and_optin_source_satin' if manifest['sourceSatinTrial']['acceptedObjects'] else 'native_fill_and_source_skeleton_running',
+            'semanticStitchIntentVerified':False},
         'detailedArtworkBenchmarkVerified':False,
         'releaseEvidenceScope':'source_bound_machine_file_only_not_sewn',
         'unresolvedObjects':len(unresolved)+sum(o.get('unresolvedDetailObjects',0) for o in manifest['objects']),
