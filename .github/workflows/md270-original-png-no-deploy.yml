@@ -1,0 +1,53 @@
+name: MD-2.70 full-original-PNG packet contract (NO DEPLOY)
+on:
+  push:
+    branches: [feature/md270-original-png-packet-no-deploy]
+    paths:
+      - ".github/workflows/md270-original-png-no-deploy.yml"
+      - "services/digitiser/original_png_contract.py"
+      - "services/digitiser/artwork_packet.py"
+      - "site/artwork-pipeline.js"
+      - "site/auto-reconstruct-ui.js"
+      - "netlify/functions/lib/artwork-jobs.mjs"
+      - "netlify/functions/artwork-embroidery.mjs"
+      - "tests/test_original_png_transport.py"
+      - "tests/test_original_png_transport.cjs"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-original-source-protocol:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing Node and Python dependencies
+        run: |
+          npm ci --ignore-scripts
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+      - name: Test original JPEG/PNG browser script syntax, SHA identity and envelope
+        run: |
+          node --check site/artwork-pipeline.js
+          node --check site/auto-reconstruct-ui.js
+          node --check netlify/functions/artwork-embroidery.mjs
+          node --test tests/test_original_png_transport.cjs
+          node --test tests/test_artwork_pipeline.cjs
+          node --test tests/test_background_artwork_jobs.mjs
+          node --test tests/test_artwork_endpoint.mjs
+      - name: Test original PNG image correspondence and existing worker packet compatibility
+        run: |
+          python -m compileall -q services/digitiser/original_png_contract.py services/digitiser/artwork_packet.py
+          python -m unittest discover -s tests -p test_original_png_transport.py -v
+          python -m unittest discover -s tests -p test_home_live_bridge.py -v
+      - name: No customer output or deployment
+        run: |
+          echo "Contract tests only; no source or private user art in artifacts."
+          echo "NO Netlify deploy, NO Cloud Build, NO worker traffic changes."
