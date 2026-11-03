@@ -228,7 +228,11 @@ q("#sfAutoRun").onclick=async()=>{
    const original=new Image();await new Promise((yes,no)=>{original.onload=yes;original.onerror=no;original.src=source;});
    // Preserve original image bytes once; do not recompute for each fallback
    // analysis size or silently lower source detail to fit an upload.
-   const originalPngBytes=await originalSourcePng(source,original);
+   // MD-2.70 experimental V2 is NOT in production: deployed Cloud Run
+   // still expects the V1 packet. Never send a full-source V2 request
+   // without explicitly configuring and testing BOTH connected services.
+   const originalPngBytes=window.STITCH_FORGE_V2_FULL_SOURCE_ENABLED===true
+    ? await originalSourcePng(source,original) : null;
    // Native fill detail is physically bounded. Attempt the finest reasonable
    // resolution first, then reduce *analysis* resolution if there are still too
    // many unsewable working parts. Never resize the physical embroidery width.
