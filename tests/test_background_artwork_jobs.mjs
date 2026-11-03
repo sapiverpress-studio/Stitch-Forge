@@ -116,3 +116,23 @@ test('native worker errors fail closed without output or browser fallback',async
  assert.equal(f.jobs.map.has('output/'+ID),false);
  assert.equal((await f.result(request('/api/artwork-job-result?id='+ID,{headers:{Authorization:'Bearer '+owner}}))).status,409);
 });
+
+test('private V2 full-source input is deleted if background dispatch fails',async()=>{
+ const jobs=store();
+ const source=Buffer.alloc(180,17);
+ Buffer.from([137,80,78,71,13,10,26,10]).copy(source,0);
+ const origHeader=JSON.stringify({schema:'stitch-forge-artwork-request-v2',
+  originalPng:{sha256:createHash('sha256').update(source).digest('hex'),
+               bytes:source.length}});
+ const body={...packet,header:origHeader,originalPngBase64:source.toString('base64')};
+ assert.equal(validPacket(JSON.stringify(body)),true);
+ const submit=createSubmit({jobs:()=>jobs,env:environment,
+  generateId:()=>ID,
+  dispatch:async()=>new Response(null,{status:503})});
+ const response=await submit(request('/api/artwork-job-submit',{
+  method:'POST',headers,body:JSON.stringify(body)}));
+ assert.equal(response.status,502);
+ assert.equal(jobs.map.has('input/'+ID),false,
+  'Original customer source bytes must not remain stored after dispatch refusal');
+ assert.equal(jobs.map.get('state/'+ID).status,'failed');
+});
