@@ -8,13 +8,14 @@ on:
       - "services/digitiser/artwork_trial.py"
       - "tests/test_auto_satin_object.py"
       - "tools/bench_md271_source_satin.py"
+      - "tools/bench_md271_licensed_satin.py"
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   test-and-audit-real-satin:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,6 +43,13 @@ jobs:
           mkdir -p "$RUNNER_TEMP/md271"
           xvfb-run -a python tools/bench_md271_source_satin.py --engine "$ENGINE" --output "$RUNNER_TEMP/md271"
           test -s "$RUNNER_TEMP/md271/md271-satin-native-AB-NOT-APPROVED.json"
+      - name: Check actual licensed macaw and rose against unchanged browser-to-worker pipeline
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md271-licensed"
+          xvfb-run -a python tools/bench_md271_licensed_satin.py --engine "$ENGINE" --output "$RUNNER_TEMP/md271-licensed"
+          test -s "$RUNNER_TEMP/md271-licensed/md271-licensed-satin-AB-NOT-APPROVED.json"
       - name: Retain derived public synthetic audit only
         if: always()
         uses: actions/upload-artifact@v4
@@ -50,6 +58,7 @@ jobs:
           path: |
             ${{ runner.temp }}/md271/md271-satin-native-AB-NOT-APPROVED.json
             ${{ runner.temp }}/md271/*/machine-report.json
+            ${{ runner.temp }}/md271-licensed/md271-licensed-satin-AB-NOT-APPROVED.json
           retention-days: 3
           if-no-files-found: ignore
       - name: No customer release or live change
