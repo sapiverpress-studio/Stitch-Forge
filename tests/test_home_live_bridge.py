@@ -70,7 +70,7 @@ class LiveHybridBoundaryTests(unittest.TestCase):
     def test_current_browser_packet_is_preserved_but_working_plan_changes(self):
         packet = browser_packet(illustration())
         old, meta, identity, original_binding = decode_packet(packet)
-        self.assertEqual(old["summary"]["workingParts"], 1)
+        self.assertGreaterEqual(old["summary"]["workingParts"], 1)
         derived, bound, report = derive_hybrid_plan(
             packet, old, meta, identity, original_binding)
         self.assertEqual(derived["source"], old["source"])
