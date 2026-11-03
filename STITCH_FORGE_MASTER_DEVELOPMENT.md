@@ -8,14 +8,14 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.67 server-integrated Home hybrid (four real native worker E2E controls PASS; single Cloud Run release pending; physical quality HOLD) |
+| Document version | MD-2.71 source integrated into main; V2 browser default OFF; automatic straight satin opt-in only; detailed-art quality HOLD |
 | Last updated | 2026-11-03 (Europe/London) |
-| Last independently checked source | Isolated feature branch native engine commit `2a966a347b123e4f12c9d8110c9db5461ac71cf1`; offline regression commit `127a54eafef3d32289482037849aa7d6704d75ac`. GitHub Actions `41439326194`, `41439326236` and `41439467534` passed. Three CC0 source designs have genuine independently decoded PES/DST passes, but no Kingfisher likeness/physical stitch-out approval. Main/hosted builds were not promoted or tested in this continuation. |
+| Last independently checked source | MD-2.71 isolated native tests [synthetic satin](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41620357275), [licensed two-phase](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41620570692), [combined V1 browser + native regression](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41645882625). The last regression must be PASS before source integration; none establishes physical quality. |
 | Default branch | `main` |
-| Development branch | MD-2.66 source/tests added to main by owner instruction; feature/md266-home-hybrid-segmentation-no-deploy preserved for history. Existing live app and worker do not automatically enable the experimental hybrid. |
+| Development branch | MD-2.70 full-original PNG packet and MD-2.71 bounded satin sources integrated to main at owner request, both inactive by default. Isolated historical feature branches retained. Next curved/tapered work to be performed on another isolated branch. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Deployment | Source integration only; no Netlify deploy, no Cloud Run build/traffic update, no Home production enablement. Latest observed Netlify live commit 3cd91d895b864f034528c0ee8f119e629f7ea794 (2026-11-02 07:30 UTC). Current Cloud Run traffic unverified. |
+| Deployment | GitHub source integration only in this session. No Netlify / Cloud Run production deploy or traffic change. User previously confirmed MD-2.67 worker serving 100% traffic, and MD-2.67 Kingfisher ZIP confirmed live hybrid use. Source MD-2.70/71 are NOT live. |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
 | External Ink/Stitch or pyembroidery integration | Real pinned Ink/Stitch 3.3.0 and independent native PES/DST audit passed on licensed macaw, butterfly and rose in isolated GitHub CI; no physical stitch-out or source-identical Kingfisher test. No hosted worker called by this continuation. |
@@ -1599,3 +1599,12 @@ Native CI [41590375479](https://github.com/sapiverpress-studio/Stitch-Forge/acti
 **Release not yet performed:** Current public Netlify version already has the necessary functions and production keys; staged MD-2.66 Cloud Run image remains separate and cannot invoke MD-2.67 logic. The owner must execute the pinned one-build `tools/deploy_md267_one_release.sh` helper once from Cloud Shell to create the new worker revision and switch normal traffic to it. The script records previous revision and prints a zero-build rollback. The connected Netlify app masks the full production worker URL, so whether it uses the canonical service endpoint or an old pinned tag remains **unverified until a live file's `machine-report.json` contains `homeHybrid.enabledForThisNativeJob=true`**. No further Netlify build should be launched without diagnosing that exact fact.
 
 Detailed scope, controls, non-actions and acceptance sequence: [MD-2.67 release handover](docs/MD-2.67_LIVE_HYBRID_RELEASE.md). Home release quality, private Kingfisher fidelity and physical sew-outs remain HOLD; do not assert commercial/machine safety.
+
+
+## 2026-11-03 — MD-2.70 / MD-2.71 source integration to main at owner request
+
+The full-original SHA-bound PNG V2 browser/job/private-worker packet, source-size and privacy guards, guarded source-colour calibration, high-resolution analysis experiments, physically bounded native straight-satin selector, genuine Ink/Stitch PES6/DST regression tests, four CI workflows and source-evidence documents have been integrated from `feature/md271-physical-satin-object-trial-no-deploy` into GitHub `main` as **source only**. No online service is updated by this integration. The existing public upload retains V1 behaviour: `window.STITCH_FORGE_V2_FULL_SOURCE_ENABLED===true` is not enabled by the published app. Server trials `STITCH_FORGE_HIGH_RES_PLAN_TRIAL`, `STITCH_FORGE_SOURCE_PALETTE_REFIT_TRIAL`, and `STITCH_FORGE_AUTO_SATIN_TRIAL` are optional and disabled in live configuration. Even if the website is rebuilt later, it should continue producing V1 until explicit integrated release validation.
+
+**Verified narrow result:** exact source-bound controlled synthetic straight satin generated real decoded PES/DST, 680 stitches in both variants, but 3→2 PES trims, 5→4 jumps, and transverse stitches 24.5%→92.3%; zero outside-colour stitch paths. Licensed macaw and rose selected 0 eligible satin objects and were unchanged. Original private Kingfisher detail likeness and physical machine stitch-outs are still not tested/satisfactory. Preserve strict source containment and do not advertise a professional digitiser. [MD-2.71 source merge handover](docs/MD-2.71_MAIN_SOURCE_INTEGRATION.md).
+
+**Next engineering:** curved and tapered source-object plan with physical-width rails/rungs, native trial evidence and decoded source identity on licensed art; separately test private Kingfisher with source permissions. Do not merge new experiments or build/pay for Cloud Run until aesthetic/physical acceptance improves.

@@ -26,7 +26,8 @@ export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(
   let data,obj;
   try{
    data=await boundedBytes(request.body,4000000);obj=JSON.parse(data.toString('utf8'));
-   const fields=['header','rgbaGzip','labelsGzip','requestId','phase',...(obj.phase==='dst'?['receipt','pesBase64']:[]),...('repairReceipt' in obj?['repairReceipt']:[])];
+   const fields=['header','rgbaGzip','labelsGzip','requestId','phase',...(obj.phase==='dst'?['receipt','pesBase64']:[]),...('repairReceipt' in obj?['repairReceipt']:[]),
+    ...(typeof obj.header==='string'&&obj.header.includes('stitch-forge-artwork-request-v2')?['originalPngBase64']:[])];
    if(!obj||typeof obj!=='object'||Array.isArray(obj)||!['pes','dst'].includes(obj.phase)||Object.keys(obj).sort().join()!==fields.sort().join()||typeof obj.header!=='string'||obj.header.length>2000||!/^([0-9a-f]{64})$/.test(obj.requestId||''))throw Error();
   }catch{return json(422,'Invalid bounded artwork packet');}
   let idToken=null;

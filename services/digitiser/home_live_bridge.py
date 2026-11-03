@@ -11,7 +11,10 @@ deployment, source upload outside the existing private worker, or product approv
 from __future__ import annotations
 
 from hashlib import sha256
+from io import BytesIO
+import base64
 import json
+import os
 import numpy as np
 from PIL import Image
 
@@ -49,6 +52,22 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
     # resolution. Working masks are then reconciled to *all* original pixels.
     reduced, palette, evidence = reconstruct(analysis, colours=9, max_side=320,
                                             design_width_mm=80)
+    trial_source_dimensions=None
+    if (os.environ.get('STITCH_FORGE_HIGH_RES_PLAN_TRIAL','0')=='1'
+            and 'originalPngBase64' in packet
+            and original_binding.get('originalSourceSha256Verified') is True):
+        # Explicit offline A/B only. The original PNG was independently
+        # verified by decode_packet before we use its source pixels here.
+        raw=base64.b64decode(packet['originalPngBase64'],validate=True)
+        with Image.open(BytesIO(raw)) as original_png:
+            full=original_png.convert('RGBA')
+            trial_source_dimensions=list(full.size)
+        # This tests whether high-resolution source segmentation survives
+        # quantisation to the existing *unchanged* native source frame.
+        # It is NOT an assertion that the result looks better on fabric.
+        reduced,palette,evidence=reconstruct(
+            full,colours=9,max_side=640,superpixels=920,
+            design_width_mm=float(original_plan['physical']['imageWidthMm']))
     if not evidence["foregroundPreserved"]:
         raise ValueError("Hybrid candidate changed its analysis foreground")
     native_labels = np.asarray(Image.fromarray(reduced, "L").resize(
@@ -67,6 +86,16 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         raise ValueError("Hybrid reconstruction changed original source foreground")
     if np.any(native_labels[mask] > len(palette)):
         raise ValueError("Hybrid produced an unknown thread colour")
+    palette_refit_evidence={'trialEnabled':False,'selectedByErrorAndPaletteGuard':False}
+    if (os.environ.get('STITCH_FORGE_SOURCE_PALETTE_REFIT_TRIAL','0')=='1'
+            and 'originalPngBase64' in packet
+            and original_binding.get('originalSourceSha256Verified') is True):
+        from source_palette_refit import refit_palette_from_original
+        raw=base64.b64decode(packet['originalPngBase64'],validate=True)
+        with Image.open(BytesIO(raw)) as source_png:
+            rgba_full=np.asarray(source_png.convert('RGBA'),dtype=np.uint8)
+        palette,palette_refit_evidence=refit_palette_from_original(
+            rgba_full,original,native_labels,palette)
     # The browser and native code require sorted, unique, used palette colours.
     # A reduced palette cannot silently create a 13th machine colour.
     used = sorted(int(i) for i in np.unique(native_labels[mask]))
@@ -117,6 +146,10 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         "hybridWorkingParts": components,
         "hybridThreadColours": len(sorted_colours),
         "analysisLongestSide": max(reduced.shape),
+        "highResolutionSourcePlanTrial": trial_source_dimensions is not None,
+        "sourceFullResolutionDimensionsForPlan": trial_source_dimensions,
+        "sourceOriginalWorkingMaskUnchanged": True,
+        "sourcePaletteRefit": palette_refit_evidence,
         "nativeCanvasWidth": w,
         "nativeCanvasHeight": h,
         "sourceMeanRgbDistance": float(np.mean(distance)),

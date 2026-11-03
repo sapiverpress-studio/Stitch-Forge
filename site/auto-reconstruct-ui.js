@@ -152,6 +152,33 @@ async function decoded(src,maxDim){
  ctx.clearRect(0,0,cvs.width,cvs.height);ctx.drawImage(image,0,0,cvs.width,cvs.height);
  return {canvas:cvs,ctx};
 }
+async function originalSourcePng(source, image){
+ // Experimental V2 transport: retain original image pixels BEFORE analysis
+ // downsizing. This runs locally; only the owner's existing private worker
+ // will receive them after the versioned, SHA-bound request is submitted.
+ if(image.naturalWidth*image.naturalHeight>12000000)
+  throw Error('Original image exceeds full-resolution private transport limit');
+ const isPng=bytes=>bytes.length>=8&&[137,80,78,71,13,10,26,10].every((n,i)=>bytes[i]===n);
+ let raw=null;
+ try{
+  const response=await fetch(source,{cache:'no-store'});
+  if(response.ok){
+   const bytes=new Uint8Array(await response.arrayBuffer());
+   if(isPng(bytes)&&bytes.length<=2450000)raw=bytes;
+  }
+ }catch{}
+ if(!raw){
+  const canvas=document.createElement('canvas');
+  canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+  canvas.getContext('2d').drawImage(image,0,0);
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(
+   b=>b?resolve(b):reject(Error('Cannot encode original PNG')),'image/png'));
+  if(blob.size>2450000)
+   throw Error('Full-resolution PNG exceeds the secure 2.45MB input limit; no quality-reducing resize was applied');
+  raw=new Uint8Array(await blob.arrayBuffer());
+ }
+ return raw;
+}
 async function modelImage(source){
  const {canvas,ctx}=await decoded(source,1000);
  // White background is only for AI vision; original alpha/RGB is retained locally
@@ -199,6 +226,13 @@ q("#sfAutoRun").onclick=async()=>{
   status('Preparing source pixels and colour shapes locally…');
   try{
    const original=new Image();await new Promise((yes,no)=>{original.onload=yes;original.onerror=no;original.src=source;});
+   // Preserve original image bytes once; do not recompute for each fallback
+   // analysis size or silently lower source detail to fit an upload.
+   // MD-2.70 experimental V2 is NOT in production: deployed Cloud Run
+   // still expects the V1 packet. Never send a full-source V2 request
+   // without explicitly configuring and testing BOTH connected services.
+   const originalPngBytes=window.STITCH_FORGE_V2_FULL_SOURCE_ENABLED===true
+    ? await originalSourcePng(source,original) : null;
    // Native fill detail is physically bounded. Attempt the finest reasonable
    // resolution first, then reduce *analysis* resolution if there are still too
    // many unsewable working parts. Never resize the physical embroidery width.
@@ -220,7 +254,8 @@ q("#sfAutoRun").onclick=async()=>{
     try{
      packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,
       {imageWidthMm:width,originalWidth:original.naturalWidth,originalHeight:original.naturalHeight,
-       texturePolicy,maxWorkingParts:1500,sizeMode:'visible'});
+       texturePolicy,maxWorkingParts:1500,sizeMode:'visible',
+       originalPngBytes});
      analysisPixels=canvas.width+' × '+canvas.height;
      break;
     }catch(error){

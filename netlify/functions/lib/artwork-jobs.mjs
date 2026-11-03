@@ -42,6 +42,19 @@ export function validPacket(body){
   typeof obj.rgbaGzip!=='string'||typeof obj.labelsGzip!=='string'||
   obj.rgbaGzip.length>3200000||obj.labelsGzip.length>1000000)return false;
  const keys=['header','rgbaGzip','labelsGzip','requestId'];
+ if('originalPngBase64' in obj){
+  let header;
+  try{header=JSON.parse(obj.header);}catch{return false;}
+  if(header?.schema!=='stitch-forge-artwork-request-v2'||
+     !header.originalPng||typeof header.originalPng!=='object'||
+     !/^[0-9a-f]{64}$/.test(header.originalPng.sha256||'')||
+     !Number.isInteger(header.originalPng.bytes)||
+     header.originalPng.bytes<100||header.originalPng.bytes>2450000||
+     typeof obj.originalPngBase64!=='string'||obj.originalPngBase64.length>3266672||
+     !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(obj.originalPngBase64))
+   return false;
+  keys.push('originalPngBase64');
+ }else if(obj.header.includes('stitch-forge-artwork-request-v2'))return false;
  return Object.keys(obj).sort().join(',')===keys.sort().join(',');
 }
 export async function bodyText(request,max=MAX_BYTES){

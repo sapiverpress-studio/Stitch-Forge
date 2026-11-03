@@ -82,12 +82,22 @@ def decode_packet(obj):
     required={'header','rgbaGzip','labelsGzip','requestId','phase'}
     phase=obj.get('phase') if isinstance(obj,dict) else None
     allowed=required|({'receipt','pesBase64'} if phase=='dst' else set())
+    # V2 is opt-in, exact and additive: older production packets remain valid.
+    # Binding to the original PNG hash is inside the signed requestId header.
+    header_value=obj.get('header') if isinstance(obj,dict) else None
+    if isinstance(header_value,str) and 'stitch-forge-artwork-request-v2' in header_value:
+        allowed.add('originalPngBase64')
     if isinstance(obj,dict) and 'repairReceipt' in obj:allowed.add('repairReceipt')
     if not isinstance(obj,dict) or phase not in ('pes','dst') or set(obj)!=allowed:raise ValueError('Unsupported artwork request')
     header=obj['header']
     if not isinstance(header,str) or len(header)>2000:raise ValueError('Oversized artwork header')
     meta=strict_json(header)
-    if not isinstance(meta,dict) or set(meta)!={'schema','source','imageWidthMm','palette','foregroundPixels','preparationSignature','texturePolicy'} or meta['schema']!='stitch-forge-artwork-request-v1':
+    version=meta.get('schema') if isinstance(meta,dict) else None
+    required_meta={'schema','source','imageWidthMm','palette','foregroundPixels','preparationSignature','texturePolicy'}
+    if version=='stitch-forge-artwork-request-v2':
+        required_meta.add('originalPng')
+    if not isinstance(meta,dict) or set(meta)!=required_meta or version not in (
+            'stitch-forge-artwork-request-v1','stitch-forge-artwork-request-v2'):
         raise ValueError('Unsupported artwork header')
     source=meta['source']
     if not isinstance(source,dict) or set(source)!={'sha256','width','height','originalWidth','originalHeight'}:raise ValueError('Invalid source identity')
@@ -118,4 +128,11 @@ def decode_packet(obj):
     evidence={'sourcePixelsVerified':True,'foregroundIndependentlyVerified':True,'clientObjectAlgorithmRecomputed':False,
        'clientPreparationSignature':meta['preparationSignature'],'sourceMeanRgbDistance':float(distances.mean()),'sourcePixelsBeyondRgb60':int((distances>60).sum()),
        'sourceSemanticFeaturesVerified':False}
+    if version=='stitch-forge-artwork-request-v2':
+        from original_png_contract import verify_original_png
+        original_evidence=verify_original_png(obj['originalPngBase64'],
+                                               meta['originalPng'],rgba)
+        if original_evidence['originalPixelDimensionsVerified'] != [ow,oh]:
+            raise ValueError('Original PNG dimensions conflict with signed packet')
+        evidence.update(original_evidence)
     return plan,meta,identity,evidence
