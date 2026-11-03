@@ -1,0 +1,65 @@
+name: MD-2.68 guarded real PES/DST quality A-B (NO DEPLOY)
+on:
+  push:
+    branches: [feature/md268-kingfisher-quality-gates-no-deploy]
+    paths:
+      - ".github/workflows/md268-real-native-ab-no-deploy.yml"
+      - "services/digitiser/source_stitch_orientation.py"
+      - "services/digitiser/home_live_bridge.py"
+      - "services/digitiser/artwork_trial.py"
+      - "tests/test_source_stitch_orientation.py"
+      - "tools/bench_md268_quality.py"
+      - "tools/verify_live_home_hybrid.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verified-native-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [synthetic, macaw, butterfly, rose]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned private-worker library dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Unit test source-led angle and existing bounds before any Ink/Stitch processing
+        run: |
+          python -m compileall -q services/digitiser tools/bench_md268_quality.py
+          python -m unittest discover -s tests -p test_source_stitch_orientation.py -v
+          python -m unittest discover -s tests -p test_home_live_bridge.py -v
+          python -m unittest discover -s tests -p test_native_fill_precision.py -v
+      - name: Install trusted, SHA-verified Ink/Stitch 3.3.0
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Compare four real native PES/DST alternatives, one identical source
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md268"
+          xvfb-run -a python tools/bench_md268_quality.py \
+            --engine "$ENGINE" --fixture "${{ matrix.fixture }}" --output "$RUNNER_TEMP/md268"
+          test -s "$RUNNER_TEMP/md268/MD268-COMPARE-NOT-APPROVED.json"
+      - name: Preserve public-licensed evidence reports; never upload private Kingfisher
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md268-${{ matrix.fixture }}-comparison-REPORT-ONLY
+          path: |
+            ${{ runner.temp }}/md268/MD268-COMPARE-NOT-APPROVED.json
+            ${{ runner.temp }}/md268/*/md267-worker-native-verification.json
+            ${{ runner.temp }}/md268/*/md267-machine-report-NOT-APPROVED.json
+          retention-days: 4
+          if-no-files-found: ignore
+      - name: Verify no customer release was published
+        run: |
+          echo "Strict experimental CI: NO NETLIFY deploy, NO CLOUD RUN build, NO traffic, NO private uploads."
