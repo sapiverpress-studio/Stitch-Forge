@@ -369,6 +369,12 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
     records, path_count, total_vertices = [], 0, 0
     underlay_count=0;running_branches=0;routed_walks=0
     fill_pieces=[];repaired=[]
+    # Generated only by the private worker from independently verified source
+    # RGBA, never accepted directly as a client packet field.
+    source_optical=plan.get('sourceTextureFillCandidates',{})
+    if not isinstance(source_optical,dict) or len(source_optical)>500:
+        raise ValueError('Invalid bounded source-optical fill proposals')
+    optical_applied=0
     def add_path(color, points, closed=False, holes=(),angle=0,underlay=False,underpath=True):
         nonlocal path_count, total_vertices,underlay_count
         if partition_fills and not closed:points=without_collinear_steps(points)
@@ -428,11 +434,32 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                     raise ValueError('Contour generalisation exceeded its source bound')
                 polygons = [] if smooth.is_empty else [smooth] if smooth.geom_type == 'Polygon' else list(smooth.geoms)
                 angle,directional=component_axis(component)
+                geometric_angle=angle
+                texture_candidate=source_optical.get(identity)
+                optical_applied_here=False
+                if texture_candidate is not None:
+                    if (not isinstance(texture_candidate,dict)
+                            or not isinstance(texture_candidate.get('angleDeg'),int)
+                            or isinstance(texture_candidate.get('angleDeg'),bool)
+                            or texture_candidate['angleDeg'] not in range(0,180,15)
+                            or not isinstance(texture_candidate.get('gradientCoherence'),(int,float))
+                            or not .72<=texture_candidate['gradientCoherence']<=1.
+                            or not isinstance(texture_candidate.get('interiorPixels'),int)
+                            or texture_candidate['interiorPixels']<55
+                            or area<6.):
+                        raise ValueError('Invalid source texture fill-direction evidence')
+                    # A source-driven preference is a physically untested
+                    # direction change, not a source-geometry replacement.
+                    if (texture_candidate['angleDeg']-angle)%180 not in (0,):
+                        angle=texture_candidate['angleDeg']
+                        optical_applied_here=True
+                        optical_applied+=1
                 piece_index=0
                 for poly in polygons:
                     if poly.geom_type != 'Polygon' or poly.is_empty:
                         raise ValueError('Invalid native fill polygon')
-                    angle,directional=component_axis(component)
+                    # Preserve the component-level optical choice through
+                    # all native fill pieces; do not silently reset it.
                     pieces=bounded_fill_parts(poly,scale) if partition_fills else [poly]
                     for piece in pieces:
                         piece_id=identity+'-p'+str(piece_index);piece_index+=1
@@ -498,6 +525,10 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                                                  'preservedFill':True})
                 record['action'] = 'native_fill_trial'
                 record['fillAngleDeg']=angle;record['geometryAxisUsed']=directional;record['semanticDirectionVerified']=False
+                record['fillAngleBasis']='source_interior_gradient' if optical_applied_here else 'geometry_axis'
+                if optical_applied_here:
+                    record['geometricFallbackAngleDeg']=geometric_angle
+                    record['sourceGradientCoherence']=texture_candidate['gradientCoherence']
                 record['contourHausdorffMm'] = shape.hausdorff_distance(smooth)*scale
             else:
                 paths, count, dots = skeleton_paths(local)
@@ -549,6 +580,11 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         'source':plan['source'],'sourcePlanSignature':plan['sourcePlanSignature'],'scaleMmPerPixel':scale,
         'originMm':[width/2,height/2],'widthMm':width,'heightMm':height,'objects':records,'nativePaths':actual_elements,'nativeCandidatePaths':path_count,
         'nativeFillPieces':fill_pieces,'nativeRepairObjects':repaired,
+        'sourceOpticalFillDirectionAudit':{
+            'proposals':len(source_optical),'appliedComponents':optical_applied,
+            'sourceGeometryChanged':False,'sourcePaletteChanged':False,
+            'semanticFeatherIdentificationVerified':False,
+            'physicalSewoutVerified':False},
         'regionConsolidation':{'method':'connected_skeleton_edge_walk_and_same_colour_nearest_centre',
             'originalRunningBranches':running_branches,'connectedRunningWalks':routed_walks,
             'colourPixelsReassigned':0,'sourceGeometryChanged':False,
@@ -748,6 +784,7 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
         'nativeRepairObjects':manifest.get('nativeRepairObjects',[]),
         'stitchPlanning':{'settings':manifest['settings'],
             'nativeFillUnderlayAudit':manifest['underlayAudit'],
+            'sourceOpticalFillDirectionAudit':manifest['sourceOpticalFillDirectionAudit'],
             'families':'native_fill_and_source_skeleton_running','semanticStitchIntentVerified':False},
         'detailedArtworkBenchmarkVerified':False,
         'releaseEvidenceScope':'source_bound_machine_file_only_not_sewn',
