@@ -1,0 +1,60 @@
+name: MD-2.67 existing website packet to real hybrid PES/DST validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/digitiser/home_live_bridge.py"
+      - "services/digitiser/artwork_service.py"
+      - "services/digitiser/hybrid_home.py"
+      - "services/digitiser/hybrid_packet_bridge.py"
+      - "services/digitiser/artwork_trial.py"
+      - "tests/test_home_live_bridge.py"
+      - "tools/verify_live_home_hybrid.py"
+      - ".github/workflows/md267-live-home-integration.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-real-two-phase-worker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned image/native dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Run offline live-packet source-binding tests
+        run: |
+          python -m compileall -q services/digitiser
+          python -m unittest discover -s tests -p test_home_live_bridge.py -v
+          python -m unittest discover -s tests -p test_home_hybrid.py -v
+          python -m unittest discover -s tests -p test_hybrid_packet_bridge.py -v
+          python -m unittest discover -s tests -p test_native_fill_precision.py -v
+      - name: Install SHA-verified Ink/Stitch 3.3.0
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Run the current website's browser packet through BOTH real native worker phases
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md267-native"
+          xvfb-run -a python tools/verify_live_home_hybrid.py --engine "$ENGINE" --output "$RUNNER_TEMP/md267-native"
+          test -s "$RUNNER_TEMP/md267-native/md267-worker-native-verification.json"
+      - name: Publish reports only; no customer source or native products
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md267-both-phases-engineering-report-NOT-APPROVED
+          path: |
+            ${{ runner.temp }}/md267-native/md267-worker-native-verification.json
+            ${{ runner.temp }}/md267-native/md267-machine-report-NOT-APPROVED.json
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Confirm no Netlify/Cloud Run production change
+        run: echo "CI only: no website redeploy, Cloud Build, Cloud Run release or traffic switch."
