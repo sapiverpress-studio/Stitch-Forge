@@ -35,13 +35,16 @@ def propose_curved_satin(component, scale, colour, *, origin=(2., 2.),
         raise ValueError('Invalid source-bound curved satin inputs')
 
     runs = component['runs']
-    if not 6 <= len(runs) <= max_runs:
+    if len(runs)>max_runs:
         return None
+    # Short malformed RLE must be validated, not silently treated as thin art.
     if any(not isinstance(r, (list, tuple)) or len(r) != 3
            or any(type(n) != int for n in r)
            or r[1] < 0 or r[0] < 0 or r[2] <= r[1]
            or r[2] > 2000 or r[0] > 2000 for r in runs):
         raise ValueError('Noncanonical source pixel runs')
+    if len(runs)<6:
+        return None
     pixel_area = sum(x1-x0 for y, x0, x1 in runs)
     if pixel_area < 30 or pixel_area > 750000:
         return None
