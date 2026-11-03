@@ -17,13 +17,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"services"/"digitiser
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"tests"))
 from artwork_service import process_phase
 from test_home_live_bridge import browser_packet, illustration
+from verify_home_hybrid_native import licensed_fixture
+from PIL import Image
 
 
-def native_acceptance(engine, output):
+def native_acceptance(engine, output, fixture=None):
     os.environ["STITCH_FORGE_HOME_HYBRID_ENABLED"] = "1"
     os.environ["STITCH_FORGE_ARTWORK_EXPORT_TIMEOUT_SECONDS"] = "110"
     os.environ["STITCH_FORGE_AUTO_SOURCE_REPAIR"] = "1"
-    packet = browser_packet(illustration())
+    original = licensed_fixture(fixture) if fixture else illustration()
+    if max(original.size) > 320:
+        ratio = 320 / max(original.size)
+        original = original.convert('RGBA').resize(
+            tuple(max(48, round(z*ratio)) for z in original.size),
+            Image.Resampling.LANCZOS)
+    packet = browser_packet(original)
     secret = "synthetic-offline-CI-key-never-used-live"
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
@@ -84,6 +92,7 @@ def native_acceptance(engine, output):
         evidence = {
             "schema": "md267-full-browser-packet-to-real-native-pesdst-CI-v1",
             "result": "PASS_NATIVE_SOURCE_CONTAINED_NOT_SEWOUT_APPROVED",
+            "fixture": fixture or "synthetic-bird",
             "clientSourceSha256": browser_plan["source"]["sha256"],
             "sourceRequestId": identity,
             "workerHybridProfile": proof,
@@ -107,5 +116,6 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--engine", required=True)
     p.add_argument("--output", required=True)
+    p.add_argument("--fixture", choices=["macaw", "butterfly", "rose"])
     arguments = p.parse_args()
-    print(json.dumps(native_acceptance(arguments.engine, arguments.output), indent=2))
+    print(json.dumps(native_acceptance(arguments.engine, arguments.output, arguments.fixture), indent=2))
