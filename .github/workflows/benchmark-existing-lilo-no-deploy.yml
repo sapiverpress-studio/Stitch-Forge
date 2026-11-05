@@ -1,0 +1,81 @@
+name: Independent Lilo v1.4.0 real PES/DST benchmark (NO DEPLOY)
+on:
+  push:
+    branches: [experiment/existing-engines-nuizu-benchmark-no-deploy-20261105]
+    paths:
+      - ".github/workflows/benchmark-existing-lilo-no-deploy.yml"
+      - "tools/benchmark_external_lilo.mts"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lilo-public-art-native-trial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Clone the exact third-party Lilo v1.4.0 release
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch v1.4.0 https://github.com/Kadwood/lilo.git "$RUNNER_TEMP/lilo"
+          test "$(git -C "$RUNNER_TEMP/lilo" rev-parse HEAD)" = "c82a9d7ddae21e73048ccd4163b2ad22c4829f8c"
+      - name: Install published Lilo dependencies with unchanged frozen lock
+        run: |
+          npm install --global pnpm@10.0.0
+          cd "$RUNNER_TEMP/lilo"
+          pnpm install --frozen-lockfile
+          pnpm add -D --workspace-root tsx@4.20.6
+      - name: Export only known CC0 fixtures into private runner RGBA buffers
+        run: |
+          python -m pip install 'Pillow==12.3.0'
+          mkdir -p "$RUNNER_TEMP/lilo-public-input" "$RUNNER_TEMP/lilo-public-output"
+          python - <<'PY'
+          import os, hashlib, json
+          from pathlib import Path
+          from PIL import Image
+          root=Path.cwd()/'tests/fixtures/artwork-evaluation'
+          manifest=json.loads((root/'manifest.json').read_text())
+          dest=Path(os.environ['RUNNER_TEMP'])/'lilo-public-input'
+          for fixture in ('macaw','rose'):
+              item=next(x for x in manifest['samples'] if x['id']==fixture)
+              if item['licence']!='CC0-1.0':raise ValueError('Fixture must be CC0')
+              data=(root/item['raster_file']).read_bytes()
+              if hashlib.sha256(data).hexdigest()!=item['raster_sha256']:
+                  raise ValueError('Input SHA mismatch')
+              im=Image.open(root/item['raster_file']).convert('RGBA')
+              rgba=im.tobytes()
+              (dest/(fixture+'.rgba')).write_bytes(rgba)
+              (dest/(fixture+'.json')).write_text(json.dumps({
+                'width':im.width,'height':im.height,
+                'pngSha256':item['raster_sha256'],
+                'rgbaSha256':hashlib.sha256(rgba).hexdigest()}))
+          PY
+      - name: Generate and audit actual third-party Lilo PES/DST engine output
+        run: |
+          set -euo pipefail
+          cp tools/benchmark_external_lilo.mts "$RUNNER_TEMP/lilo/engine/benchmark_external_lilo.mts"
+          cd "$RUNNER_TEMP/lilo"
+          LILO_BENCH_INPUT="$RUNNER_TEMP/lilo-public-input" \
+          LILO_BENCH_OUTPUT="$RUNNER_TEMP/lilo-public-output" \
+            pnpm exec tsx engine/benchmark_external_lilo.mts
+          test -s "$RUNNER_TEMP/lilo-public-output/LILO-EXTERNAL-ENGINE-REPORT.json"
+      - name: Preserve only CC0 embroidery trials, no private customer artwork
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Lilo-v1.4.0-CC0-PES-DST-NOT-MACHINE-APPROVED
+          path: ${{ runner.temp }}/lilo-public-output/
+          retention-days: 4
+          if-no-files-found: ignore
+      - name: No deployment or proprietary integration
+        run: |
+          echo "Lilo GPL-3.0 source is cloned only in disposable CI for evaluation."
+          echo "No source code copied into Stitch Forge backend, no Netlify/Cloud Run deploy."
