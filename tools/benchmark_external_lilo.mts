@@ -8,10 +8,12 @@ import { createHash } from 'node:crypto';
 // Load only the two upstream auto-digitizing and export modules: Lilo's
 // package-wide index also imports UI shape tools with a jsts .jsx Node
 // resolution defect that is irrelevant to the headless digitiser.
-import { initVtracerNode } from './src/node.ts';
-import { autoDigitize } from './src/autodigitize/index.ts';
-import { designToEmbroidery } from './src/export.ts';
+import { it } from 'vitest';
+import { initVtracerNode } from '../src/node';
+import { autoDigitize } from '../src/autodigitize';
+import { designToEmbroidery } from '../src/export';
 
+it('independent Lilo upstream CC0 image to PES/DST benchmark', async () => {
 const inputDir = process.env.LILO_BENCH_INPUT;
 const outputDir = process.env.LILO_BENCH_OUTPUT;
 if (!inputDir || !outputDir) throw Error('Missing benchmark input/output');
@@ -61,4 +63,5 @@ for (const id of ['macaw','rose']) {
 }
 writeFileSync(join(outputDir,'LILO-EXTERNAL-ENGINE-REPORT.json'),
  JSON.stringify(report,null,2)+'\n');
-if(report.results.some(x=>!x.success))process.exitCode=1;
+if(report.results.some(x=>!x.success))throw Error('External upstream Lilo native conversion did not succeed');
+},240_000);
