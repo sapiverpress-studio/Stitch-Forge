@@ -5,8 +5,12 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { initVtracerNode } from '@lilo/engine/node';
-import { autoDigitize, designToEmbroidery } from '@lilo/engine';
+// Load only the two upstream auto-digitizing and export modules: Lilo's
+// package-wide index also imports UI shape tools with a jsts .jsx Node
+// resolution defect that is irrelevant to the headless digitiser.
+import { initVtracerNode } from './src/node.ts';
+import { autoDigitize } from './src/autodigitize/index.ts';
+import { designToEmbroidery } from './src/export.ts';
 
 const inputDir = process.env.LILO_BENCH_INPUT;
 const outputDir = process.env.LILO_BENCH_OUTPUT;
