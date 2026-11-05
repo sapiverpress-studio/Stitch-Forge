@@ -66,6 +66,21 @@ jobs:
           LILO_BENCH_OUTPUT="$RUNNER_TEMP/lilo-public-output" \
             pnpm exec vitest run test/external-benchmark.test.ts --silent=false --reporter=verbose
           test -s "$RUNNER_TEMP/lilo-public-output/LILO-EXTERNAL-ENGINE-REPORT.json"
+      - name: Package unmodified installed Lilo engine for LOCAL private-image testing
+        if: success()
+        run: |
+          tar -czf "$RUNNER_TEMP/lilo-v1.4.0-offline-engine.tar.gz" \
+            -C "$RUNNER_TEMP/lilo" \
+            package.json pnpm-workspace.yaml pnpm-lock.yaml engine node_modules scripts data
+          test -s "$RUNNER_TEMP/lilo-v1.4.0-offline-engine.tar.gz"
+      - name: Transfer upstream engine bundle (NO user artwork) for private evaluation
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lilo-1.4.0-upstream-engine-for-local-private-test
+          path: ${{ runner.temp }}/lilo-v1.4.0-offline-engine.tar.gz
+          retention-days: 2
+          if-no-files-found: error
       - name: Preserve only CC0 embroidery trials, no private customer artwork
         if: always()
         uses: actions/upload-artifact@v4
