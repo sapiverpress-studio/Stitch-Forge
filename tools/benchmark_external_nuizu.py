@@ -21,8 +21,21 @@ from PIL import Image, ImageDraw
 import pyembroidery
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "tools"))
-from verify_home_hybrid_native import licensed_fixture
+
+
+def licensed_fixture(name):
+    # Avoid importing Stitch Forge's own segmentation/machine engine: this
+    # benchmark must exercise ONLY the upstream Nuizu digitiser.
+    manifest_path = ROOT / "tests" / "fixtures" / "artwork-evaluation" / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    record = next((r for r in manifest["samples"] if r["id"] == name), None)
+    if not record or record["licence"] != "CC0-1.0":
+        raise ValueError("Only independently verified CC0 images are allowed")
+    target = manifest_path.parent / record["raster_file"]
+    if sha256(target.read_bytes()).hexdigest() != record["raster_sha256"]:
+        raise ValueError("CC0 artwork SHA mismatch")
+    return Image.open(target).copy()
+
 
 # Public, CC0 test art. No user or private Kingfisher assets ever uploaded.
 FIXTURES = ("macaw", "rose", "butterfly")
