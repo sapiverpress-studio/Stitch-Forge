@@ -1,0 +1,27 @@
+name: Fetch independent machine-file decoder for private evaluation (NO DEPLOY)
+on:
+  push:
+    branches: [experiment/existing-engines-nuizu-benchmark-no-deploy-20261105]
+    paths:
+      - ".github/workflows/fetch-pyembroidery-wheel-no-deploy.yml"
+permissions:
+  contents: read
+jobs:
+  original-published-wheel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download unmodified pyembroidery decoder package
+        run: |
+          mkdir -p "$RUNNER_TEMP/decoder"
+          python -m pip download --no-deps --only-binary=:all: pyembroidery==1.5.1 -d "$RUNNER_TEMP/decoder"
+          sha256sum "$RUNNER_TEMP/decoder/"*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: published-pyembroidery-1.5.1-wheel-for-private-offline-audit
+          path: ${{ runner.temp }}/decoder/*.whl
+          retention-days: 2
+          if-no-files-found: error
