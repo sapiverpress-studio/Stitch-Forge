@@ -1,0 +1,62 @@
+name: External digitiser benchmark Nuizu 0.3.1 (NO DEPLOY)
+on:
+  push:
+    branches: [experiment/existing-engines-nuizu-benchmark-no-deploy-20261105]
+    paths:
+      - ".github/workflows/benchmark-existing-nuizu-no-deploy.yml"
+      - "tools/benchmark_external_nuizu.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  nuizu-real-machine-file-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download Nuizu original published wheel and check PyPI SHA256
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/nuizu-wheel"
+          python -m pip download --no-deps --only-binary=:all: nuizu==0.3.1 -d "$RUNNER_TEMP/nuizu-wheel"
+          printf '%s  %s\n' \
+            '507c69fa5184c6c69f48347b33a9b11be5e0b227176673f5b95997da90c2dfec' \
+            "$RUNNER_TEMP/nuizu-wheel/nuizu-0.3.1-py3-none-any.whl" | sha256sum -c -
+      - name: Install unchanged external engine and independent file decoder
+        run: |
+          python -m pip install "$RUNNER_TEMP/nuizu-wheel/nuizu-0.3.1-py3-none-any.whl" 'pyembroidery==1.5.1'
+          python -m pip freeze > "$RUNNER_TEMP/nuizu-requirements-resolved.txt"
+          nuizu --help | head -45
+      - name: Produce genuine PES/DST from three public CC0 artwork fixtures
+        run: |
+          set -euo pipefail
+          python -m compileall -q tools/benchmark_external_nuizu.py
+          python tools/benchmark_external_nuizu.py "$RUNNER_TEMP/nuizu-CC0-results"
+          test -s "$RUNNER_TEMP/nuizu-CC0-results/NUiZU-EXTERNAL-ENGINE-REPORT.json"
+      - name: Save reproducible Nuizu release package for OFFLINE PRIVATE evaluation only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuizu-0.3.1-verified-upstream-wheel-for-offline-test
+          path: ${{ runner.temp }}/nuizu-wheel/*.whl
+          retention-days: 3
+          if-no-files-found: ignore
+      - name: Save CC0-only actual machine files and diagnostic previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuizu-CC0-benchmark-PES-DST-NOT-MACHINE-APPROVED
+          path: |
+            ${{ runner.temp }}/nuizu-CC0-results/
+            ${{ runner.temp }}/nuizu-requirements-resolved.txt
+          retention-days: 3
+          if-no-files-found: ignore
+      - name: Confirm no paid deployment
+        run: |
+          echo "External open-source comparison only. No private Kingfisher in CI."
+          echo "NO Cloud Run build, NO Netlify deploy, NO traffic changes, NO Work."
