@@ -32,7 +32,6 @@ jobs:
           npm install --global pnpm@10.0.0
           cd "$RUNNER_TEMP/lilo"
           pnpm install --frozen-lockfile
-          pnpm add -D --workspace-root tsx@4.20.6
       - name: Export only known CC0 fixtures into private runner RGBA buffers
         run: |
           python -m pip install 'Pillow==12.3.0'
@@ -61,11 +60,11 @@ jobs:
       - name: Generate and audit actual third-party Lilo PES/DST engine output
         run: |
           set -euo pipefail
-          cp tools/benchmark_external_lilo.mts "$RUNNER_TEMP/lilo/engine/benchmark_external_lilo.mts"
-          cd "$RUNNER_TEMP/lilo"
+          cp tools/benchmark_external_lilo.mts "$RUNNER_TEMP/lilo/engine/test/external-benchmark.test.ts"
+          cd "$RUNNER_TEMP/lilo/engine"
           LILO_BENCH_INPUT="$RUNNER_TEMP/lilo-public-input" \
           LILO_BENCH_OUTPUT="$RUNNER_TEMP/lilo-public-output" \
-            pnpm exec tsx engine/benchmark_external_lilo.mts
+            pnpm exec vitest run test/external-benchmark.test.ts --silent=false --reporter=verbose
           test -s "$RUNNER_TEMP/lilo-public-output/LILO-EXTERNAL-ENGINE-REPORT.json"
       - name: Preserve only CC0 embroidery trials, no private customer artwork
         if: always()
