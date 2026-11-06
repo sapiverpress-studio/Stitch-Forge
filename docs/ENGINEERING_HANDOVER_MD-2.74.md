@@ -23,7 +23,7 @@ This is a narrow step toward a real separated workflow, **not yet an automatic s
 
 - Six original MD-2.73 stage tests + actual older planner integration: PASS in previous feature-branch CI.
 - MD-2.74 geometric unit and source-mask/satin-selection/CLI acceptance tests: **PASS** in [GitHub Actions 42177933835](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42177933835) and [42177996281](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42177996281).
-- True Ink/Stitch 3.3.0 PES6/DST stage-selection A/B: [GitHub Actions 42178183566](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42178183566), **result must be checked**. This is controlled synthetic artwork, not the owner's Kingfisher.
+- True Ink/Stitch 3.3.0 PES6/DST stage-selection A/B **PASS**, [GitHub Actions 42178183566](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42178183566). Identical source identity/pixels and two native formats. Synthetic bent-strip control: baseline Tatami **842 PES stitches / 3 trims / 5 jumps / 17.58% transverse needle movements**; source-selected curved satin **647 / 2 / 4 / 97.01%**. Decoded needle paths differed and neither mode left verified working-colour pixels/segments (0/0). This proves a true stitch-family change and independent source audit **only on the controlled fixture**. Satin inset may leave unstitched visual edges; no Kingfisher or physical fabric approval.
 - No real-fabric sew-out, no user-private artwork uploaded to public repository/CI, no deployed worker or Netlify changes.
 
 ## Local workflow
