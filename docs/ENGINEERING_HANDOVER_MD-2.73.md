@@ -35,7 +35,7 @@ These remain the next engineering milestones.
 ## Evidence and release gates
 
 - Six isolated unit tests checked source identity, underlay, empty satin, tampering, missing objects, duplicate IDs and mixed stitch types locally before repository commit.
-- GitHub CI runs the same isolated tests on the feature branch; record the run and PASS before marking verified.
+- GitHub CI PASS at [run 42176927471](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42176927471) for six stage-integrity unit tests plus a real **older source-plan generator -> offline CLI -> separated Tatami/running/satin review SVG** synthetic fixture test. It verifies byte-identical combined SVG, not PES/DST output.
 - Actual original-Kingfisher source-identical improvement: **NOT TESTED**.
 - Actual staged native PES/DST generation for Kingfisher: **NOT TESTED**.
 - Fabric stitch-out: **NOT PERFORMED**.
