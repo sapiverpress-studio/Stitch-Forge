@@ -103,6 +103,11 @@ function render(){
 }
 function candidates(){
  $('candidateList').replaceChildren();
+ if(bundle.candidateScanTruncated){
+  const p=document.createElement('p');
+  p.textContent='Some complex objects were not scanned. They will retain the original stitch treatment.';
+  $('candidateList').append(p);
+ }
  if(!bundle.candidates.length){
   const p=document.createElement('p');p.textContent='No suitable satin candidates found. Keeping the original stitch types is safer.';$('candidateList').append(p);return;
  }
