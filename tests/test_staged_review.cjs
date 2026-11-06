@@ -37,3 +37,23 @@ test('reject repeated, unsupported, unbounded and tampered candidate selections'
  bad.candidates.push({...bad.candidates[0]});
  assert.throws(()=>R.validate(bad));
 });
+
+test('protected detail warnings are data-only, non-approved, source-local',()=>{
+ const b=sample();
+ b.protectedDetailReview={
+  windows:[{id:'eye',contrastLossPossible:true}],
+  nativeFeatureRetentionVerified:false,
+  originalToPreparedPacketAuthenticated:false,
+  machineApproved:false,
+  sourceOriginalImageIncluded:false
+ };
+ assert.equal(R.validate(b),b);
+ const decision=R.createDecisions(b,['114488-0']);
+ assert.equal(decision.choices.length,1);
+ assert.equal(decision.sourcePlanSignature,b.sourcePlanSignature);
+ b.protectedDetailReview.nativeFeatureRetentionVerified=true;
+ assert.throws(()=>R.validate(b),/Invalid private/);
+ b.protectedDetailReview.nativeFeatureRetentionVerified=false;
+ b.protectedDetailReview.sourceOriginalImageIncluded=true;
+ assert.throws(()=>R.validate(b),/Invalid private/);
+});
