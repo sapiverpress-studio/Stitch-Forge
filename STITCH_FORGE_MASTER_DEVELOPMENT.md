@@ -1620,3 +1620,15 @@ Owner authorised a reversible return to the established pre-hybrid native planni
 **Test evidence:** six isolated unit checks passed locally and in GitHub CI on 6 November 2026. The older native source-plan generator also passed an end-to-end *synthetic source plan → review-stage CLI* integration test at [run 42176927471](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42176927471). No Ink/Stitch PES/DST trial was executed for this milestone, so machine-file and fabric gates remain unverified.
 
 **Decision:** Existing native generation and independently audited PES6/DST remain the final output path; the new separated stage files are source-bound inspection artefacts only. No user-uploaded private Kingfisher illustration is committed. Do not confuse stage decomposition with independently optimised stitch-type algorithms. See [MD-2.73 handover](docs/ENGINEERING_HANDOVER_MD-2.73.md).
+
+
+## MD-2.74 — isolated source-verified independent stitch pass selection (6 November 2026)
+
+**Status: IN-PROGRESS / NO DEPLOY / HOLD FOR SOURCE-LIKENESS AND FABRIC TESTS.**
+Owner authorised continuation of the older-engine separate-pass rebuild without changing live systems.
+
+**Tasks and implementation:** MD-2.74-A independent source-object satin proposal review **CI PASS**; MD-2.74-B explicit source-ID-to-stitch-family native builder selection with unchanged legacy defaults **CI PASS**; MD-2.74-C genuine native source-identical PES6/DST A/B **CI executing / verify result**; MD-2.74-D user-facing stage review and correction **TODO**; MD-2.74-E real Kingfisher likeness and physical sewn fabric gate **BLOCKED / NOT TESTED**.
+
+**Evidence:** [unit/staged CLI CI 42177933835](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42177933835), [second staged CLI CI 42177996281](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42177996281), [native CI 42178183566](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42178183566) (check completion before claiming native success).
+
+**Decision:** Reuse the earlier original-image-ledger / Ink-Stitch exporter. Independent pass review offers existing tested straight and curved satin *candidate geometry*, not automatic semantic choice. Unselected components retain their original Tatami/running handling. Source selection fails closed if object IDs or methods do not match. The underlay remains with its original Tatami object. Controlled satin can still underfill visual areas; no improvement on the owner's Kingfisher or licensed naturalistic artwork has been demonstrated. Neither code on the isolated branch nor CI tests change public Netlify/Cloud Run endpoints. See [MD-2.74 engineering handover](docs/ENGINEERING_HANDOVER_MD-2.74.md).
