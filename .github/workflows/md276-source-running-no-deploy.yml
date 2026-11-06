@@ -1,0 +1,38 @@
+name: MD-2.76 original-authenticated running stage (NO DEPLOY)
+
+on:
+  push:
+    branches: ["feature/md276-authenticated-original-detail-running-no-deploy"]
+    paths:
+      - ".github/workflows/md276-source-running-no-deploy.yml"
+      - "services/digitiser/authenticated_running_detail.py"
+      - "services/digitiser/artwork_trial.py"
+      - "tools/staged_legacy_trial.py"
+      - "tests/test_md276_authenticated_running.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-bound-running-unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned original-engine image and geometry requirements
+        run: python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+      - name: Verify original-to-working full-PNG proof and real contour insertion
+        run: python -m unittest discover -s tests -p "test_md276_authenticated_running.py" -v
+      - name: Regress baseline stage and V2 original image contract
+        run: |
+          python -m unittest discover -s tests -p "test_legacy_staged_passes.py" -v
+          python -m unittest discover -s tests -p "test_legacy_staged_builder.py" -v
+          python -m unittest discover -s tests -p "test_original_png_transport.py" -v
+      - name: Compile source-bound native trial modules
+        run: python -m py_compile services/digitiser/authenticated_running_detail.py services/digitiser/artwork_trial.py tools/staged_legacy_trial.py
