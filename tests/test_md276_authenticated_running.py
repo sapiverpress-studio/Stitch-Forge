@@ -47,15 +47,53 @@ def synthetic_source(folder):
     return plan,original.read_bytes(),working.read_bytes(),windows
 
 
+def explicit_two_colour_source_plan(browser_plan,working):
+    """Controlled synthetic alternative: all pixels retained, exactly 2 threads.
+
+    This is NOT an algorithm for assigning the right colours on real artwork.
+    Demonstrates the same-source distinction between a fragmented colour
+    segmentation and an explicit stable eye/body source ledger.
+    """
+    import copy
+    from artwork_packet import regions_from_labels, foreground
+    w,h=browser_plan['source']['width'],browser_plan['source']['height']
+    rgba=np.frombuffer(working,np.uint8).reshape((h,w,4))
+    visible=foreground(rgba)
+    palette=['#122432','#DC6428']
+    rgb=np.array([[18,36,50],[220,100,40]],dtype=np.int16)
+    delta=((rgba[...,:3].astype(np.int16)[...,None,:]-rgb)**2).sum(axis=3)
+    labels=np.zeros((h,w),dtype=np.uint8)
+    labels[visible]=np.argmin(delta[visible],axis=1).astype(np.uint8)+1
+    regions,parts=regions_from_labels(labels,palette)
+    planned=copy.deepcopy(browser_plan)
+    planned['regions']=regions
+    count=int(visible.sum())
+    planned['summary'].update(sourcePixels=count,representedPixels=count,
+        sourceParts=parts,workingParts=parts,omittedPixels=0)
+    planned['sourcePlanSignature']=sha256(
+        b'MD276-SYNTHETIC-TWO-COLOUR\x00'+working+labels.tobytes()).hexdigest()
+    return planned
+
+
 class OriginalBoundRunningDetailTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.temp=TemporaryDirectory(prefix='md276-')
         cls.folder=Path(cls.temp.name)
-        cls.plan,cls.original,cls.working,cls.windows=synthetic_source(cls.folder)
+        cls.browser_plan,cls.original,cls.working,cls.windows=synthetic_source(cls.folder)
+        cls.plan=explicit_two_colour_source_plan(cls.browser_plan,cls.working)
+        cls.windows[0]['color']='#122432'
 
     @classmethod
     def tearDownClass(cls):cls.temp.cleanup()
+
+    def test_original_browser_palette_fragments_eye_and_safely_refuses_running(self):
+        review=propose_authenticated_running_details(
+            self.browser_plan,self.original,self.working,
+            [{'id':'dark-eye-outline','rect':[158,108,222,171],'color':'#122432'}])
+        self.assertEqual(review['candidateCount'],0)
+        self.assertEqual(review['rejected'][0]['reason'],
+                         'NO_COMPLETE_ORIGINAL_AND_WORKING_COLOUR_CONTOUR')
 
     def test_source_binding_proves_both_image_sha_and_ledger(self):
         original,reduced,masks,scale,proof=bind_private_original(
