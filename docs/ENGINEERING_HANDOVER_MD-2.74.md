@@ -21,10 +21,11 @@ This is a narrow step toward a real separated workflow, **not yet an automatic s
 
 ## Offline mobile review handoff (data only)
 
+- Candidate inspection has a bounded geometry-search budget: any unscanned fragments retain the original stitch family; the stage reviewer explicitly discloses truncation rather than failing the entire artwork or silently making decisions.
 - `tools/staged_legacy_trial.py` now also writes `stage-review-bundle.json`, which includes the original source SHA, plan signature, Tatami/Satin/running counts and bounded candidate metadata. It intentionally contains **no original raster or image bytes**.
 - `site/staged-review.html` + `site/staged-review.js` are a standalone mobile-first, **local file** stepper: load report → Tatami inventory → choose source-supported satin candidates → running inventory → download `stitch-forge-stage-decisions.json`.
 - The offline CLI now accepts `--decisions-json` and verifies exact plan/source hashes, bounded unique candidate IDs and methods before rebuilding any native SVG. Wrong-source or tampered files fail closed. The app cannot independently generate machine files and is **not integrated with the live website**.
-- Node contract tests plus end-to-end old source-plan → review bundle → user decisions → re-run CLI tests were added; independent GitHub CI result must be checked before treating this addition as verified.
+- Node contract tests, old source-plan → review bundle → source-bound user decisions → re-run offline CLI and actual **390px-wide mobile Chromium file upload/step navigation/download** passed in [GitHub Actions 42179237877](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42179237877). The latest full staged regression also passed [42179404713](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42179404713). These verify the local-only reviewer and handoff, **not** a hosted website or a browser-generated machine file.
 
 ## Test evidence
 
