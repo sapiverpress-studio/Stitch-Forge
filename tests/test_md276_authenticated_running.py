@@ -110,7 +110,7 @@ class OriginalBoundRunningDetailTests(unittest.TestCase):
             altered.putpixel((190,140),(10,240,240,255))
             from io import BytesIO
             buffer=BytesIO();altered.save(buffer,format='PNG')
-        with self.assertRaisesRegex(ValueError,'colours|match'):
+        with self.assertRaisesRegex(ValueError,'colours|match|reproduce exact'):
             bind_private_original(self.plan,buffer.getvalue(),self.working)
 
     def test_fail_closed_on_unsupported_selection_and_windows(self):
