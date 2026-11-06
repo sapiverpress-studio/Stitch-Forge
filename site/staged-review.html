@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stitch Forge — Separate Stitch Stages (Local Trial)</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#0e171c;color:#edf7f4}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh}
+main{max-width:720px;margin:auto;padding:20px 16px 28px}
+header{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:18px}
+h1{font-size:1.38rem;line-height:1.2;margin:0 0 6px}
+h2{font-size:1.15rem;margin:2px 0 12px}
+p{line-height:1.5;color:#bed1cb}
+small,.hint{color:#a6bbb6}
+small{font-size:.78rem}
+header small{display:block}
+.panel{background:#18262c;border:1px solid #35514e;border-radius:15px;padding:18px;margin-bottom:16px}
+input[type=file]{width:100%;padding:14px;background:#101c22;border:1px solid #456764;border-radius:10px;color:#e8f7f3}
+button{min-height:48px;border:0;border-radius:10px;padding:10px 18px;font-size:1rem;font-weight:700;cursor:pointer}
+button.primary{background:#83dcc6;color:#062c24}
+button.secondary{background:#314a4b;color:#ecfffa}
+button:disabled{opacity:.35;cursor:not-allowed}
+nav{display:flex;justify-content:space-between;gap:12px;margin-top:20px}
+.big-number{font-size:2.4rem;font-weight:800;color:#91ddc8;margin:8px 0}
+.pill{font-size:.77rem;background:#2b4947;border-radius:999px;padding:5px 10px;white-space:nowrap}
+.candidate{border:1px solid #43625d;border-radius:11px;padding:12px;display:flex;gap:12px;margin:10px 0;align-items:center}
+.candidate input{width:23px;height:23px;accent-color:#83dcc6;flex-shrink:0}
+.candidate strong{display:block;overflow-wrap:anywhere}
+.candidate small{display:block;margin-top:4px}
+.hidden{display:none}
+#status{margin-top:10px;min-height:20px;color:#e6d29a}
+footer{margin-top:26px;color:#9caba8;font-size:.8rem}
+.meter{background:#243b3c;border-radius:8px;overflow:hidden;height:6px;margin-bottom:20px}
+.meter>div{background:#83dcc6;height:100%;width:20%;transition:width .16s}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><h1>Sapiver Stitch Forge</h1><small>Separate stitch stages · private local trial</small></div>
+<span class="pill">NOT MACHINE APPROVED</span>
+</header>
+<div class="meter" aria-hidden="true"><div id="progress"></div></div>
+<section class="panel" id="step0">
+<h2>1 · Load the stage report</h2>
+<p>Choose <strong>stage-review-bundle.json</strong> from your offline Stitch Forge trial. Your original artwork is not required.</p>
+<input id="file" type="file" accept=".json,application/json" aria-label="Load local stage review bundle">
+<p class="hint">Nothing is uploaded. This page processes the report only on your device.</p>
+<div id="status" role="status" aria-live="polite"></div>
+</section>
+<section class="panel hidden" id="step1">
+<h2>2 · Tatami fill</h2>
+<p>These are the larger areas assigned to the existing fill engine. Their underlay remains attached to the fill.</p>
+<div class="big-number" id="tatamiCount">0</div>
+<small>Original Tatami objects · inspect only</small>
+<p class="hint">This version does not edit fill density or direction. Those changes still require a new audited native trial.</p>
+</section>
+<section class="panel hidden" id="step2">
+<h2>3 · Satin stitch</h2>
+<p>Select only the source-supported satin suggestions you want to try. An unsuitable shape will remain with the old fill or running engine.</p>
+<div id="candidateList"></div>
+<p class="hint">Satin may leave edges underfilled. These are shape candidates, not identified feathers or machine-approved stitches.</p>
+</section>
+<section class="panel hidden" id="step3">
+<h2>4 · Running stitch</h2>
+<p>The original running-stitch engine retains fine source-supported linework. No invented eye or feather detail is added.</p>
+<div class="big-number" id="runningCount">0</div>
+<small>Original running objects · inspect only</small>
+</section>
+<section class="panel hidden" id="step4">
+<h2>5 · Save your choices</h2>
+<p>Download a small decisions file. The offline Stitch Forge engine will independently check the original image signature and every chosen stitch object before generating a new native test.</p>
+<p id="summary"></p>
+<button id="download" class="primary">Download stage decisions</button>
+<p class="hint">This does not generate PES/DST in your browser, publish anything, or change the live Stitch Forge website.</p>
+</section>
+<nav>
+<button id="back" class="secondary" disabled>Back</button>
+<button id="next" class="primary" disabled>Next</button>
+</nav>
+<footer>For development review only. Genuine PES/DST and fabric suitability must be independently verified.</footer>
+</main>
+<script src="./staged-review.js"></script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+let bundle=null,step=0;
+const selected=new Set();
+function render(){
+ for(let i=0;i<5;i++)$('step'+i).classList.toggle('hidden',i!==step);
+ $('progress').style.width=((step+1)*20)+'%';
+ $('back').disabled=step===0;
+ $('next').disabled=!bundle||step===4;
+ $('next').textContent=step===3?'Review choices':'Next';
+ if(bundle){
+  $('tatamiCount').textContent=String(bundle.counts.tatami);
+  $('runningCount').textContent=String(bundle.counts.running);
+  $('summary').textContent=selected.size+' satin candidates selected. Other objects retain their original treatment.';
+ }
+}
+function candidates(){
+ $('candidateList').replaceChildren();
+ if(!bundle.candidates.length){
+  const p=document.createElement('p');p.textContent='No suitable satin candidates found. Keeping the original stitch types is safer.';$('candidateList').append(p);return;
+ }
+ for(const c of bundle.candidates){
+  const label=document.createElement('label');label.className='candidate';
+  const cb=document.createElement('input');cb.type='checkbox';cb.checked=selected.has(c.sourceObjectId);
+  cb.setAttribute('aria-label','Try '+c.method+' satin for source '+c.sourceObjectId);
+  cb.addEventListener('change',()=>{if(cb.checked)selected.add(c.sourceObjectId);else selected.delete(c.sourceObjectId);render()});
+  const section=document.createElement('div');
+  const strong=document.createElement('strong');strong.textContent=c.method==='curved'?'Curved / tapered satin':'Straight satin';
+  const small=document.createElement('small');
+  small.textContent='Original object '+c.sourceObjectId+' · Inset area '+Math.round(c.estimatedFootprintAreaFraction*100)+'% (not thread coverage)';
+  section.append(strong,small);label.append(cb,section);$('candidateList').append(label);
+ }
+}
+$('file').addEventListener('change',async event=>{
+ const file=event.target.files?.[0];bundle=null;selected.clear();$('status').textContent='';
+ if(!file){render();return}
+ try{
+  if(file.size>256000)throw Error('Report exceeds permitted file size');
+  const document=JSON.parse(await file.text());
+  bundle=StitchStageReview.validate(document);
+  $('status').textContent='Verified report structure. Original artwork is not included.';
+  candidates();render();
+ }catch(error){$('status').textContent='Cannot read this report: '+error.message;render()}
+});
+$('back').addEventListener('click',()=>{if(step>0){step--;render()}});
+$('next').addEventListener('click',()=>{if(bundle&&step<4){step++;render()}});
+$('download').addEventListener('click',()=>{
+ try{
+  const doc=StitchStageReview.createDecisions(bundle,[...selected]);
+  const blob=new Blob([JSON.stringify(doc,null,2)+'\n'],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='stitch-forge-stage-decisions.json';
+  document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+ }catch(error){alert('Cannot export decisions: '+error.message)}
+});
+render();
+})();
+</script>
+</body>
+</html>
