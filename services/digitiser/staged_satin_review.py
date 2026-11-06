@@ -82,3 +82,44 @@ def validate_stage_choices(review, selections):
            for k,method in selections.items()):
         raise ValueError('Staged satin choice is not supported by this original source')
     return dict(sorted(selections.items()))
+
+
+DECISION_SCHEMA = 'stitch-forge-offline-stage-decisions-v1'
+BUNDLE_SCHEMA = 'stitch-forge-offline-stage-review-v1'
+
+
+def accept_review_decisions(review, document):
+    """Fail closed unless choice document is bound to this precise source plan."""
+    if (not isinstance(document,dict)
+            or set(document) != {'schema','sourcePlanSignature','sourceSha256','choices'}
+            or document['schema'] != DECISION_SCHEMA
+            or document['sourcePlanSignature'] != review['sourcePlanSignature']
+            or document['sourceSha256'] != review['sourceSha256']
+            or not isinstance(document['choices'],list)
+            or len(document['choices'])>35):
+        raise ValueError('Staged decisions do not match the reviewed source')
+    chosen={}
+    for item in document['choices']:
+        if (not isinstance(item,dict) or set(item) != {'sourceObjectId','method'}
+                or not isinstance(item['sourceObjectId'],str)
+                or not isinstance(item['method'],str)
+                or item['sourceObjectId'] in chosen):
+            raise ValueError('Invalid or duplicated staged object choice')
+        chosen[item['sourceObjectId']] = item['method']
+    return validate_stage_choices(review,chosen)
+
+
+def make_review_bundle(review, stages):
+    """One lightweight data-only handoff to a local-only mobile reviewer."""
+    if (not isinstance(stages,dict) or set(stages) != {'tatami','satin','running'}
+            or any(type(value)!=int or value<0 or value>1500 for value in stages.values())):
+        raise ValueError('Invalid stage inventory')
+    return {'schema':BUNDLE_SCHEMA,
+            'sourcePlanSignature':review['sourcePlanSignature'],
+            'sourceSha256':review['sourceSha256'],
+            'counts':dict(stages),
+            'candidates':review['candidates'],
+            'dataOnly':True,
+            'originalImageIncluded':False,
+            'machineApproved':False,
+            'notes':'Curved satin selection is geometry only. Real native and fabric validation still required.'}
