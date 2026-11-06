@@ -1,0 +1,32 @@
+name: MD-2.75 protected detail loss gate (NO DEPLOY)
+
+on:
+  push:
+    branches: ["feature/md275-protected-source-detail-gate-no-deploy"]
+    paths:
+      - "services/digitiser/protected_detail_audit.py"
+      - "tests/test_protected_detail_audit.py"
+      - "tools/audit_protected_detail.py"
+      - ".github/workflows/md275-protected-detail-no-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-feature-retention:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned existing offline imaging requirements
+        run: python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+      - name: Detect lost synthetic eye detail, verify source identity, reject malformed windows
+        run: python -m unittest discover -s tests -p "test_protected_detail_audit.py" -v
+      - name: Ensure safe source-only CLI
+        run: python -m py_compile tools/audit_protected_detail.py services/digitiser/protected_detail_audit.py
