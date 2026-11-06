@@ -1,0 +1,58 @@
+name: MD-2.74 real InkStitch source-selected stitch passes (NO DEPLOY)
+
+on:
+  push:
+    branches: ["feature/md274-independent-stitch-passes-no-deploy"]
+    paths:
+      - ".github/workflows/md274-real-native-stage-no-deploy.yml"
+      - "services/digitiser/staged_satin_review.py"
+      - "services/digitiser/artwork_trial.py"
+      - "services/digitiser/auto_curved_satin_object.py"
+      - "services/digitiser/auto_satin_object.py"
+      - "tools/bench_md274_staged_satin.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-source-selected-native-ab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing pinned native dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Check independent stage invariants before native machine export
+        run: |
+          python -m unittest discover -s tests -p test_md274_independent_stages.py -v
+          python -m unittest discover -s tests -p test_auto_curved_satin_object.py -v
+          python -m unittest discover -s tests -p test_auto_satin_object.py -v
+          python -m py_compile tools/bench_md274_staged_satin.py
+      - name: Install checksum-verified official InkStitch 3.3.0 engine
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Run source-identical baseline versus explicitly selected curved satin
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md274-native"
+          xvfb-run -a python tools/bench_md274_staged_satin.py --engine "$ENGINE" --output "$RUNNER_TEMP/md274-native"
+          test -s "$RUNNER_TEMP/md274-native/md274-staged-satin-AB-NOT-APPROVED.json"
+      - name: Retain report-only evidence; no private image or stitchfile upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md274-source-selected-native-audit-report-only
+          path: ${{ runner.temp }}/md274-native/md274-staged-satin-AB-NOT-APPROVED.json
+          if-no-files-found: ignore
+          retention-days: 4
+      - name: Assert no production deployment
+        run: echo "CI only. No Netlify, Cloud Run, GitHub main or production traffic change."
