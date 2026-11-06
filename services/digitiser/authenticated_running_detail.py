@@ -160,31 +160,37 @@ def propose_authenticated_running_details(plan, original_png: bytes,
                 shape=Polygon(coords)
                 if not shape.is_valid or shape.area<=0:
                     continue
-                # Inset physical seam provides conservative colour ownership.
-                inset=shape.buffer(-max(.28/mm_orig,.9),resolution=6)
-                if inset.geom_type!="Polygon" or inset.is_empty or not inset.is_valid:
-                    continue
-                smooth=inset.simplify(.055/mm_orig,preserve_topology=True)
-                line=list(smooth.exterior.coords)
-                if not 6<=len(line)<=MAX_POINTS_PER_DETAIL:
-                    continue
-                length=smooth.exterior.length*mm_orig
-                if not 2.5<=length<=MAX_DETAIL_LENGTH_MM:
-                    continue
-                perimeter_ok=True
-                for a,b in zip(line,line[1:]):
-                    segment=hypot(b[0]-a[0],b[1]-a[1])
-                    for i in range(ceil(segment*mm_orig/.06)+1):
-                        t=i/max(1,ceil(segment*mm_orig/.06))
-                        xx=a[0]+t*(b[0]-a[0])
-                        yy=a[1]+t*(b[1]-a[1])
-                        if not _phys_point_allowed(xx,yy,original,masks[color],rgb,mm_orig):
-                            perimeter_ok=False
+                # Quantised and antialiased working masks can be tighter than
+                # the full-resolution colour. Only move the contour FURTHER
+                # inward when the strict two-source ownership audit rejects it.
+                # Never dilate masks, change colour ownership or weaken tests.
+                for inset_mm in (.28,.45,.65,.90,1.20):
+                    inset=shape.buffer(-max(inset_mm/mm_orig,.9),quad_segs=6)
+                    if inset.geom_type!="Polygon" or inset.is_empty or not inset.is_valid:
+                        continue
+                    smooth=inset.simplify(.055/mm_orig,preserve_topology=True)
+                    line=list(smooth.exterior.coords)
+                    if not 6<=len(line)<=MAX_POINTS_PER_DETAIL:
+                        continue
+                    length=smooth.exterior.length*mm_orig
+                    if not 2.5<=length<=MAX_DETAIL_LENGTH_MM:
+                        continue
+                    perimeter_ok=True
+                    for a,b in zip(line,line[1:]):
+                        segment=hypot(b[0]-a[0],b[1]-a[1])
+                        samples=max(1,ceil(segment*mm_orig/.06))
+                        for i in range(samples+1):
+                            t=i/samples
+                            xx=a[0]+t*(b[0]-a[0])
+                            yy=a[1]+t*(b[1]-a[1])
+                            if not _phys_point_allowed(xx,yy,original,masks[color],rgb,mm_orig):
+                                perimeter_ok=False
+                                break
+                        if not perimeter_ok:
                             break
-                    if not perimeter_ok:
+                    if perimeter_ok:
+                        choices.append((length,line))
                         break
-                if perimeter_ok:
-                    choices.append((length,line))
         if not choices:
             rejected.append({"id":ident,"reason":"NO_COMPLETE_ORIGINAL_AND_WORKING_COLOUR_CONTOUR"})
             continue
