@@ -15,7 +15,7 @@ import struct
 
 import numpy as np
 from PIL import Image
-from scipy.ndimage import label as components
+from scipy.ndimage import label as components, distance_transform_edt
 from skimage.measure import find_contours
 from shapely.geometry import Polygon
 
@@ -106,7 +106,7 @@ def _windows(requests, original, masks):
         seen.add(ident)
 
 
-def _phys_point_allowed(x,y, original, working_mask, target_rgb, mm_per_orig):
+def _phys_point_allowed(x,y, original, working_mask, working_clearance_mm, target_rgb, mm_per_orig):
     H,W=original.shape[:2]
     wh,ww=working_mask.shape
     xi,yi=int(round(x)),int(round(y))
@@ -120,6 +120,12 @@ def _phys_point_allowed(x,y, original, working_mask, target_rgb, mm_per_orig):
         return False
     wx=int(round((x+.5)*ww/W-.5));wy=int(round((y+.5)*wh/H-.5))
     if not (0<=wx<ww and 0<=wy<wh and bool(working_mask[wy,wx])):
+        return False
+    # Ink/Stitch can round/interpolate a running stitch across corners even
+    # when individual SVG points are inside the source mask. Require at least
+    # a full 0.9mm nearest-opposite-colour pixel-centre clearance to bound
+    # those real machine movements; no source-colour mask is expanded.
+    if working_clearance_mm[wy,wx] < .9:
         return False
     return True
 
@@ -138,6 +144,7 @@ def propose_authenticated_running_details(plan, original_png: bytes,
     wh,ww=working.shape[:2]
     mm_orig=plan["physical"]["imageWidthMm"]/W
     proposed=[];rejected=[];total_length=0.
+    clearance={c:distance_transform_edt(mask)*scale for c,mask in masks.items()}
     for request in windows:
         ident,color=request["id"],request["color"]
         x0,y0,x1,y1=request["rect"]
@@ -183,7 +190,7 @@ def propose_authenticated_running_details(plan, original_png: bytes,
                             t=i/samples
                             xx=a[0]+t*(b[0]-a[0])
                             yy=a[1]+t*(b[1]-a[1])
-                            if not _phys_point_allowed(xx,yy,original,masks[color],rgb,mm_orig):
+                            if not _phys_point_allowed(xx,yy,original,masks[color],clearance[color],rgb,mm_orig):
                                 perimeter_ok=False
                                 break
                         if not perimeter_ok:
