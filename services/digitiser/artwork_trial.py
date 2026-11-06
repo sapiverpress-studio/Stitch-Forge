@@ -32,6 +32,7 @@ from native_tatami_decomposition import decompose_tatami
 from inkstitch_cli import export_trusted_svg, _run_engine, DigitiserError
 from format_audit import audit_zip
 from auto_satin_object import propose_straight_satin
+from auto_curved_satin_object import propose_curved_satin
 from satin_native import validate_column
 
 INK = '{http://inkstitch.org/namespace}'
@@ -337,7 +338,7 @@ def safe_native_svg_fill_path(points,holes,scale,precision):
         ' '+commands(list(h.coords)[:-1])+' Z' for h in fixed.interiors)
 
 
-def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=()):
+def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=(),staged_satin_choices=None):
     """Source-bound native SVG; optional fill repair keeps original tatami geometry.
 
     The new repair only disables underlay and underpath on the selected fill.
@@ -352,6 +353,19 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
     allowed=frozenset().union(*groups)
     if len(allowed)>12 or sum(map(len,groups))!=len(allowed):
         raise ValueError("Native repair object budget exceeded")
+    # MD-2.74 opt-in, source-selected stitch family, exclusively offline.
+    # Do not mix the per-source decisions with legacy global auto-satin flags.
+    if staged_satin_choices is not None:
+        if (not partition_fills or not isinstance(staged_satin_choices,dict)
+                or len(staged_satin_choices)>35 or allowed):
+            raise ValueError("Invalid staged native satin selection")
+        if (os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1'
+                or os.environ.get('STITCH_FORGE_CURVED_SATIN_TRIAL','0')=='1'):
+            raise ValueError("Staged satin conflicts with global experiment")
+        if any(not isinstance(k,str) or not re.fullmatch('[0-9A-F]{6}-[0-9]+',k)
+               or v not in ('straight','curved') for k,v in staged_satin_choices.items()):
+            raise ValueError("Unrecognised staged native satin object")
+    staged_used=set()
     masks, scale = checked_masks(plan)
     contour_tolerance=.02 if partition_fills else .04
     running_tolerance=.01 if partition_fills else .03
@@ -438,18 +452,32 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
             record = {'id':identity,'color':color,'pixels':component['pixelArea'],'areaMm2':area,'nativePaths':0}
             previous = path_count
             satin_choice=None
-            if (partition_fills and area>=12 and auto_satin_count<35
+            satin_method=None
+            if staged_satin_choices is not None:
+                satin_method=staged_satin_choices.get(identity)
+                if satin_method is not None:
+                    if area<12 or auto_satin_count>=35:
+                        raise ValueError('Staged satin object outside native physical budget')
+                    proposer=(propose_straight_satin if satin_method=='straight'
+                              else propose_curved_satin)
+                    satin_choice=proposer(component,scale,color)
+                    if satin_choice is None:
+                        raise ValueError('Staged satin source object no longer eligible')
+                    staged_used.add(identity)
+            elif (partition_fills and area>=12 and auto_satin_count<35
                     and os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1'
                     and not allowed):
                 satin_choice=propose_straight_satin(component,scale,color)
+                satin_method='straight' if satin_choice is not None else None
             if satin_choice is not None:
                 column,source_evidence=satin_choice
                 add_satin(column)
                 auto_satin_count+=1
                 satin_objects.append({'sourceObjectId':identity,
-                    'nativePathId':f'artwork-{path_count}',**source_evidence})
+                    'nativePathId':f'artwork-{path_count}',
+                    'stageMethod':satin_method,**source_evidence})
                 record.update(action='native_satin_trial',
-                              stitchFamily='source_verified_straight_satin',
+                              stitchFamily='source_verified_'+satin_method+'_satin',
                               geometricRailsStrictlyInsideSource=True,
                               sourceSemanticFeatureRecognised=False)
             elif area < .025:
@@ -550,6 +578,8 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                               routedConnectedBranchWalks=True,consolidatedSourceBranches=branch_count-len(paths))
             record['nativePaths'] = path_count-previous
             records.append(record)
+    if staged_satin_choices is not None and staged_used!=set(staged_satin_choices):
+        raise ValueError('Staged satin object identities do not match the selected source')
     if {o['id'] for o in repaired}!=allowed or sum(o['pixels'] for o in repaired)>plan['summary']['sourcePixels']*.02:
         raise ValueError('Native repair exceeds source area or identity bound')
     if not path_count:
@@ -583,7 +613,8 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         'originMm':[width/2,height/2],'widthMm':width,'heightMm':height,'objects':records,'nativePaths':actual_elements,'nativeCandidatePaths':path_count,
         'nativeFillPieces':fill_pieces,'nativeRepairObjects':repaired,
         'sourceSatinTrial':{
-            'enabled':os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1',
+            'enabled':(staged_satin_choices is not None and bool(staged_satin_choices)) or os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1',
+            'stagedPerSourceSelection':dict(sorted(staged_satin_choices.items())) if staged_satin_choices is not None else None,
             'acceptedObjects':auto_satin_count,
             'sourceGeometryChanged':False,
             'sourcePaletteChanged':False,
@@ -703,9 +734,9 @@ def audit_trial(pattern, manifest, masks, fmt, translation):
         'requestedColourOrder':colors,'translationToSourceMm':translation},moves,needle_points
 
 
-def run_trial(plan, executable, output, timeout_seconds=60, native_outputs=None,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=()):
+def run_trial(plan, executable, output, timeout_seconds=60, native_outputs=None,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=(),staged_satin_choices=None):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    svg,manifest,masks=build_trial_svg(plan,partition_fills=partition_fills,running_overrides=running_overrides,fill_repair_overrides=fill_repair_overrides,scanline_overrides=scanline_overrides,section_overrides=section_overrides)
+    svg,manifest,masks=build_trial_svg(plan,partition_fills=partition_fills,running_overrides=running_overrides,fill_repair_overrides=fill_repair_overrides,scanline_overrides=scanline_overrides,section_overrides=section_overrides,staged_satin_choices=staged_satin_choices)
     (output/'native-artwork-input.svg').write_bytes(svg)
     (output/'native-intent-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     if native_outputs is not None:
