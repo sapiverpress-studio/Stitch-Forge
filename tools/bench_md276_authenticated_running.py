@@ -17,7 +17,8 @@ from test_md276_authenticated_running import synthetic_source
 
 def evaluate(engine,output):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    plan,original,working,windows=synthetic_source(output/'fixture')
+    fixture=output/'fixture';fixture.mkdir(parents=True,exist_ok=True)
+    plan,original,working,windows=synthetic_source(fixture)
     review=propose_authenticated_running_details(plan,original,working,windows)
     if review['candidateCount']!=1:
         raise RuntimeError('Exact original-source-supported running candidate missing')
