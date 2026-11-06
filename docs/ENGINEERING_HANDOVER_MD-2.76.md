@@ -25,7 +25,7 @@ A separate *controlled two-colour source-ledger* comparison uses the exact same 
 ## Verification
 
 - First six baseline source-bound running pass tests **PASS**: [GitHub Actions 42185533677](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42185533677).
-- Controlled coherent two-colour source and native PES6/DST A/B: latest Actions must pass before evidence can be accepted. Treat as pending until independently checked.
+- **PASS** [genuine native PES6/DST A/B CI 42186700592](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42186700592). Same synthetic original, same exact working pixels, one coherent explicitly selected two-colour palette: baseline **3,201 PES stitches / 3 trims / 5 jumps / peak 19 needle points in a 1mm² cell**; selected source-authenticated running detail **3,284 / 4 / 6 / peak 24**. Both PES and DST independently decoded with **zero out-of-colour needle points and zero out-of-colour sewn segments**; the new native PES6 bytes and stitch count actually changed. This is source-format evidence only, **not proof of improved visible eye or safe fabric density**.
 - Actual Kingfisher source-to-working authenticated native detail recovery: **NOT TESTED**. The private Kingfisher artwork remains out of public CI/repository.
 - Semantic feature recognition, thread simulation, user visual sign-off and physical fabric sew-out: **NOT VERIFIED**.
 
