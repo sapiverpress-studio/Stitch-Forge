@@ -66,7 +66,7 @@ class OriginalBoundRunningDetailTests(unittest.TestCase):
     def test_original_derived_eye_contour_is_bounded_and_source_verified(self):
         review=propose_authenticated_running_details(
             self.plan,self.original,self.working,self.windows)
-        self.assertEqual(review['candidateCount'],1,review['rejected'])
+        self.assertEqual(review['candidateCount'],1, {'rejected':review['rejected'], 'palette':[r['color'] for r in self.plan['regions']], 'regionPixelAreas':[r['ledger']['foregroundPixels'] for r in self.plan['regions']]})
         candidate=review['candidates'][0]
         self.assertEqual(candidate['id'],'dark-eye-outline')
         self.assertGreater(candidate['lengthMm'],2.5)
