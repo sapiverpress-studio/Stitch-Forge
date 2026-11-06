@@ -1,0 +1,41 @@
+name: MD-2.74 independent source-bound stitch stages (NO DEPLOY)
+
+on:
+  push:
+    branches: ["feature/md274-independent-stitch-passes-no-deploy"]
+    paths:
+      - "services/digitiser/staged_satin_review.py"
+      - "services/digitiser/auto_curved_satin_object.py"
+      - "services/digitiser/artwork_trial.py"
+      - "tools/staged_legacy_trial.py"
+      - "tests/test_md274_independent_stages.py"
+      - "tests/test_auto_curved_satin_object.py"
+      - ".github/workflows/md274-independent-stages-no-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-native-source-stages:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned existing native planning dependencies
+        run: python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+      - name: Re-run source bounded curved and tapered geometric guards
+        run: python -m unittest discover -s tests -p "test_auto_curved_satin_object.py" -v
+      - name: Independently test source object selection, Tatami fallback and offline CLI
+        run: python -m unittest discover -s tests -p "test_md274_independent_stages.py" -v
+      - name: Regress stage splitter and old source planner
+        run: |
+          python -m unittest discover -s tests -p "test_legacy_staged_passes.py" -v
+          python -m unittest discover -s tests -p "test_legacy_staged_builder.py" -v
+      - name: Compile staged source and CLI
+        run: python -m py_compile services/digitiser/{staged_satin_review,auto_curved_satin_object,artwork_trial,legacy_staged_passes}.py tools/staged_legacy_trial.py
