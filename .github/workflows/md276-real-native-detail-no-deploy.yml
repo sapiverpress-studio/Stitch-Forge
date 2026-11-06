@@ -1,0 +1,53 @@
+name: MD-2.76 actual original-bound running PES/DST A-B (NO DEPLOY)
+
+on:
+  push:
+    branches: ["feature/md276-authenticated-original-detail-running-no-deploy"]
+    paths:
+      - ".github/workflows/md276-real-native-detail-no-deploy.yml"
+      - "services/digitiser/authenticated_running_detail.py"
+      - "services/digitiser/artwork_trial.py"
+      - "tests/test_md276_authenticated_running.py"
+      - "tools/bench_md276_authenticated_running.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authentic-native-running:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install existing source-imaging and official InkStitch dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Verify original-to-source and native plan selection
+        run: python -m unittest discover -s tests -p "test_md276_authenticated_running.py" -v
+      - name: Install exact checksum-verified official InkStitch 3.3.0
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Generate and independently decode original-bound source-matched real PES6/DST
+        run: |
+          set -euo pipefail
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          mkdir -p "$RUNNER_TEMP/md276-native"
+          xvfb-run -a python tools/bench_md276_authenticated_running.py --engine "$ENGINE" --output "$RUNNER_TEMP/md276-native"
+          test -s "$RUNNER_TEMP/md276-native/md276-native-running-AB-NOT-APPROVED.json"
+      - name: Keep only non-image summary, no private artwork or stitched files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md276-authenticated-running-native-summary-only-not-approved
+          path: ${{ runner.temp }}/md276-native/md276-native-running-AB-NOT-APPROVED.json
+          if-no-files-found: ignore
+          retention-days: 4
+      - name: Confirm isolated source-only testing
+        run: echo "No main merge, cloud build, Netlify or Cloud Run changes; not machine approved."
