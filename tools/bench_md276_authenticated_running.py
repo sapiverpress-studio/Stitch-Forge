@@ -40,9 +40,15 @@ def evaluate(engine,output):
             raise RuntimeError('Missing native PES6/DST files')
         if formats['pes']['needleStitches']!=formats['dst']['needleStitches']:
             raise RuntimeError('Independent native PES and DST needle coordinates disagree')
+        print(json.dumps({'phase':name,
+            'native_colour_audit':{key:{
+              'needlePointsOutsideWorkingColour':v['needlePointsOutsideWorkingColour'],
+              'needleSegmentsOutsideWorkingColour':v['needleSegmentsOutsideWorkingColour'],
+              'firstOutsideSegments':v.get('firstOutsideSegments',[])[:3]}
+              for key,v in formats.items()}},indent=2),flush=True)
         if any(row['needlePointsOutsideWorkingColour'] or row['needleSegmentsOutsideWorkingColour']
                for row in formats.values()):
-            raise RuntimeError('New running detail breaks verified source-pixel colour containment')
+            raise RuntimeError(name+' genuine PES/DST violates original source-pixel colour containment')
         native=(output/name/'ENGINEERING-TRIAL-NOT-APPROVED.pes').read_bytes()
         trials.append({'mode':name,
                        'sourcePngSha256':plan['source']['sha256'],
