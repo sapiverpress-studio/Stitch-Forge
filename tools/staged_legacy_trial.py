@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "services" / "digitiser"))
 from artwork_trial import build_trial_svg, run_trial
 from legacy_staged_passes import STAGES, split_legacy_svg, verify_legacy_stages
-from staged_satin_review import inspect_source_satin_candidates, validate_stage_choices
+from staged_satin_review import (inspect_source_satin_candidates, validate_stage_choices,
+                                 accept_review_decisions, make_review_bundle)
 
 
 def main():
@@ -29,9 +30,11 @@ def main():
                         help="Existing restrictive satin experiment; no automatic curved-feather recognition")
     parser.add_argument("--select-satin", action="append", default=[], metavar="OBJECT_ID:METHOD",
                         help="Explicitly select a source-verified straight or curved satin object")
+    parser.add_argument("--decisions-json", type=Path,
+                        help="Offline phone reviewer choices, bound to the exact original source hash")
     args = parser.parse_args()
-    if args.select_satin and args.try_straight_satin:
-        parser.error("Select either review-based satin objects or the older global trial")
+    if sum(bool(a) for a in (args.select_satin,args.try_straight_satin,args.decisions_json))>1:
+        parser.error("Use exactly one satin selection mechanism")
     # Reuse the established pre-hybrid plan and geometry, not the SLIC/AI Home bridge.
     # Prevent inherited experimental flags from silently changing the comparison.
     for flag in ("STITCH_FORGE_BETA_COMPACT_RUNNING",
@@ -50,10 +53,17 @@ def main():
         if identity in selections:
             parser.error("Duplicate satin object selection")
         selections[identity] = method
-    selections = validate_stage_choices(review, selections)
+    if args.decisions_json:
+        raw=args.decisions_json.read_bytes()
+        if len(raw)>25000:
+            raise ValueError('Staged decisions file exceeds bounded size')
+        document=json.loads(raw)
+        selections=accept_review_decisions(review,document)
+    else:
+        selections=validate_stage_choices(review,selections)
     # No opt-in means the previous native input stays identical. An explicit
     # candidate choice replaces ONLY its existing source-owned stitch object.
-    staged_override = selections if args.select_satin else None
+    staged_override = selections if args.select_satin or args.decisions_json else None
     original, old_manifest, _ = build_trial_svg(
         plan, partition_fills=True, staged_satin_choices=staged_override)
     staged = split_legacy_svg(original)
@@ -64,6 +74,9 @@ def main():
     (output / "combined-source-identical.svg").write_bytes(staged.native_svg)
     (output / "satin-source-candidates.json").write_text(
         json.dumps(review, indent=2) + "\n", encoding="utf-8")
+    (output / "stage-review-bundle.json").write_text(
+        json.dumps(make_review_bundle(review,staged.manifest["counts"]),indent=2) + "\n",
+        encoding="utf-8")
     for stage in STAGES:
         (output / "stages" / (stage + "-review-only.svg")).write_bytes(staged.stage_svgs[stage])
     status = {**staged.manifest,
