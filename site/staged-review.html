@@ -68,6 +68,7 @@ footer{margin-top:26px;color:#9caba8;font-size:.8rem}
 <p>The original running-stitch engine retains fine source-supported linework. No invented eye or feather detail is added.</p>
 <div class="big-number" id="runningCount">0</div>
 <small>Original running objects · inspect only</small>
+<div id="protectedDetailInfo" class="hint" aria-live="polite"></div>
 </section>
 <section class="panel hidden" id="step4">
 <h2>5 · Save your choices</h2>
@@ -98,6 +99,18 @@ function render(){
  if(bundle){
   $('tatamiCount').textContent=String(bundle.counts.tatami);
   $('runningCount').textContent=String(bundle.counts.running);
+  const audit=bundle.protectedDetailReview;
+  const detail=$('protectedDetailInfo');
+  detail.replaceChildren();
+  const info=document.createElement('p');
+  if(!audit){info.textContent='No original-image detail audit has been attached. Feature retention is unverified.';}
+  else{
+   const possible=audit.windows.filter(w=>w.contrastLossPossible===true).map(w=>w.id);
+   info.textContent='Protected source features reviewed: '+audit.windows.length+
+    '. Possible contrast loss: '+(possible.length?possible.join(', '):'none flagged by this limited raster check')+
+    '. Native feature visibility is NOT verified.';
+  }
+  detail.append(info);
   $('summary').textContent=selected.size+' satin candidates selected. Other objects retain their original treatment.';
  }
 }
