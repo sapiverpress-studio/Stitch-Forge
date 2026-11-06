@@ -17,6 +17,7 @@ from artwork_trial import build_trial_svg, run_trial
 from legacy_staged_passes import STAGES, split_legacy_svg, verify_legacy_stages
 from staged_satin_review import (inspect_source_satin_candidates, validate_stage_choices,
                                  accept_review_decisions, make_review_bundle)
+from protected_detail_audit import audit_protected_details, load_rgba
 
 
 def main():
@@ -31,10 +32,20 @@ def main():
     parser.add_argument("--select-satin", action="append", default=[], metavar="OBJECT_ID:METHOD",
                         help="Explicitly select a source-verified straight or curved satin object")
     parser.add_argument("--decisions-json", type=Path,
-                        help="Offline phone reviewer choices, bound to the exact original source hash")
+                        help="Offline phone reviewer choices, bound to the prepared source hash")
+    parser.add_argument("--original-png", type=Path,
+                        help="Optional private original PNG for protected-detail review only")
+    parser.add_argument("--protected-windows-json", type=Path,
+                        help="JSON array of user-chosen critical-feature rectangles in ORIGINAL pixels")
+    parser.add_argument("--detail-comparison-png", type=Path,
+                        help="Optional same-composition reduced/quantised raster for feature-loss diagnostics")
     args = parser.parse_args()
     if sum(bool(a) for a in (args.select_satin,args.try_straight_satin,args.decisions_json))>1:
         parser.error("Use exactly one satin selection mechanism")
+    if bool(args.original_png) != bool(args.protected_windows_json):
+        parser.error("Original PNG and critical-feature windows must be supplied together")
+    if args.detail_comparison_png and not args.original_png:
+        parser.error("Cannot compare detail without the private original PNG")
     # Reuse the established pre-hybrid plan and geometry, not the SLIC/AI Home bridge.
     # Prevent inherited experimental flags from silently changing the comparison.
     for flag in ("STITCH_FORGE_BETA_COMPACT_RUNNING",
@@ -44,6 +55,24 @@ def main():
         os.environ[flag] = "0"
     os.environ["STITCH_FORGE_AUTO_SATIN_TRIAL"] = "1" if args.try_straight_satin else "0"
     plan = json.loads(args.plan_json.read_text(encoding="utf-8"))
+    protected=None
+    if args.original_png:
+        windows_raw=args.protected_windows_json.read_bytes()
+        if len(windows_raw)>8192:
+            raise ValueError('Protected detail window document exceeds bounded size')
+        windows=json.loads(windows_raw)
+        _,rgba=load_rgba(args.original_png)
+        # The V1 signed plan does not carry the full original PNG SHA.
+        # Matching source-frame dimensions is useful, but is NOT proof of
+        # authenticated original-to-working-packet identity.
+        if ([rgba.shape[1],rgba.shape[0]] !=
+              [plan['source']['originalWidth'],plan['source']['originalHeight']]):
+            raise ValueError('Original artwork dimensions do not match prepared source')
+        protected=audit_protected_details(args.original_png,windows,
+            width_mm=plan['physical']['imageWidthMm'],
+            comparison_png=args.detail_comparison_png)
+        protected['boundToPreparedPlanByOriginalSha256']=False
+        protected['preparedSourcePlanSignature']=plan['sourcePlanSignature']
     review = inspect_source_satin_candidates(plan)
     selections = {}
     for choice in args.select_satin:
@@ -74,9 +103,19 @@ def main():
     (output / "combined-source-identical.svg").write_bytes(staged.native_svg)
     (output / "satin-source-candidates.json").write_text(
         json.dumps(review, indent=2) + "\n", encoding="utf-8")
+    bundle=make_review_bundle(review,staged.manifest["counts"])
+    if protected is not None:
+        bundle['protectedDetailReview']={
+            'windows':[{'id':r['id'], 'contrastLossPossible':r.get('contrastLossPossible')}
+                       for r in protected['featureWindows']],
+            'nativeFeatureRetentionVerified':False,
+            'originalToPreparedPacketAuthenticated':False,
+            'machineApproved':False,
+            'sourceOriginalImageIncluded':False}
+        (output / "protected-detail-audit.json").write_text(
+            json.dumps(protected,indent=2)+"\n",encoding="utf-8")
     (output / "stage-review-bundle.json").write_text(
-        json.dumps(make_review_bundle(review,staged.manifest["counts"]),indent=2) + "\n",
-        encoding="utf-8")
+        json.dumps(bundle,indent=2) + "\n", encoding="utf-8")
     for stage in STAGES:
         (output / "stages" / (stage + "-review-only.svg")).write_bytes(staged.stage_svgs[stage])
     status = {**staged.manifest,
@@ -84,6 +123,8 @@ def main():
               "sourceSatinTrial": old_manifest["sourceSatinTrial"],
               "chosenSatinObjects": selections,
               "reviewCandidateCount": review["candidateCount"],
+              "protectedDetailReviewPerformed": protected is not None,
+              "protectedDetailNativeLikenessVerified": False,
               "nativeExportPerformed": False}
     if args.native_executable:
         if not args.native_executable.is_file():
