@@ -22,16 +22,23 @@ def inspect_source_satin_candidates(plan, *, include_curved=True):
     _,scale=checked_masks(plan)
     results=[]
     total=0
+    examined=0
+    truncated=False
     for region in sorted(plan['regions'],key=lambda item:item['color']):
         color=region['color']
         for index,component in enumerate(region['ledger']['components']):
             total+=1
-            if total>1000:
-                raise ValueError('Staged source object budget exceeded')
             identity=color[1:]+'-'+str(index)
             area=component['pixelArea']*scale*scale
             if area<12 or len(component['runs'])>2500:
                 continue
+            # Complex illustrations may contain many fragments. Retain the
+            # older engine rather than failing the entire image when a review
+            # search budget is reached; never auto-select omitted components.
+            if examined>=250 or len(results)>=35:
+                truncated=True
+                continue
+            examined+=1
             proposal=propose_straight_satin(component,scale,color)
             method='straight'
             if proposal is None and include_curved:
@@ -61,9 +68,10 @@ def inspect_source_satin_candidates(plan, *, include_curved=True):
                 'fabricSewoutVerified':False,
                 'evidence':evidence
             })
-            if len(results)>35:
-                raise ValueError('Staged satin proposal budget exceeded')
     return {'status':'SOURCE_SATIN_PROPOSALS_REQUIRE_NATIVE_AUDIT',
+            'totalSourceComponents':total,
+            'reviewedLargeSourceComponents':examined,
+            'candidateScanTruncated':truncated,
             'sourcePlanSignature':plan['sourcePlanSignature'],
             'sourceSha256':plan['source']['sha256'],
             'scaleMmPerPixel':scale,
@@ -119,6 +127,7 @@ def make_review_bundle(review, stages):
             'sourceSha256':review['sourceSha256'],
             'counts':dict(stages),
             'candidates':review['candidates'],
+            'candidateScanTruncated':review['candidateScanTruncated'],
             'dataOnly':True,
             'originalImageIncluded':False,
             'machineApproved':False,
