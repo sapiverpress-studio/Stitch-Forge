@@ -6,6 +6,8 @@ on:
     paths:
       - "services/digitiser/legacy_staged_passes.py"
       - "tests/test_legacy_staged_passes.py"
+      - "tests/test_legacy_staged_builder.py"
+      - "tests/test_legacy_staged_builder.py"
       - "tools/staged_legacy_trial.py"
       - ".github/workflows/md273-staged-legacy-trial-no-deploy.yml"
   pull_request:
@@ -31,5 +33,9 @@ jobs:
           python-version: "3.12"
       - name: Verify three pass extraction, original SHA and fail-closed guards
         run: python -m unittest discover -s tests -p "test_legacy_staged_passes.py" -v
+      - name: Install pinned existing local artwork planner dependencies
+        run: python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+      - name: Exercise older native planner through separate stage CLI
+        run: python -m unittest discover -s tests -p "test_legacy_staged_builder.py" -v
       - name: Compile local CLI (does not call cloud or Ink/Stitch)
         run: python -m py_compile tools/staged_legacy_trial.py services/digitiser/legacy_staged_passes.py
