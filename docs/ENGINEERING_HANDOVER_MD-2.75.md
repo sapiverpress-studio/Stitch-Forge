@@ -20,7 +20,7 @@ The older V1 source-object plan **does not authenticate the original PNG SHA aga
 ## Tests
 
 - [MD-2.75 source gate CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42181828989) initially passed synthetic: original source contains eye ring/bright glint, flattened raster loses the contrast, invalid ROIs are rejected.
-- [Expanded CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42182192716) covers source review → old native stage runner, unchanged combined SVG, no source image copy, mismatched dimensions rejected, offline reviewer data contract, original stage generation. **Check final result before claiming PASS**.
+- [Expanded CI](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42182192716) covers source review → old native stage runner, unchanged combined SVG, no source image copy, mismatched dimensions rejected, offline reviewer data contract, original stage generation. **PASS** — workflow completed successfully 6 November 2026; this is a source/planner/regression test, not actual full-resolution native detail restoration.
 - The private original Kingfisher was examined locally using an **approximate 320px, nine-colour proxy**, which suggests substantial loss of wing-edge contrast. This proxy was **not produced by Stitch Forge**, so it is NOT source-identical native validation and its figures are deliberately excluded from public CI and this repository.
 - **No private image bytes, ROI coordinates or private source SHA are committed here.**
 
