@@ -37,7 +37,12 @@ def synthetic_source(folder):
                    cwd=ROOT,check=True,capture_output=True,timeout=90)
     plan=json.loads((folder/'source-object-plan.json').read_text())
     palette=[r['color'] for r in plan['regions']]
-    dark=min(palette,key=lambda c:sum(int(c[i:i+2],16) for i in (1,3,5)))
+    # Pick the *actual source-ledger owner* of the centre eye pixel, not
+    # the darkest palette swatch (which may describe an antialiased fringe).
+    dark=next(r['color'] for r in plan['regions']
+              if any(y==70 and x0<=95<x1
+                     for component in r['ledger']['components']
+                     for y,x0,x1 in component['runs']))
     windows=[{'id':'dark-eye-outline','rect':[158,108,222,171],'color':dark}]
     return plan,original.read_bytes(),working.read_bytes(),windows
 
