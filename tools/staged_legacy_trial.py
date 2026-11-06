@@ -36,7 +36,8 @@ def main():
     # Prevent inherited experimental flags from silently changing the comparison.
     for flag in ("STITCH_FORGE_BETA_COMPACT_RUNNING",
                  "STITCH_FORGE_DETAIL_SAFE_ROUTING",
-                 "STITCH_FORGE_HYBRID_PATH_PLANNER"):
+                 "STITCH_FORGE_HYBRID_PATH_PLANNER",
+                 "STITCH_FORGE_CURVED_SATIN_TRIAL"):
         os.environ[flag] = "0"
     os.environ["STITCH_FORGE_AUTO_SATIN_TRIAL"] = "1" if args.try_straight_satin else "0"
     plan = json.loads(args.plan_json.read_text(encoding="utf-8"))
