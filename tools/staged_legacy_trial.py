@@ -62,7 +62,7 @@ def main():
     (output / "stages").mkdir(parents=True, exist_ok=True)
     (output / "combined-source-identical.svg").write_bytes(staged.native_svg)
     (output / "satin-source-candidates.json").write_text(
-        json.dumps(review, indent=2) + "\\n", encoding="utf-8")
+        json.dumps(review, indent=2) + "\n", encoding="utf-8")
     for stage in STAGES:
         (output / "stages" / (stage + "-review-only.svg")).write_bytes(staged.stage_svgs[stage])
     status = {**staged.manifest,
