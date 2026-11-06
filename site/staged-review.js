@@ -39,6 +39,23 @@
         throw Error('Malformed or repeated satin source candidate');
       seen.add(c.sourceObjectId);
     }
+    if(bundle.protectedDetailReview!==undefined){
+      const review=bundle.protectedDetailReview;
+      if(!isObj(review)||!Array.isArray(review.windows)||review.windows.length>12||
+         review.nativeFeatureRetentionVerified!==false||
+         review.originalToPreparedPacketAuthenticated!==false||
+         review.machineApproved!==false||review.sourceOriginalImageIncluded!==false)
+        throw Error('Invalid private critical-detail review');
+      const names=new Set();
+      for(const win of review.windows){
+        if(!isObj(win)||!/^[a-zA-Z0-9_-]{1,32}$/.test(win.id||'')||
+           (win.contrastLossPossible!==null && typeof win.contrastLossPossible!=='boolean'
+             && win.contrastLossPossible!==undefined)||
+           names.has(win.id))
+          throw Error('Invalid protected-detail window status');
+        names.add(win.id);
+      }
+    }
     return bundle;
   }
   function createDecisions(bundle,selectedIds){
