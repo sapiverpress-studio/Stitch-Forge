@@ -7,13 +7,13 @@ on:
       - "services/digitiser/legacy_staged_passes.py"
       - "tests/test_legacy_staged_passes.py"
       - "tests/test_legacy_staged_builder.py"
-      - "tests/test_legacy_staged_builder.py"
       - "tools/staged_legacy_trial.py"
       - ".github/workflows/md273-staged-legacy-trial-no-deploy.yml"
   pull_request:
     paths:
       - "services/digitiser/legacy_staged_passes.py"
       - "tests/test_legacy_staged_passes.py"
+      - "tests/test_legacy_staged_builder.py"
       - "tools/staged_legacy_trial.py"
   workflow_dispatch:
 
