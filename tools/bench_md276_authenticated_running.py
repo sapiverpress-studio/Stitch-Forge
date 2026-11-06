@@ -12,13 +12,18 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'services'/'digitiser'),str(ROOT/'tests')]
 from authenticated_running_detail import propose_authenticated_running_details
 from artwork_trial import run_trial
-from test_md276_authenticated_running import synthetic_source
+from test_md276_authenticated_running import synthetic_source, explicit_two_colour_source_plan
 
 
 def evaluate(engine,output):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
     fixture=output/'fixture';fixture.mkdir(parents=True,exist_ok=True)
-    plan,original,working,windows=synthetic_source(fixture)
+    browser_plan,original,working,windows=synthetic_source(fixture)
+    plan=explicit_two_colour_source_plan(browser_plan,working)
+    windows[0]['color']='#122432'
+    # This controlled A/B deliberately compares one coherent two-colour plan.
+    # The separate unit test records that the existing ten-colour browser
+    # proposal is too fragmented to accept the same contour safely.
     review=propose_authenticated_running_details(plan,original,working,windows)
     if review['candidateCount']!=1:
         raise RuntimeError('Exact original-source-supported running candidate missing')
