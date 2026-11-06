@@ -60,10 +60,13 @@ def explicit_two_colour_source_plan(browser_plan,working):
     rgba=np.frombuffer(working,np.uint8).reshape((h,w,4))
     visible=foreground(rgba)
     palette=['#122432','#DC6428']
-    rgb=np.array([[18,36,50],[220,100,40]],dtype=np.int16)
-    delta=((rgba[...,:3].astype(np.int16)[...,None,:]-rgb)**2).sum(axis=3)
+    rgb=np.array([[18,36,50],[220,100,40]],dtype=np.int32)
+    delta=((rgba[...,:3].astype(np.int32)[...,None,:]-rgb)**2).sum(axis=3)
     labels=np.zeros((h,w),dtype=np.uint8)
     labels[visible]=np.argmin(delta[visible],axis=1).astype(np.uint8)+1
+    # Explicitly guard squared-distance arithmetic against int16 overflow:
+    # otherwise a dark eye can be mislabelled as orange and vice versa.
+    assert labels[70,95]==1 and labels[30,80]==2
     regions,parts=regions_from_labels(labels,palette)
     planned=copy.deepcopy(browser_plan)
     planned['regions']=regions
