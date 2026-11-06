@@ -56,7 +56,7 @@ def evaluate(engine,output):
             raise RuntimeError(name+' genuine PES/DST violates original source-pixel colour containment')
         native=(output/name/'ENGINEERING-TRIAL-NOT-APPROVED.pes').read_bytes()
         trials.append({'mode':name,
-                       'sourcePngSha256':plan['source']['sha256'],
+                       'preparedWorkingRgbaFingerprint':plan['source']['sha256'],
                        'originalSourceSha256Verified':bool(source),
                        'authenticRunningObjects':family['acceptedObjects'],
                        'machinePES6Sha256':sha256(native).hexdigest(),
@@ -68,7 +68,7 @@ def evaluate(engine,output):
                        'outsideSourceColourSegments':formats['pes']['needleSegmentsOutsideWorkingColour'],
                        'machineApproved':False})
     a,b=trials
-    if (a['sourcePngSha256']!=b['sourcePngSha256']
+    if (a['preparedWorkingRgbaFingerprint']!=b['preparedWorkingRgbaFingerprint']
             or a['machinePES6Sha256']==b['machinePES6Sha256']
             or a['pesNeedleStitches']==b['pesNeedleStitches']):
         raise RuntimeError('Genuine native needle geometry did not change on the same source')
