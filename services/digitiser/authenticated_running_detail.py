@@ -52,6 +52,17 @@ def bind_private_original(plan, original_png: bytes, working_rgba: bytes):
     if proof["originalPixelDimensionsVerified"] != [
         plan["source"]["originalWidth"],plan["source"]["originalHeight"]]:
         raise ValueError("Full-resolution PNG dimensions differ from signed source plan")
+    # The V2 browser gate tolerates modest resizing differences, which is
+    # acceptable for transport but NOT strong enough to add needle geometry.
+    # This offline trial requires an EXACT, reproducible LANCZOS reduction.
+    # Browser-specific reductions must first be converted to a separately
+    # proven deterministic source recipe; otherwise refuse the detail pass.
+    with Image.open(BytesIO(original_png)) as checked_image:
+        exact=np.asarray(checked_image.convert("RGBA").resize(
+            (w,h),Image.Resampling.LANCZOS),dtype=np.uint8)
+    if not np.array_equal(exact,rgba):
+        raise ValueError("Original PNG pixels do not reproduce exact prepared RGBA")
+
     covered=np.zeros((h,w),dtype=bool)
     for mask in masks.values():
         covered |= mask
@@ -65,6 +76,7 @@ def bind_private_original(plan, original_png: bytes, working_rgba: bytes):
         "preparedSourceSha256Verified":True,
         "preparedSourcePlanSignature":plan["sourcePlanSignature"],
         "preparedForegroundMatchesColourLedger":True,
+        "originalToWorkingPixelReductionExact":True,
         "sourceToReducedForegroundIoU":proof["foregroundIntersectionOverUnion"],
         "sourceToReducedMeanRgbDifference":proof["sourceToReducedMeanAbsoluteRgb"],
         "machineStitchQualityVerified":False,
