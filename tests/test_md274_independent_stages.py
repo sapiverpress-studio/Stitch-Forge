@@ -12,7 +12,8 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT / "services" / "digitiser"))
 from artwork_trial import build_trial_svg,checked_masks
-from staged_satin_review import inspect_source_satin_candidates,validate_stage_choices
+from staged_satin_review import (inspect_source_satin_candidates,validate_stage_choices,
+                                 make_review_bundle,accept_review_decisions)
 from legacy_staged_passes import split_legacy_svg
 
 
@@ -109,6 +110,46 @@ class StageDecisionsIntegration(unittest.TestCase):
             candidates=json.loads((out/"satin-source-candidates.json").read_text())
             self.assertGreaterEqual(candidates["candidateCount"],1)
             self.assertFalse(candidates["candidates"][0]["fabricSewoutVerified"])
+
+
+    def test_mobile_decisions_roundtrip_to_original_offline_engine(self):
+        identity=self.eligible["sourceObjectId"]
+        with TemporaryDirectory(prefix="stage-decisions-") as tmp:
+            root=Path(tmp)
+            review=root/"review"
+            subprocess.run([sys.executable,str(ROOT/"tools/staged_legacy_trial.py"),
+                            "--plan-json",str(self.file),"--output",str(review)],
+                           cwd=ROOT,check=True,capture_output=True,timeout=120)
+            bundle=json.loads((review/"stage-review-bundle.json").read_text())
+            self.assertTrue(bundle["dataOnly"])
+            self.assertFalse(bundle["originalImageIncluded"])
+            self.assertEqual(bundle["sourcePlanSignature"],self.plan["sourcePlanSignature"])
+            self.assertIn(identity,[o["sourceObjectId"] for o in bundle["candidates"]])
+            choices={"schema":"stitch-forge-offline-stage-decisions-v1",
+                     "sourcePlanSignature":bundle["sourcePlanSignature"],
+                     "sourceSha256":bundle["sourceSha256"],
+                     "choices":[{"sourceObjectId":identity,"method":"straight"}]}
+            self.assertEqual(accept_review_decisions(self.review,choices),
+                             {identity:"straight"})
+            file=root/"decisions.json";file.write_text(json.dumps(choices))
+            out=root/"selected"
+            subprocess.run([sys.executable,str(ROOT/"tools/staged_legacy_trial.py"),
+                            "--plan-json",str(self.file),"--output",str(out),
+                            "--decisions-json",str(file)],
+                           cwd=ROOT,check=True,capture_output=True,timeout=120)
+            report=json.loads((out/"staged-pass-report.json").read_text())
+            self.assertEqual(report["chosenSatinObjects"],{identity:"straight"})
+            self.assertEqual(report["counts"]["satin"],1)
+            choices["sourceSha256"]="0"*64
+            with self.assertRaisesRegex(ValueError,"do not match"):
+                accept_review_decisions(self.review,choices)
+            file.write_text(json.dumps(choices))
+            failed=subprocess.run([sys.executable,str(ROOT/"tools/staged_legacy_trial.py"),
+                                   "--plan-json",str(self.file),"--output",str(root/"bad"),
+                                   "--decisions-json",str(file)],
+                                  cwd=ROOT,capture_output=True,timeout=120)
+            self.assertNotEqual(failed.returncode,0)
+            self.assertFalse((root/"bad"/"combined-source-identical.svg").exists())
 
 
 if __name__=="__main__":
