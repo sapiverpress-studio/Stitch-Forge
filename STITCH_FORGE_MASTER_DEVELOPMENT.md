@@ -1608,3 +1608,15 @@ The full-original SHA-bound PNG V2 browser/job/private-worker packet, source-siz
 **Verified narrow result:** exact source-bound controlled synthetic straight satin generated real decoded PES/DST, 680 stitches in both variants, but 3→2 PES trims, 5→4 jumps, and transverse stitches 24.5%→92.3%; zero outside-colour stitch paths. Licensed macaw and rose selected 0 eligible satin objects and were unchanged. Original private Kingfisher detail likeness and physical machine stitch-outs are still not tested/satisfactory. Preserve strict source containment and do not advertise a professional digitiser. [MD-2.71 source merge handover](docs/MD-2.71_MAIN_SOURCE_INTEGRATION.md).
 
 **Next engineering:** curved and tapered source-object plan with physical-width rails/rungs, native trial evidence and decoded source identity on licensed art; separately test private Kingfisher with source permissions. Do not merge new experiments or build/pay for Cloud Run until aesthetic/physical acceptance improves.
+
+
+## MD-2.73 — isolated, source-identical legacy stitch-pass prototype (6 November 2026)
+
+**Status: IN-PROGRESS. No production deployment, and no Kingfisher quality or physical sew-out approval.**
+Owner authorised a reversible return to the established pre-hybrid native planning flow with independently inspectable Tatami, satin and running passes. Development branch: `feature/md273-legacy-staged-passes-no-deploy`.
+
+**Tasks:** MD-2.73-A source-identical stage separation (implemented and locally unit-tested); MD-2.73-B safe optional native CLI (implemented, native execution not yet proven); MD-2.73-C independent stage correction/re-digitising (TODO); MD-2.73-D source-identical Kingfisher comparison (TODO); MD-2.73-E actual fabric sew-out (BLOCKED). **Acceptance:** every object included once, stage object bytes unchanged, original order preserved, embedded fill underlay retained, fail-closed tampering checks, and no accidental hosted activation.
+
+**Test evidence:** six local unit checks passed on 6 November 2026 for this extracted-pass implementation; GitHub CI must independently pass before promotion. No Ink/Stitch PES/DST trial was executed for this milestone, so machine-file and fabric gates remain unverified.
+
+**Decision:** Existing native generation and independently audited PES6/DST remain the final output path; the new separated stage files are source-bound inspection artefacts only. No user-uploaded private Kingfisher illustration is committed. Do not confuse stage decomposition with independently optimised stitch-type algorithms. See [MD-2.73 handover](docs/ENGINEERING_HANDOVER_MD-2.73.md).
