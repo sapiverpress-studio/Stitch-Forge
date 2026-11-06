@@ -338,7 +338,7 @@ def safe_native_svg_fill_path(points,holes,scale,precision):
         ' '+commands(list(h.coords)[:-1])+' Z' for h in fixed.interiors)
 
 
-def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=(),staged_satin_choices=None):
+def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=(),staged_satin_choices=None,staged_running_source=None):
     """Source-bound native SVG; optional fill repair keeps original tatami geometry.
 
     The new repair only disables underlay and underpath on the selected fill.
@@ -367,6 +367,28 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
             raise ValueError("Unrecognised staged native satin object")
     staged_used=set()
     masks, scale = checked_masks(plan)
+    running_detail_candidates={}
+    detail_source_proof=None
+    if staged_running_source is not None:
+        if (not partition_fills or not isinstance(staged_running_source,dict)
+                or set(staged_running_source)!={'originalPng','workingRgba','windows','selectedIds'}
+                or not isinstance(staged_running_source['selectedIds'],list)
+                or not 1<=len(staged_running_source['selectedIds'])<=6
+                or len(set(staged_running_source['selectedIds']))!=len(staged_running_source['selectedIds'])):
+            raise ValueError('Invalid authenticated running-stage request')
+        # This independently recreates the source proof at the native boundary.
+        # Never accept browser-authored line geometry or an unchecked SVG.
+        from authenticated_running_detail import propose_authenticated_running_details
+        review=propose_authenticated_running_details(plan,
+            staged_running_source['originalPng'],staged_running_source['workingRgba'],
+            staged_running_source['windows'])
+        offered={entry['id']:entry for entry in review['candidates']}
+        if any(type(k)!=str or k not in offered for k in staged_running_source['selectedIds']):
+            raise ValueError('Running detail unsupported by original/working source')
+        for k in staged_running_source['selectedIds']:
+            item=offered[k]
+            running_detail_candidates.setdefault(item['color'],[]).append(item)
+        detail_source_proof=review['sourceBinding']
     contour_tolerance=.02 if partition_fills else .04
     running_tolerance=.01 if partition_fills else .03
     precision=4 if partition_fills else 6
@@ -578,6 +600,17 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                               routedConnectedBranchWalks=True,consolidatedSourceBranches=branch_count-len(paths))
             record['nativePaths'] = path_count-previous
             records.append(record)
+        # Genuine separate running layer, but inserted next to the matching
+        # colour's existing objects to preserve the machine palette order.
+        # Each path was geometrically and cryptographically source-checked
+        # against the real full-resolution PNG and the exact prepared RGBA.
+        for detail in running_detail_candidates.get(color,()):
+            add_path(color,detail['points'])
+            records.append({'id':'authenticated-detail-'+detail['id'],
+                'color':color,'pixels':0,'areaMm2':0,'nativePaths':1,
+                'action':'original_authenticated_running_detail',
+                'sourceSemanticFeatureRecognised':False,
+                'physicallySewnAndApproved':False})
     if staged_satin_choices is not None and staged_used!=set(staged_satin_choices):
         raise ValueError('Staged satin object identities do not match the selected source')
     if {o['id'] for o in repaired}!=allowed or sum(o['pixels'] for o in repaired)>plan['summary']['sourcePixels']*.02:
@@ -612,6 +645,16 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         'source':plan['source'],'sourcePlanSignature':plan['sourcePlanSignature'],'scaleMmPerPixel':scale,
         'originMm':[width/2,height/2],'widthMm':width,'heightMm':height,'objects':records,'nativePaths':actual_elements,'nativeCandidatePaths':path_count,
         'nativeFillPieces':fill_pieces,'nativeRepairObjects':repaired,
+        'sourceRunningDetailTrial':{
+            'enabled':staged_running_source is not None,
+            'acceptedObjects':sum(len(v) for v in running_detail_candidates.values()),
+            'sourceOriginalPngSha256Verified':bool(detail_source_proof),
+            'sourcePreparedRgbaSha256Verified':bool(detail_source_proof),
+            'sourcePlanSignatureVerified':bool(detail_source_proof),
+            'detailIDs':[o['id'] for values in running_detail_candidates.values() for o in values],
+            'sourcePixelRegionsUnchanged':True,
+            'semanticFeatureRecognitionVerified':False,
+            'physicalSewoutVerified':False},
         'sourceSatinTrial':{
             'enabled':(staged_satin_choices is not None and bool(staged_satin_choices)) or os.environ.get('STITCH_FORGE_AUTO_SATIN_TRIAL','0')=='1',
             'stagedPerSourceSelection':dict(sorted(staged_satin_choices.items())) if staged_satin_choices is not None else None,
@@ -734,9 +777,9 @@ def audit_trial(pattern, manifest, masks, fmt, translation):
         'requestedColourOrder':colors,'translationToSourceMm':translation},moves,needle_points
 
 
-def run_trial(plan, executable, output, timeout_seconds=60, native_outputs=None,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=(),staged_satin_choices=None):
+def run_trial(plan, executable, output, timeout_seconds=60, native_outputs=None,partition_fills=False,running_overrides=(),fill_repair_overrides=(),scanline_overrides=(),section_overrides=(),staged_satin_choices=None,staged_running_source=None):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    svg,manifest,masks=build_trial_svg(plan,partition_fills=partition_fills,running_overrides=running_overrides,fill_repair_overrides=fill_repair_overrides,scanline_overrides=scanline_overrides,section_overrides=section_overrides,staged_satin_choices=staged_satin_choices)
+    svg,manifest,masks=build_trial_svg(plan,partition_fills=partition_fills,running_overrides=running_overrides,fill_repair_overrides=fill_repair_overrides,scanline_overrides=scanline_overrides,section_overrides=section_overrides,staged_satin_choices=staged_satin_choices,staged_running_source=staged_running_source)
     (output/'native-artwork-input.svg').write_bytes(svg)
     (output/'native-intent-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     if native_outputs is not None:
@@ -813,6 +856,8 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
     if any(o.get('repairStrategy')=='source_contained_scanline_fill'
            for o in manifest.get('nativeRepairObjects',[])):
         blockers.append('scanline_fill_is_running_stitch_tracks_requires_physical_sewout')
+    if manifest.get('sourceRunningDetailTrial',{}).get('enabled'):
+        blockers.append('authenticated_running_detail_requires_physical_sewout_and_likeness_review')
     if plan.get('textureApproximation'):blockers.append('texture_simplification_requires_likeness_and_feature_review')
     if manifest['underlayFillPaths']==0 and any(o.get('action')=='native_fill_trial' for o in manifest['objects']):
         blockers.append('native_fill_underlay_absent_requires_fabric_review')
@@ -822,6 +867,7 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
         'stitchPlanning':{'settings':manifest['settings'],
             'nativeFillUnderlayAudit':manifest['underlayAudit'],
             'sourceSatinTrial':manifest['sourceSatinTrial'],
+            'sourceRunningDetailTrial':manifest.get('sourceRunningDetailTrial'),
             'families':'native_fill_source_skeleton_running_and_optin_source_satin' if manifest['sourceSatinTrial']['acceptedObjects'] else 'native_fill_and_source_skeleton_running',
             'semanticStitchIntentVerified':False},
         'detailedArtworkBenchmarkVerified':False,
