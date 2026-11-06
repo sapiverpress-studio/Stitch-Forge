@@ -18,6 +18,7 @@ from legacy_staged_passes import STAGES, split_legacy_svg, verify_legacy_stages
 from staged_satin_review import (inspect_source_satin_candidates, validate_stage_choices,
                                  accept_review_decisions, make_review_bundle)
 from protected_detail_audit import audit_protected_details, load_rgba
+from authenticated_running_detail import propose_authenticated_running_details
 
 
 def main():
@@ -39,13 +40,25 @@ def main():
                         help="JSON array of user-chosen critical-feature rectangles in ORIGINAL pixels")
     parser.add_argument("--detail-comparison-png", type=Path,
                         help="Optional same-composition reduced/quantised raster for feature-loss diagnostics")
+    parser.add_argument("--working-rgba", type=Path,
+                        help="Exact private working RGBA byte file bound to the plan and original PNG")
+    parser.add_argument("--running-detail-windows-json", type=Path,
+                        help="Original-pixel source colour windows for a separate running-detail pass")
+    parser.add_argument("--select-running", action="append", default=[], metavar="FEATURE_ID",
+                        help="Activate only a verified running detail proposed for this exact original PNG")
     args = parser.parse_args()
     if sum(bool(a) for a in (args.select_satin,args.try_straight_satin,args.decisions_json))>1:
         parser.error("Use exactly one satin selection mechanism")
-    if bool(args.original_png) != bool(args.protected_windows_json):
-        parser.error("Original PNG and critical-feature windows must be supplied together")
-    if args.detail_comparison_png and not args.original_png:
-        parser.error("Cannot compare detail without the private original PNG")
+    if (args.protected_windows_json or args.running_detail_windows_json) and not args.original_png:
+        parser.error("Detail windows require the original private PNG")
+    if args.original_png and not (args.protected_windows_json or args.running_detail_windows_json):
+        parser.error("Original PNG needs protected windows or verified running windows")
+    if args.detail_comparison_png and not args.protected_windows_json:
+        parser.error("Contrast comparison needs protected windows")
+    if args.running_detail_windows_json and not args.working_rgba:
+        parser.error("Running-detail proposals require the exact working RGBA bytes")
+    if args.select_running and not args.running_detail_windows_json:
+        parser.error("Select running details only after a source-bound candidate review")
     # Reuse the established pre-hybrid plan and geometry, not the SLIC/AI Home bridge.
     # Prevent inherited experimental flags from silently changing the comparison.
     for flag in ("STITCH_FORGE_BETA_COMPACT_RUNNING",
@@ -56,7 +69,29 @@ def main():
     os.environ["STITCH_FORGE_AUTO_SATIN_TRIAL"] = "1" if args.try_straight_satin else "0"
     plan = json.loads(args.plan_json.read_text(encoding="utf-8"))
     protected=None
-    if args.original_png:
+    original_png_bytes=args.original_png.read_bytes() if args.original_png else None
+    running_review=None
+    staged_running=None
+    if args.running_detail_windows_json:
+        detail_raw=args.running_detail_windows_json.read_bytes()
+        if len(detail_raw)>8192:
+            raise ValueError("Running detail source window document exceeds bounded size")
+        requested=json.loads(detail_raw)
+        working=args.working_rgba.read_bytes()
+        running_review=propose_authenticated_running_details(
+            plan,original_png_bytes,working,requested)
+        offered={item['id'] for item in running_review['candidates']}
+        if not args.select_running and running_review['candidateCount']:
+            # Candidate-only review stays completely source-identical.
+            pass
+        if len(args.select_running)!=len(set(args.select_running)) or any(
+            key not in offered for key in args.select_running):
+            raise ValueError("Unsupported or duplicate source running-detail choice")
+        if args.select_running:
+            staged_running={'originalPng':original_png_bytes,
+                'workingRgba':working,'windows':requested,
+                'selectedIds':args.select_running}
+    if args.protected_windows_json:
         windows_raw=args.protected_windows_json.read_bytes()
         if len(windows_raw)>8192:
             raise ValueError('Protected detail window document exceeds bounded size')
@@ -94,7 +129,8 @@ def main():
     # candidate choice replaces ONLY its existing source-owned stitch object.
     staged_override = selections if args.select_satin or args.decisions_json else None
     original, old_manifest, _ = build_trial_svg(
-        plan, partition_fills=True, staged_satin_choices=staged_override)
+        plan, partition_fills=True, staged_satin_choices=staged_override,
+        staged_running_source=staged_running)
     staged = split_legacy_svg(original)
     verify_legacy_stages(staged)
     # No writing until every stage has passed path-identity checks.
@@ -103,7 +139,18 @@ def main():
     (output / "combined-source-identical.svg").write_bytes(staged.native_svg)
     (output / "satin-source-candidates.json").write_text(
         json.dumps(review, indent=2) + "\n", encoding="utf-8")
+    if running_review is not None:
+        (output / "running-original-candidates.json").write_text(
+            json.dumps(running_review,indent=2)+"\n",encoding="utf-8")
     bundle=make_review_bundle(review,staged.manifest["counts"])
+    if running_review is not None:
+        bundle['authenticatedRunningReview']={
+            'sourceOriginalSha256Verified':True,
+            'preparedSourceSha256Verified':True,
+            'candidateIds':[item['id'] for item in running_review['candidates']],
+            'selectedIds':list(args.select_running),
+            'machineApproved':False,
+            'sourceOriginalImageIncluded':False}
     if protected is not None:
         bundle['protectedDetailReview']={
             'windows':[{'id':r['id'], 'contrastLossPossible':r.get('contrastLossPossible')}
@@ -125,12 +172,15 @@ def main():
               "reviewCandidateCount": review["candidateCount"],
               "protectedDetailReviewPerformed": protected is not None,
               "protectedDetailNativeLikenessVerified": False,
+              "originalAuthenticatedRunningReviewPerformed": running_review is not None,
+              "originalAuthenticatedRunningSelections":list(args.select_running),
               "nativeExportPerformed": False}
     if args.native_executable:
         if not args.native_executable.is_file():
             raise ValueError("Ink/Stitch executable not found")
         audited = run_trial(plan, args.native_executable, output / "native",
-                            partition_fills=True, staged_satin_choices=staged_override)
+                            partition_fills=True, staged_satin_choices=staged_override,
+                            staged_running_source=staged_running)
         if (output / "native" / "native-artwork-input.svg").read_bytes() != staged.native_svg:
             raise ValueError("Native exporter did not use the byte-identical combined SVG")
         if not audited.get("decoded") or any(
