@@ -58,7 +58,7 @@ test('high-contrast miniature eye and mouth are not erased in name of making con
  for(let k=0;k<labels.length;k++)if(pixels[k*4+3]){
   labels[k]=pixels[k*4]===19?1:2;
  }
- const singleton=109*width+100;
+ const singleton=120*width+120;
  assert.equal(labels[singleton],2);
  labels[singleton]=1;
  const result=prescan.simplify(labels,pixels,width,height,[black,white],80);
