@@ -6,6 +6,8 @@ on:
     paths:
       - ".github/workflows/md277-simple-motif-no-deploy.yml"
       - "site/motif-prep.js"
+      - "site/motif-prescan.js"
+      - "tests/test_motif_prescan.cjs"
       - "site/artwork-pipeline.js"
       - "site/auto-reconstruct-ui.js"
       - "site/simple-workflow.js"
@@ -34,7 +36,7 @@ jobs:
       - name: Verify actual simple motif source and worker packet
         run: |
           node tools/check_frontend_syntax.cjs
-          node --test tests/test_simple_motif.cjs tests/test_simple_workflow.cjs tests/test_artwork_pipeline.cjs
+          node --test tests/test_simple_motif.cjs tests/test_motif_prescan.cjs tests/test_simple_workflow.cjs tests/test_artwork_pipeline.cjs
       - name: Build the entire existing site safety suite
         run: |
           npm install --ignore-scripts --no-audit --no-fund
