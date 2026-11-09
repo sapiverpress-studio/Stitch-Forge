@@ -35,3 +35,17 @@ Netlify **production** currently runs Git SHA `792c37fddb3df77900b875e94a09e976c
 Before production: audit and safely reconcile all 58 commits or isolate a tested release against the actual production baseline, then confirm actual current Cloud Run worker compatibility, protected end-to-end browser generation, thread density/colour/hoop and a real sew-out. Retain older live site until this is verified. No Work credits.
 
 **Status:** Real native ghost generation, preview build and phone-sized upload/no-token controls **VERIFIED**; current live Cloud Run compatibility with the preview and fabric output quality **UNVERIFIED**; physical sewout and more varied motifs **NOT DONE**; production **UNCHANGED**.
+
+## MD-2.78 — requested conservative automated pre-scan (9 November 2026)
+
+The user's actual test on a named capybara design reported: "Automatic motif has too many detached pixel fragments; use cleaner flat-colour artwork." **Only an Android screenshot of that failure was provided, not the uploaded capybara image bytes.** No claim of a working actual capybara is warranted.
+
+- Added `site/motif-prescan.js`: connected-component analysis of the *source palette labels*. Only bounded micro-islands (up to 0.20 mm² and 0.85 mm span, <=2.5% foreground pixels globally) are eligible for reassignment **to an adjacent similar-colour region**. Rejects strong colour contrast, dark marks merging into brighter areas and image-colour disagreement. Never changes original source RGBA, alpha, source silhouette or cut-outs. No semantic eye/mouth recognition is claimed.
+- `site/motif-prep.js` now runs this pre-scan automatically after palette assignment and **before** source masks, source SHA binding and native worker conversion. After cleanup it recomputes colour quantisation metrics against the unaltered original pixels and retains all existing native fail-closed tests.
+- The main mobile workflow now displays a small temporary **colour-shape pre-scan thumbnail**, actual before stitches, with honest fragment counts. This does not enable machine-file downloads.
+- A fixture with a ghost silhouette/eyes/mouth and **240 separate pale RGB flecks** previously overran the 160-component automatic motif guard. Verified post-scan evidence from actual CI: **245 components → 5**, 240 pixels reassigned (**1.8705%** of foreground), original source RGBA/foreground unchanged, contrasting eye/mouth marks retained.
+- [TRUE signed browser → private Ink/Stitch two-phase PES6/DST CI run 42609091447](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/42609091447): **PASS** on this intentionally speckled source; PES and DST both **9,501 needle stitches**, **0 out-of-colour needle points/segments**, 9 trims/11 jumps. Still **NOT** machine sewout/approved density.
+- Latest Netlify exact-node build and step-two user-facing prescan-preview test must pass before release; production remains unchanged.
+- The failure can legitimately recur when artwork contains too much colour texture, many genuinely disconnected high-contrast details or semantically essential regions smaller than a stitch. Do **not** silently remove eyes/mouth or relax safety budgets. Obtain the ACTUAL capybara original image for an honest before/after and native trial before promising to fix that screenshot's case.
+
+**Release guard stays:** PR #2 draft only; verify the unresolved 58 unshipped main commits before production. No Work credits.
