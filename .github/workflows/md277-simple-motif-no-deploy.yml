@@ -11,6 +11,8 @@ on:
       - "site/simple-workflow.js"
       - "site/index.html"
       - "tests/test_simple_motif.cjs"
+      - "tests/test_one_button_access.cjs"
+      - "tests/test_original_png_transport.cjs"
       - "tools/simple_ghost_fixture.cjs"
       - "tools/prepare_simple_ghost.cjs"
       - "tools/test_simple_motif_native.py"
