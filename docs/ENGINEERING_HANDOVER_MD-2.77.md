@@ -49,3 +49,28 @@ The user's actual test on a named capybara design reported: "Automatic motif has
 - The failure can legitimately recur when artwork contains too much colour texture, many genuinely disconnected high-contrast details or semantically essential regions smaller than a stitch. Do **not** silently remove eyes/mouth or relax safety budgets. Obtain the ACTUAL capybara original image for an honest before/after and native trial before promising to fix that screenshot's case.
 
 **Release guard stays:** PR #2 draft only; verify the unresolved 58 unshipped main commits before production. No Work credits.
+
+
+## MD-2.79 — first diagnostic with user's actual photographic capybara (9 Nov 2026)
+
+This is a **quality hold**, not an implemented fix. Owner supplied private source PNG, 1254×1254 RGBA with transparent background. The source is photographically textured: dense fine fur, antialiased contour hairs, dark closed eye, prominent nostrils, long whiskers, smile curve, four groups of paws/toes. Do not commit the private PNG or derived raster outputs to this repository.
+
+Local controlled diagnostics on a 320×320 working image, six or fewer approximate thread colours:
+- Bilateral variants contained about 1,164–1,836 connected colour islands before a local label filter, and still 224–268 after.
+- Nine-pixel median + palette reduced about 136 → 122 colour islands; fifteen-pixel median about 58 → 60.
+- Original-RGB colour differences after these reductions are typically 23–27 mean Euclidean RGB; purely numerical colour error is NOT a face-preservation metric.
+- Visual source comparison: outline, overall seated pose and some paws survive, BUT dark muzzle/cheek becomes a large wrong-colour patch; closed eye, smile and nostril interpretation drift. **All outputs FAIL source-feature likeness acceptance**. This is not embroidery, machine data, sewout or an actual native pass on this PNG.
+- Prototype dark-line extraction within hand-selected local eye/smile/muzzle test windows recovers some high-contrast source strokes but produces false positive fur/whisker noise. The windows were hand-scoped for diagnosis, **not automatic facial feature detection**. Do not ship this as automatic preservation.
+
+**Decision:** The current MD-2.78 adjacent low-contrast micro-fragment prescan (max 2.5% changed source ownership) is not a proper solution for this real image. Its purpose is only to clean near-flat anti-alias speckles. Escalating fragment budgets or stronger palette blur would generate misleading files. Do not auto-generate a PES/DST until the protected face feature pass is separately confirmed.
+
+**Required end-to-end automatic pipeline for textured illustration:** 
+1. Source-image classifier routes photoreal texture away from the flat-motif path automatically. No false claims of native eligibility.
+2. Produce a genuinely *new* simple-source derivative with clear local colour masses and faithful source-verified facial expression; this is an illustrated interpretation, NOT pixel-identical original. Generative edits can hallucinate, so expose this draft before a paid/real native job.
+3. Protect and review eye/nostrils/smile and silhouette as individual semantic regions/contrasting thin running lines, not just global flat colours. Use source-aligned proof where feasible, and disclose any intentionally redrawn features.
+4. Native worker uses this approved derived-source as its signed pixel contract; independently decode PES/DST and assess contour, local stitch density, jumps, trims, faithful feature visibility at target 80mm.
+5. At least one actual fabric sewout before customer-use claims.
+
+A ChatGPT-generated app-style illustration of an embroidery result made in this conversation is a **mock-up only**. Its stitch totals, buttons and 'digitising complete' label were fabricated in the artwork and MUST NEVER be described as real machine evidence.
+
+**Still outstanding:** implement and validate that automated source-preserving facial-detail workflow; capybara native PES/DST NOT generated. Production HOLD remains in place.
