@@ -8,6 +8,7 @@ const dep=(name,path)=>root[name]||(typeof require==='function'?require(path):nu
 const P=dep('StitchForgeSourceRegionProject','./source-region-project.js');
 const A=dep('StitchForgeSourceObjectPlan','./source-object-plan.js');
 const M=dep('StitchForgeMotifPrep','./motif-prep.js');
+const L=dep('StitchForgeSourceMaskLedger','./source-mask-ledger.js');
 const R=dep('StitchForgeAutoReconstruct','./auto-reconstruct.js');
 const SCHEMA='stitch-forge-artwork-request-v1',AUDIT='SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED';
 const cryptoAPI=()=>root.crypto||(typeof require==='function'?require('node:crypto').webcrypto:null);
@@ -69,12 +70,12 @@ function visibleArtworkFrame(rgba,w,h,designWidthMm){
   unmodifiedSourcePixels:true,
   physicalSewoutVerified:false};
 }
-async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null,profile='detailed'}={}){
+async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null,profile='detailed',approvedPalette=null}={}){
  if(!['if_needed','off'].includes(texturePolicy))throw Error('Invalid texture policy');
  if(!['visible','canvas'].includes(sizeMode))throw Error('Invalid physical artwork width mode');
- if(!['detailed','simple_motif'].includes(profile))throw Error('Unsupported automatic digitising profile');
- if(profile==='simple_motif'&&texturePolicy!=='off')
-  throw Error('Simple motif must not silently simplify or drop source details');
+ if(!['detailed','simple_motif','detailed_motif'].includes(profile))throw Error('Unsupported automatic digitising profile');
+ if(profile!=='detailed'&&texturePolicy!=='off')
+  throw Error('Automatic motif preparation must not silently simplify or drop approved source details');
  const sizing=sizeMode==='visible'?visibleArtworkFrame(rgba,w,h,imageWidthMm):
     {mode:'canvas',imageWidthMm,unmodifiedSourcePixels:true};
  const frameWidthMm=sizing.imageWidthMm;
@@ -83,18 +84,38 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
   throw Error('Invalid maximum working-part budget');
  let motifQuality=null;
  let draft;
- if(profile==='simple_motif'){
+ if(profile==='detailed_motif'){
+  if(!Array.isArray(approvedPalette)||approvedPalette.length<1||approvedPalette.length>8||
+      !approvedPalette.every((c,i)=>/^#[0-9A-F]{6}$/.test(c)&&(i===0||c>approvedPalette[i-1])))
+   throw Error('Invalid approved illustration palette');
+  const sha256=await P.fingerprint(rgba,w,h);
+  const indexByRGB=new Map(approvedPalette.map((c,i)=>[parseInt(c.slice(1),16),i]));
+  const masks=approvedPalette.map(()=>new Uint8Array(w*h));
+  let foregroundPixels=0;
+  for(let i=0;i<rgba.length;i+=4){
+   if(!rgba[i+3])continue;
+   const colour=indexByRGB.get((rgba[i]<<16)|(rgba[i+1]<<8)|rgba[i+2]);
+   if(rgba[i+3]!==255||colour===undefined)throw Error('Approved pixels differ from the illustration palette');
+   masks[colour][i/4]=1;
+   foregroundPixels++;
+  }
+  draft=P.validateDraft({schema:'stitch-forge-source-region-project-v1',
+   source:{sha256,width:w,height:h,originalWidth,originalHeight},physical:{imageWidthMm:frameWidthMm},
+   regions:masks.map((mask,i)=>({id:sha256.slice(0,12)+'-colour-'+(i+1),
+     color:approvedPalette[i],ledger:L.ledgerFromMask(mask,w,h)})),foregroundPixels,
+   quantisation:{pixelsBeyondRgb60:0,meanRgbDistance:0}});
+ }else if(profile==='simple_motif'){
   if(!M)throw Error('Automatic simple-motif preparation unavailable');
   const motif=await M.prepare(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
   draft=motif.draft;motifQuality=motif.quality;
  }else draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
  let plan;
- try{plan=await A.build(draft);}
+ try{plan=await A.build(draft,profile==='detailed_motif'?{maxRgbChange:0}:{});}
  catch(error){
   // A fully tracked graph can be too large to sign as a source plan even
   // when its region masks are valid. Fall back to a bounded, source-fingerprinted
   // palette partition; never truncate graph nodes or silently discard pixels.
-  if(profile==='simple_motif'||!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
+  if(profile!=='detailed'||!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
   draft=await P.createApproximationDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight,
    reasonCode:'source_graph_serialisation_budget'});
   plan=await A.build(draft);
