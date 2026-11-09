@@ -12,7 +12,7 @@ const packet={header:'header',rgbaGzip:'AAA===',labelsGzip:'AAA===',requestId:SO
 const owner='private-owner-token',workerSecret='private-worker-token';
 function environment(key){
  return {STITCH_FORGE_ANALYSIS_TOKEN:owner,STITCH_FORGE_WORKER_TOKEN:workerSecret,
-  STITCH_FORGE_ARTWORK_TRIAL_ENABLED:'1'}[key];
+  STITCH_FORGE_ARTWORK_TRIAL_ENABLED:'1',STITCH_FORGE_DETAILED_MOTIF_WORKER_TAG:'exact-palette'}[key];
 }
 function store(){
  const map=new Map();
@@ -35,11 +35,13 @@ function fixture(){
  const pes=Buffer.concat([Buffer.from('#PES0060'),Buffer.alloc(60,42)]);
  const zip=Buffer.concat([Buffer.from('PK\x03\x04'),Buffer.alloc(160,11)]);
  const digest=x=>createHash('sha256').update(x).digest('hex');
- let phases=[];
+ let phases=[],routedTags=[];
  const receipt={requestId:SOURCE,pesSha256:digest(pes),svgSha256:'c'.repeat(64),mac:'d'.repeat(64)};
- const bridge=()=>async req=>{
-  const body=await req.json();phases.push(body.phase);
+ const bridge=({workerRevisionTag})=>async req=>{
+  const body=await req.json();phases.push(body.phase);routedTags.push(workerRevisionTag);
   assert.equal(body.requestId,SOURCE);
+  assert.ok(!Object.hasOwn(body,'profile'));
+  assert.ok(!Object.hasOwn(body,'finish'));
   if(body.phase==='pes')return Response.json({requestId:SOURCE,pesBase64:pes.toString('base64'),receipt});
   if(body.phase==='dst'){
    assert.equal(body.receipt.pesSha256,receipt.pesSha256);
@@ -59,7 +61,7 @@ function fixture(){
  const submit=createSubmit({jobs:()=>jobs,dispatch,env:environment,generateId:()=>ID});
  const status=createStatus({jobs:()=>jobs,env:environment});
  const result=createResult({jobs:()=>jobs,env:environment});
- return {jobs,submit,status,result,work,phases,receipt,zip,image};
+ return {jobs,submit,status,result,work,phases,routedTags,receipt,zip,image};
 }
 
 test('bounded source packet is schema-bound and rejects attempts to inject a phase or secret',()=>{
@@ -76,12 +78,29 @@ test('an unrecognised owner cannot submit, poll or retrieve any private artwork'
  assert.equal((await f.result(request('/api/artwork-job-result?id='+ID))).status,401);
  assert.equal(f.jobs.map.size,0);
 });
+test('submission distinguishes missing owner setup, a rejected token, and disabled generation before creating a job',async()=>{
+ const submit=(env=environment)=>createSubmit({env,
+  jobs:()=>{assert.fail('A blocked submission must not access job storage');},
+  dispatch:()=>{assert.fail('A blocked submission must not start the worker');}});
+ const post=(sentHeaders)=>request('/api/artwork-job-submit',{
+  method:'POST',headers:sentHeaders,body:JSON.stringify(packet)});
+ const missing=await submit(key=>key==='STITCH_FORGE_ANALYSIS_TOKEN'?'':environment(key))(post(headers));
+ assert.equal(missing.status,503);
+ assert.equal((await missing.json()).code,'OWNER_ACCESS_UNAVAILABLE');
+ const rejected=await submit()(post({...headers,Authorization:'Bearer wrong-local-test-value'}));
+ assert.equal(rejected.status,401);
+ assert.equal((await rejected.json()).code,'OWNER_TOKEN_REJECTED');
+ const disabled=await submit(key=>key==='STITCH_FORGE_ARTWORK_TRIAL_ENABLED'?'':environment(key))(post(headers));
+ assert.equal(disabled.status,503);
+ assert.equal((await disabled.json()).code,'ARTWORK_TRIAL_DISABLED');
+});
 test('one queued job completes both native phases, preserves bound receipt and releases an audited ZIP',async()=>{
  const f=fixture();
  const submission=await f.submit(request('/api/artwork-job-submit',{method:'POST',headers,body:JSON.stringify(packet)}));
  assert.equal(submission.status,202);
  assert.equal((await submission.json()).jobId,ID);
  assert.deepEqual(f.phases,['pes','dst']);
+ assert.deepEqual(f.routedTags,[undefined,undefined]);
  const state=await f.status(request('/api/artwork-job-status?id='+ID,{headers:{Authorization:'Bearer '+owner}}));
  assert.equal(state.status,200);
  const body=await state.json();
@@ -91,6 +110,39 @@ test('one queued job completes both native phases, preserves bound receipt and r
  assert.equal(downloaded.headers.get('x-stitch-forge-audit'),'SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED');
  assert.deepEqual(Buffer.from(await downloaded.arrayBuffer()),f.zip);
  assert.equal(f.jobs.map.has('input/'+ID),false);
+});
+test('only approved Detailed Motif jobs select the server-configured revision for both phases',async()=>{
+ const approved={...packet,profile:'detailed_motif',
+  header:JSON.stringify({schema:'stitch-forge-artwork-request-v1',texturePolicy:'off'})};
+ assert.ok(validPacket(JSON.stringify(approved)));
+ for(const modified of [{...approved,profile:'https://other.run.app'},
+  {...approved,workerRevisionTag:'other'},{...approved,header:'null'},
+  {...approved,header:JSON.stringify({schema:'stitch-forge-artwork-request-v1',texturePolicy:'if_needed'})}]){
+  assert.equal(validPacket(JSON.stringify(modified)),false);
+ }
+ const f=fixture();
+ const response=await f.submit(request('/api/artwork-job-submit',{
+  method:'POST',headers,body:JSON.stringify(approved)}));
+ assert.equal(response.status,202);
+ assert.deepEqual(f.routedTags,['exact-palette','exact-palette']);
+ const state=await f.status(request('/api/artwork-job-status?id='+ID,{headers}));
+ assert.equal((await state.json()).state,'done');
+});
+
+test('black satin is limited to Detailed Motif and cannot publish an unchecked result',async()=>{
+ const approved={...packet,profile:'detailed_motif',finish:'black_satin_v1',
+  header:JSON.stringify({schema:'stitch-forge-artwork-request-v1',texturePolicy:'off'})};
+ assert.ok(validPacket(JSON.stringify(approved)));
+ assert.equal(validPacket(JSON.stringify({...approved,profile:undefined})),false);
+ assert.equal(validPacket(JSON.stringify({...approved,finish:{type:'black_satin_v1',svg:'<svg/>'}})),false);
+ const f=fixture();
+ const response=await f.submit(request('/api/artwork-job-submit',{
+  method:'POST',headers,body:JSON.stringify(approved)}));
+ assert.equal(response.status,202);
+ assert.deepEqual(f.phases,['pes','dst']);
+ const state=await f.status(request('/api/artwork-job-status?id='+ID,{headers}));
+ assert.equal((await state.json()).state,'failed');
+ assert.equal(f.jobs.map.has('output/'+ID),false);
 });
 test('tampered dispatch signatures and repeated dispatches do not start duplicate native processing',async()=>{
  const f=fixture(),input=JSON.stringify(packet);

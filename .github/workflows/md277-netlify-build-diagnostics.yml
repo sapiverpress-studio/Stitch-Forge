@@ -1,0 +1,32 @@
+name: MD-2.77 Netlify preview exact build diagnostics (NO DEPLOY)
+on:
+  push:
+    branches: ["feature/md277-automatic-simple-motifs-no-deploy"]
+    paths:
+      - ".github/workflows/md277-netlify-build-diagnostics.yml"
+      - "site/**"
+      - "tests/**"
+      - "tools/**"
+      - "package.json"
+      - "netlify.toml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  netlify-node24-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      NETLIFY: "true"
+      CONTEXT: "deploy-preview"
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: "24"}
+      - name: Match Netlify install
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run exact netlify.toml build script in Node 24
+        run: |
+          node --version
+          node tools/check_frontend_syntax.cjs && node --test tests/*.cjs tests/*.mjs

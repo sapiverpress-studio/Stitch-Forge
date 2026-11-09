@@ -35,7 +35,9 @@ test('the user controls local persistence and can remove saved access token',()=
 });
 test('one main button requests AI features at most once before the native stitch workflow',()=>{
  assert.match(ui,/id="sfAutoRun" type="button">Generate embroidery/);
- assert.match(ui,/id="sfAutoUseAI" type="checkbox" checked/);
+ assert.match(ui,/id="sfAutoUseAI" type="checkbox"/);
+ assert.doesNotMatch(ui,/id="sfAutoUseAI" type="checkbox" checked/);
+ assert.match(ui,/!motifMode&&q\('#sfAutoUseAI'\)\.checked/);
  assert.match(ui,/fetch\('\/api\/analyse-embroidery'/);
  assert.match(ui,/aiCached\?\.source===source/);
  assert.match(ui,/const result=await api\.generate\(packed/);

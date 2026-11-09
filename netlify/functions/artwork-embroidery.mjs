@@ -14,13 +14,25 @@ export async function boundedBytes(stream,maximum){
  for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>maximum){await reader.cancel();throw Error('Body exceeds limit');}chunks.push(value);}
  return Buffer.concat(chunks,size);
 }
-export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(...args),upstreamTimeoutMs=55000}={}){
+export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(...args),upstreamTimeoutMs=55000,
+ workerRevisionTag}={}){
  return async function artworkEmbroidery(request){
   if(request.method!=='POST')return json(405,'POST only');
   if(!authorised(request.headers.get('authorization'),getEnv('STITCH_FORGE_ANALYSIS_TOKEN')))return json(401,'Owner access token required');
   if(getEnv('STITCH_FORGE_ARTWORK_TRIAL_ENABLED')!=='1')return json(503,'The artwork pipeline is not enabled. The native worker and app must be upgraded together; no OpenAI request was made.');
-  const oldEndpoint=getEnv('STITCH_FORGE_ENGINE_URL')||'',workerToken=getEnv('STITCH_FORGE_WORKER_TOKEN');
+  let oldEndpoint=getEnv('STITCH_FORGE_ENGINE_URL')||'';
+  const workerToken=getEnv('STITCH_FORGE_WORKER_TOKEN');
   if(!workerToken||!/^https:\/\/[a-z0-9][a-z0-9.:-]+\/v1\/digitise$/i.test(oldEndpoint))return json(503,'Private native artwork worker is not configured');
+  if(workerRevisionTag){
+   try{
+    if(!/^[a-z][a-z0-9-]{0,62}$/.test(workerRevisionTag))throw Error();
+    const audience=cloudRunAudience(oldEndpoint);
+    const tagged=new URL('/v1/digitise',audience);
+    tagged.hostname=workerRevisionTag+'---'+tagged.hostname;
+    if(cloudRunAudience(tagged.href)!==audience)throw Error();
+    oldEndpoint=tagged.href;
+   }catch{return json(503,'The Detailed Motif worker revision is not configured correctly');}
+  }
   if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))return json(415,'JSON required');
   if(Number(request.headers.get('content-length')||0)>4000000)return json(413,'Artwork exceeds the request budget');
   let data,obj;

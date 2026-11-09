@@ -23,7 +23,7 @@ function page(owner='saved-owner-token'){
   click(){this.clicks=(this.clicks||0)+1;for(const fn of this.handlers.get('click')||[])fn();}
   focus(){this.focused=true;}before(){}appendChild(){}
   querySelector(query){return query==='.workspace'?nodes.get('workspace'):query==='.note'?nodes.get('note'):nodes.get(query.slice(1));}
-  getContext(){return {fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){strokes++;}};}
+  getContext(){return {fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){strokes++;},createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};},putImageData(){this.previewWritten=true;}};}
  }
  for(const id of ['main','workspace','note','sfAutoRun','importFile','sfAutoToken','sfAutoWorkflow','sfAutoDownload','sfAutoPES','sfAutoDST','sfAutoProductName','sfNativeWidth'])new Element().id=id;
  nodes.get('sfNativeWidth').value='80';
@@ -58,6 +58,23 @@ test('decoded PES stitches are the only source for visible playback and verified
  report:{decoded:[{format:'pes',needleStitches:2,colourChanges:0}]}});
  p.flush();assert.equal(p.strokes(),2);assert.equal(p.get('sfQuickZip').disabled,false);
  p.get('sfQuickZip').click();assert.equal(p.get('sfAutoDownload').clicks,1);
+});
+test('automatic prescan preview appears during native job without enabling unaudited files',()=>{
+ const p=page();
+ p.window.dispatch('stitchforge:image-imported');
+ p.get('sfQuickGenerate').click();
+ assert.equal(p.get('sfQuickPrescan').hidden,true);
+ p.window.dispatch('stitchforge:prescan-ready',{
+  draft:{source:{width:48,height:48},regions:[{color:'#131313',
+    ledger:{components:[{runs:[[15,10,30]]}]}}]},
+  quality:{colourCount:2,prescan:{componentsAfter:4,
+    recolouredFragments:3,originalForegroundPixelsPreserved:true}}
+ });
+ assert.equal(p.get('sfQuickPrescan').hidden,false);
+ assert.match(p.get('sfQuickPrescanNote').textContent,/tidied 3/);
+ assert.equal(p.get('sfQuickZip').disabled,true);
+ assert.equal(p.get('sfQuickPES').disabled,true);
+ assert.equal(p.get('sfQuickDST').disabled,true);
 });
 test('missing access token blocks generation and shows one-time setup',()=>{
  const p=page('');p.window.dispatch('stitchforge:image-imported');p.get('sfQuickGenerate').click();

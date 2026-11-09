@@ -20,6 +20,13 @@
 @media(max-width:580px){.play-row{flex-wrap:wrap;gap:5px}.play-row #showAllBtn{flex:1 0 100%}.play-row .btn{min-height:42px;padding:8px 9px}.simulator-inline{padding:9px 10px 10px}.play-row #progressText{font-size:10px;min-width:40px}.upload-note{padding:7px 10px;font-size:11px}}
 
 .trace-panel{background:#f5f9f7;padding:12px 15px;border-bottom:1px solid var(--border)}.trace-title,.trace-buttons{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}.trace-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0}.trace-options label{font-size:12px;font-weight:650}.trace-options input{width:100%;display:block;accent-color:var(--a)}.trace-panel p{margin:6px 0 0}.wide-select{width:100%;padding:10px;border:1px solid #cddcda;border-radius:9px;background:white;color:var(--deep)}.field input[type=range]{width:100%;accent-color:var(--a)}@media(max-width:580px){.trace-options{grid-template-columns:1fr 1fr;gap:9px}.trace-panel{padding:11px}}
+/* Preserve the machine-not-approved notice on narrow phones without the
+   header's two flex children forcing horizontal page overflow. */
+@media(max-width:580px){
+ body>header{flex-wrap:wrap;justify-content:flex-start;align-items:center}
+ body>header .brand{min-width:0;flex:1 1 100%}
+ body>header .pill{max-width:100%;white-space:normal}
+}
 </style>
 </head>
 <body>
@@ -327,7 +334,7 @@ try{let saved=JSON.parse(localStorage.getItem('sapiver.stitch.v01')||'null');if(
 $('#stitchValue').textContent=Number($('#stitchLength').value).toFixed(2)+' mm';updateStitchUI();render();
 // Readiness diagnostic for automated browser checks. Not machine certification.
 window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterReference||null,getSourceStatus:()=>rasterSource?'original':rasterReference?'restored-preview':'none',getBounds:()=>rasterBounds?deep(rasterBounds):null,
- getWidthMm:()=>Number($('#designWidth').value),
+ getWidthMm:()=>Number($('#designWidth').value),packageFiles:zip,
  setSourceRegionInspectionActive:(active)=>{sourceRegionInspectionActive=active===true;$('#design').classList.toggle('source-inspection',sourceRegionInspectionActive);drag=null;stop();runIndex=0;planKey='';try{renderStitches()}catch(e){updateFailed(e)}},
  // Explicit allowlist: never upload the full-colour original or lossy trace preview
  // to the native worker. Its source of truth is the current editable vector plan.
@@ -425,4 +432,4 @@ window.StitchForgeAIContext=Object.freeze({getImage:()=>rasterSource||rasterRefe
 });
 window.__stitchforge_test={generate,makeDst,makePes,zip,exportSvg:()=>makeSvg(getPlan()),get pathColors(){return deep(pathColors)},fox:()=>deep(fox),get paths(){return deep(paths)},setPaths(p){paths=deep(p);selected=null;planKey='';render()},report(){let p=getPlan();return{count:p.count,jumps:p.jumps,extent:[p.widthMm,p.heightMm],pesLength:makePes(p).length,dstLength:makeDst(p).length}}};
 })();
-</script><script src="/fill-geometry.js" defer></script><script src="/auto-reconstruct.js" defer></script><script src="/ai-guides.js" defer></script><script src="/ai-details.js" defer></script><script src="/stitch-classifier.js" defer></script><script src="/satin-geometry.js" defer></script><script src="/source-mask-ledger.js" defer></script><script src="/source-topology.js" defer></script><script src="/source-region-graph.js" defer></script><script src="/source-region-project.js" defer></script><script src="/reconstruction-diagnostics.js" defer></script><script src="/private-token-storage.js" defer></script><script src="/download-naming.js" defer></script><script src="/auto-reconstruct-ui.js" defer></script><script src="/source-stitch-candidates.js" defer></script><script src="/source-object-plan.js" defer></script><script src="/artwork-pipeline.js" defer></script><script src="/source-region-ui.js" defer></script><script src="/simple-workflow.js" defer></script></body></html>
+</script><script src="/fill-geometry.js" defer></script><script src="/auto-reconstruct.js" defer></script><script src="/ai-guides.js" defer></script><script src="/ai-details.js" defer></script><script src="/stitch-classifier.js" defer></script><script src="/satin-geometry.js" defer></script><script src="/source-mask-ledger.js" defer></script><script src="/source-topology.js" defer></script><script src="/source-region-graph.js" defer></script><script src="/source-region-project.js" defer></script><script src="/reconstruction-diagnostics.js" defer></script><script src="/private-token-storage.js" defer></script><script src="/download-naming.js" defer></script><script src="/auto-reconstruct-ui.js" defer></script><script src="/source-stitch-candidates.js" defer></script><script src="/source-object-plan.js" defer></script><script src="/motif-prescan.js" defer></script><script src="/motif-prep.js" defer></script><script src="/artwork-pipeline.js" defer></script><script src="/source-region-ui.js" defer></script><script src="/detailed-motif.js" defer></script><script src="/detailed-satin.js" defer></script><script src="/motif-project.js" defer></script><script src="/detailed-motif-ui.js" defer></script><script src="/simple-workflow.js" defer></script></body></html>

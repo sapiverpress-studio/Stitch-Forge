@@ -7,6 +7,8 @@
 const dep=(name,path)=>root[name]||(typeof require==='function'?require(path):null);
 const P=dep('StitchForgeSourceRegionProject','./source-region-project.js');
 const A=dep('StitchForgeSourceObjectPlan','./source-object-plan.js');
+const M=dep('StitchForgeMotifPrep','./motif-prep.js');
+const L=dep('StitchForgeSourceMaskLedger','./source-mask-ledger.js');
 const R=dep('StitchForgeAutoReconstruct','./auto-reconstruct.js');
 const SCHEMA='stitch-forge-artwork-request-v1',AUDIT='SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED';
 const cryptoAPI=()=>root.crypto||(typeof require==='function'?require('node:crypto').webcrypto:null);
@@ -68,23 +70,52 @@ function visibleArtworkFrame(rgba,w,h,designWidthMm){
   unmodifiedSourcePixels:true,
   physicalSewoutVerified:false};
 }
-async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null}={}){
+async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null,profile='detailed',approvedPalette=null}={}){
  if(!['if_needed','off'].includes(texturePolicy))throw Error('Invalid texture policy');
  if(!['visible','canvas'].includes(sizeMode))throw Error('Invalid physical artwork width mode');
+ if(!['detailed','simple_motif','detailed_motif'].includes(profile))throw Error('Unsupported automatic digitising profile');
+ if(profile!=='detailed'&&texturePolicy!=='off')
+  throw Error('Automatic motif preparation must not silently simplify or drop approved source details');
  const sizing=sizeMode==='visible'?visibleArtworkFrame(rgba,w,h,imageWidthMm):
     {mode:'canvas',imageWidthMm,unmodifiedSourcePixels:true};
  const frameWidthMm=sizing.imageWidthMm;
  if(Number.isFinite(frameWidthMm)&&frameWidthMm*h/w>296)throw Error('Artwork height exceeds 296mm at this width; reduce the width before generating');
  if(!Number.isInteger(maxWorkingParts)||maxWorkingParts<0||maxWorkingParts>10000)
   throw Error('Invalid maximum working-part budget');
- let draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
+ let motifQuality=null;
+ let draft;
+ if(profile==='detailed_motif'){
+  if(!Array.isArray(approvedPalette)||approvedPalette.length<1||approvedPalette.length>8||
+      !approvedPalette.every((c,i)=>/^#[0-9A-F]{6}$/.test(c)&&(i===0||c>approvedPalette[i-1])))
+   throw Error('Invalid approved illustration palette');
+  const sha256=await P.fingerprint(rgba,w,h);
+  const indexByRGB=new Map(approvedPalette.map((c,i)=>[parseInt(c.slice(1),16),i]));
+  const masks=approvedPalette.map(()=>new Uint8Array(w*h));
+  let foregroundPixels=0;
+  for(let i=0;i<rgba.length;i+=4){
+   if(!rgba[i+3])continue;
+   const colour=indexByRGB.get((rgba[i]<<16)|(rgba[i+1]<<8)|rgba[i+2]);
+   if(rgba[i+3]!==255||colour===undefined)throw Error('Approved pixels differ from the illustration palette');
+   masks[colour][i/4]=1;
+   foregroundPixels++;
+  }
+  draft=P.validateDraft({schema:'stitch-forge-source-region-project-v1',
+   source:{sha256,width:w,height:h,originalWidth,originalHeight},physical:{imageWidthMm:frameWidthMm},
+   regions:masks.map((mask,i)=>({id:sha256.slice(0,12)+'-colour-'+(i+1),
+     color:approvedPalette[i],ledger:L.ledgerFromMask(mask,w,h)})),foregroundPixels,
+   quantisation:{pixelsBeyondRgb60:0,meanRgbDistance:0}});
+ }else if(profile==='simple_motif'){
+  if(!M)throw Error('Automatic simple-motif preparation unavailable');
+  const motif=await M.prepare(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
+  draft=motif.draft;motifQuality=motif.quality;
+ }else draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
  let plan;
- try{plan=await A.build(draft);}
+ try{plan=await A.build(draft,profile==='detailed_motif'?{maxRgbChange:0}:{});}
  catch(error){
   // A fully tracked graph can be too large to sign as a source plan even
   // when its region masks are valid. Fall back to a bounded, source-fingerprinted
   // palette partition; never truncate graph nodes or silently discard pixels.
-  if(!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
+  if(profile!=='detailed'||!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
   draft=await P.createApproximationDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight,
    reasonCode:'source_graph_serialisation_budget'});
   plan=await A.build(draft);
@@ -121,7 +152,7 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
    ...(fullSource?{originalPngBase64:b64(originalPngBytes)}:{})};
  if(new TextEncoder().encode(JSON.stringify(packet)).length>3900000)
   throw Error('Full-resolution PNG exceeds the current private submission budget; source data was not truncated');
- return {packet,draft,plan,sizing};
+ return {packet,draft,plan,sizing,profile,motifQuality};
 }
 function crc32(bytes){let value=-1;for(const b of bytes){value^=b;for(let j=0;j<8;j++)value=(value>>>1)^(value&1?0xedb88320:0);}return (value^-1)>>>0;}
 async function readArchive(bytes){
@@ -152,20 +183,30 @@ function previewPacket(p){
  for(const line of p.segments)if(!Array.isArray(line)||line.length!==5||!line.slice(0,4).every(Number.isFinite)||line[0]<0||line[2]<0||line[1]<0||line[3]<0||line[0]>p.widthMm||line[2]>p.widthMm||line[1]>p.heightMm||line[3]>p.heightMm||!Number.isInteger(line[4])||line[4]<0||line[4]>=p.palette.length)throw Error('Decoded stitch preview leaves its physical bounds');
  return p;
 }
-async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true}={}){
+async function backgroundJobError(response,message){
+ let detail;try{detail=await response.json();}catch{}
+ const error=Error(detail?.error||message+' (HTTP '+response.status+')');
+ if(response.status===401)error.code='OWNER_TOKEN_REJECTED';
+ if(response.status===503&&['OWNER_ACCESS_UNAVAILABLE','ARTWORK_TRIAL_DISABLED'].includes(detail?.code))error.code=detail.code;
+ return error;
+}
+async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},onAccepted=()=>{},
+ fetchImpl=root.fetch.bind(root),isCurrent=()=>true}={}){
  if(!token||token.length>512)throw Error('Enter your private access token');
  const headers={'Content-Type':'application/json','Authorization':'Bearer '+token};
  if(!isCurrent())throw Error('Source changed before submission');
- const body=JSON.stringify(packed.packet);
+ const satinPlanSha=packed.finishPlanSha256;
+ const job=packed.profile==='detailed_motif'?{...packed.packet,profile:'detailed_motif',
+  ...(satinPlanSha?{finish:'black_satin_v1'}:{})}:packed.packet;
+ const body=JSON.stringify(job);
  if(new TextEncoder().encode(body).length>4000000)throw Error('Artwork job exceeds the private submission limit');
  onProgress('Submitting private embroidery job…');
  const submit=await fetchImpl('/api/artwork-job-submit',{method:'POST',headers,body,signal,cache:'no-store'});
- if(submit.status!==202){
-  let detail;try{detail=await submit.json()}catch{}
-  throw Error(detail?.error||'Background embroidery submission failed (HTTP '+submit.status+')');
- }
+ if(submit.status!==202)throw await backgroundJobError(submit,'Background embroidery submission failed');
  const {jobId}=await submit.json();
  if(typeof jobId!=='string'||!(/^[a-f0-9-]{36}$/i).test(jobId))throw Error('Invalid background job reference');
+ if(!isCurrent()||signal?.aborted)throw Error('Artwork changed or processing cancelled');
+ onAccepted();
  let state=null;
  const started=Date.now(),maxWait=16*60*1000;
  for(;;){
@@ -178,37 +219,44 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
   });
   const check=await fetchImpl('/api/artwork-job-status?id='+encodeURIComponent(jobId),
    {headers:{Authorization:'Bearer '+token},signal,cache:'no-store'});
-  if(!check.ok){let detail;try{detail=await check.json()}catch{}
-   throw Error(detail?.error||'Background artwork status unavailable (HTTP '+check.status+')');}
+  if(!check.ok)throw await backgroundJobError(check,'Background artwork status unavailable');
   state=await check.json();
   if(state.state==='failed')throw Error(state.error||'Native embroidery failed');
   if(state.state==='done')break;
   if(!['queued','running'].includes(state.state))throw Error('Invalid private job state');
-  onProgress(state.state==='queued'?'Waiting for the private embroidery worker…':'Generating and auditing actual machine stitches…');
+  onProgress(state.state==='queued'?'Waiting for the private embroidery worker…':
+   satinPlanSha?'Generating fills, adding black satin and checking PES/DST…':'Generating and auditing actual machine stitches…');
  }
  if(!isCurrent()||signal?.aborted)throw Error('Artwork changed before native result');
  onProgress('Downloading and independently verifying PES/DST…');
  const result=await fetchImpl('/api/artwork-job-result?id='+encodeURIComponent(jobId),
   {headers:{Authorization:'Bearer '+token},signal,cache:'no-store'});
- if(!result.ok)throw Error('Background native result unavailable (HTTP '+result.status+')');
+ if(!result.ok)throw await backgroundJobError(result,'Background native result unavailable');
  if(result.headers.get('x-stitch-forge-audit')!==AUDIT||
     !result.headers.get('content-type')?.startsWith('application/zip'))throw Error('Independent native audit missing');
  const bytes=new Uint8Array(await result.arrayBuffer());
  if(await digest(bytes)!==result.headers.get('x-stitch-forge-sha256'))throw Error('Native ZIP checksum failed');
  const files=await readArchive(bytes),receipt=state.receipt;
+ const report=JSON.parse(new TextDecoder().decode(files['machine-report.json']));
+ const finish=report.satinFinish;
+ const svgSha=await digest(files['native-artwork-input.svg']);
+ const pesSha=await digest(files['artwork-trial.pes']);
  if(!receipt||receipt.requestId!==packed.packet.requestId||
     !/^[0-9a-f]{64}$/.test(receipt.svgSha256||'')||
     !/^[0-9a-f]{64}$/.test(receipt.pesSha256||'')||
-    await digest(files['artwork-trial.pes'])!==receipt.pesSha256||
-    await digest(files['native-artwork-input.svg'])!==receipt.svgSha256)throw Error('Background PES receipt/source geometry binding failed');
- const report=JSON.parse(new TextDecoder().decode(files['machine-report.json']));
+    (satinPlanSha?(finish?.type!=='black_satin_v1'||finish.colour!=='#000000'||
+     finish.planSha256!==satinPlanSha||finish.basePesSha256!==receipt.pesSha256||
+     finish.baseSvgSha256!==receipt.svgSha256||!Number.isInteger(finish.needleStitches)||finish.needleStitches<3):
+     (finish!==undefined||pesSha!==receipt.pesSha256||svgSha!==receipt.svgSha256)))
+  throw Error('The machine files do not match the approved geometry and finish.');
  const preview=previewPacket(JSON.parse(new TextDecoder().decode(files['decoded-preview.json'])));
  const validCount=(n,limit=125000)=>Number.isInteger(n)&&n>=0&&n<=limit;
  if(report.requestId!==packed.packet.requestId||report.source?.sha256!==packed.draft.source.sha256||
     report.source?.width!==packed.draft.source.width||report.source?.height!==packed.draft.source.height||
     report.imageWidthMm!==packed.draft.physical.imageWidthMm||report.machineEligible!==false||
     report.physicalQualityVerified!==false||report.sourceBinding?.foregroundIndependentlyVerified!==true||
-    report.workflow!=='TWO_NATIVE_PHASES_NO_AI'||report.nativeInputSha256!==receipt.svgSha256||
+    report.workflow!==(satinPlanSha?'TWO_NATIVE_PHASES_WITH_SATIN_FINISH':'TWO_NATIVE_PHASES_NO_AI')||
+    report.nativeInputSha256!==svgSha||
     preview.requestId!==packed.packet.requestId||
     Math.abs(preview.widthMm-report.imageWidthMm-4)>1e-6||
     Math.abs(preview.heightMm-packed.draft.physical.imageHeightMm-4)>1e-6||
@@ -225,8 +273,8 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
  if(!isCurrent()||signal?.aborted)throw Error('Artwork changed before native result acceptance');
  return {bytes,report,preview,geometry:files['native-artwork-input.svg'],sourceDraft:packed.draft};
 }
-async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true,background=false}={}){
- if(background)return backgroundGenerate(packed,{token,signal,onProgress,fetchImpl,isCurrent});
+async function generate(packed,{token,signal,onProgress=()=>{},onAccepted,fetchImpl=root.fetch.bind(root),isCurrent=()=>true,background=false}={}){
+ if(background)return backgroundGenerate(packed,{token,signal,onProgress,onAccepted,fetchImpl,isCurrent});
  if(!token||token.length>512)throw Error('Enter your private access token');
  const {packet}=packed;
  let repairReceipt=null;
