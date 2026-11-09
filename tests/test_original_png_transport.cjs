@@ -81,5 +81,5 @@ test('existing published browser remains V1 unless full-source protocol explicit
  const browser=readFileSync(require('node:path').join(__dirname,'../site/auto-reconstruct-ui.js'),'utf8');
  assert.match(browser,/window\.STITCH_FORGE_V2_FULL_SOURCE_ENABLED===true/);
  assert.match(browser,/\? await originalSourcePng\(source,original\) : null/);
- assert.match(browser,/originalPngBytes\}\)/);
+ assert.match(browser,/originalPngBytes,profile:motifMode\?'simple_motif':'detailed'\}\)/);
 });
