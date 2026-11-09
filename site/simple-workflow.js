@@ -13,10 +13,13 @@ if(!main||!workspace)return;
 const app=document.createElement('section');
 app.id='sfSimpleFlow';app.setAttribute('aria-label','Automatic embroidery creation');
 app.innerHTML=[
- '<header class="sf-simple-head"><h1>Image to embroidery</h1><p>Upload a picture, then press Generate. AI analysis, stitches and a ZIP are handled automatically.</p></header>',
+ '<header class="sf-simple-head"><h1>Image to embroidery</h1><p>Upload a simple motif and press Generate. Stitch Forge prepares the colour regions automatically, creates native stitches and checks the PES/DST files.</p></header>',
  '<div class="sf-simple-step"><span class="sf-step">1</span><div class="sf-step-body"><button type="button" class="btn primary" id="sfQuickUpload">Upload image</button>',
  '<p class="sf-small" id="sfQuickFilename">Choose a PNG, JPG or WebP image.</p><img id="sfQuickOriginal" alt="Uploaded source artwork" hidden></div></div>',
  '<div class="sf-simple-step"><span class="sf-step">2</span><div class="sf-step-body">',
+ '<label class="sf-small" for="sfQuickArtworkType">Automatic digitising type</label>',
+ '<select id="sfQuickArtworkType" aria-label="Automatic digitising type"><option value="simple" selected>Simple motif — automatic (recommended)</option><option value="detailed">Detailed picture — experimental</option></select>',
+ '<p class="sf-small">Simple motif is designed for a clear silhouette, a few solid colours and a plain or transparent background. Complex photos are not silently simplified.</p>',
  '<label class="sf-small" for="sfQuickProductName">Product / design name</label>',
  '<input id="sfQuickProductName" type="text" maxlength="80" autocomplete="off" placeholder="e.g. Kingfisher on Ivy">',
  '<p class="sf-small">Used for your ZIP, PES and DST download names, independently of the uploaded image filename. Does not alter stitches.</p>',
@@ -62,7 +65,7 @@ const css=document.createElement('style');css.textContent=[
  '#sfQuickOriginal[hidden],#sfQuickCanvas[hidden],#sfQuickAuth[hidden]{display:none!important}',
  '#sfQuickAuth{margin-top:12px;padding:10px;background:#eff5f3;border-radius:9px}',
  '#sfQuickAuth input{width:100%;height:45px;margin-top:7px;padding:10px;border:1px solid #abbfba;border-radius:8px}',
- '#sfQuickWidth,#sfQuickProductName{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
+ '#sfQuickWidth,#sfQuickProductName,#sfQuickArtworkType{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
  '.sf-embroidery-individual{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.sf-embroidery-individual .btn{min-width:0;white-space:normal}',
  '@media(max-width:340px){.sf-embroidery-individual{grid-template-columns:1fr}}',
  '#sfQuickStatus{font-weight:600;white-space:pre-wrap}',
@@ -79,6 +82,12 @@ const status=$('#sfQuickStatus'),auth=$('#sfQuickAuth'),token=$('#sfQuickToken')
 const canvas=$('#sfQuickCanvas'),replay=$('#sfQuickReplay');
 const pesButton=$('#sfQuickPES'),dstButton=$('#sfQuickDST'),productName=$('#sfQuickProductName'),advancedName=$('#sfAutoProductName');
 const image=$('#sfQuickOriginal'),empty=$('#sfQuickEmpty'),filename=$('#sfQuickFilename');
+const artworkType=$('#sfQuickArtworkType');
+artworkType?.addEventListener('change',()=>{
+ reset('Digitising type changed. Generate a fresh native result for the current image.');
+ const nativeWidth=$('#sfNativeWidth');
+ nativeWidth?.dispatchEvent(new Event('change'));
+});
 let preview=null,frame=0,run=0,ready=false,busy=false,hasImage=false,failed=false;
 function stop(){run++;if(frame)cancelAnimationFrame(frame);frame=0;}
 function reset(text){
