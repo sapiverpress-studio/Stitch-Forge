@@ -7,6 +7,7 @@
 const dep=(name,path)=>root[name]||(typeof require==='function'?require(path):null);
 const P=dep('StitchForgeSourceRegionProject','./source-region-project.js');
 const A=dep('StitchForgeSourceObjectPlan','./source-object-plan.js');
+const M=dep('StitchForgeMotifPrep','./motif-prep.js');
 const R=dep('StitchForgeAutoReconstruct','./auto-reconstruct.js');
 const SCHEMA='stitch-forge-artwork-request-v1',AUDIT='SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED';
 const cryptoAPI=()=>root.crypto||(typeof require==='function'?require('node:crypto').webcrypto:null);
@@ -68,23 +69,32 @@ function visibleArtworkFrame(rgba,w,h,designWidthMm){
   unmodifiedSourcePixels:true,
   physicalSewoutVerified:false};
 }
-async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null}={}){
+async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null,profile='detailed'}={}){
  if(!['if_needed','off'].includes(texturePolicy))throw Error('Invalid texture policy');
  if(!['visible','canvas'].includes(sizeMode))throw Error('Invalid physical artwork width mode');
+ if(!['detailed','simple_motif'].includes(profile))throw Error('Unsupported automatic digitising profile');
+ if(profile==='simple_motif'&&texturePolicy!=='off')
+  throw Error('Simple motif must not silently simplify or drop source details');
  const sizing=sizeMode==='visible'?visibleArtworkFrame(rgba,w,h,imageWidthMm):
     {mode:'canvas',imageWidthMm,unmodifiedSourcePixels:true};
  const frameWidthMm=sizing.imageWidthMm;
  if(Number.isFinite(frameWidthMm)&&frameWidthMm*h/w>296)throw Error('Artwork height exceeds 296mm at this width; reduce the width before generating');
  if(!Number.isInteger(maxWorkingParts)||maxWorkingParts<0||maxWorkingParts>10000)
   throw Error('Invalid maximum working-part budget');
- let draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
+ let motifQuality=null;
+ let draft;
+ if(profile==='simple_motif'){
+  if(!M)throw Error('Automatic simple-motif preparation unavailable');
+  const motif=await M.prepare(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
+  draft=motif.draft;motifQuality=motif.quality;
+ }else draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
  let plan;
  try{plan=await A.build(draft);}
  catch(error){
   // A fully tracked graph can be too large to sign as a source plan even
   // when its region masks are valid. Fall back to a bounded, source-fingerprinted
   // palette partition; never truncate graph nodes or silently discard pixels.
-  if(!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
+  if(profile==='simple_motif'||!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
   draft=await P.createApproximationDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight,
    reasonCode:'source_graph_serialisation_budget'});
   plan=await A.build(draft);
@@ -121,7 +131,7 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
    ...(fullSource?{originalPngBase64:b64(originalPngBytes)}:{})};
  if(new TextEncoder().encode(JSON.stringify(packet)).length>3900000)
   throw Error('Full-resolution PNG exceeds the current private submission budget; source data was not truncated');
- return {packet,draft,plan,sizing};
+ return {packet,draft,plan,sizing,profile,motifQuality};
 }
 function crc32(bytes){let value=-1;for(const b of bytes){value^=b;for(let j=0;j<8;j++)value=(value>>>1)^(value&1?0xedb88320:0);}return (value^-1)>>>0;}
 async function readArchive(bytes){
