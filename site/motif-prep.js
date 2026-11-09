@@ -10,6 +10,7 @@ const P=dep('StitchForgeSourceRegionProject','./source-region-project.js');
 const L=dep('StitchForgeSourceMaskLedger','./source-mask-ledger.js');
 const T=dep('StitchForgeSourceTopology','./source-topology.js');
 const R=dep('StitchForgeAutoReconstruct','./auto-reconstruct.js');
+const S=dep('StitchForgeMotifPrescan','./motif-prescan.js');
 const LIMIT_COLOURS=6,MAX_COMPONENTS=160,MAX_TINY_COMPONENTS=60;
 const rgbHex=a=>'#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0').toUpperCase()).join('');
 function closest(pixel,palette){
@@ -68,14 +69,24 @@ async function prepare(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=
  if(new Set(final.map(c=>c.color)).size!==final.length)
   throw Error('Automatic motif palette collapsed onto duplicate thread colours');
  const masks=final.map(()=>new Uint8Array(w*h)),hist=new Array(final.length).fill(0);
- const targetRGB=final.map(e=>e.rgb);
- let totalError=0,highError=0;
+ const targetRGB=final.map(e=>e.rgb),initialLabels=new Uint8Array(w*h);
  for(let k=0;k<w*h;k++){
   if(!foreground[k])continue;
   const j=4*k,pixel=[rgba[j],rgba[j+1],rgba[j+2]];
-  const [ci,squared]=closest(pixel,targetRGB);
-  const d=Math.sqrt(squared);totalError+=d;
-  if(d>60)highError++;
+  initialLabels[k]=closest(pixel,targetRGB)[0]+1;
+ }
+ // Conservative automatic prescan: keep original RGBA, all silhouette
+ // pixels and high-contrast expression marks. Relabel only bounded,
+ // physically tiny near-tone islands; the native worker remains authoritative.
+ const prescan=S.simplify(initialLabels,rgba,w,h,targetRGB,imageWidthMm);
+ let totalError=0,highError=0;
+ for(let k=0;k<w*h;k++){
+  if(!foreground[k])continue;
+  const ci=prescan.labels[k]-1;
+  if(ci<0||ci>=targetRGB.length)throw Error('Prescan removed a source foreground pixel');
+  const j=4*k,pixel=[rgba[j],rgba[j+1],rgba[j+2]];
+  const d=Math.sqrt(pixel.reduce((t,v,p)=>t+(v-targetRGB[ci][p])**2,0));
+  totalError+=d;if(d>60)highError++;
   masks[ci][k]=1;hist[ci]++;
  }
  const meanError=totalError/foregroundPixels;
@@ -104,7 +115,7 @@ async function prepare(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=
  });
  return {draft,quality:{mode:'automatic_flat_motif_source_partition',
   palette:regions.map(x=>x.color),colourCount:regions.length,sourcePixels:foregroundPixels,
-  components:componentCount,smallComponents:tinyCount,
+  components:componentCount,smallComponents:tinyCount,prescan:prescan.quality,
   meanRgbError:Number(meanError.toFixed(3)),
   fractionPixelsBeyondRgb60:Number((highError/foregroundPixels).toFixed(5)),
   allForegroundPixelsAccountedFor:true,semanticDetailVerified:false,
