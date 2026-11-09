@@ -1,0 +1,79 @@
+name: MD-2.77 simple motif upload to genuine PES-DST (NO DEPLOY)
+
+on:
+  push:
+    branches: ["feature/md277-automatic-simple-motifs-no-deploy"]
+    paths:
+      - ".github/workflows/md277-simple-motif-no-deploy.yml"
+      - "site/motif-prep.js"
+      - "site/artwork-pipeline.js"
+      - "site/auto-reconstruct-ui.js"
+      - "site/simple-workflow.js"
+      - "site/index.html"
+      - "tests/test_simple_motif.cjs"
+      - "tools/simple_ghost_fixture.cjs"
+      - "tools/prepare_simple_ghost.cjs"
+      - "tools/test_simple_motif_native.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Verify actual simple motif source and worker packet
+        run: |
+          node tools/check_frontend_syntax.cjs
+          node --test tests/test_simple_motif.cjs tests/test_simple_workflow.cjs tests/test_artwork_pipeline.cjs
+      - name: Build the entire existing site safety suite
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          node --test tests/*.cjs tests/*.mjs
+
+  true-pes-dst:
+    needs: browser-source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install pinned production native offline dependencies
+        run: |
+          python -m pip install -r services/digitiser/requirements-artwork-trial.txt
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends inkscape libnsl2 libwayland-server0 xvfb xauth
+      - name: Prepare actual signed browser packet from automatic ghost pixels
+        run: |
+          mkdir -p "$RUNNER_TEMP/md277-ghost"
+          node tools/prepare_simple_ghost.cjs "$RUNNER_TEMP/md277-ghost"
+      - name: Install checksum-verified InkStitch 3.3.0
+        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Genuine signed packet worker two-phase PES6 DST plus independent audit
+        run: |
+          ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
+          xvfb-run -a python tools/test_simple_motif_native.py --engine "$ENGINE" --out "$RUNNER_TEMP/md277-ghost"
+          test -s "$RUNNER_TEMP/md277-ghost/simple-motif-native-test-not-sewout.json"
+      - name: Preserve only generated synthetic motif and actual decoded preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: md277-ghost-real-PES-DST-decoded-test-not-fabric-approved
+          path: |
+            ${{ runner.temp }}/md277-ghost/simple-ghost-original.png
+            ${{ runner.temp }}/md277-ghost/simple-ghost-actual-decoded-PES-preview-not-sewout.png
+            ${{ runner.temp }}/md277-ghost/simple-motif-native-test-not-sewout.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: No live deployment
+        run: echo "Source review and genuine native formats only. No Netlify or Cloud Run changes."
