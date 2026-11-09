@@ -16,7 +16,7 @@ from playwright.sync_api import expect, sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def run(url, artwork, out, executable=None, native=False, variant="balanced", black_satin=None):
+def run(url, artwork, out, executable=None, native=False, variant="body", black_satin=None):
     with sync_playwright() as p:
         chromium = p.chromium.launch(executable_path=executable, args=['--no-sandbox', '--disable-gpu'])
         context = chromium.new_context(**p.devices['Pixel 7'], accept_downloads=True)
@@ -36,18 +36,18 @@ def run(url, artwork, out, executable=None, native=False, variant="balanced", bl
         expect(get('sfQuickOriginal')).to_be_visible()
         get('sfDetailedPrepare').click()
         expect(get('sfDetailedReview')).to_be_visible(timeout=20000)
-        expect(get('sfDetailedPreset')).to_have_text('Balanced')
+        expect(get('sfDetailedPreset')).to_have_text('Smoother body fills')
         before = get('sfDetailedAfter').evaluate('(canvas)=>canvas.toDataURL()')
-        get('sfDetailedRetry').click()
-        expect(get('sfDetailedPreset')).to_have_text('Preserve more detail', timeout=20000)
-        assert before != get('sfDetailedAfter').evaluate('(canvas)=>canvas.toDataURL()')
-        get('sfDetailedRetry').click()
-        expect(get('sfDetailedPreset')).to_have_text('Fewer shapes', timeout=20000)
-        get('sfDetailedRetry').click()
-        expect(get('sfDetailedPreset')).to_have_text('Balanced', timeout=20000)
+        variants = [('balanced','Balanced'),('detail','Preserve more detail'),('clean','Fewer shapes'),('body','Smoother body fills')]
+        for key, label in variants:
+            get('sfDetailedRetry').click()
+            expect(get('sfDetailedPreset')).to_have_text(label, timeout=20000)
+            if key == 'balanced':
+                balanced = get('sfDetailedAfter').evaluate('(canvas)=>canvas.toDataURL()')
+            if key == 'detail':
+                assert balanced != get('sfDetailedAfter').evaluate('(canvas)=>canvas.toDataURL()')
         assert before == get('sfDetailedAfter').evaluate('(canvas)=>canvas.toDataURL()')
-        variants = [('detail','Preserve more detail'),('clean','Fewer shapes')]
-        if variant != 'balanced':
+        if variant != 'body':
             for key,label in variants:
                 get('sfDetailedRetry').click()
                 expect(get('sfDetailedPreset')).to_have_text(label, timeout=20000)
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     parser.add_argument('--chromium')
     parser.add_argument('--out', type=Path)
     parser.add_argument('--native', action='store_true')
-    parser.add_argument('--variant', choices=['balanced','detail','clean'], default='balanced')
+    parser.add_argument('--variant', choices=['body','balanced','detail','clean'], default='body')
     parser.add_argument('--black-satin', action=argparse.BooleanOptionalAction, default=None)
     args = parser.parse_args()
     if args.native and not args.out:

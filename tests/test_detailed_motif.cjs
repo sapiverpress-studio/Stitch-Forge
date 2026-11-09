@@ -42,6 +42,37 @@ test('plain opaque borders separate by connectivity; ambiguous backgrounds are r
  assert.throws(()=>motif.prepare(input,w,h),/background is too varied/);
 });
 
+test('smoother body fills merge similar middle shading and preserve the ends and outline',()=>{
+ const rgba=new Uint8ClampedArray(w*h*4);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  if(((x-80)/62)**2+((y-72)/53)**2>1)continue;
+  let colour=x>100?[174,108,65,255]:[198,134,87,255];
+  if((x-78)**2/400+(y-73)**2/150<1 ||
+     (x-64)**2/150+(y-40)**2/65<1 ||
+     (x-76)**2/100+(y-108)**2/50<1)colour=[213,154,105,255];
+  if((x-72)**2/110+(y-35)**2/6<1 || (x-74)**2/64+(y-115)**2/21<1)
+   colour=[45,29,17,255];
+  place(rgba,x,y,colour);
+ }
+ const balanced=motif.prepare(rgba,w,h), body=motif.prepare(rgba,w,h,{preset:'body'});
+ assert.ok(body.quality.body.patches>0);
+ assert.ok(body.quality.regions<balanced.quality.regions);
+ assert.equal(body.quality.contrastPixels,balanced.quality.contrastPixels);
+ const pixel=(image,x,y)=>image.rgba.slice(4*(y*w+x),4*(y*w+x)+4);
+ assert.notDeepEqual(pixel(body,78,73),pixel(balanced,78,73));
+ assert.deepEqual(pixel(body,78,73),pixel(balanced,82,55));
+ let changed=0;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const at=4*(y*w+x);
+  assert.equal(body.rgba[at+3],balanced.rgba[at+3]);
+  if(body.rgba.slice(at,at+3).some((n,i)=>n!==balanced.rgba[at+i])){
+   assert.ok(y>=56&&y<=102);
+   changed++;
+  }
+ }
+ assert.equal(changed,body.quality.body.pixels);
+});
+
 test('signed detailed packet contains exactly the approved illustration and palette',async()=>{
  const illustration=motif.prepare(raster(false),w,h);
  const options={profile:'detailed_motif',sizeMode:'visible',texturePolicy:'off',approvedPalette:illustration.palette};

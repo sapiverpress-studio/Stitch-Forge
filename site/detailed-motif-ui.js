@@ -4,8 +4,9 @@
 'use strict';
 const q=id=>document.getElementById(id);
 const analysisSide=480;
-const labels={balanced:'Balanced',detail:'Preserve more detail',clean:'Fewer shapes'};
-const nextPreset={balanced:'detail',detail:'clean',clean:'balanced'};
+const defaultPreset='body';
+const labels={body:'Smoother body fills',balanced:'Balanced',detail:'Preserve more detail',clean:'Fewer shapes'};
+const nextPreset={body:'balanced',balanced:'detail',detail:'clean',clean:'body'};
 
 function loadImage(source) {
   const image=new Image();
@@ -89,7 +90,7 @@ function mount({reset,present}) {
   const satin=window.StitchForgeDetailedSatin, finish=q('sfDetailedSatin'), overlay=q('sfDetailedSatinOverlay');
   const name=q('sfQuickProductName'), cancel=q('sfDetailedCancel');
   let source=null, previousLegacy=null, proposal=null, approved=false, result=null, files=null;
-  let stamp=0, operation=null, pending=false, attempted=false, preparationFailed=false, preset='balanced';
+  let stamp=0, operation=null, pending=false, attempted=false, preparationFailed=false, preset=defaultPreset;
 
   const active=()=>mode.value==='detailed';
   const message=text=>{status.textContent=text;};
@@ -121,7 +122,7 @@ function mount({reset,present}) {
   function setSource(newSource,text) {
     source=newSource;
     finish.checked=true;
-    preset='balanced';attempted=false;preparationFailed=false;
+    preset=defaultPreset;attempted=false;preparationFailed=false;
     invalidate(text||'Image loaded. Tap Prepare illustration.');
     displayOriginal();
   }

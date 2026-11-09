@@ -2,8 +2,10 @@
 (function (root) {
 'use strict';
 
+const BALANCED = { colours: 6, smooth: 1, contrast: 1 };
 const PRESETS = {
-  balanced: { colours: 6, smooth: 1, contrast: 1 },
+  body: BALANCED,
+  balanced: BALANCED,
   detail: { colours: 7, smooth: .76, contrast: .78 },
   clean: { colours: 5, smooth: 1.28, contrast: 1.25 }
 };
@@ -268,6 +270,49 @@ function mergeFlecks(labels,w,palette,minArea,protectedColour=-1) {
   }
 }
 
+function mergeBodyShading(labels,w,main,palette,inkColour) {
+  const {parts,owners}=components(labels,w);
+  const height=main.maxY-main.minY+1;
+  // Work on whole shade islands in the middle of the subject. Avoid creating
+  // a new seam along the height cutoffs and preserve the two ends of the pose.
+  const start=main.minY+height*.34,end=main.minY+height*.78;
+  const maxPatch=main.pixels.length*.13,maxChange=main.pixels.length*.20;
+  const replacement=new Map();
+  let pixels=0;
+  for (const part of parts.slice().sort((a,b)=>b.pixels.length-a.pixels.length)) {
+    if (part.minY<start || part.maxY>=end || part.colour===inkColour ||
+        part.pixels.length>maxPatch || pixels+part.pixels.length>maxChange) continue;
+    const contacts=new Map();
+    let perimeter=0;
+    for (const i of part.pixels) {
+      const x=i%w;
+      perimeter+=Number(x===0)+Number(x===w-1)+Number(i<w)+Number(i+w>=labels.length);
+      neighbours(i,w,labels.length,j=>{
+        const owner=owners[j];
+        if (owner===part.id) return;
+        perimeter++;
+        if (owner) contacts.set(owner,1+(contacts.get(owner)||0));
+      });
+    }
+    const [r,g,b]=palette[part.colour];
+    for (const [id,boundary] of contacts) {
+      const target=parts[id-1], destination=replacement.get(id)??target.colour;
+      if (boundary<perimeter*.70 || target.colour===inkColour ||
+          target.pixels.length<part.pixels.length*1.15 ||
+          destination===part.colour || colourDistance(r,g,b,palette[destination])>30**2) continue;
+      replacement.set(part.id,destination);
+      pixels+=part.pixels.length;
+      break;
+    }
+  }
+  for (const part of parts) {
+    const target=replacement.get(part.id);
+    if (target===undefined) continue;
+    for (const i of part.pixels) labels[i]=target;
+  }
+  return {patches:replacement.size,pixels};
+}
+
 function retainInk(rgba,mask,w,pxMm,contrast,channels,labels,palette) {
   const h=mask.length/w, luminance=new Float32Array(mask.length);
   for (let i=0;i<mask.length;i++) if (mask[i]) luminance[i]=light(rgba[i*4],rgba[i*4+1],rgba[i*4+2]);
@@ -354,6 +399,7 @@ function prepare(rgba,w,h,{widthMm=80,preset='balanced'}={}) {
   mergeFlecks(labels,w,palette,Math.max(8,pxMm*pxMm*1.55*config.smooth));
   const ink=retainInk(rgba,mask,w,pxMm,config.contrast,channels,labels,palette);
   mergeFlecks(labels,w,palette,Math.max(7,pxMm*pxMm*.72),ink.colour);
+  const body=preset==='body'?mergeBodyShading(labels,w,main,palette,ink.colour):null;
   const output=new Uint8ClampedArray(rgba.length), used=new Set();
   for (let i=0;i<labels.length;i++) if (mask[i]) {
     const c=labels[i],at=i*4;
@@ -366,9 +412,12 @@ function prepare(rgba,w,h,{widthMm=80,preset='balanced'}={}) {
   const warnings=[];
   if (subject.discarded) warnings.push('Detached fragments were removed. Compare the outer edges and any fine projections.');
   if (!ink.parts) warnings.push('No separate fine dark marks were detected. Check any eyes, markings or other fine details before approval.');
+  if (body) warnings.push(body.patches
+    ? 'Similar shades in the middle were combined into broader fills. Compare the body before approval.'
+    : 'Balanced artwork is shown because no suitable shading patches could be combined.');
   return { rgba:output,width:w,height:h,palette:[...new Set([...used].map(i=>hex(palette[i])))].sort(),
     quality:{preset,visibleWidthMm:widthMm,background:subject.background,removedFragmentsPixels:subject.discarded,
-      regions:regions.length,contrastGroups:ink.parts,contrastPixels:ink.pixels,warnings} };
+      regions:regions.length,contrastGroups:ink.parts,contrastPixels:ink.pixels,body,warnings} };
 }
 
 const api=Object.freeze({prepare});

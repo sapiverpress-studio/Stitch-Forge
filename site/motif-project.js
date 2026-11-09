@@ -66,7 +66,7 @@ async function open(file) {
       typeof data.source?.name!=='string'||data.source.name.length>140 ||
       data.coordinateSystem?.unit!=='mm'||data.coordinateSystem.origin!=='artwork-top-left'||
       data.coordinateSystem.axes!=='x-right-y-down' ||
-      !['balanced','detail','clean'].includes(data.illustration?.preset) ||
+      !['body','balanced','detail','clean'].includes(data.illustration?.preset) ||
       !Number.isFinite(data.illustration.widthMm)||data.illustration.widthMm<30||data.illustration.widthMm>200 ||
       !Array.isArray(data.illustration.palette)||data.illustration.palette.length>8 ||
       (data.illustration.blackSatin!==undefined&&typeof data.illustration.blackSatin!=='boolean') ||
