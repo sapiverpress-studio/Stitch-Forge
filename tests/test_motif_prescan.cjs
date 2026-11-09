@@ -1,28 +1,12 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {ghost}=require('../tools/simple_ghost_fixture.cjs');
+const {ghost,fleckedGhost}=require('../tools/simple_ghost_fixture.cjs');
 const prescan=require('../site/motif-prescan.js');
 const M=require('../site/motif-prep.js');
 const P=require('../site/artwork-pipeline.js');
 const L=require('../site/source-mask-ledger.js');
 const R=require('../site/auto-reconstruct.js');
 
-function fleckedGhost(){
- const fixture=ghost();
- const {pixels,width:w,height:h}=fixture;
- let added=0;
- for(let y=45;y<151;y+=5)for(let x=47;x<148;x+=5){
-  const i=(y*w+x)*4;
-  if(pixels[i]!==246||pixels[i+1]!==246||pixels[i+2]!==246||pixels[i+3]!==255)continue;
-  const adjacent=[[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
-  if(adjacent.some(([xx,yy])=>pixels[(yy*w+xx)*4]!==246))continue;
-  if(added>=240)continue; // fixed, physically bounded 1px source flecks
-  pixels[i]=pixels[i+1]=pixels[i+2]=210;
-  added++;
- }
- assert.ok(added>160&&added<330,'fixture must exceed former 160-component failure');
- return {...fixture,added};
-}
 function sourceIndex(draft,color,x,y){
  const region=draft.regions.find(r=>r.color===color);
  return region?L.maskFromLedger(region.ledger)[y*draft.source.width+x]:0;
