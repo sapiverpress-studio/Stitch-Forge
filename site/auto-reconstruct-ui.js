@@ -271,6 +271,15 @@ q("#sfAutoRun").onclick=async()=>{
     }
    }
    if(!packed)throw Error('Detailed regions remain beyond the native trial budget at this physical size. The original image is unchanged; no machine file was produced');
+   if(!current()||nativeAbort.signal.aborted)throw Error('Artwork changed during automatic prescan');
+   if(motifMode&&packed.motifQuality?.prescan){
+    window.dispatchEvent(new CustomEvent('stitchforge:prescan-ready',{
+     detail:{draft:packed.draft,quality:packed.motifQuality}
+    }));
+    status('Prescan preserved the silhouette and contrast marks; tidied '+
+      packed.motifQuality.prescan.recolouredFragments+
+      ' tiny similar-colour fragments. Generating actual stitches…');
+   }
    // AI supplies feature names for review only. Native source masks and existing
    // safety budgets remain authoritative, regardless of the AI response.
    let aiNote=motifMode?'Automatic simple-motif palette and shapes; no paid AI. ':'AI disabled in Advanced settings. ';
