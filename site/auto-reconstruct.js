@@ -564,6 +564,7 @@ function reconstruct(rgba,w,h,plan,opts={}){
    "Satin columns, underlay, trims, pull compensation and physical stitch-out are not verified.",
    "Locally recovered image details need stitch-type verification and cannot trigger machine export."]};
 }
-root.StitchForgeAutoReconstruct=Object.freeze({reconstruct,analyseArtwork,sourceForegroundMask,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction});
-if(typeof module!=="undefined"&&module.exports)module.exports={reconstruct,analyseArtwork,sourceForegroundMask,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction};
+const api={reconstruct,analyseArtwork,sourceForegroundMask,boundaryPixels,formatFillValidationFailure,formatModelRejectionDiagnostics,assertCompleteReconstruction};
+root.StitchForgeAutoReconstruct=Object.freeze(api);
+if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window==="undefined"?globalThis:window);

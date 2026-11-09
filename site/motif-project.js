@@ -46,7 +46,8 @@ async function create({name,source,artwork,packed,result}) {
     source:{name:String(source.name||'original').slice(0,140),data:source.data,
       sha256:await api.digest(original.bytes)},
     illustration:{data:artwork.data,sha256:await api.digest(illustration.bytes),
-      widthMm:packed.sizing.requestedDesignWidthMm,preset:artwork.preset,palette:artwork.palette},
+      widthMm:packed.sizing.requestedDesignWidthMm,preset:artwork.preset,palette:artwork.palette,
+      blackSatin:!!packed.finishPlanSha256},
     editableRegions:JSON.parse(geometry.serialiseDraft(packed.draft)),
     stitchSettings:result.report.stitchPlanning,
     native:{requestId:packed.packet.requestId,archiveBase64:toBase64(result.bytes),
@@ -68,6 +69,7 @@ async function open(file) {
       !['balanced','detail','clean'].includes(data.illustration?.preset) ||
       !Number.isFinite(data.illustration.widthMm)||data.illustration.widthMm<30||data.illustration.widthMm>200 ||
       !Array.isArray(data.illustration.palette)||data.illustration.palette.length>8 ||
+      (data.illustration.blackSatin!==undefined&&typeof data.illustration.blackSatin!=='boolean') ||
       !/^[a-f0-9]{64}$/.test(data.native?.requestId||''))
     throw Error('This is not a supported Stitch Forge motif project.');
   const original=imageBytes(data.source.data), illustration=imageBytes(data.illustration.data);

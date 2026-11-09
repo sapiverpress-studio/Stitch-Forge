@@ -16,7 +16,7 @@ from playwright.sync_api import expect, sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def run(url, artwork, out, executable=None, native=False, variant="balanced"):
+def run(url, artwork, out, executable=None, native=False, variant="balanced", black_satin=None):
     with sync_playwright() as p:
         chromium = p.chromium.launch(executable_path=executable, args=['--no-sandbox', '--disable-gpu'])
         context = chromium.new_context(**p.devices['Pixel 7'], accept_downloads=True)
@@ -58,6 +58,18 @@ def run(url, artwork, out, executable=None, native=False, variant="balanced"):
         expect(get('sfQuickZip')).to_be_disabled()
         assert not any('/api/' in url for url in urls)
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+        if black_satin is not None:
+            expect(get('sfDetailedSatin')).to_be_checked()
+            get('sfDetailedSatin').uncheck()
+            expect(get('sfDetailedSatinOverlay')).to_be_hidden()
+            get('sfDetailedApprove').click()
+            expect(get('sfQuickGenerate')).to_be_enabled()
+            if black_satin:
+                get('sfDetailedSatin').check()
+                expect(get('sfDetailedSatinOverlay')).to_be_visible()
+                expect(get('sfDetailedPalette').locator('li').last).to_have_text('#000000')
+                expect(get('sfQuickGenerate')).to_be_hidden()
+                expect(get('sfQuickZip')).to_be_disabled()
         get('sfDetailedApprove').click()
         expect(get('sfQuickGenerate')).to_be_enabled()
         get('sfQuickGenerate').click()
@@ -95,6 +107,12 @@ def run(url, artwork, out, executable=None, native=False, variant="balanced"):
                     assert bundle.read('artwork-trial.'+fmt)==(out/('detailed-motif.'+fmt)).read_bytes()
                 assert 'native-artwork-input.svg' in bundle.namelist()
                 assert 'approved-illustration.png' in bundle.namelist()
+                report = json.loads(bundle.read('machine-report.json'))
+                if black_satin is not None:
+                    assert bool(report.get('satinFinish')) == black_satin
+                if black_satin:
+                    assert report['satinFinish']['needleStitches'] > 0
+                    assert b'inkstitch:satin_column="true"' in bundle.read('native-artwork-input.svg')
             page.reload(wait_until='domcontentloaded')
             with page.expect_file_chooser() as chooser:
                 get('sfDetailedOpen').click()
@@ -103,6 +121,8 @@ def run(url, artwork, out, executable=None, native=False, variant="balanced"):
             expect(get('sfQuickGenerate')).to_be_hidden()
             expect(get('sfQuickZip')).to_be_disabled()
             assert approved == get('sfDetailedAfter').evaluate('(canvas)=>canvas.toDataURL()')
+            if black_satin is not None:
+                assert get('sfDetailedSatin').is_checked() == black_satin
             get('sfDetailedApprove').click()
             get('sfQuickWidth').fill('90')
             expect(get('sfDetailedReview')).to_be_hidden()
@@ -110,7 +130,8 @@ def run(url, artwork, out, executable=None, native=False, variant="balanced"):
         assert not any('/api/analyse-embroidery' in url or '/api/reconstruct-embroidery' in url for url in urls)
         assert not errors, errors
         print(json.dumps({'result':'PASS','device':'Pixel 7 Chromium emulation',
-                          'viewport':page.viewport_size,'nativeDownloadAndReopen':native,'http':response.status,'variant':variant}))
+                          'viewport':page.viewport_size,'nativeDownloadAndReopen':native,'http':response.status,
+                          'variant':variant,'blackSatin':black_satin}))
         chromium.close()
 
 
@@ -122,8 +143,9 @@ if __name__ == '__main__':
     parser.add_argument('--out', type=Path)
     parser.add_argument('--native', action='store_true')
     parser.add_argument('--variant', choices=['balanced','detail','clean'], default='balanced')
+    parser.add_argument('--black-satin', action=argparse.BooleanOptionalAction, default=None)
     args = parser.parse_args()
     if args.native and not args.out:
         parser.error('--native requires --out')
     with tempfile.TemporaryDirectory() as tmp:
-        run(args.url,args.image.resolve(),args.out or Path(tmp),args.chromium,args.native,args.variant)
+        run(args.url,args.image.resolve(),args.out or Path(tmp),args.chromium,args.native,args.variant,args.black_satin)

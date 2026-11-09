@@ -41,6 +41,7 @@ function fixture(){
   const body=await req.json();phases.push(body.phase);routedTags.push(workerRevisionTag);
   assert.equal(body.requestId,SOURCE);
   assert.ok(!Object.hasOwn(body,'profile'));
+  assert.ok(!Object.hasOwn(body,'finish'));
   if(body.phase==='pes')return Response.json({requestId:SOURCE,pesBase64:pes.toString('base64'),receipt});
   if(body.phase==='dst'){
    assert.equal(body.receipt.pesSha256,receipt.pesSha256);
@@ -126,6 +127,22 @@ test('only approved Detailed Motif jobs select the server-configured revision fo
  assert.deepEqual(f.routedTags,['exact-palette','exact-palette']);
  const state=await f.status(request('/api/artwork-job-status?id='+ID,{headers}));
  assert.equal((await state.json()).state,'done');
+});
+
+test('black satin is limited to Detailed Motif and cannot publish an unchecked result',async()=>{
+ const approved={...packet,profile:'detailed_motif',finish:'black_satin_v1',
+  header:JSON.stringify({schema:'stitch-forge-artwork-request-v1',texturePolicy:'off'})};
+ assert.ok(validPacket(JSON.stringify(approved)));
+ assert.equal(validPacket(JSON.stringify({...approved,profile:undefined})),false);
+ assert.equal(validPacket(JSON.stringify({...approved,finish:{type:'black_satin_v1',svg:'<svg/>'}})),false);
+ const f=fixture();
+ const response=await f.submit(request('/api/artwork-job-submit',{
+  method:'POST',headers,body:JSON.stringify(approved)}));
+ assert.equal(response.status,202);
+ assert.deepEqual(f.phases,['pes','dst']);
+ const state=await f.status(request('/api/artwork-job-status?id='+ID,{headers}));
+ assert.equal((await state.json()).state,'failed');
+ assert.equal(f.jobs.map.has('output/'+ID),false);
 });
 test('tampered dispatch signatures and repeated dispatches do not start duplicate native processing',async()=>{
  const f=fixture(),input=JSON.stringify(packet);

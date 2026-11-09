@@ -50,7 +50,9 @@ function download(bytes,name,type='application/octet-stream') {
 
 async function verifyApproved(result, packed) {
   const api=window.StitchForgeArtworkPipeline, report=result.report;
-  const expected=packed.draft.regions.map(r=>r.color).join(',');
+  const palette=packed.draft.regions.map(r=>r.color);
+  if(packed.finishPlanSha256 && palette.at(-1)!=='#000000')palette.push('#000000');
+  const expected=palette.join(',');
   const files=await api.readArchive(result.bytes);
   if (report.sourceBinding?.sourceMeanRgbDistance!==0 ||
       report.sourceBinding.clientProposedPaletteOverridden ||
@@ -58,7 +60,7 @@ async function verifyApproved(result, packed) {
       report.decoded.some(d=>d.requestedColourOrder?.join(',')!==expected))
     throw Error('The native worker changed the approved colours. This preview needs a compatible private worker.');
   if (!Array.isArray(report.structuralAudit)||report.structuralAudit.length!==2||
-      report.structuralAudit.some(d=>d.stops!==0||d.changes!==packed.draft.regions.length-1))
+      report.structuralAudit.some(d=>d.stops!==0||d.changes!==palette.length-1))
     throw Error('The machine files contain an unexpected stop or colour-change sequence.');
   if (report.unresolvedObjects>0)
     throw Error('The native worker could not resolve '+report.unresolvedObjects+' small shapes. Try Fewer shapes or increase the width, then approve the new illustration.');
@@ -84,6 +86,7 @@ function mount({reset,present}) {
   const prepare=q('sfDetailedPrepare'), approve=q('sfDetailedApprove'), retry=q('sfDetailedRetry');
   const fileInput=q('sfDetailedImage'), projectInput=q('sfDetailedProjectInput'), save=q('sfDetailedSave');
   const canvas=q('sfDetailedAfter'), token=q('sfQuickToken'), auth=q('sfQuickAuth');
+  const satin=window.StitchForgeDetailedSatin, finish=q('sfDetailedSatin'), overlay=q('sfDetailedSatinOverlay');
   const name=q('sfQuickProductName'), cancel=q('sfDetailedCancel');
   let source=null, previousLegacy=null, proposal=null, approved=false, result=null, files=null;
   let stamp=0, operation=null, pending=false, attempted=false, preparationFailed=false, preset='balanced';
@@ -95,7 +98,8 @@ function mount({reset,present}) {
     prepare.disabled=value||!source;
     retry.hidden=!attempted;
     retry.disabled=value||!source;
-    approve.disabled=value||!proposal;
+    approve.disabled=value||!proposal||(finish.checked&&!proposal.finishPlan);
+    finish.disabled=value;
     upload.disabled=value;
     generate.disabled=value||!approved;
     cancel.hidden=!operation;
@@ -116,6 +120,7 @@ function mount({reset,present}) {
   }
   function setSource(newSource,text) {
     source=newSource;
+    finish.checked=true;
     preset='balanced';attempted=false;preparationFailed=false;
     invalidate(text||'Image loaded. Tap Prepare illustration.');
     displayOriginal();
@@ -152,20 +157,44 @@ function mount({reset,present}) {
       if (stamp===before&&active()) message('Upload failed: '+error.message);
     }
   }
-  function show(proposed, text) {
-    proposal=proposed;approved=false;result=null;files=null;save.disabled=true;
-    attempted=true;preparationFailed=false;
-    canvasImage(canvas,proposal);
-    q('sfDetailedBefore').src=source.data;
-    q('sfDetailedPreset').textContent=labels[proposal.preset];
-    const chips=proposal.palette.map(colour=>{
+  function reviewFinish() {
+    const plan=finish.checked?proposal.finishPlan:null;
+    proposal.packed.finishPlanSha256=plan?.sha256;
+    overlay.hidden=!plan;
+    if(plan){
+      overlay.width=proposal.width;overlay.height=proposal.height;
+      const ctx=overlay.getContext('2d'),ratio=proposal.width/proposal.packed.sizing.imageWidthMm;
+      ctx.setTransform(ratio,0,0,ratio,-2*ratio,-2*ratio);
+      ctx.fillStyle=satin.COLOUR;
+      for(const {left,right} of plan.columns){
+        ctx.beginPath();
+        ctx.moveTo(...left[0]);
+        for(const point of left.slice(1))ctx.lineTo(...point);
+        for(let i=right.length-1;i>=0;i--)ctx.lineTo(...right[i]);
+        ctx.closePath();ctx.fill();
+      }
+    }
+    const colours=plan&&proposal.palette.at(-1)!==satin.COLOUR?[...proposal.palette,satin.COLOUR]:proposal.palette;
+    const chips=colours.map(colour=>{
       const chip=document.createElement('li'),sample=document.createElement('span');
       sample.style.backgroundColor=colour;
       chip.append(sample,colour);
       return chip;
     });
     q('sfDetailedPalette').replaceChildren(...chips);
-    q('sfDetailedNote').textContent=(proposal.quality?.warnings||[]).join(' ');
+    const notes=[...(proposal.quality?.warnings||[])];
+    if(plan)notes.push('Black satin will sew last around the subject'+
+      (plan.columns.length>1?' and over selected dark details.':'.'));
+    else if(finish.checked)notes.push(proposal.finishIssue+' Turn off Black satin finish or try a larger width.');
+    q('sfDetailedNote').textContent=notes.join(' ');
+  }
+  function show(proposed, text) {
+    proposal=proposed;approved=false;result=null;files=null;save.disabled=true;
+    attempted=true;preparationFailed=false;
+    canvasImage(canvas,proposal);
+    q('sfDetailedBefore').src=source.data;
+    q('sfDetailedPreset').textContent=labels[proposal.preset];
+    reviewFinish();
     review.hidden=false;
     generate.hidden=true;
     message(text);
@@ -174,6 +203,15 @@ function mount({reset,present}) {
     return api.pack(illustration.rgba,illustration.width,illustration.height,
       {profile:'detailed_motif',imageWidthMm:widthMm,sizeMode:'visible',texturePolicy:'off',
        approvedPalette:illustration.palette,maxWorkingParts:110});
+  }
+  async function planFinish(illustration,packed) {
+    try {
+      const plan=satin.plan(illustration.rgba,illustration.width,illustration.height,packed.sizing.imageWidthMm);
+      const sha256=await api.digest(new TextEncoder().encode(JSON.stringify(plan)));
+      return {finishPlan:{...plan,sha256}};
+    } catch(error) {
+      return {finishIssue:error.message};
+    }
   }
   async function makeIllustration() {
     if (!active()||!source||pending) return;
@@ -188,8 +226,9 @@ function mount({reset,present}) {
       const {rgba,width:w,height:h}=pixels(input,analysisSide);
       const artwork=window.StitchForgeDetailedMotif.prepare(rgba,w,h,{widthMm,preset});
       const packed=await pack(artwork,widthMm);
+      const planned=await planFinish(artwork,packed);
       if (stamp!==current) return;
-      show({...artwork,preset,packed},'Compare the outline and important details, then approve the illustration or try another version.');
+      show({...artwork,preset,packed,...planned},'Compare the outline and important details, then approve the illustration or try another version.');
     } catch(error) {
       if (stamp===current) {preparationFailed=true;message('Could not prepare this image: '+error.message);}
     } finally {
@@ -226,7 +265,8 @@ function mount({reset,present}) {
       const warnings=[];
       if (decoded.maxNeedlesInOneMmSquare>45) warnings.push('Inspect dense areas in the report.');
       if (decoded.jumps>180) warnings.push('Inspect jump routing before sewing.');
-      present(result,'Validated PES and DST. '+decoded.needleStitches.toLocaleString('en-GB')+' stitches, '+
+      present(result,(result.report.satinFinish?'Validated PES and DST with black satin. ':'Validated PES and DST. ')+
+        decoded.needleStitches.toLocaleString('en-GB')+' stitches, '+
         decoded.boundsMm.map(x=>x.toFixed(1)).join(' × ')+' mm. '+warnings.join(' '));
     } catch(error) {
       if (stamp!==current) return;
@@ -281,6 +321,7 @@ function mount({reset,present}) {
         throw Error('Saved image dimensions exceed the motif limits.');
       const illustration={...pixels(after,640),palette:saved.illustration.palette,preset:saved.illustration.preset};
       const packed=await pack(illustration,saved.illustration.widthMm);
+      const planned=await planFinish(illustration,packed);
       const geometry=window.StitchForgeSourceRegionProject;
       if (geometry.serialiseDraft(packed.draft)!==geometry.serialiseDraft(saved.savedDraft))
         throw Error('The saved editable geometry differs from the illustration.');
@@ -288,8 +329,9 @@ function mount({reset,present}) {
       const originalBytes=project.imageBytes(saved.source.data);
       source={...saved.source,file:new File([originalBytes.bytes],saved.source.name,{type:'image/'+originalBytes.format})};
       name.value=saved.name;width.value=String(saved.illustration.widthMm);preset=illustration.preset;
+      finish.checked=saved.illustration.blackSatin===true;
       displayOriginal();
-      show({...illustration,packed},'Saved motif opened. Approve the illustration and generate to revalidate machine downloads.');
+      show({...illustration,packed,...planned},'Saved motif opened. Approve the illustration and generate to revalidate machine downloads.');
     } catch(error) {
       if (stamp===current) message('Could not open the motif: '+error.message);
     } finally {
@@ -315,9 +357,16 @@ function mount({reset,present}) {
     void makeIllustration();
   });
   approve.addEventListener('click',()=>{
-    if (!proposal||pending) return;
+    if (!proposal||pending||(finish.checked&&!proposal.finishPlan)) return;
     approved=true;generate.hidden=false;generate.disabled=false;
     message('Illustration approved. Tap Generate embroidery to create and validate the machine files.');
+  });
+  finish.addEventListener('change',()=>{
+    if(!proposal||pending)return;
+    stamp++;approved=false;result=null;files=null;save.disabled=true;generate.hidden=true;
+    reset('Finish changed. Review and approve the illustration again.');
+    reviewFinish();
+    setBusy(false);
   });
   width.addEventListener('input',()=>{
     if (!active()) return;

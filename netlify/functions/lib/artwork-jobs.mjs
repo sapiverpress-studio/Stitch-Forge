@@ -49,6 +49,10 @@ export function validPacket(body){
      header.texturePolicy!=='off'||'originalPngBase64' in obj)return false;
   keys.push('profile');
  }
+ if('finish' in obj){
+  if(obj.profile!=='detailed_motif'||obj.finish!=='black_satin_v1')return false;
+  keys.push('finish');
+ }
  if('originalPngBase64' in obj){
   let header;
   try{header=JSON.parse(obj.header);}catch{return false;}

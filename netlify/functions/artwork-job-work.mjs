@@ -5,6 +5,7 @@
 import {createHash} from 'node:crypto';
 import {signed,JOB_ID,getJobs,getEnv,expired,HEADERS} from './lib/artwork-jobs.mjs';
 import {createArtworkBridge} from './artwork-embroidery.mjs';
+import {addDetailedSatin} from './lib/detailed-satin-export.mjs';
 
 const sha256=value=>createHash('sha256').update(value).digest('hex');
 function reject(what){throw Error(what);}
@@ -27,7 +28,7 @@ export function createWorker({jobs=getJobs,env=getEnv,bridge=createArtworkBridge
    await store.setJSON('state/'+id,{status:'running',createdAt});
    const input=await store.get('input/'+id);
    if(!input||input.length>4000000)reject('Prepared artwork missing or oversized');
-   const {profile,...packet}=JSON.parse(input),owner=env('STITCH_FORGE_ANALYSIS_TOKEN');
+   const {profile,finish,...packet}=JSON.parse(input),owner=env('STITCH_FORGE_ANALYSIS_TOKEN');
    if(!owner)reject('Worker credentials unavailable');
    // This route marker belongs to Netlify. The signed source packet sent to
    // either worker revision has the original schema and bytes.
@@ -70,8 +71,13 @@ export function createWorker({jobs=getJobs,env=getEnv,bridge=createArtworkBridge
     const payload=await second.arrayBuffer(),sha=second.headers.get('x-stitch-forge-sha256')||'';
     if(payload.byteLength<100||payload.byteLength>3000000||sha256(Buffer.from(payload))!==sha)
      reject('Native ZIP checksum or size invalid');
-    await store.set('output/'+id,new Blob([payload]));
-    await store.setJSON('state/'+id,{status:'done',createdAt,receipt:first.receipt,sha,
+    let archive=payload,outputSha=sha;
+    if(finish==='black_satin_v1'&&profile==='detailed_motif'){
+     archive=await addDetailedSatin(payload,packet,first.receipt);
+     outputSha=sha256(archive);
+    }
+    await store.set('output/'+id,new Blob([archive]));
+    await store.setJSON('state/'+id,{status:'done',createdAt,receipt:first.receipt,sha:outputSha,
      audit:'SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED'});
     await store.delete('input/'+id);
     finished=true;break;

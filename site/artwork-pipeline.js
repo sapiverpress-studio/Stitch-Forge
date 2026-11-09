@@ -195,7 +195,9 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},onAccep
  if(!token||token.length>512)throw Error('Enter your private access token');
  const headers={'Content-Type':'application/json','Authorization':'Bearer '+token};
  if(!isCurrent())throw Error('Source changed before submission');
- const job=packed.profile==='detailed_motif'?{...packed.packet,profile:'detailed_motif'}:packed.packet;
+ const satinPlanSha=packed.finishPlanSha256;
+ const job=packed.profile==='detailed_motif'?{...packed.packet,profile:'detailed_motif',
+  ...(satinPlanSha?{finish:'black_satin_v1'}:{})}:packed.packet;
  const body=JSON.stringify(job);
  if(new TextEncoder().encode(body).length>4000000)throw Error('Artwork job exceeds the private submission limit');
  onProgress('Submitting private embroidery job…');
@@ -222,7 +224,8 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},onAccep
   if(state.state==='failed')throw Error(state.error||'Native embroidery failed');
   if(state.state==='done')break;
   if(!['queued','running'].includes(state.state))throw Error('Invalid private job state');
-  onProgress(state.state==='queued'?'Waiting for the private embroidery worker…':'Generating and auditing actual machine stitches…');
+  onProgress(state.state==='queued'?'Waiting for the private embroidery worker…':
+   satinPlanSha?'Generating fills, adding black satin and checking PES/DST…':'Generating and auditing actual machine stitches…');
  }
  if(!isCurrent()||signal?.aborted)throw Error('Artwork changed before native result');
  onProgress('Downloading and independently verifying PES/DST…');
@@ -234,19 +237,26 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},onAccep
  const bytes=new Uint8Array(await result.arrayBuffer());
  if(await digest(bytes)!==result.headers.get('x-stitch-forge-sha256'))throw Error('Native ZIP checksum failed');
  const files=await readArchive(bytes),receipt=state.receipt;
+ const report=JSON.parse(new TextDecoder().decode(files['machine-report.json']));
+ const finish=report.satinFinish;
+ const svgSha=await digest(files['native-artwork-input.svg']);
+ const pesSha=await digest(files['artwork-trial.pes']);
  if(!receipt||receipt.requestId!==packed.packet.requestId||
     !/^[0-9a-f]{64}$/.test(receipt.svgSha256||'')||
     !/^[0-9a-f]{64}$/.test(receipt.pesSha256||'')||
-    await digest(files['artwork-trial.pes'])!==receipt.pesSha256||
-    await digest(files['native-artwork-input.svg'])!==receipt.svgSha256)throw Error('Background PES receipt/source geometry binding failed');
- const report=JSON.parse(new TextDecoder().decode(files['machine-report.json']));
+    (satinPlanSha?(finish?.type!=='black_satin_v1'||finish.colour!=='#000000'||
+     finish.planSha256!==satinPlanSha||finish.basePesSha256!==receipt.pesSha256||
+     finish.baseSvgSha256!==receipt.svgSha256||!Number.isInteger(finish.needleStitches)||finish.needleStitches<3):
+     (finish!==undefined||pesSha!==receipt.pesSha256||svgSha!==receipt.svgSha256)))
+  throw Error('The machine files do not match the approved geometry and finish.');
  const preview=previewPacket(JSON.parse(new TextDecoder().decode(files['decoded-preview.json'])));
  const validCount=(n,limit=125000)=>Number.isInteger(n)&&n>=0&&n<=limit;
  if(report.requestId!==packed.packet.requestId||report.source?.sha256!==packed.draft.source.sha256||
     report.source?.width!==packed.draft.source.width||report.source?.height!==packed.draft.source.height||
     report.imageWidthMm!==packed.draft.physical.imageWidthMm||report.machineEligible!==false||
     report.physicalQualityVerified!==false||report.sourceBinding?.foregroundIndependentlyVerified!==true||
-    report.workflow!=='TWO_NATIVE_PHASES_NO_AI'||report.nativeInputSha256!==receipt.svgSha256||
+    report.workflow!==(satinPlanSha?'TWO_NATIVE_PHASES_WITH_SATIN_FINISH':'TWO_NATIVE_PHASES_NO_AI')||
+    report.nativeInputSha256!==svgSha||
     preview.requestId!==packed.packet.requestId||
     Math.abs(preview.widthMm-report.imageWidthMm-4)>1e-6||
     Math.abs(preview.heightMm-packed.draft.physical.imageHeightMm-4)>1e-6||
