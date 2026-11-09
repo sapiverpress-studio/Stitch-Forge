@@ -30,7 +30,7 @@ test('legacy browser exports and simulator are visibly segregated from true nati
 });
 
 test('native mode is selected without initiating a paid AI proposal',()=>{
- assert.match(ui,/<option value="native">Automatic AI analysis \+ native PES\/DST/);
+ assert.match(ui,/<option value="native">Automatic native PES\/DST \(optional advisory AI\)/);
  assert.match(ui,/<option value="ai">AI geometry proposal only \(not stitches\)/);
  assert.match(ui,/q\('#sfAutoWorkflow'\)\.dispatchEvent\(new Event\('change'\)\)/);
  assert.match(ui,/Automatic embroidery selected/);
