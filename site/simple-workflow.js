@@ -27,6 +27,7 @@ app.innerHTML=[
  '<input id="sfQuickWidth" type="number" min="10" max="250" step="1" value="80" inputmode="decimal">',
  '<p class="sf-small">Measured across the visible artwork, excluding transparent margins. The decoded needle dimensions are shown after generation.</p>',
  '<button type="button" class="btn primary" id="sfQuickGenerate" disabled>Generate embroidery</button>',
+ '<div id="sfQuickPrescan" hidden><strong class="sf-small">Automatic prescan — colour shapes, not stitches</strong><canvas id="sfQuickPrescanCanvas" aria-label="Prescan preview showing cleaned colours and preserved high-contrast details"></canvas><p id="sfQuickPrescanNote" class="sf-small"></p></div>',
  '<div id="sfQuickAuth" hidden><label for="sfQuickToken">Private access token — enter once on this device</label>',
  '<input id="sfQuickToken" type="password" autocomplete="off" placeholder="Stitch Forge access token">',
  '<p class="sf-small">Saved in this browser if Remember token is enabled. This is not your OpenAI API key.</p></div>',
@@ -62,7 +63,9 @@ const css=document.createElement('style');css.textContent=[
  '.sf-step-body h2{font-size:1.12rem;margin:2px 0 9px}',
  '.sf-small{font-size:12px;color:#47646a;line-height:1.5;margin:7px 0 4px;overflow-wrap:anywhere}',
  '#sfQuickOriginal{display:block;max-height:175px;max-width:100%;object-fit:contain;border-radius:6px;margin:10px auto 0}',
- '#sfQuickOriginal[hidden],#sfQuickCanvas[hidden],#sfQuickAuth[hidden]{display:none!important}',
+ '#sfQuickOriginal[hidden],#sfQuickCanvas[hidden],#sfQuickAuth[hidden],#sfQuickPrescan[hidden]{display:none!important}',
+ '#sfQuickPrescan{margin:12px 0;padding:10px;background:#f2f7f4;border:1px solid #d3e2da;border-radius:10px}',
+ '#sfQuickPrescan canvas{display:block;width:auto;max-width:180px;max-height:180px;margin:8px 0;object-fit:contain;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 50%/16px 16px;border:1px solid #cdd5d1;border-radius:6px}',
  '#sfQuickAuth{margin-top:12px;padding:10px;background:#eff5f3;border-radius:9px}',
  '#sfQuickAuth input{width:100%;height:45px;margin-top:7px;padding:10px;border:1px solid #abbfba;border-radius:8px}',
  '#sfQuickWidth,#sfQuickProductName,#sfQuickArtworkType{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
@@ -82,7 +85,8 @@ const status=$('#sfQuickStatus'),auth=$('#sfQuickAuth'),token=$('#sfQuickToken')
 const canvas=$('#sfQuickCanvas'),replay=$('#sfQuickReplay');
 const pesButton=$('#sfQuickPES'),dstButton=$('#sfQuickDST'),productName=$('#sfQuickProductName'),advancedName=$('#sfAutoProductName');
 const image=$('#sfQuickOriginal'),empty=$('#sfQuickEmpty'),filename=$('#sfQuickFilename');
-const artworkType=$('#sfQuickArtworkType');
+const artworkType=$('#sfQuickArtworkType'),prescanBox=$('#sfQuickPrescan'),
+ prescanCanvas=$('#sfQuickPrescanCanvas'),prescanNote=$('#sfQuickPrescanNote');
 artworkType?.addEventListener('change',()=>{
  reset('Digitising type changed. Generate a fresh native result for the current image.');
  const nativeWidth=$('#sfNativeWidth');
@@ -93,6 +97,7 @@ function stop(){run++;if(frame)cancelAnimationFrame(frame);frame=0;}
 function reset(text){
  stop();preview=null;ready=false;zip.disabled=true;pesButton.disabled=true;dstButton.disabled=true;replay.disabled=true;
  canvas.hidden=true;empty.hidden=false;empty.textContent='Actual stitches will animate here after generation.';
+ prescanBox.hidden=true;
  if(text)status.textContent=text;
 }
 function tokenAvailable(){return !!($('#sfAutoToken')?.value.trim()||token.value.trim());}
@@ -188,6 +193,32 @@ window.addEventListener('stitchforge:workflow-status',e=>{
   /first native|PES|second native|DST|native engine|generat/i.test(message)?'Generating and validating machine stitches…':
   /ZIP|decoded stitches/i.test(message)?'Finishing stitch preview and ZIP…':
   message.length>160?message.slice(0,157)+'…':message;
+});
+window.addEventListener('stitchforge:prescan-ready',e=>{
+ const draft=e.detail?.draft,quality=e.detail?.quality;
+ if(!busy||!draft?.regions?.length||!quality?.prescan?.originalForegroundPixelsPreserved)return;
+ const {width:w,height:h}=draft.source||{};
+ if(!Number.isInteger(w)||!Number.isInteger(h)||w*h>750000||w<48||h<48)return;
+ const ctx=prescanCanvas.getContext('2d');
+ if(!ctx)return;
+ prescanCanvas.width=w;prescanCanvas.height=h;
+ const image=ctx.createImageData(w,h);
+ for(const region of draft.regions){
+  if(!/^#[0-9A-F]{6}$/.test(region.color))return;
+  const rgb=[1,3,5].map(i=>parseInt(region.color.slice(i,i+2),16));
+  for(const part of region.ledger.components)for(const [y,x0,x1] of part.runs)
+   for(let x=x0;x<x1;x++){
+    const at=(y*w+x)*4;
+    image.data[at]=rgb[0];image.data[at+1]=rgb[1];
+    image.data[at+2]=rgb[2];image.data[at+3]=255;
+   }
+ }
+ ctx.putImageData(image,0,0);
+ prescanNote.textContent='Retained '+quality.colourCount+' colours and '+
+  quality.prescan.componentsAfter+' regions; tidied '+
+  quality.prescan.recolouredFragments+
+  ' tiny near-colour speckles. High-contrast marks remain, but check eyes and mouth visually.';
+ prescanBox.hidden=false;
 });
 window.addEventListener('stitchforge:native-ready',e=>{
  const p=e.detail?.preview;
