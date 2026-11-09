@@ -183,7 +183,15 @@ function previewPacket(p){
  for(const line of p.segments)if(!Array.isArray(line)||line.length!==5||!line.slice(0,4).every(Number.isFinite)||line[0]<0||line[2]<0||line[1]<0||line[3]<0||line[0]>p.widthMm||line[2]>p.widthMm||line[1]>p.heightMm||line[3]>p.heightMm||!Number.isInteger(line[4])||line[4]<0||line[4]>=p.palette.length)throw Error('Decoded stitch preview leaves its physical bounds');
  return p;
 }
-async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true}={}){
+async function backgroundJobError(response,message){
+ let detail;try{detail=await response.json();}catch{}
+ const error=Error(detail?.error||message+' (HTTP '+response.status+')');
+ if(response.status===401)error.code='OWNER_TOKEN_REJECTED';
+ if(response.status===503&&['OWNER_ACCESS_UNAVAILABLE','ARTWORK_TRIAL_DISABLED'].includes(detail?.code))error.code=detail.code;
+ return error;
+}
+async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},onAccepted=()=>{},
+ fetchImpl=root.fetch.bind(root),isCurrent=()=>true}={}){
  if(!token||token.length>512)throw Error('Enter your private access token');
  const headers={'Content-Type':'application/json','Authorization':'Bearer '+token};
  if(!isCurrent())throw Error('Source changed before submission');
@@ -191,12 +199,11 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
  if(new TextEncoder().encode(body).length>4000000)throw Error('Artwork job exceeds the private submission limit');
  onProgress('Submitting private embroidery job…');
  const submit=await fetchImpl('/api/artwork-job-submit',{method:'POST',headers,body,signal,cache:'no-store'});
- if(submit.status!==202){
-  let detail;try{detail=await submit.json()}catch{}
-  throw Error(detail?.error||'Background embroidery submission failed (HTTP '+submit.status+')');
- }
+ if(submit.status!==202)throw await backgroundJobError(submit,'Background embroidery submission failed');
  const {jobId}=await submit.json();
  if(typeof jobId!=='string'||!(/^[a-f0-9-]{36}$/i).test(jobId))throw Error('Invalid background job reference');
+ if(!isCurrent()||signal?.aborted)throw Error('Artwork changed or processing cancelled');
+ onAccepted();
  let state=null;
  const started=Date.now(),maxWait=16*60*1000;
  for(;;){
@@ -209,8 +216,7 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
   });
   const check=await fetchImpl('/api/artwork-job-status?id='+encodeURIComponent(jobId),
    {headers:{Authorization:'Bearer '+token},signal,cache:'no-store'});
-  if(!check.ok){let detail;try{detail=await check.json()}catch{}
-   throw Error(detail?.error||'Background artwork status unavailable (HTTP '+check.status+')');}
+  if(!check.ok)throw await backgroundJobError(check,'Background artwork status unavailable');
   state=await check.json();
   if(state.state==='failed')throw Error(state.error||'Native embroidery failed');
   if(state.state==='done')break;
@@ -221,7 +227,7 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
  onProgress('Downloading and independently verifying PES/DST…');
  const result=await fetchImpl('/api/artwork-job-result?id='+encodeURIComponent(jobId),
   {headers:{Authorization:'Bearer '+token},signal,cache:'no-store'});
- if(!result.ok)throw Error('Background native result unavailable (HTTP '+result.status+')');
+ if(!result.ok)throw await backgroundJobError(result,'Background native result unavailable');
  if(result.headers.get('x-stitch-forge-audit')!==AUDIT||
     !result.headers.get('content-type')?.startsWith('application/zip'))throw Error('Independent native audit missing');
  const bytes=new Uint8Array(await result.arrayBuffer());
@@ -256,8 +262,8 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
  if(!isCurrent()||signal?.aborted)throw Error('Artwork changed before native result acceptance');
  return {bytes,report,preview,geometry:files['native-artwork-input.svg'],sourceDraft:packed.draft};
 }
-async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true,background=false}={}){
- if(background)return backgroundGenerate(packed,{token,signal,onProgress,fetchImpl,isCurrent});
+async function generate(packed,{token,signal,onProgress=()=>{},onAccepted,fetchImpl=root.fetch.bind(root),isCurrent=()=>true,background=false}={}){
+ if(background)return backgroundGenerate(packed,{token,signal,onProgress,onAccepted,fetchImpl,isCurrent});
  if(!token||token.length>512)throw Error('Enter your private access token');
  const {packet}=packed;
  let repairReceipt=null;

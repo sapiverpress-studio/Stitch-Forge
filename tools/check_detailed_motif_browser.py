@@ -64,10 +64,22 @@ def run(url, artwork, out, executable=None, native=False, variant="balanced"):
         expect(get('sfQuickToken')).to_be_visible()
         assert not any('/api/' in url for url in urls)
         if native:
-            get('sfQuickToken').fill(os.environ['STITCH_FORGE_LOCAL_OWNER_TOKEN'])
+            rejected='wrong-local-test-value'
+            page.evaluate('value=>window.StitchForgeTokenStore.save(value)',rejected)
+            get('sfQuickToken').fill(rejected)
+            get('sfQuickGenerate').click()
+            expect(get('sfQuickStatus')).to_contain_text('Token rejected')
+            expect(get('sfQuickToken')).to_have_value('')
+            expect(get('sfQuickGenerate')).to_be_enabled()
+            expect(get('sfDetailedReview')).to_be_visible()
+            expect(get('sfQuickZip')).to_be_disabled()
+            assert page.evaluate('window.StitchForgeTokenStore.read()')==''
+            owner=os.environ['STITCH_FORGE_LOCAL_OWNER_TOKEN']
+            get('sfQuickToken').fill(owner)
             get('sfQuickProductName').fill('Detailed motif acceptance')
             get('sfQuickGenerate').click()
             expect(get('sfQuickZip')).to_be_enabled(timeout=180000)
+            assert page.evaluate('value=>window.StitchForgeTokenStore.read()===value',owner)
             expect(get('sfQuickCanvas')).to_be_visible()
             expect(get('sfQuickReplay')).to_be_enabled()
             get('sfQuickReplay').click()

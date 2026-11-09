@@ -76,6 +76,22 @@ test('an unrecognised owner cannot submit, poll or retrieve any private artwork'
  assert.equal((await f.result(request('/api/artwork-job-result?id='+ID))).status,401);
  assert.equal(f.jobs.map.size,0);
 });
+test('submission distinguishes missing owner setup, a rejected token, and disabled generation before creating a job',async()=>{
+ const submit=(env=environment)=>createSubmit({env,
+  jobs:()=>{assert.fail('A blocked submission must not access job storage');},
+  dispatch:()=>{assert.fail('A blocked submission must not start the worker');}});
+ const post=(sentHeaders)=>request('/api/artwork-job-submit',{
+  method:'POST',headers:sentHeaders,body:JSON.stringify(packet)});
+ const missing=await submit(key=>key==='STITCH_FORGE_ANALYSIS_TOKEN'?'':environment(key))(post(headers));
+ assert.equal(missing.status,503);
+ assert.equal((await missing.json()).code,'OWNER_ACCESS_UNAVAILABLE');
+ const rejected=await submit()(post({...headers,Authorization:'Bearer wrong-local-test-value'}));
+ assert.equal(rejected.status,401);
+ assert.equal((await rejected.json()).code,'OWNER_TOKEN_REJECTED');
+ const disabled=await submit(key=>key==='STITCH_FORGE_ARTWORK_TRIAL_ENABLED'?'':environment(key))(post(headers));
+ assert.equal(disabled.status,503);
+ assert.equal((await disabled.json()).code,'ARTWORK_TRIAL_DISABLED');
+});
 test('one queued job completes both native phases, preserves bound receipt and releases an audited ZIP',async()=>{
  const f=fixture();
  const submission=await f.submit(request('/api/artwork-job-submit',{method:'POST',headers,body:JSON.stringify(packet)}));

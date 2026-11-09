@@ -204,16 +204,21 @@ function mount({reset,present}) {
       message('Enter your private Stitch Forge access token, then tap Generate embroidery.');
       return;
     }
-    underlying.value=selected;
-    if (q('sfRememberToken')?.checked) window.StitchForgeTokenStore?.save(selected);
-    else window.StitchForgeTokenStore?.forget();
+    const tokenStore=window.StitchForgeTokenStore;
     const current=stamp, controller=new AbortController();
     operation=controller;result=null;files=null;save.disabled=true;
     reset('Sending approved colour geometry to the private Ink/Stitch worker…');
     setBusy(true);
     try {
       const generated=await api.generate(proposal.packed,{token:selected,background:true,signal:controller.signal,
-        isCurrent:()=>stamp===current,onProgress:text=>{if (stamp===current) message(text);}});
+        isCurrent:()=>stamp===current,onProgress:text=>{if (stamp===current) message(text);},
+        onAccepted:()=>{
+          underlying.value=selected;
+          if (q('sfRememberToken')?.checked) tokenStore?.save(selected);
+          else tokenStore?.forget();
+          if (token.value.trim()===selected) token.value='';
+          auth.hidden=true;
+        }});
       const entries=await verifyApproved(generated,proposal.packed);
       if (stamp!==current) return;
       result=generated;files=entries;save.disabled=false;auth.hidden=true;token.value='';
@@ -232,8 +237,17 @@ function mount({reset,present}) {
         GEOMETRY_BUDGET_EXCEEDED:'The approved version has too much geometry for the native worker. Try Fewer shapes.'
       };
       const code=/\[([A-Z_]+)\]/.exec(error.message)?.[1];
-      reset('Generation stopped: '+(reasons[code]||error.message));
-      if (/access token|unauthori[sz]ed|401/i.test(error.message)) { auth.hidden=false;token.focus(); }
+      if (error.code==='OWNER_TOKEN_REJECTED') {
+        if (tokenStore?.read()===selected) tokenStore.forget();
+        for (const field of [token,underlying,q('sfAiToken')]) {
+          if (field?.value.trim()===selected) field.value='';
+        }
+        reset('Token rejected. Enter the Stitch Forge owner token set for this site address, then tap Generate embroidery.');
+        auth.hidden=false;token.focus();
+      } else {
+        reset('Generation stopped: '+(reasons[code]||error.message));
+        if (error.code==='OWNER_ACCESS_UNAVAILABLE'||error.code==='ARTWORK_TRIAL_DISABLED') auth.hidden=true;
+      }
     } finally {
       if (stamp===current) {operation=null;setBusy(false);}
     }
