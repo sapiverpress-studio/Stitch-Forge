@@ -16,6 +16,7 @@ on:
       - "tools/simple_ghost_fixture.cjs"
       - "tools/prepare_simple_ghost.cjs"
       - "tools/test_simple_motif_native.py"
+      - "tools/install_verified_inkstitch_ci_fallback.py"
   workflow_dispatch:
 
 permissions:
@@ -68,8 +69,9 @@ jobs:
               break
             fi
             if [ "$attempt" -eq 4 ]; then
-              echo "Official pinned native engine download unavailable" >&2
-              exit 1
+              echo "Upstream GitHub CDN failed repeatedly. Trying checksum-verified SourceForge mirror" >&2
+              python tools/install_verified_inkstitch_ci_fallback.py "$RUNNER_TEMP/inkstitch"
+              break
             fi
             sleep $((attempt*8))
           done
