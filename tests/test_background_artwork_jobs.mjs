@@ -12,7 +12,7 @@ const packet={header:'header',rgbaGzip:'AAA===',labelsGzip:'AAA===',requestId:SO
 const owner='private-owner-token',workerSecret='private-worker-token';
 function environment(key){
  return {STITCH_FORGE_ANALYSIS_TOKEN:owner,STITCH_FORGE_WORKER_TOKEN:workerSecret,
-  STITCH_FORGE_ARTWORK_TRIAL_ENABLED:'1'}[key];
+  STITCH_FORGE_ARTWORK_TRIAL_ENABLED:'1',STITCH_FORGE_DETAILED_MOTIF_WORKER_TAG:'exact-palette'}[key];
 }
 function store(){
  const map=new Map();
@@ -35,11 +35,12 @@ function fixture(){
  const pes=Buffer.concat([Buffer.from('#PES0060'),Buffer.alloc(60,42)]);
  const zip=Buffer.concat([Buffer.from('PK\x03\x04'),Buffer.alloc(160,11)]);
  const digest=x=>createHash('sha256').update(x).digest('hex');
- let phases=[];
+ let phases=[],routedTags=[];
  const receipt={requestId:SOURCE,pesSha256:digest(pes),svgSha256:'c'.repeat(64),mac:'d'.repeat(64)};
- const bridge=()=>async req=>{
-  const body=await req.json();phases.push(body.phase);
+ const bridge=({workerRevisionTag})=>async req=>{
+  const body=await req.json();phases.push(body.phase);routedTags.push(workerRevisionTag);
   assert.equal(body.requestId,SOURCE);
+  assert.ok(!Object.hasOwn(body,'profile'));
   if(body.phase==='pes')return Response.json({requestId:SOURCE,pesBase64:pes.toString('base64'),receipt});
   if(body.phase==='dst'){
    assert.equal(body.receipt.pesSha256,receipt.pesSha256);
@@ -59,7 +60,7 @@ function fixture(){
  const submit=createSubmit({jobs:()=>jobs,dispatch,env:environment,generateId:()=>ID});
  const status=createStatus({jobs:()=>jobs,env:environment});
  const result=createResult({jobs:()=>jobs,env:environment});
- return {jobs,submit,status,result,work,phases,receipt,zip,image};
+ return {jobs,submit,status,result,work,phases,routedTags,receipt,zip,image};
 }
 
 test('bounded source packet is schema-bound and rejects attempts to inject a phase or secret',()=>{
@@ -98,6 +99,7 @@ test('one queued job completes both native phases, preserves bound receipt and r
  assert.equal(submission.status,202);
  assert.equal((await submission.json()).jobId,ID);
  assert.deepEqual(f.phases,['pes','dst']);
+ assert.deepEqual(f.routedTags,[undefined,undefined]);
  const state=await f.status(request('/api/artwork-job-status?id='+ID,{headers:{Authorization:'Bearer '+owner}}));
  assert.equal(state.status,200);
  const body=await state.json();
@@ -107,6 +109,23 @@ test('one queued job completes both native phases, preserves bound receipt and r
  assert.equal(downloaded.headers.get('x-stitch-forge-audit'),'SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED');
  assert.deepEqual(Buffer.from(await downloaded.arrayBuffer()),f.zip);
  assert.equal(f.jobs.map.has('input/'+ID),false);
+});
+test('only approved Detailed Motif jobs select the server-configured revision for both phases',async()=>{
+ const approved={...packet,profile:'detailed_motif',
+  header:JSON.stringify({schema:'stitch-forge-artwork-request-v1',texturePolicy:'off'})};
+ assert.ok(validPacket(JSON.stringify(approved)));
+ for(const modified of [{...approved,profile:'https://other.run.app'},
+  {...approved,workerRevisionTag:'other'},{...approved,header:'null'},
+  {...approved,header:JSON.stringify({schema:'stitch-forge-artwork-request-v1',texturePolicy:'if_needed'})}]){
+  assert.equal(validPacket(JSON.stringify(modified)),false);
+ }
+ const f=fixture();
+ const response=await f.submit(request('/api/artwork-job-submit',{
+  method:'POST',headers,body:JSON.stringify(approved)}));
+ assert.equal(response.status,202);
+ assert.deepEqual(f.routedTags,['exact-palette','exact-palette']);
+ const state=await f.status(request('/api/artwork-job-status?id='+ID,{headers}));
+ assert.equal((await state.json()).state,'done');
 });
 test('tampered dispatch signatures and repeated dispatches do not start duplicate native processing',async()=>{
  const f=fixture(),input=JSON.stringify(packet);

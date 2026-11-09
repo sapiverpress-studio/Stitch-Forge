@@ -42,6 +42,13 @@ export function validPacket(body){
   typeof obj.rgbaGzip!=='string'||typeof obj.labelsGzip!=='string'||
   obj.rgbaGzip.length>3200000||obj.labelsGzip.length>1000000)return false;
  const keys=['header','rgbaGzip','labelsGzip','requestId'];
+ if('profile' in obj){
+  let header;
+  try{header=JSON.parse(obj.header);}catch{return false;}
+  if(obj.profile!=='detailed_motif'||header?.schema!=='stitch-forge-artwork-request-v1'||
+     header.texturePolicy!=='off'||'originalPngBase64' in obj)return false;
+  keys.push('profile');
+ }
  if('originalPngBase64' in obj){
   let header;
   try{header=JSON.parse(obj.header);}catch{return false;}

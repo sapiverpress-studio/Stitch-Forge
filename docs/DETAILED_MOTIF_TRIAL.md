@@ -40,9 +40,12 @@ outside the public repository. CC0 generalisation fixtures and their source
 credits are under `tests/fixtures/artwork-evaluation/`.
 
 Detailed Motif uses no paid image API. A hosted preview needs the existing
-private job and Cloud Run credentials. A worker that substitutes its own
-palette for the approved illustration is incompatible and the app refuses
-that result. Before production, verify the exact preview worker revision with
+private job and Cloud Run credentials. In the Deploy Preview Functions
+environment, `STITCH_FORGE_DETAILED_MOTIF_WORKER_TAG` can select an existing
+exact-palette revision of the configured private Cloud Run service. Both
+native phases use this revision for Detailed Motif jobs. The normal worker
+route remains in use for the other workflows. A worker that substitutes its
+own palette for the approved illustration fails the existing download gate. Before production, verify the exact preview worker revision with
 an authenticated job, review stitch routing and perform a fabric sew-out on a
 supported home machine. Review the full diff against the deployed Netlify
 revision and obtain a separate production release approval.

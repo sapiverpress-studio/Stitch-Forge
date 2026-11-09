@@ -195,7 +195,8 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},onAccep
  if(!token||token.length>512)throw Error('Enter your private access token');
  const headers={'Content-Type':'application/json','Authorization':'Bearer '+token};
  if(!isCurrent())throw Error('Source changed before submission');
- const body=JSON.stringify(packed.packet);
+ const job=packed.profile==='detailed_motif'?{...packed.packet,profile:'detailed_motif'}:packed.packet;
+ const body=JSON.stringify(job);
  if(new TextEncoder().encode(body).length>4000000)throw Error('Artwork job exceeds the private submission limit');
  onProgress('Submitting private embroidery job…');
  const submit=await fetchImpl('/api/artwork-job-submit',{method:'POST',headers,body,signal,cache:'no-store'});

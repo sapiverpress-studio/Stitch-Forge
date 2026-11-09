@@ -27,9 +27,13 @@ export function createWorker({jobs=getJobs,env=getEnv,bridge=createArtworkBridge
    await store.setJSON('state/'+id,{status:'running',createdAt});
    const input=await store.get('input/'+id);
    if(!input||input.length>4000000)reject('Prepared artwork missing or oversized');
-   const packet=JSON.parse(input),owner=env('STITCH_FORGE_ANALYSIS_TOKEN');
+   const {profile,...packet}=JSON.parse(input),owner=env('STITCH_FORGE_ANALYSIS_TOKEN');
    if(!owner)reject('Worker credentials unavailable');
-   const invoke=bridge({upstreamTimeoutMs:180000});
+   // This route marker belongs to Netlify. The signed source packet sent to
+   // either worker revision has the original schema and bytes.
+   const workerRevisionTag=profile==='detailed_motif'?
+    env('STITCH_FORGE_DETAILED_MOTIF_WORKER_TAG'):undefined;
+   const invoke=bridge({upstreamTimeoutMs:180000,workerRevisionTag});
    async function phase(name,extra={}){
     const body=JSON.stringify({...packet,phase:name,...extra});
     const response=await invoke(new Request('https://internal.invalid/api/artwork-embroidery',{
