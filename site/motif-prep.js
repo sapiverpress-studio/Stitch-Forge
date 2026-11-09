@@ -68,13 +68,14 @@ async function prepare(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=
  if(new Set(final.map(c=>c.color)).size!==final.length)
   throw Error('Automatic motif palette collapsed onto duplicate thread colours');
  const masks=final.map(()=>new Uint8Array(w*h)),hist=new Array(final.length).fill(0);
+ const targetRGB=final.map(e=>e.rgb);
  let totalError=0,highError=0;
  for(let k=0;k<w*h;k++){
   if(!foreground[k])continue;
   const j=4*k,pixel=[rgba[j],rgba[j+1],rgba[j+2]];
-  const [ci,squared]=closest(pixel,final.map(e=>e.rgb));
+  const [ci,squared]=closest(pixel,targetRGB);
   const d=Math.sqrt(squared);totalError+=d;
-  if(d>55)highError++;
+  if(d>60)highError++;
   masks[ci][k]=1;hist[ci]++;
  }
  const meanError=totalError/foregroundPixels;
@@ -105,7 +106,7 @@ async function prepare(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=
   palette:regions.map(x=>x.color),colourCount:regions.length,sourcePixels:foregroundPixels,
   components:componentCount,smallComponents:tinyCount,
   meanRgbError:Number(meanError.toFixed(3)),
-  fractionPixelsBeyondRgb55:Number((highError/foregroundPixels).toFixed(5)),
+  fractionPixelsBeyondRgb60:Number((highError/foregroundPixels).toFixed(5)),
   allForegroundPixelsAccountedFor:true,semanticDetailVerified:false,
   machineFileGenerated:false,physicalSewoutVerified:false}};
 }
