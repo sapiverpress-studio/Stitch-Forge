@@ -40,6 +40,13 @@ def run():
         assert page.locator("#sfQuickZip").is_disabled()
         body_width=page.evaluate("document.documentElement.scrollWidth")
         if body_width>396:
+            offenders=page.evaluate("""() => [...document.body.querySelectorAll('*')].map(
+              e => ({tag:e.tagName,id:e.id,cls:String(e.className).slice(0,80),
+                right:Math.round(e.getBoundingClientRect().right),
+                width:Math.round(e.getBoundingClientRect().width)}))
+                .filter(x=>x.right>396 && x.width>5)
+                .sort((a,b)=>b.right-a.right).slice(0,12)""")
+            print({'mobileOverflow':body_width,'offenders':offenders},flush=True)
             raise AssertionError(f"Phone UI overflow: {body_width}px")
         page.locator("#importFile").set_input_files({
             "name":"synthetic-simple-ghost.png","mimeType":"image/png","buffer":synthetic_png()})
