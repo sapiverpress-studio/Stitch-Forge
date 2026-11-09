@@ -16,6 +16,7 @@ function fleckedGhost(){
   if(pixels[i]!==246||pixels[i+1]!==246||pixels[i+2]!==246||pixels[i+3]!==255)continue;
   const adjacent=[[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
   if(adjacent.some(([xx,yy])=>pixels[(yy*w+xx)*4]!==246))continue;
+  if(added>=240)continue; // fixed, physically bounded 1px source flecks
   pixels[i]=pixels[i+1]=pixels[i+2]=210;
   added++;
  }
