@@ -11,7 +11,7 @@ panel.className="ai-detail-panel";
 panel.id="sfAutoPanel";
 panel.innerHTML=[
  '<div class="ai-detail-head"><strong>Automatic artwork digitising</strong><small>Engineering trial</small></div>',
- '<p class="tiny">One button runs AI feature analysis, then native multicolour PES/DST. AI advice does not yet change stitch geometry or guarantee likeness.</p>',
+ '<p class="tiny">A simple flat-colour motif is digitised automatically from its source shapes and colours. Optional AI advice does not yet change stitch geometry or guarantee likeness.</p>',
  '<p class="tiny">Prepare colour shapes from the original pixels, generate real Ink/Stitch files and inspect independently decoded stitches. Trial files require review and have not been physically sewn.</p>',
  '<label class="tiny" for="sfAutoProductName">Product / design name for downloads</label>',
  '<input id="sfAutoProductName" type="text" maxlength="80" autocomplete="off" placeholder="e.g. Kingfisher on Ivy">',
@@ -23,7 +23,7 @@ panel.innerHTML=[
  '<label class="tiny"><input id="sfRememberToken" type="checkbox" checked> Remember token on this device</label>',
  '<div class="ai-actions"><button class="btn" id="sfForgetToken" type="button">Forget saved token</button></div>',
  '<details id="sfAutoAdvanced"><summary>Advanced settings</summary>',
- '<label class="tiny" for="sfAutoWorkflow">Workflow</label><select id="sfAutoWorkflow"><option value="native">Automatic AI analysis + native PES/DST</option><option value="ai">AI geometry proposal only (not stitches)</option></select>',
+ '<label class="tiny" for="sfAutoWorkflow">Workflow</label><select id="sfAutoWorkflow"><option value="native">Automatic native PES/DST (optional advisory AI)</option><option value="ai">AI geometry proposal only (not stitches)</option></select>',
  '<label class="tiny"><input id="sfAutoUseAI" type="checkbox"> Include one paid OpenAI image-analysis request for detailed artwork (optional; advisory only).</label>',
  '<label class="tiny"><input id="sfNativeTexture" type="checkbox" checked> Allow measured simplification of tiny texture if geometry is too complex. Fine details may change.</label>',
  '</details>',
@@ -51,7 +51,7 @@ q('#sfNativeJump')?.addEventListener('click',()=>{
  q('#sfAutoWorkflow').value='native';
  q('#sfAutoWorkflow').dispatchEvent(new Event('change'));
  panel.scrollIntoView({behavior:'smooth',block:'start'});
- status('Automatic embroidery selected. One OpenAI image-analysis call will run before the native PES/DST trial unless disabled in Advanced settings.');
+ status('Automatic embroidery selected. The simple-motif workflow runs without paid AI; optional paid analysis is available for detailed artwork only.');
 });
 const css=document.createElement("style");css.textContent=[
  "#sfAutoPanel{border:2px solid #90b9b1;background:#f8fbfa}",
@@ -131,7 +131,7 @@ async function saveNativeMachineFile(ext){
  }catch(error){status('Named '+ext.toUpperCase()+' download unavailable: '+String(error?.message||error));}
 }
 function invalidateNative(){revision++;nativeAbort?.abort();clearNative();q('#sfAutoDownload').disabled=!last;q('#sfAutoUndo').disabled=!last;q('#sfAutoDownload').textContent='Download editable colour SVG';status('Artwork settings changed. Previous native result cleared; generate again when ready.');}
-q('#sfAutoWorkflow').onchange=()=>{invalidateNative();q('#sfAutoRun').textContent=q('#sfAutoWorkflow').value==='native'?'Generate embroidery':'Generate AI proposal (not machine stitches)';status(q('#sfAutoWorkflow').value==='native'?'Automatic AI feature analysis and native PES/DST trial. AI is advisory and uses a paid API call when enabled.':'AI proposal is an experimental geometry draft; it is not machine embroidery.');};
+q('#sfAutoWorkflow').onchange=()=>{invalidateNative();q('#sfAutoRun').textContent=q('#sfAutoWorkflow').value==='native'?'Generate embroidery':'Generate AI proposal (not machine stitches)';status(q('#sfAutoWorkflow').value==='native'?'Automatic native PES/DST trial. Detailed-artwork AI analysis is optional and paid; simple motifs use no AI call.':'AI proposal is an experimental geometry draft; it is not machine embroidery.');};
 q('#sfNativeWidth').onchange=invalidateNative;q('#sfNativeTexture').onchange=invalidateNative;q('#sfAutoUseAI').onchange=invalidateNative;
 q('#sfAutoCancelNative').onclick=()=>{invalidateNative();status('Native generation cancelled. No further phase will be requested.');};
 q('#sfAutoNativeReport').onclick=()=>{if(nativeResult)saveBytes(JSON.stringify(nativeResult.report,null,2),namedReport(),'application/json');};
