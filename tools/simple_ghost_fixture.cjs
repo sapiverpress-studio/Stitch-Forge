@@ -21,4 +21,21 @@ function ghost(w=192,h=192){
  }
  return {pixels,width:w,height:h};
 }
-module.exports={ghost};
+function fleckedGhost(){
+ const fixture=ghost(),{pixels,width:w,height:h}=fixture;
+ let added=0;
+ // More than 160 independent pale shade flecks: previously made the
+ // automatic native workflow refuse the whole image before stitch creation.
+ for(let y=45;y<151;y+=5)for(let x=47;x<148;x+=5){
+  const i=(y*w+x)*4;
+  if(added>=240||pixels[i]!==246||pixels[i+1]!==246||
+     pixels[i+2]!==246||pixels[i+3]!==255)continue;
+  if([[x-1,y],[x+1,y],[x,y-1],[x,y+1]]
+      .some(([xx,yy])=>pixels[(yy*w+xx)*4]!==246))continue;
+  pixels[i]=pixels[i+1]=pixels[i+2]=210;
+  added++;
+ }
+ if(added!==240)throw Error('Synthetic source flecks setup unexpectedly changed');
+ return {...fixture,added};
+}
+module.exports={ghost,fleckedGhost};
