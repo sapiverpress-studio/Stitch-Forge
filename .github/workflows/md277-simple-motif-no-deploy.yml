@@ -59,8 +59,20 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/md277-ghost"
           node tools/prepare_simple_ghost.cjs "$RUNNER_TEMP/md277-ghost"
-      - name: Install checksum-verified InkStitch 3.3.0
-        run: python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"
+      - name: Install checksum-verified InkStitch 3.3.0 (bounded official GitHub CDN retries)
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4; do
+            if python services/digitiser/install_engine.py "$RUNNER_TEMP/inkstitch"; then
+              echo "Pinned official InkStitch archive verified"
+              break
+            fi
+            if [ "$attempt" -eq 4 ]; then
+              echo "Official pinned native engine download unavailable" >&2
+              exit 1
+            fi
+            sleep $((attempt*8))
+          done
       - name: Genuine signed packet worker two-phase PES6 DST plus independent audit
         run: |
           ENGINE="$(cat "$RUNNER_TEMP/inkstitch/engine-path")"
