@@ -21,16 +21,20 @@ fileInput.addEventListener('change',async()=>{
  original.hidden=true;const file=fileInput.files?.[0];
  if(!file){message('Choose an image to begin.');return;}
  if(!validImage(file)){message('Choose a PNG, JPG or WEBP under 12 MB.',true);return;}
+ const uploadSerial=serial;
+ let newUrl=null;
  try{
-  const url=URL.createObjectURL(file),img=new Image();img.src=url;
+  newUrl=URL.createObjectURL(file);
+  const img=new Image();img.src=newUrl;
   await img.decode();
   if(img.naturalWidth*img.naturalHeight>45000000)throw Error('Source image exceeds 45 million pixels.');
-  objectUrl=url;original.src=url;original.hidden=false;
+  if(uploadSerial!==serial){URL.revokeObjectURL(newUrl);return;}
+  objectUrl=newUrl;original.src=newUrl;original.hidden=false;
   selected={file,image:img};generate.disabled=false;
   message('Image loaded. Choose your settings, then select Simplify and outline.');
  }catch(error){
-  if(!objectUrl&&typeof url!=='undefined')URL.revokeObjectURL(url);
-  message('Cannot open image: '+error.message,true);
+  if(newUrl)URL.revokeObjectURL(newUrl);
+  if(uploadSerial===serial)message('Cannot open image: '+error.message,true);
  }
 });
 async function run(){
