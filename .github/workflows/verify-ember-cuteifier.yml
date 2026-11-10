@@ -1,22 +1,15 @@
-name: Verify Ember Cuteifier PNG
+name: Verify Simplifier PNG
 on:
   push:
     branches:
-      - feature/cuteifier-ember-png-20261110
-      - 'fix/cuteifier-*'
-      - feature/ai-cuteifier-redraw-20261110
       - main
+      - fix/restore-capaybara-simplifier-png-20261110
     paths:
-      - "site/cuteifier*"
-      - "site/ember-prep-core.js"
-      - "site/detailed-motif.js"
-      - "tests/test_ember_prep.cjs"
-      - "tests/test_cuteifier_complex_png.cjs"
-      - "tests/test_cuteifier_ai.mjs"
-      - "netlify/functions/cuteifier-*.mjs"
-      - "netlify/functions/lib/cuteifier-jobs.mjs"
-      - "tools/check_cuteifier_mobile.mjs"
-      - ".github/workflows/verify-ember-cuteifier.yml"
+      - 'site/cuteifier*'
+      - 'site/detailed-motif.js'
+      - 'tests/test_cuteifier_complex_png.cjs'
+      - 'tools/check_cuteifier_mobile.mjs'
+      - '.github/workflows/verify-ember-cuteifier.yml'
   pull_request:
     branches: [main]
 permissions:
@@ -28,16 +21,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "24"
-      - name: Install pinned Netlify packages
+          node-version: '24'
+      - name: Install existing dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Validate all client scripts
+      - name: Check JS and page script paths
         run: node tools/check_frontend_syntax.cjs
-      - name: Test all Stitch Forge routes and PNG processing
+      - name: Run full repository tests
         run: node --test tests/*.cjs tests/*.mjs
-      - name: Install disposable browser smoke tools
+      - name: Install Chromium test browser
         run: |
           npm install --no-save --ignore-scripts playwright
           npx playwright install --with-deps chromium
-      - name: Test phone upload, generated preview and actual PNG download
+      - name: Test mobile image simplification and downloaded PNG
         run: node tools/check_cuteifier_mobile.mjs
