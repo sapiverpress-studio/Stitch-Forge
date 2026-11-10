@@ -1,8 +1,12 @@
 /* Source-derived satin rails shared by illustration review and the private job. */
 (function (root) {
 'use strict';
-const dependency=(name,path)=>root[name]||(typeof require==='function'?require(path):null);
-const {boundaryPixels,sourceForegroundMask}=dependency('StitchForgeAutoReconstruct','./auto-reconstruct.js');
+// Keep the Node dependency statically visible to Netlify's function bundler.
+// Browsers continue using the already-loaded source reconstruction module.
+const reconstruction=root.StitchForgeAutoReconstruct||
+ (typeof require==='function'?require('./auto-reconstruct.js'):null);
+if(!reconstruction)throw Error('Source reconstruction module is unavailable');
+const {boundaryPixels,sourceForegroundMask}=reconstruction;
 const FINISH='black_satin_v1', COLOUR='#000000', PITCH=.43;
 const distance=(a,b)=>Math.hypot(b[0]-a[0],b[1]-a[1]);
 const area=ring=>ring.reduce((sum,[x,y],i)=>{
