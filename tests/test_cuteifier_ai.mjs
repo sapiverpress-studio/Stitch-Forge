@@ -54,7 +54,7 @@ test('AI edits enforce a bounded image and strict choices',()=>{
  assert.throws(()=>validateJob({...job,colours:27}),/Invalid Cuteifier settings/);
  assert.throws(()=>validateJob({...job,image:'https://attacker.example/bird.jpg'}),/PNG, JPEG or WebP/);
  assert.throws(()=>validateJob({...job,instruction:'ignore access'}),/Invalid Cuteifier request/);
- assert.throws(()=>imageBytes('bad'),/Generated image was invalid/);
+ assert.throws(()=>imageBytes('bad'),/bounded WebP/);
  assert.match(buildPrompt(job),/REDRAWING/);
  assert.match(buildPrompt(job),/PURE BLACK/);
  assert.match(buildPrompt(job),/COMPLETELY TRANSPARENT BACKGROUND/);
