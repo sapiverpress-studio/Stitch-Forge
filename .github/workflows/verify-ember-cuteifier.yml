@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/cuteifier-ember-png-20261110
+      - 'fix/cuteifier-*'
       - main
     paths:
       - "site/cuteifier*"
