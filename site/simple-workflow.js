@@ -28,8 +28,10 @@ app.innerHTML=[
  '<label class="sf-small" for="sfQuickWidth">Visible embroidery width (mm)</label>',
  '<input id="sfQuickWidth" type="number" min="10" max="250" step="1" value="80" inputmode="decimal">',
  '<p class="sf-small">Measured across the visible artwork, excluding transparent margins. The decoded needle dimensions are shown after generation.</p>',
- '<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox"> Black satin edge</label>',
- '<p class="sf-small">Adds a stitched black border around the main silhouette. Sharp corners and separate shapes may need a larger design or a simpler edge.</p>',
+ fineDetail?'<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox" disabled> Black satin edge (temporarily unavailable)</label>':
+  '<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox"> Black satin edge</label>',
+ fineDetail?'<p class="sf-small">The optional satin finishing pass is paused while its machine-file audit is corrected. Fine Detail generates without a satin edge for now.</p>':
+  '<p class="sf-small">Adds a stitched black border around the main silhouette. Sharp corners and separate shapes may need a larger design or a simpler edge.</p>',
  '<button type="button" class="btn primary" id="sfQuickGenerate" disabled>'+generateLabel+'</button>',
  '<div id="sfQuickAuth" hidden><label for="sfQuickToken">Private access token — enter once on this device</label>',
  '<input id="sfQuickToken" type="password" autocomplete="off" placeholder="Stitch Forge access token">',
@@ -94,6 +96,7 @@ const canvas=$('#sfQuickCanvas'),replay=$('#sfQuickReplay');
 const pesButton=$('#sfQuickPES'),dstButton=$('#sfQuickDST'),productName=$('#sfQuickProductName'),advancedName=$('#sfAutoProductName');
 const image=$('#sfQuickOriginal'),empty=$('#sfQuickEmpty'),filename=$('#sfQuickFilename');
 const satin=$('#sfQuickSatin');
+if(fineDetail){satin.checked=false;satin.disabled=true;}
 let preview=null,frame=0,run=0,ready=false,busy=false,hasImage=false,failed=false,workerAvailable=!fineDetail;
 function updateGenerate(){generate.disabled=busy||!hasImage||!workerAvailable;}
 if(fineDetail){
@@ -231,7 +234,7 @@ window.addEventListener('stitchforge:native-error',e=>{
 });
 window.addEventListener('stitchforge:native-idle',()=>{
  if(busy&&!ready&&!failed)reset('Generation stopped or image changed. Press Generate to retry.');
- busy=false;updateGenerate();upload.disabled=false;satin.disabled=false;
+ busy=false;updateGenerate();upload.disabled=false;satin.disabled=fineDetail;
 });
 replay.addEventListener('click',play);
 zip.addEventListener('click',()=>{
