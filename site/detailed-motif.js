@@ -379,7 +379,7 @@ function retainInk(rgba,mask,w,pxMm,contrast,channels,labels,palette) {
   return {parts:selected.length,pixels,colour:ink};
 }
 
-function prepare(rgba,w,h,{widthMm=80,preset='balanced'}={}) {
+function prepare(rgba,w,h,{widthMm=80,preset='balanced',imageOnly=false}={}) {
   if (!(rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||
       w<48||h<48||Math.max(w,h)>640||rgba.length!==4*w*h) throw Error('The artwork analysis size is unsupported.');
   if (!Number.isFinite(widthMm)||widthMm<30||widthMm>200) throw Error('Detailed Motif supports visible widths from 30 to 200 mm.');
@@ -407,9 +407,13 @@ function prepare(rgba,w,h,{widthMm=80,preset='balanced'}={}) {
     used.add(c);
   }
   const regions=components(labels,w).parts;
-  if (regions.length>MAX_PARTS)
+  // Embroidery generation has a strict object-budget gate. PNG-only artwork
+  // is not sent to the worker and must not be rejected by that stitch budget.
+  if (regions.length>MAX_PARTS && !imageOnly)
     throw Error('This image still has '+regions.length+' separate thread shapes. Try the cleaner version or choose a simpler source.');
   const warnings=[];
+  if (imageOnly && regions.length>MAX_PARTS)
+    warnings.push('The image has '+regions.length+' colour areas. This PNG is downloadable; inspect fine details and consider Fewer shapes before digitising.');
   if (subject.discarded) warnings.push('Detached fragments were removed. Compare the outer edges and any fine projections.');
   if (!ink.parts) warnings.push('No separate fine dark marks were detected. Check any eyes, markings or other fine details before approval.');
   if (body) warnings.push(body.patches
