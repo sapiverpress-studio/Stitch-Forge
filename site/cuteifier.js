@@ -55,7 +55,7 @@ async function run(){
   const imageData=context.getImageData(0,0,w,h);
   const widthMm=Number(el('stitchWidth').value);
   const prepared=window.StitchForgeDetailedMotif.prepare(imageData.data,w,h,{
-   widthMm,preset:el('simplify').value
+   widthMm,preset:el('simplify').value,imageOnly:true
   });
   const outlined=window.StitchForgeEmberOutline.prepare(prepared.rgba,w,h,{
    outline:el('outline').value,detail:el('internal').checked?'major':'outer'
