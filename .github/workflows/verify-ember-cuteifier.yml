@@ -1,0 +1,28 @@
+name: Verify Ember Cuteifier PNG
+on:
+  push:
+    branches:
+      - feature/cuteifier-ember-png-20261110
+      - main
+    paths:
+      - "site/cuteifier*"
+      - "site/ember-prep-core.js"
+      - "site/detailed-motif.js"
+      - "tests/test_ember_prep.cjs"
+      - ".github/workflows/verify-ember-cuteifier.yml"
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate all client scripts
+        run: node tools/check_frontend_syntax.cjs
+      - name: Test PNG outline preparation
+        run: node --test tests/test_ember_prep.cjs
