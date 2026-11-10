@@ -4,8 +4,8 @@ Latest build: 10 November 2026.
 ## What the feature does
 This is NOT embroidery digitising, colour-quantisation, posterisation, or the legacy detailed motif tracer.
 The capybara's “Prescan (tidied)” visual concept is the desired quality standard, not a previously proven working engine.
-One explicit Make cute illustration click sends the uploaded original to the official OpenAI Images Edits API (model gpt-image-2.5-sunburst, high quality, 1024×1024, transparent WebP output). It prompts a genuine storybook-style redraw that preserves identity, pose, smile, muzzle, eye closure and whiskers.
-After a result, the browser keeps the native image pixels. The optional black *outer silhouette* outline is **off** by default and toggles without another API call. Download PNG saves exactly the visible canvas in native resolution.
+One explicit Make cute illustration click submits one OpenAI Images edit using the selected mode. The cutout is 1024×1024 with an alpha background. Full design redraws the composition and setting on an opaque canvas, with square, landscape or portrait output based on the uploaded image.
+Both modes ask for simplified picture-book shapes and a faithful expression and pose. The browser checks the generated background before enabling PNG download. The optional black outer outline is off by default and applies to a cutout without another API call. Each PNG saves the visible canvas in its generated resolution.
 
 ## Security and economics
 Existing owner token STITCH_FORGE_ANALYSIS_TOKEN authenticates submitted images. The separate internal worker token signs background jobs. Existing OPENAI_API_KEY remains server side.
@@ -15,5 +15,5 @@ No changes to existing PES/DST/Cloud Run embroidery systems.
 
 ## Verification
 Automated tests mock the official provider; no paid image call in CI.
-Mobile Chromium test must upload a source, receive a mocked illustration, show image rather than placeholder, download an alpha PNG with pixels identical to the preview, toggle the black outer outline on/off, and confirm no additional API requests.
+The mobile Chromium check compares the PNG pixels with the preview for both modes, checks real alpha and the optional outline, and verifies one request per explicit generation with a mocked provider.
 A real user-supplied capybara/kingfisher edit and human visual evaluation remain necessary to certify quality. Unit tests cannot establish aesthetics, facial fidelity or production-worthiness.

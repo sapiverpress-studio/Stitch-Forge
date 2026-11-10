@@ -4,6 +4,8 @@
   "private": true,
   "description": "Existing Stitch Forge site and protected native artwork jobs",
   "dependencies": {
-    "@netlify/blobs": "11.1.7"
+    "@guillaumemmm/tsembroidery": "3.0.2",
+    "@netlify/blobs": "11.1.7",
+    "fflate": "0.8.2"
   }
 }

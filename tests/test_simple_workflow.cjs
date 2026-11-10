@@ -34,7 +34,7 @@ function page(owner='saved-owner-token'){
   dispatch(name,detail){for(const fn of listeners.get(name)||[])fn({type:name,detail});}};
  const document={querySelector:name=>name==='main'?nodes.get('main'):nodes.get(name.slice(1)),createElement:name=>new Element(name),head:{appendChild(){}}};
  const requestAnimationFrame=cb=>{frames.set(++counter,cb);return counter;},cancelAnimationFrame=id=>frames.delete(id);
- vm.runInNewContext(file,{window,document,Event:class{constructor(type){this.type=type;}},requestAnimationFrame,cancelAnimationFrame});
+ vm.runInNewContext(file,{window,document,location:{pathname:'/'},Event:class{constructor(type){this.type=type;}},requestAnimationFrame,cancelAnimationFrame});
  return {get:id=>nodes.get(id),window,strokes:()=>strokes,flush(){let count=0;while(frames.size&&count++<1500){const [id,fn]=frames.entries().next().value;frames.delete(id);fn();}assert.ok(count<1500);}};
 }
 test('product screen has only four stages, with old tools collapsed and Generate initially disabled',()=>{

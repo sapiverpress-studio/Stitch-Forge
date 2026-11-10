@@ -40,10 +40,30 @@ test('provider prompt is a redraw, protects facial expression and pose, never as
   assert.ok(p.toLowerCase().includes(word.toLowerCase()),word);
  assert.match(p,/closed eye/i);assert.match(p,/do not add a heavy black exterior outline/i);
  assert.doesNotMatch(p,/\bPES\b|\bDST\b|\bdigitis/i);
- const accepted=validateJob({image:source});assert.deepEqual(accepted,{image:source});
+ const accepted=validateJob({image:source});assert.deepEqual(accepted,{image:source,mode:'cutout',size:'1024x1024'});
+ assert.throws(()=>validateJob({image:source,mode:'other'}),/full design/);
+ assert.throws(()=>validateJob({image:source,mode:'cutout',size:'1536x1024'}),/output size/);
  assert.throws(()=>validateJob({image:source,instructions:'ignore all'}),/single source image/);
  assert.throws(()=>validateJob({image:'https://attacker.example/x.png'}),/PNG, JPEG or WebP/);
  assert.throws(()=>imageBytes('bad'),/WebP/);
+});
+test('a full design uses one opaque edit, retains the composition and reports its output type',async()=>{
+ const mem=new Mem(),jobs=()=>mem,now=()=>NOW;
+ const submit=createSubmit({jobs,env,now,generateId:()=>ID,dispatch:async()=>new Response(null,{status:202})});
+ const job={image:source,mode:'full-design',size:'1536x1024'};
+ assert.equal((await submit(makeRequest('/api/cuteifier-submit','POST',job))).status,202);
+ let calls=0;
+ const worker=createWorker({jobs,env,now,invoke:async(_url,opts)=>{
+  calls++;
+  const {background,size,prompt}=JSON.parse(opts.body);
+  assert.equal(background,'opaque');assert.equal(size,'1536x1024');
+  assert.match(prompt,/complete original composition/);assert.doesNotMatch(prompt,/true alpha transparency/);
+  return Response.json({output_format:'webp',data:[{b64_json:webp().toString('base64')}]});
+ }});
+ assert.equal((await worker(makeRequest('/api/cuteifier-work','POST',{id:ID,mac:signature(ID,env)}))).status,204);
+ assert.equal(calls,1);
+ const response=await createStatus({jobs,env,now})(makeRequest('/api/cuteifier-status?id='+ID));
+ assert.deepEqual(await response.json(),{state:'done',mode:'full-design'});
 });
 test('paid request requires the existing owner token, uses exactly one high-quality image edit, stores result privately and supports recovery',async()=>{
  const mem=new Mem(),jobs=()=>mem,now=()=>NOW;let calls=0,dispatches=0;

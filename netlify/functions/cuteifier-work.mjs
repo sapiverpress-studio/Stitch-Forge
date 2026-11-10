@@ -27,6 +27,7 @@ export function createWorker({jobs=getJobs,env=getEnv,invoke=(...args)=>fetch(..
    const input=await store.get('input/'+id);
    if(!input||input.length>2300000)throw Error('Private reference image is missing.');
    const job=JSON.parse(input),key=env('OPENAI_API_KEY');
+   const mode=job.mode||'cutout',size=job.size||'1024x1024';
    if(!key)throw Error('OpenAI editing is not configured.');
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),210000);
    let response;
@@ -38,8 +39,8 @@ export function createWorker({jobs=getJobs,env=getEnv,invoke=(...args)=>fetch(..
       model:'gpt-image-2.5-sunburst',
       images:[{image_url:job.image}],
       prompt:buildPrompt(job),
-      size:'1024x1024',quality:'high',n:1,
-      background:'transparent',output_format:'webp',output_compression:90
+      size,quality:'high',n:1,
+      background:mode==='full-design'?'opaque':'transparent',output_format:'webp',output_compression:90
      })
     });
    }finally{clearTimeout(timer);}
@@ -49,7 +50,7 @@ export function createWorker({jobs=getJobs,env=getEnv,invoke=(...args)=>fetch(..
     throw Error('AI returned an unexpected image format.');
    const image=imageBytes(answer?.data?.[0]?.b64_json);
    await store.set('output/'+id,new Blob([image],{type:'image/webp'}));
-   await store.setJSON('state/'+id,{status:'done',createdAt,bytes:image.length,format:'webp'});
+   await store.setJSON('state/'+id,{status:'done',createdAt,bytes:image.length,format:'webp',mode});
   }catch(error){
    const message=error?.name==='AbortError'?'The AI image editor timed out. Please try again later.':
     String(error?.message||'AI image generation failed.').slice(0,200);

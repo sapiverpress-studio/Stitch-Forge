@@ -18,6 +18,10 @@ a{color:var(--teal)}p{margin-top:0}.lead{color:var(--muted);max-width:700px}
 .card{background:white;border:1px solid var(--line);border-radius:17px;padding:18px;box-shadow:0 8px 30px #1030310c}
 h2{font-size:18px;margin:0 0 14px}
 .field{margin:0 0 16px}.field>label{display:block;font-weight:750;font-size:13px;margin:0 0 7px}
+.formats{border:0;margin:0 0 14px;padding:0}.formats legend{font-weight:750;margin-bottom:6px}
+.formats label{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin:0 0 6px;cursor:pointer}
+.formats label:has(input:checked){border-color:var(--teal);background:#edf7f5}
+.formats input{accent-color:var(--teal);margin-top:5px}.formats small{display:block;color:var(--muted)}
 input,button{font:inherit}input[type=file],input[type=password]{display:block;width:100%;min-height:45px;border-radius:10px;border:1px solid #afc5c0;background:white;color:var(--ink);padding:10px}
 input[type=file]{font-size:12px}input[type=checkbox]{width:20px;height:20px;accent-color:var(--teal);flex:none}
 .check{display:flex;align-items:center;gap:10px;margin:12px 0 18px;font-size:14px;font-weight:650}
@@ -48,13 +52,18 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #eb9a
 <main>
 <a href="/">← Stitch Forge</a>
 <h1>Make your picture cute</h1>
-<p class="lead">Upload a detailed image. Get a genuinely redrawn, simplified illustration that keeps the original character, expression and pose. Add an outer black outline only if you want one, then download the PNG.</p>
+<p class="lead">Turn your artwork into a simpler picture-book illustration. Choose a transparent cutout or a complete scene, then download the result as a PNG.</p>
 <div class="layout">
 <section class="card" aria-label="Make cute artwork">
 <h2>1. Choose the original</h2>
 <div class="field"><label for="sourceFile">Image to simplify</label>
 <input type="file" id="sourceFile" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp">
 <p class="muted">PNG, JPG or WEBP up to 12 MB. Nothing is uploaded until you press the button.</p></div>
+<fieldset class="formats" id="outputMode">
+<legend>Choose an output</legend>
+<label><input name="output" type="radio" value="cutout" checked><span><strong>Transparent cutout</strong><small>One standalone subject with a clear background.</small></span></label>
+<label><input name="output" type="radio" value="full-design"><span><strong>Full design</strong><small>A complete scene with a background. Keeps your layout or adds a setting to an isolated subject.</small></span></label>
+</fieldset>
 <div id="authPanel" hidden>
 <div class="field"><label for="accessToken">Existing Stitch Forge owner access token</label>
 <input id="accessToken" type="password" autocomplete="off" placeholder="Enter owner token">
@@ -70,13 +79,13 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #eb9a
 <h2>2. Review and download</h2>
 <div class="preview">
 <figure><figcaption>Original</figcaption><img id="original" alt="Uploaded artwork" hidden></figure>
-<figure><figcaption>Cute illustration</figcaption><canvas id="result" hidden aria-label="Generated cute illustration preview"></canvas></figure>
+<figure><figcaption id="resultCaption">Cute illustration</figcaption><canvas id="result" hidden aria-label="Generated cute illustration preview"></canvas></figure>
 </div>
 <p class="empty" id="placeholder">Your cute illustration will appear here.</p>
-<label class="check"><input type="checkbox" id="blackOutline">Add black outer outline (optional)</label>
+<label class="check" id="outlineOption" hidden><input type="checkbox" id="blackOutline">Add black outer outline (optional)</label>
 <p id="details"></p>
 <button id="download" class="secondary" type="button" disabled>Download PNG</button>
-<p class="tips">The black outline switch changes only the displayed image and downloaded PNG—no new AI request. Check the eyes, smile, nose and other recognisable details before accepting a result.</p>
+<p class="tips">You can add an outline to a cutout without starting another generation. Check the expression, pose and framing in the preview.</p>
 </section>
 </div>
 </main></body></html>

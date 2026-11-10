@@ -100,3 +100,26 @@ Following any approved staging deployment:
   has been configured. The endpoint remains undeployed.
 - No active hosted service, cost commitment or OpenAI request has occurred.
 - Physical embroidery testing remains absent; PES/DST are experimental.
+
+## Connecting the Fine Detail page
+
+The site at `/fine-detail` sends a verified original PNG only to the
+separately configured Fine Detail worker. The page pauses generation until a
+worker URL is configured. The original homepage uses its existing endpoint.
+
+Once the owner approves the cloud build, build the reviewed release commit
+using the existing private registry. Deploy it as a tagged revision of the
+existing private service with `--no-traffic --tag fine-detail`. Keep the
+service account and worker secret, and set
+`STITCH_FORGE_ARTWORK_TRIAL_ENABLED=1`,
+`STITCH_FORGE_HOME_HYBRID_ENABLED=1`, and
+`STITCH_FORGE_PRESERVE_FINE_DETAIL=1` on that revision.
+For the phone smoke test, allow up to 120 seconds per native phase.
+
+Set `STITCH_FORGE_FINE_DETAIL_ENGINE_URL` to the tagged HTTPS endpoint ending
+in `/v1/digitise` in Netlify's Functions environment. Start in Deploy Previews.
+The existing private caller identity and worker token must be valid for the
+tagged revision. After the authenticated preview test verifies the original
+and both machine files, apply the same endpoint to the site's production
+Functions environment. Leave the standard worker URL and traffic allocation
+in place.

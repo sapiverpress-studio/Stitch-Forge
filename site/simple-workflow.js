@@ -9,11 +9,16 @@ const context=window.StitchForgeAIContext;
 if(!native||!originalInput||!context)return;
 const main=document.querySelector('main'),workspace=main?.querySelector('.workspace');
 if(!main||!workspace)return;
+const fineDetail=/^\/fine-detail\/?$/.test(location.pathname);
+if(fineDetail)document.title='Fine Detail — Sapiver Stitch Forge';
+document.querySelector('#sfToolNav a[href="'+(fineDetail?'/fine-detail':'/')+'"]')?.setAttribute('aria-current','page');
+const generateLabel=fineDetail?'Generate Fine Detail':'Generate embroidery';
 
 const app=document.createElement('section');
-app.id='sfSimpleFlow';app.setAttribute('aria-label','Automatic embroidery creation');
+app.id='sfSimpleFlow';app.setAttribute('aria-label',fineDetail?'Fine Detail embroidery':'Automatic embroidery creation');
 app.innerHTML=[
- '<header class="sf-simple-head"><h1>Image to embroidery</h1><p>Upload a picture, then press Generate. AI analysis, stitches and a ZIP are handled automatically.</p></header>',
+ fineDetail?'<header class="sf-simple-head"><h1>Fine Detail embroidery</h1><p>For artwork with feathers, fur and other small details. Stitch Forge checks the original image for details it can preserve at your chosen size.</p><p id="sfFineWorker" role="status" class="sf-small">Checking the private Fine Detail worker…</p></header>':
+  '<header class="sf-simple-head"><h1>Image to embroidery</h1><p>Upload a picture, then press Generate. AI analysis, stitches and a ZIP are handled automatically.</p></header>',
  '<div class="sf-simple-step"><span class="sf-step">1</span><div class="sf-step-body"><button type="button" class="btn primary" id="sfQuickUpload">Upload image</button>',
  '<p class="sf-small" id="sfQuickFilename">Choose a PNG, JPG or WebP image.</p><img id="sfQuickOriginal" alt="Uploaded source artwork" hidden></div></div>',
  '<div class="sf-simple-step"><span class="sf-step">2</span><div class="sf-step-body">',
@@ -23,7 +28,9 @@ app.innerHTML=[
  '<label class="sf-small" for="sfQuickWidth">Visible embroidery width (mm)</label>',
  '<input id="sfQuickWidth" type="number" min="10" max="250" step="1" value="80" inputmode="decimal">',
  '<p class="sf-small">Measured across the visible artwork, excluding transparent margins. The decoded needle dimensions are shown after generation.</p>',
- '<button type="button" class="btn primary" id="sfQuickGenerate" disabled>Generate embroidery</button>',
+ '<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox"> Black satin edge</label>',
+ '<p class="sf-small">Adds a stitched black border around the main silhouette. Sharp corners and separate shapes may need a larger design or a simpler edge.</p>',
+ '<button type="button" class="btn primary" id="sfQuickGenerate" disabled>'+generateLabel+'</button>',
  '<div id="sfQuickAuth" hidden><label for="sfQuickToken">Private access token — enter once on this device</label>',
  '<input id="sfQuickToken" type="password" autocomplete="off" placeholder="Stitch Forge access token">',
  '<p class="sf-small">Saved in this browser if Remember token is enabled. This is not your OpenAI API key.</p></div>',
@@ -47,8 +54,12 @@ const imageAccept='.png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp';
 originalInput.accept=imageAccept;
 advanced.addEventListener('toggle',()=>{originalInput.accept=advanced.open?oldAccept:imageAccept;});
 main.classList.add('sf-simple-mode');
+if(fineDetail)main.classList.add('sf-fine-mode');
 const css=document.createElement('style');css.textContent=[
  '.sf-simple-mode>.intro{display:none}',
+ '.sf-fine-mode #sfAdvancedTools,.sf-fine-mode #sfCuteifierPromo{display:none}',
+ '#sfToolNav [aria-current=page]{color:#102a31;text-decoration:none}',
+ '#sfFineWorker{margin-top:10px;padding:9px 12px;background:#fff1df;border-radius:8px}',
  '#sfSimpleFlow{max-width:800px;margin:12px auto 24px;display:flex;flex-direction:column;gap:14px}',
  '.sf-simple-head h1{font-size:clamp(1.6rem,5vw,2.2rem);margin:0 0 4px}',
  '.sf-simple-head p{margin:0;color:#4a666b}',
@@ -63,6 +74,7 @@ const css=document.createElement('style');css.textContent=[
  '#sfQuickAuth{margin-top:12px;padding:10px;background:#eff5f3;border-radius:9px}',
  '#sfQuickAuth input{width:100%;height:45px;margin-top:7px;padding:10px;border:1px solid #abbfba;border-radius:8px}',
  '#sfQuickWidth,#sfQuickProductName{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
+ '.sf-satin{min-height:44px;margin-top:7px}.sf-satin input{accent-color:#146e7b;width:19px;height:19px}',
  '.sf-embroidery-individual{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.sf-embroidery-individual .btn{min-width:0;white-space:normal}',
  '@media(max-width:340px){.sf-embroidery-individual{grid-template-columns:1fr}}',
  '#sfQuickStatus{font-weight:600;white-space:pre-wrap}',
@@ -79,7 +91,21 @@ const status=$('#sfQuickStatus'),auth=$('#sfQuickAuth'),token=$('#sfQuickToken')
 const canvas=$('#sfQuickCanvas'),replay=$('#sfQuickReplay');
 const pesButton=$('#sfQuickPES'),dstButton=$('#sfQuickDST'),productName=$('#sfQuickProductName'),advancedName=$('#sfAutoProductName');
 const image=$('#sfQuickOriginal'),empty=$('#sfQuickEmpty'),filename=$('#sfQuickFilename');
-let preview=null,frame=0,run=0,ready=false,busy=false,hasImage=false,failed=false;
+const satin=$('#sfQuickSatin');
+let preview=null,frame=0,run=0,ready=false,busy=false,hasImage=false,failed=false,workerAvailable=!fineDetail;
+function updateGenerate(){generate.disabled=busy||!hasImage||!workerAvailable;}
+if(fineDetail){
+ const note=$('#sfFineWorker');
+ fetch('/api/artwork-job-submit?mode=fine-detail',{cache:'no-store',signal:AbortSignal.timeout(8000)})
+  .then(response=>response.ok?response.json():null)
+  .then(state=>{workerAvailable=state?.available===true;})
+  .catch(()=>{})
+  .finally(()=>{
+   note.hidden=workerAvailable;
+   note.textContent='Fine Detail is waiting for its private embroidery worker. Standard embroidery is available from the menu above.';
+   updateGenerate();
+  });
+}
 function stop(){run++;if(frame)cancelAnimationFrame(frame);frame=0;}
 function reset(text){
  stop();preview=null;ready=false;zip.disabled=true;pesButton.disabled=true;dstButton.disabled=true;replay.disabled=true;
@@ -129,17 +155,17 @@ window.addEventListener('stitchforge:upload-error',event=>{
 window.addEventListener('stitchforge:image-imported',()=>{
  const source=context.getImage();
  hasImage=context.getSourceStatus()==='original';
- reset('Artwork loaded. Tap Generate embroidery.');
+ reset('Artwork loaded. '+(workerAvailable?'Tap '+generateLabel+'.':'Fine Detail generation is paused.'));
  image.hidden=!hasImage;if(hasImage)image.src=source;
  filename.textContent=hasImage?'Image uploaded — ready to generate.':'Re-upload the original PNG, JPG or WebP.';
- generate.disabled=!hasImage;requestAuth();
+ updateGenerate();requestAuth();
 });
 window.addEventListener('stitchforge:design-changed',()=>{
  // The old editor may invalidate a previous native result.
  if(ready)reset('Design changed. Generate a new native trial for this image.');
 });
 generate.addEventListener('click',()=>{
- if(busy||!hasImage)return;
+ if(busy||!hasImage||!workerAvailable)return;
  const wantedWidth=$('#sfQuickWidth'),advancedWidth=$('#sfNativeWidth');
  if(wantedWidth&&advancedWidth){
   const requested=Number(wantedWidth.value);
@@ -164,12 +190,16 @@ generate.addEventListener('click',()=>{
  // default as previously configured; Advanced may disable paid analysis.
  const mode=$('#sfAutoWorkflow');if(mode&&mode.value!=='native'){mode.value='native';mode.dispatchEvent(new Event('change'));}
  reset('Preparing image…');
- failed=false;busy=true;generate.disabled=true;upload.disabled=true;
+ failed=false;busy=true;generate.disabled=true;upload.disabled=true;satin.disabled=true;
  native.click();
  // The source workflow emits completion and failure events. The ZIP is NEVER
  // enabled by a preview, AI proposal or legacy outline export.
 });
 productName.addEventListener('input',()=>{if(advancedName)advancedName.value=productName.value;});
+satin.addEventListener('change',()=>{
+ window.dispatchEvent(new Event('stitchforge:satin-changed'));
+ if(hasImage)reset('Edge setting updated. Tap '+generateLabel+'.');
+});
 token.addEventListener('input',()=>{if(token.value.trim())status.textContent='Token entered. Tap Generate embroidery.';});
 window.addEventListener('stitchforge:workflow-status',e=>{
  if(!busy||typeof e.detail?.message!=='string')return;
@@ -185,8 +215,11 @@ window.addEventListener('stitchforge:native-ready',e=>{
  if(!busy||!p||!Array.isArray(p.segments)||!Array.isArray(p.palette))return;
  ready=true;preview=p;zip.disabled=false;pesButton.disabled=false;dstButton.disabled=false;replay.disabled=false;
  auth.hidden=true;token.value='';
- const d=e.detail?.report?.decoded?.find(x=>x.format==='pes');
- status.textContent='Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes'+(Array.isArray(d.boundsMm)&&d.boundsMm.length===2?', actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':''):'')+'. ZIP ready; physical stitch quality not approved.';
+ const report=e.detail?.report,d=report?.decoded?.find(x=>x.format==='pes');
+ const label=fineDetail?(report?.homeHybrid?.preserveFineDetail?.selected?
+  'Fine Detail used the original artwork. ':'Fine Detail checked the original and kept the standard plan. '):'';
+ status.textContent=label+'Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes'+(Array.isArray(d.boundsMm)&&d.boundsMm.length===2?', actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':''):'')+
+  (report?.satinFinish?'. Black satin edge included.':'.')+' ZIP ready; physical stitch quality not approved.';
  play();
 });
 window.addEventListener('stitchforge:native-error',e=>{
@@ -196,7 +229,7 @@ window.addEventListener('stitchforge:native-error',e=>{
 });
 window.addEventListener('stitchforge:native-idle',()=>{
  if(busy&&!ready&&!failed)reset('Generation stopped or image changed. Press Generate to retry.');
- busy=false;generate.disabled=!hasImage;upload.disabled=false;
+ busy=false;updateGenerate();upload.disabled=false;satin.disabled=false;
 });
 replay.addEventListener('click',play);
 zip.addEventListener('click',()=>{

@@ -65,7 +65,8 @@ function fixture(){
 test('bounded source packet is schema-bound and rejects attempts to inject a phase or secret',()=>{
  assert.equal(validPacket(JSON.stringify(packet)),true);
  for(const forged of [{...packet,phase:'dst'},{...packet,workerToken:'foo'},
-  {...packet,requestId:'notsha'}, {...packet,rgbaGzip:null}])
+  {...packet,requestId:'notsha'}, {...packet,rgbaGzip:null},
+  {...packet,mode:'fine-detail'},{...packet,finish:'anything-else'}])
   assert.equal(validPacket(JSON.stringify(forged)),false);
  assert.equal(expired({createdAt:1000},1000+8*3600_000+1),true);
 });
@@ -129,6 +130,11 @@ test('private V2 full-source input is deleted if background dispatch fails',asyn
  const submit=createSubmit({jobs:()=>jobs,env:environment,
   generateId:()=>ID,
   dispatch:async()=>new Response(null,{status:503})});
+ assert.deepEqual(await (await submit(request('/api/artwork-job-submit?mode=fine-detail'))).json(),{available:false});
+ const closed=await submit(request('/api/artwork-job-submit',{
+  method:'POST',headers,body:JSON.stringify({...body,mode:'fine-detail'})}));
+ assert.equal(closed.status,503);
+ assert.equal(jobs.map.size,0,'fine detail without a worker must not store the source');
  const response=await submit(request('/api/artwork-job-submit',{
   method:'POST',headers,body:JSON.stringify(body)}));
  assert.equal(response.status,502);

@@ -14,7 +14,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 let browser;
 try{
- browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-gpu']});
+ browser=await chromium.launch({headless:true,executablePath:process.env.CUTEIFIER_TEST_CHROMIUM,args:['--no-sandbox','--disable-gpu']});
  const ctx=await browser.newContext({...devices['Pixel 7'],acceptDownloads:true});
  const page=await ctx.newPage(),errors=[],external=[],calls=[];
  page.on('pageerror',e=>errors.push(e.message));
@@ -43,25 +43,33 @@ try{
   return c.toDataURL('image/webp',.96).split(',')[1];
  });
  const webp=Buffer.from(generated,'base64');
+ const scene=Buffer.from(await page.evaluate(()=>{
+  const c=document.createElement('canvas');c.width=640;c.height=480;const g=c.getContext('2d');
+  g.fillStyle='#b0d8d5';g.fillRect(0,0,640,480);
+  g.fillStyle='#79936b';g.fillRect(0,336,640,144);
+  g.fillStyle='#b87a43';g.beginPath();g.ellipse(320,278,138,110,0,0,Math.PI*2);g.fill();
+  return c.toDataURL('image/webp',.96).split(',')[1];
+ }),'base64');
+ let mode='cutout';
  const uuid='24f8b964-e739-4d31-ac72-d6f7b1b01ab2';
  await page.route('**/api/cuteifier-*',async route=>{
   const req=route.request(),p=new URL(req.url()).pathname;
   calls.push({path:p,authorization:req.headers().authorization});
   if(p.endsWith('-submit')){
    const body=req.postDataJSON();
-   assert.deepEqual(Object.keys(body),['image']);
+   assert.deepEqual(Object.keys(body),['image','mode','size']);
    assert.match(body.image,/^data:image\/webp;base64,/);
+   assert.equal(body.size,'1024x1024');
+   mode=body.mode;
    return route.fulfill({status:202,contentType:'application/json',body:JSON.stringify({jobId:uuid})});
   }
-  if(p.endsWith('-status'))return route.fulfill({status:200,contentType:'application/json',body:'{"state":"done"}'});
-  if(p.endsWith('-result'))return route.fulfill({status:200,contentType:'image/webp',body:webp});
+  if(p.endsWith('-status'))return route.fulfill({status:200,json:{state:'done',mode}});
+  if(p.endsWith('-result'))return route.fulfill({status:200,contentType:'image/webp',body:mode==='cutout'?webp:scene});
   return route.fulfill({status:404});
  });
  await page.locator('#sourceFile').setInputFiles({name:'capybara.png',mimeType:'image/png',buffer:Buffer.from(original,'base64')});
  await page.waitForFunction(()=>!document.querySelector('#generate').disabled);
  assert.equal(calls.length,0,'no paid action before generate');
- await page.locator('#blackOutline').check();await page.locator('#blackOutline').uncheck();
- assert.equal(calls.length,0,'optional outline toggle must not cost API requests');
  await page.locator('#generate').click();
  await page.waitForFunction(()=>!document.querySelector('#download').disabled,{timeout:30000});
  assert.equal(await page.locator('#placeholder').isVisible(),false);
@@ -72,10 +80,10 @@ try{
   pixels:Array.from(canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)
  }));
  const baseline=await output();
- async function downloadExact(expected){
+ async function downloadExact(expected,name='capybara-cutout.png'){
   const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('#download').click()]);
   const bytes=await readFile(await dl.path());
-  assert.equal(dl.suggestedFilename(),'capybara-cute.png');
+  assert.equal(dl.suggestedFilename(),name);
   assert.equal(bytes.toString('hex',0,8),'89504e470d0a1a0a');
   assert.equal(bytes.readUInt32BE(16),expected.width);assert.equal(bytes.readUInt32BE(20),expected.height);
   assert.equal(bytes[25],6,'RGBA PNG');
@@ -94,10 +102,20 @@ try{
  await downloadExact(outlined);
  await page.locator('#blackOutline').uncheck();
  assert.deepEqual((await output()).pixels,baseline.pixels,'outline switch must be reversible, no redrawing');
- assert.deepEqual(calls.map(c=>c.path),['/api/cuteifier-submit','/api/cuteifier-status','/api/cuteifier-result']);
+ const round=['/api/cuteifier-submit','/api/cuteifier-status','/api/cuteifier-result'];
+ assert.deepEqual(calls.map(c=>c.path),round);
+ await page.locator('input[value="full-design"]').check();
+ await page.locator('#generate').click();
+ await page.getByRole('button',{name:'Download full design PNG'}).waitFor();
+ assert.equal(await page.locator('#outlineOption').isVisible(),false);
+ const full=await output();
+ assert.equal(full.width,640);assert.equal(full.height,480);
+ assert.ok(full.pixels.every((value,i)=>i%4!==3||value===255));
+ await downloadExact(full,'capybara-full-design.png');
+ assert.deepEqual(calls.map(c=>c.path),[...round,...round]);
  assert.ok(calls.every(c=>c.authorization==='Bearer owner-test-token'));
  assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
- console.log('PASS — Pixel 7 mobile: uploaded original → mocked illustrated image → alpha PNG downloads (outline on/off), no extra paid calls');
+ console.log('PASS — Pixel 7 mobile: true-alpha cutout, reversible outline, and opaque full design exported pixel-for-pixel from one mock edit each');
  await ctx.close();
 }finally{
  if(browser)await browser.close();

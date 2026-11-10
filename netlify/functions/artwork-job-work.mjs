@@ -3,8 +3,9 @@
  * PES6, checks its receipt, then DST and the independent native audit.
  */
 import {createHash} from 'node:crypto';
-import {signed,JOB_ID,getJobs,getEnv,expired,HEADERS} from './lib/artwork-jobs.mjs';
+import {signed,JOB_ID,getJobs,getEnv,expired,fineDetailEndpoint,HEADERS} from './lib/artwork-jobs.mjs';
 import {createArtworkBridge} from './artwork-embroidery.mjs';
+import {addDetailedSatin} from './lib/detailed-satin-export.mjs';
 
 const sha256=value=>createHash('sha256').update(value).digest('hex');
 function reject(what){throw Error(what);}
@@ -27,9 +28,12 @@ export function createWorker({jobs=getJobs,env=getEnv,bridge=createArtworkBridge
    await store.setJSON('state/'+id,{status:'running',createdAt});
    const input=await store.get('input/'+id);
    if(!input||input.length>4000000)reject('Prepared artwork missing or oversized');
-   const packet=JSON.parse(input),owner=env('STITCH_FORGE_ANALYSIS_TOKEN');
+   const {mode,finish,...packet}=JSON.parse(input),owner=env('STITCH_FORGE_ANALYSIS_TOKEN');
    if(!owner)reject('Worker credentials unavailable');
-   const invoke=bridge({upstreamTimeoutMs:180000});
+   const endpoint=mode==='fine-detail'?fineDetailEndpoint(env):'';
+   if(mode==='fine-detail'&&!endpoint)reject('Fine Detail is waiting for its private embroidery worker');
+   const invoke=bridge({upstreamTimeoutMs:180000,
+    ...(endpoint?{getEnv:name=>name==='STITCH_FORGE_ENGINE_URL'?endpoint:env(name)}:{})});
    async function phase(name,extra={}){
     const body=JSON.stringify({...packet,phase:name,...extra});
     const response=await invoke(new Request('https://internal.invalid/api/artwork-embroidery',{
@@ -66,8 +70,10 @@ export function createWorker({jobs=getJobs,env=getEnv,bridge=createArtworkBridge
     const payload=await second.arrayBuffer(),sha=second.headers.get('x-stitch-forge-sha256')||'';
     if(payload.byteLength<100||payload.byteLength>3000000||sha256(Buffer.from(payload))!==sha)
      reject('Native ZIP checksum or size invalid');
-    await store.set('output/'+id,new Blob([payload]));
-    await store.setJSON('state/'+id,{status:'done',createdAt,receipt:first.receipt,sha,
+    const archive=finish==='black_satin_v1'?await addDetailedSatin(payload,packet,first.receipt):payload;
+    await store.set('output/'+id,new Blob([archive]));
+    await store.setJSON('state/'+id,{status:'done',createdAt,receipt:first.receipt,
+     sha:archive===payload?sha:sha256(archive),
      audit:'SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED'});
     await store.delete('input/'+id);
     finished=true;break;

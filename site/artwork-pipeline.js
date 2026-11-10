@@ -68,7 +68,7 @@ function visibleArtworkFrame(rgba,w,h,designWidthMm){
   unmodifiedSourcePixels:true,
   physicalSewoutVerified:false};
 }
-async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null}={}){
+async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null,blackSatin=false}={}){
  if(!['if_needed','off'].includes(texturePolicy))throw Error('Invalid texture policy');
  if(!['visible','canvas'].includes(sizeMode))throw Error('Invalid physical artwork width mode');
  const sizing=sizeMode==='visible'?visibleArtworkFrame(rgba,w,h,imageWidthMm):
@@ -121,7 +121,9 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
    ...(fullSource?{originalPngBase64:b64(originalPngBytes)}:{})};
  if(new TextEncoder().encode(JSON.stringify(packet)).length>3900000)
   throw Error('Full-resolution PNG exceeds the current private submission budget; source data was not truncated');
- return {packet,draft,plan,sizing};
+ const satinPlanSha256=blackSatin?await digest(new TextEncoder().encode(JSON.stringify(
+  dep('StitchForgeDetailedSatin','./detailed-satin.js').plan(rgba,w,h,frameWidthMm)))):null;
+ return {packet,draft,plan,sizing,satinPlanSha256};
 }
 function crc32(bytes){let value=-1;for(const b of bytes){value^=b;for(let j=0;j<8;j++)value=(value>>>1)^(value&1?0xedb88320:0);}return (value^-1)>>>0;}
 async function readArchive(bytes){
@@ -147,16 +149,18 @@ async function readArchive(bytes){
  if(new TextDecoder().decode(files['artwork-trial.pes'].subarray(0,8))!=='#PES0060'||files['artwork-trial.dst'].length<515)throw Error('Native machine files are incomplete');
  return files;
 }
-function previewPacket(p){
- if(p?.schema!=='stitch-forge-decoded-preview-v1'||!Number.isFinite(p.widthMm)||!Number.isFinite(p.heightMm)||p.widthMm<10||p.widthMm>254||p.heightMm<4||p.heightMm>300||!Array.isArray(p.palette)||!p.palette.length||p.palette.length>12||!p.palette.every(c=>/^#[0-9A-F]{6}$/.test(c))||!Array.isArray(p.segments)||p.segments.length>125000)throw Error('Invalid decoded stitch preview');
+function previewPacket(p,maxColours=12){
+ if(p?.schema!=='stitch-forge-decoded-preview-v1'||!Number.isFinite(p.widthMm)||!Number.isFinite(p.heightMm)||p.widthMm<10||p.widthMm>254||p.heightMm<4||p.heightMm>300||!Array.isArray(p.palette)||!p.palette.length||p.palette.length>maxColours||!p.palette.every(c=>/^#[0-9A-F]{6}$/.test(c))||!Array.isArray(p.segments)||p.segments.length>125000)throw Error('Invalid decoded stitch preview');
  for(const line of p.segments)if(!Array.isArray(line)||line.length!==5||!line.slice(0,4).every(Number.isFinite)||line[0]<0||line[2]<0||line[1]<0||line[3]<0||line[0]>p.widthMm||line[2]>p.widthMm||line[1]>p.heightMm||line[3]>p.heightMm||!Number.isInteger(line[4])||line[4]<0||line[4]>=p.palette.length)throw Error('Decoded stitch preview leaves its physical bounds');
  return p;
 }
-async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true}={}){
+async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true,fineDetail=false}={}){
  if(!token||token.length>512)throw Error('Enter your private access token');
  const headers={'Content-Type':'application/json','Authorization':'Bearer '+token};
  if(!isCurrent())throw Error('Source changed before submission');
- const body=JSON.stringify(packed.packet);
+ const satinSha=packed.satinPlanSha256;
+ const body=JSON.stringify({...packed.packet,...(fineDetail?{mode:'fine-detail'}:{}),
+  ...(satinSha?{finish:'black_satin_v1'}:{})});
  if(new TextEncoder().encode(body).length>4000000)throw Error('Artwork job exceeds the private submission limit');
  onProgress('Submitting private embroidery job…');
  const submit=await fetchImpl('/api/artwork-job-submit',{method:'POST',headers,body,signal,cache:'no-store'});
@@ -196,19 +200,31 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
  const bytes=new Uint8Array(await result.arrayBuffer());
  if(await digest(bytes)!==result.headers.get('x-stitch-forge-sha256'))throw Error('Native ZIP checksum failed');
  const files=await readArchive(bytes),receipt=state.receipt;
+ const report=JSON.parse(new TextDecoder().decode(files['machine-report.json']));
+ const finish=report.satinFinish,svgSha=await digest(files['native-artwork-input.svg']);
+ const pesSha=await digest(files['artwork-trial.pes']);
  if(!receipt||receipt.requestId!==packed.packet.requestId||
     !/^[0-9a-f]{64}$/.test(receipt.svgSha256||'')||
     !/^[0-9a-f]{64}$/.test(receipt.pesSha256||'')||
-    await digest(files['artwork-trial.pes'])!==receipt.pesSha256||
-    await digest(files['native-artwork-input.svg'])!==receipt.svgSha256)throw Error('Background PES receipt/source geometry binding failed');
- const report=JSON.parse(new TextDecoder().decode(files['machine-report.json']));
- const preview=previewPacket(JSON.parse(new TextDecoder().decode(files['decoded-preview.json'])));
+    (satinSha?(finish?.type!=='black_satin_v1'||finish.colour!=='#000000'||finish.planSha256!==satinSha||
+     finish.basePesSha256!==receipt.pesSha256||finish.baseSvgSha256!==receipt.svgSha256||
+     !Number.isInteger(finish.needleStitches)||finish.needleStitches<1||
+     report.decoded?.find(d=>d.format==='pes')?.sha256!==pesSha||
+     report.decoded?.find(d=>d.format==='dst')?.sha256!==await digest(files['artwork-trial.dst'])):
+     (finish||pesSha!==receipt.pesSha256||svgSha!==receipt.svgSha256)))
+  throw Error('Background PES receipt/source geometry binding failed');
+ if(fineDetail&&(report.sourceBinding?.originalSourceSha256Verified!==true||
+    typeof report.homeHybrid?.preserveFineDetail?.selected!=='boolean'))
+  throw Error('The private worker did not verify and evaluate the original artwork for Fine Detail');
+ const colourLimit=satinSha?13:12;
+ const preview=previewPacket(JSON.parse(new TextDecoder().decode(files['decoded-preview.json'])),colourLimit);
  const validCount=(n,limit=125000)=>Number.isInteger(n)&&n>=0&&n<=limit;
  if(report.requestId!==packed.packet.requestId||report.source?.sha256!==packed.draft.source.sha256||
     report.source?.width!==packed.draft.source.width||report.source?.height!==packed.draft.source.height||
     report.imageWidthMm!==packed.draft.physical.imageWidthMm||report.machineEligible!==false||
     report.physicalQualityVerified!==false||report.sourceBinding?.foregroundIndependentlyVerified!==true||
-    report.workflow!=='TWO_NATIVE_PHASES_NO_AI'||report.nativeInputSha256!==receipt.svgSha256||
+    report.workflow!==(satinSha?'TWO_NATIVE_PHASES_WITH_SATIN_FINISH':'TWO_NATIVE_PHASES_NO_AI')||
+    report.nativeInputSha256!==svgSha||(satinSha&&preview.palette.at(-1)!=='#000000')||
     preview.requestId!==packed.packet.requestId||
     Math.abs(preview.widthMm-report.imageWidthMm-4)>1e-6||
     Math.abs(preview.heightMm-packed.draft.physical.imageHeightMm-4)>1e-6||
@@ -218,15 +234,15 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
     !Array.isArray(report.decoded)||report.decoded.length!==2||
     new Set(report.decoded.map(v=>v.format)).size!==2||
     !report.decoded.every(v=>['pes','dst'].includes(v.format)&&validCount(v.needleStitches)&&
-      v.needleStitches>=3&&validCount(v.colourChanges)&&v.colourChanges<12&&validCount(v.jumps)&&validCount(v.trims))||
+      v.needleStitches>=3&&validCount(v.colourChanges)&&v.colourChanges<colourLimit&&validCount(v.jumps)&&validCount(v.trims))||
     report.decoded.some(v=>v.needlePointsOutsideWorkingColour!==0||v.needleSegmentsOutsideWorkingColour!==0)||
     report.decoded[0].needleStitches!==report.decoded[1].needleStitches)
    throw Error('Background native report failed independent source, geometry or machine checks');
  if(!isCurrent()||signal?.aborted)throw Error('Artwork changed before native result acceptance');
  return {bytes,report,preview,geometry:files['native-artwork-input.svg'],sourceDraft:packed.draft};
 }
-async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true,background=false}={}){
- if(background)return backgroundGenerate(packed,{token,signal,onProgress,fetchImpl,isCurrent});
+async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fetch.bind(root),isCurrent=()=>true,background=false,fineDetail=false}={}){
+ if(background)return backgroundGenerate(packed,{token,signal,onProgress,fetchImpl,isCurrent,fineDetail});
  if(!token||token.length>512)throw Error('Enter your private access token');
  const {packet}=packed;
  let repairReceipt=null;

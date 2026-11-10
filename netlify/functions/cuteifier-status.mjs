@@ -13,6 +13,7 @@ export function createStatus({jobs=getJobs,env=getEnv,now=()=>Date.now()}={}){
    if(!['queued','running','done','failed'].includes(record.status))
     return json(502,{error:'Invalid image job status'});
    return json(200,{state:record.status,
+    ...(record.status==='done'?{mode:record.mode||'cutout'}:{}),
     ...(record.status==='failed'?{error:record.error||'The AI editor could not finish.'}:{})});
   }catch{return json(503,{error:'Image job status is temporarily unavailable'});}
  };

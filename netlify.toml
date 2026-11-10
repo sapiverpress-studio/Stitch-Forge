@@ -5,6 +5,11 @@
   publish = "site"
   command = "node tools/check_frontend_syntax.cjs && node --test tests/*.cjs tests/*.mjs"
 
+[[redirects]]
+  from = "/fine-detail"
+  to = "/index.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

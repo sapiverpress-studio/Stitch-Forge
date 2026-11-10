@@ -10,6 +10,11 @@ export const HEADERS=Object.freeze({'Cache-Control':'private, no-store','X-Conte
 export const getEnv=name=>globalThis.Netlify?.env?.get(name)??process.env[name];
 export const getJobs=()=>getStore({name:STORE_NAME,consistency:'strong'});
 export const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{...HEADERS,'Content-Type':'application/json'}});
+export function fineDetailEndpoint(env=getEnv){
+ const endpoint=env('STITCH_FORGE_FINE_DETAIL_ENGINE_URL')||'';
+ return env('STITCH_FORGE_ARTWORK_TRIAL_ENABLED')==='1'&&
+  /^https:\/\/[a-z0-9-]+\.run\.app\/v1\/digitise$/i.test(endpoint)?endpoint:'';
+}
 
 function equal(a,b){
  if(typeof a!=='string'||typeof b!=='string')return false;
@@ -55,6 +60,14 @@ export function validPacket(body){
    return false;
   keys.push('originalPngBase64');
  }else if(obj.header.includes('stitch-forge-artwork-request-v2'))return false;
+ if('mode' in obj){
+  if(obj.mode!=='fine-detail'||!keys.includes('originalPngBase64'))return false;
+  keys.push('mode');
+ }
+ if('finish' in obj){
+  if(obj.finish!=='black_satin_v1')return false;
+  keys.push('finish');
+ }
  return Object.keys(obj).sort().join(',')===keys.sort().join(',');
 }
 export async function bodyText(request,max=MAX_BYTES){
