@@ -97,9 +97,11 @@ async function followJob(id,token){
    if(state.state==='done'){
     const picture=await request('/api/cuteifier-result?id='+encodeURIComponent(id),token);
     if(!(picture.headers.get('Content-Type')||'').startsWith('image/webp'))throw Error('The image result was not in the expected format');
-    await loadOutput(await picture.blob());
+    const isTransparent=await loadOutput(await picture.blob());
     storeJob('');
-    message('Cute illustration ready. Check the expression, then download the PNG.');
+    message(isTransparent
+      ?'Cute illustration ready. Check the expression, then download the PNG.'
+      :'The image is available, but the AI did not produce a transparent background. Download it only if an opaque PNG is acceptable.',!isTransparent);
     return;
    }
    if(!['running','queued'].includes(state.state))throw Error('Unexpected image job status');
@@ -123,8 +125,7 @@ async function loadOutput(blob){
   for(let i=3;i<rgba.data.length;i+=4)if(rgba.data[i]===255)opaque++;
   rawPixels=rgba.data;rawWidth=canvas.width;rawHeight=canvas.height;
   drawResult();
-  if(opaque>=canvas.width*canvas.height*.99)
-   message('AI generated an opaque background. The image remains downloadable, but it is not transparent. Review before using.',true);
+  return opaque<canvas.width*canvas.height*.99;
  }finally{URL.revokeObjectURL(url);}
 }
 function drawResult(){
