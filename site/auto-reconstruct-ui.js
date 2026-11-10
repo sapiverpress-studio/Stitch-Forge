@@ -217,7 +217,8 @@ q("#sfAutoRun").onclick=async()=>{
  if(secondaryToken)secondaryToken.value=token;
  if(q('#sfAutoWorkflow').value==='native'){
   const api=window.StitchForgeArtworkPipeline,stamp=revision,width=Number(q('#sfNativeWidth').value),texturePolicy=q('#sfNativeTexture').checked?'if_needed':'off';
-  const blackSatin=q('#sfQuickSatin')?.checked===true;
+  // Fine Detail's satin pass is disabled until its final-file audit is corrected.
+  const blackSatin=!fineDetail&&q('#sfQuickSatin')?.checked===true;
   if(!api){
    const message='Source-native pipeline unavailable; reload the current app.';
    status(message);
