@@ -17,7 +17,7 @@ const generateLabel=fineDetail?'Generate Fine Detail':'Generate embroidery';
 const app=document.createElement('section');
 app.id='sfSimpleFlow';app.setAttribute('aria-label',fineDetail?'Fine Detail embroidery':'Automatic embroidery creation');
 app.innerHTML=[
- fineDetail?'<header class="sf-simple-head"><h1>Fine Detail embroidery</h1><p>For artwork with feathers, fur and other small details. Stitch Forge checks the original image for details it can preserve at your chosen size.</p><p id="sfFineWorker" role="status" class="sf-small">Checking the private Fine Detail worker…</p></header>':
+ fineDetail?'<header class="sf-simple-head"><h1>Fine Detail embroidery</h1><p>For artwork with feathers, fur and other small details. Accepts uploads up to 45 million pixels, including 5000 × 5000. Larger uploads use a private, size-bounded processing copy; your original stays unchanged in the editor.</p><p id="sfFineWorker" role="status" class="sf-small">Checking the private Fine Detail worker…</p></header>':
   '<header class="sf-simple-head"><h1>Image to embroidery</h1><p>Upload a picture, then press Generate. AI analysis, stitches and a ZIP are handled automatically.</p></header>',
  '<div class="sf-simple-step"><span class="sf-step">1</span><div class="sf-step-body"><button type="button" class="btn primary" id="sfQuickUpload">Upload image</button>',
  '<p class="sf-small" id="sfQuickFilename">Choose a PNG, JPG or WebP image.</p><img id="sfQuickOriginal" alt="Uploaded source artwork" hidden></div></div>',
@@ -28,8 +28,10 @@ app.innerHTML=[
  '<label class="sf-small" for="sfQuickWidth">Visible embroidery width (mm)</label>',
  '<input id="sfQuickWidth" type="number" min="10" max="250" step="1" value="80" inputmode="decimal">',
  '<p class="sf-small">Measured across the visible artwork, excluding transparent margins. The decoded needle dimensions are shown after generation.</p>',
- '<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox"> Black satin edge</label>',
- '<p class="sf-small">Adds a stitched black border around the main silhouette. Sharp corners and separate shapes may need a larger design or a simpler edge.</p>',
+ fineDetail?'<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox" disabled> Black satin edge (temporarily unavailable)</label>':
+  '<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox"> Black satin edge</label>',
+ fineDetail?'<p class="sf-small">The optional satin finishing pass is paused while its machine-file audit is corrected. Fine Detail generates without a satin edge for now.</p>':
+  '<p class="sf-small">Adds a stitched black border around the main silhouette. Sharp corners and separate shapes may need a larger design or a simpler edge.</p>',
  '<button type="button" class="btn primary" id="sfQuickGenerate" disabled>'+generateLabel+'</button>',
  '<div id="sfQuickAuth" hidden><label for="sfQuickToken">Private access token — enter once on this device</label>',
  '<input id="sfQuickToken" type="password" autocomplete="off" placeholder="Stitch Forge access token">',
@@ -57,7 +59,9 @@ main.classList.add('sf-simple-mode');
 if(fineDetail)main.classList.add('sf-fine-mode');
 const css=document.createElement('style');css.textContent=[
  '.sf-simple-mode>.intro{display:none}',
- '.sf-fine-mode #sfAdvancedTools,.sf-fine-mode #sfCuteifierPromo{display:none}',
+ '.sf-fine-mode #sfAdvancedTools{display:none}',
+ '.sf-fine-mode #sfCuteifierPromo{display:none!important}',
+ '.sf-simple-head{display:block;background:transparent;color:var(--deep);padding:0;min-width:0}',
  '#sfToolNav [aria-current=page]{color:#102a31;text-decoration:none}',
  '#sfFineWorker{margin-top:10px;padding:9px 12px;background:#fff1df;border-radius:8px}',
  '#sfSimpleFlow{max-width:800px;margin:12px auto 24px;display:flex;flex-direction:column;gap:14px}',
@@ -92,6 +96,7 @@ const canvas=$('#sfQuickCanvas'),replay=$('#sfQuickReplay');
 const pesButton=$('#sfQuickPES'),dstButton=$('#sfQuickDST'),productName=$('#sfQuickProductName'),advancedName=$('#sfAutoProductName');
 const image=$('#sfQuickOriginal'),empty=$('#sfQuickEmpty'),filename=$('#sfQuickFilename');
 const satin=$('#sfQuickSatin');
+if(fineDetail){satin.checked=false;satin.disabled=true;}
 let preview=null,frame=0,run=0,ready=false,busy=false,hasImage=false,failed=false,workerAvailable=!fineDetail;
 function updateGenerate(){generate.disabled=busy||!hasImage||!workerAvailable;}
 if(fineDetail){
@@ -229,7 +234,7 @@ window.addEventListener('stitchforge:native-error',e=>{
 });
 window.addEventListener('stitchforge:native-idle',()=>{
  if(busy&&!ready&&!failed)reset('Generation stopped or image changed. Press Generate to retry.');
- busy=false;updateGenerate();upload.disabled=false;satin.disabled=false;
+ busy=false;updateGenerate();upload.disabled=false;satin.disabled=fineDetail;
 });
 replay.addEventListener('click',play);
 zip.addEventListener('click',()=>{

@@ -217,7 +217,8 @@ q("#sfAutoRun").onclick=async()=>{
  if(secondaryToken)secondaryToken.value=token;
  if(q('#sfAutoWorkflow').value==='native'){
   const api=window.StitchForgeArtworkPipeline,stamp=revision,width=Number(q('#sfNativeWidth').value),texturePolicy=q('#sfNativeTexture').checked?'if_needed':'off';
-  const blackSatin=q('#sfQuickSatin')?.checked===true;
+  // Fine Detail's satin pass is disabled until its final-file audit is corrected.
+  const blackSatin=!fineDetail&&q('#sfQuickSatin')?.checked===true;
   if(!api){
    const message='Source-native pipeline unavailable; reload the current app.';
    status(message);
@@ -227,13 +228,22 @@ q("#sfAutoRun").onclick=async()=>{
   running=true;q('#sfAutoRun').disabled=true;q('#sfAutoCancelNative').disabled=false;nativeAbort=new AbortController();
   const current=()=>revision===stamp&&context.getImage()===source;
   status('Preparing source pixels and colour shapes locally…');
+  let preparedFineDetail=null;
   try{
    const original=new Image();await new Promise((yes,no)=>{original.onload=yes;original.onerror=no;original.src=source;});
-   // Preserve original image bytes once; do not recompute for each fallback
-   // analysis size or silently lower source detail to fit an upload.
-   // The separate Fine Detail route opts into verified full-source transport.
-   const originalPngBytes=fineDetail||window.STITCH_FORGE_V2_FULL_SOURCE_ENABLED===true
-    ? await originalSourcePng(source,original) : null;
+   // Fine Detail accepts large originals without changing the private V2
+   // worker contract. The working copy stays within worker PNG/pixel limits.
+   // The user's original upload remains unchanged in the editor.
+   if(fineDetail&&!window.StitchForgeFineDetailSource)
+    throw Error('Fine Detail image preparation is unavailable; reload the website');
+   preparedFineDetail=fineDetail
+    ? await window.StitchForgeFineDetailSource.prepare(source,original):null;
+   const originalPngBytes=preparedFineDetail?.bytes||
+    (window.STITCH_FORGE_V2_FULL_SOURCE_ENABLED===true
+     ? await originalSourcePng(source,original) : null);
+   const workingSource=preparedFineDetail?.source||source;
+   const sourceWidth=preparedFineDetail?.width||original.naturalWidth;
+   const sourceHeight=preparedFineDetail?.height||original.naturalHeight;
    // Native fill detail is physically bounded. Attempt the finest reasonable
    // resolution first, then reduce *analysis* resolution if there are still too
    // many unsewable working parts. Never resize the physical embroidery width.
@@ -241,20 +251,20 @@ q("#sfAutoRun").onclick=async()=>{
    // in each source packet; the reference image stays untouched in the editor.
    // Establish source-foreground proportions before choosing analysis detail.
    // No geometry is cropped or discarded: the signed server still receives
-   // the entire original-sized reduced source frame.
-   const preliminary=await decoded(source,768);
+   // the complete normalized source frame, with original artwork retained locally.
+   const preliminary=await decoded(workingSource,768);
    const fitted=api.visibleArtworkFrame(preliminary.ctx.getImageData(0,0,
     preliminary.canvas.width,preliminary.canvas.height).data,
     preliminary.canvas.width,preliminary.canvas.height,width);
-   const attempts=api.analysisSizes(fitted.imageWidthMm,original.naturalWidth,original.naturalHeight,texturePolicy);
+   const attempts=api.analysisSizes(fitted.imageWidthMm,sourceWidth,sourceHeight,texturePolicy);
    let packed=null,analysisPixels=null;
    for(const size of [...new Set(attempts)]){
     if(!current()||nativeAbort.signal.aborted)throw Error('Cancelled: original artwork or settings changed');
     status('Preparing source-bound colour regions at '+size+' analysis pixels (longest side); protecting the silhouette and contrasting details…');
-    const {canvas,ctx}=await decoded(source,size);
+    const {canvas,ctx}=await decoded(workingSource,size);
     try{
      packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,
-      {imageWidthMm:width,originalWidth:original.naturalWidth,originalHeight:original.naturalHeight,
+      {imageWidthMm:width,originalWidth:sourceWidth,originalHeight:sourceHeight,
        // The configured V2 worker rebuilds these provisional colour regions
        // from the original. Its native geometry limits are checked separately.
        texturePolicy,maxWorkingParts:originalPngBytes?4500:1500,sizeMode:'visible',
@@ -292,8 +302,9 @@ q("#sfAutoRun").onclick=async()=>{
    window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
    q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoPES').disabled=false;q('#sfAutoDST').disabled=false;q('#sfAutoUndo').disabled=false;
    const r=result.report,d=r.decoded.find(x=>x.format==='pes');
-   if(r.homeHybrid?.preserveFineDetail?.selected===true)aiNote+='Fine detail was traced from the verified original image. ';
-   status(aiNote+'Requested visible width '+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
+   if(r.homeHybrid?.preserveFineDetail?.selected===true)aiNote+='Fine detail was traced from the verified '+(preparedFineDetail?.resized?'processing copy':'original image')+'. ';
+   const processingNote=preparedFineDetail?.resized?'Original '+original.naturalWidth+' × '+original.naturalHeight+' kept locally; private verified processing copy '+sourceWidth+' × '+sourceHeight+'. ':'';
+   status(aiNote+processingNote+'Requested visible width '+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
    window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview:result.preview,report:result.report}}));
    // Preserve verified ZIP auto-download, and expose a re-download button.
    saveBytes(result.bytes,fileName('zip'),'application/zip');
@@ -304,6 +315,7 @@ q("#sfAutoRun").onclick=async()=>{
     window.dispatchEvent(new CustomEvent('stitchforge:native-error',{detail:{message}}));
    }
   }finally{
+   preparedFineDetail?.release();
    running=false;nativeAbort=null;q('#sfAutoRun').disabled=false;q('#sfAutoCancelNative').disabled=true;
    window.dispatchEvent(new Event('stitchforge:native-idle'));
   }return;
