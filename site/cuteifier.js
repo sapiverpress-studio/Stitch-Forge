@@ -1,6 +1,6 @@
-/* Reuses the ORIGINAL Detailed Motif simplification algorithm unchanged.
- * Only addition: download the displayed RGBA canvas as a PNG.
- * No image-generation service, network request or outline post-filter.
+/* Original Detailed Motif simplification algorithm unchanged.
+ * Optional OUTER silhouette outline is applied only when selected.
+ * Download saves precisely the displayed RGBA canvas, without AI/network calls.
  */
 (() => {
 'use strict';
@@ -45,18 +45,22 @@ async function prepareImage(){
    widthMm:Number(q('stitchWidth').value),preset:q('simplify').value,imageOnly:true
   });
   if(current!==stamp)return;
+  const pixels=q('blackOutline').checked
+   ? window.StitchForgeOptionalOutline.outline(illustration.rgba,illustration.width,illustration.height)
+   : illustration.rgba;
   result.width=illustration.width;result.height=illustration.height;
   result.getContext('2d').putImageData(
-   new ImageData(illustration.rgba,illustration.width,illustration.height),0,0);
+   new ImageData(pixels,illustration.width,illustration.height),0,0);
   result.hidden=false;placeholder.hidden=true;ready=true;download.disabled=false;
   details.textContent=illustration.width+' × '+illustration.height+' PNG • '+
-   illustration.palette.length+' colours. Check the simplified image against the original.';
+   illustration.palette.length+' colours'+(q('blackOutline').checked?' • black outer outline':' • no outline')+
+   '. Check the simplified image against the original.';
   message('Simplified illustration ready.');
  }catch(error){if(current===stamp)message('Simplification stopped: '+error.message,true);}
  finally{if(current===stamp)generate.disabled=!selected;}
 }
 generate.addEventListener('click',prepareImage);
-for(const key of ['simplify','stitchWidth']){
+for(const key of ['simplify','stitchWidth','blackOutline']){
  q(key).addEventListener('change',()=>{stamp++;clear();if(selected)message('Settings changed. Select Prepare illustration again.');});
 }
 download.addEventListener('click',()=>{

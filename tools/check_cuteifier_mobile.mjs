@@ -18,7 +18,7 @@ try{
  const ctx=await browser.newContext({...devices['Pixel 7'],acceptDownloads:true});
  const page=await ctx.newPage(),errors=[],external=[];
  page.on('pageerror',e=>errors.push(e.message));
- page.on('request',req=>{if(!req.url().startsWith('http://127.0.0.1:'))external.push(req.url());});
+ page.on('request',req=>{if(!req.url().startsWith('http://127.0.0.1:')&&!req.url().startsWith('blob:http://127.0.0.1:'))external.push(req.url());});
  const pageURL='http://127.0.0.1:'+server.address().port+'/cuteifier.html';
  const response=await page.goto(pageURL,{waitUntil:'domcontentloaded'});
  assert.equal(response.status(),200);
@@ -32,6 +32,7 @@ try{
  });
  await page.locator('#sourceFile').setInputFiles({name:'capybara.png',mimeType:'image/png',buffer:Buffer.from(source,'base64')});
  await page.waitForFunction(()=>!document.querySelector('#generate').disabled);
+ assert.equal(await page.locator('#blackOutline').isChecked(),false,'outline must be optional and off by default');
  await page.locator('#generate').click();
  await page.waitForFunction(()=>!document.querySelector('#download').disabled,{timeout:20000});
  assert.equal(await page.locator('#placeholder').isVisible(),false);
@@ -54,6 +55,28 @@ try{
   return Array.from(ctx.getImageData(0,0,c.width,c.height).data);
  },bytes.toString('base64'));
  assert.deepEqual(decoded,original.pixels,'Downloaded PNG pixels must equal original simplified preview');
+ // Re-run with optional black outline and verify PNG again. The original style
+ // (unchecked) must remain the default, and source analysis stays unchanged.
+ await page.locator('#blackOutline').check();
+ assert.equal(await page.locator('#download').isDisabled(),true,'changing outline invalidates stale preview');
+ await page.locator('#generate').click();
+ await page.waitForFunction(()=>!document.querySelector('#download').disabled,{timeout:20000});
+ const outlined=await page.locator('#result').evaluate(canvas=>({
+  width:canvas.width,height:canvas.height,
+  pixels:Array.from(canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)
+ }));
+ assert.notDeepEqual(outlined.pixels,original.pixels,'optional outline must affect outer edge');
+ const [dl2]=await Promise.all([page.waitForEvent('download'),page.locator('#download').click()]);
+ const bytes2=await readFile(await dl2.path());
+ assert.equal(bytes2.readUInt32BE(16),outlined.width);
+ assert.equal(bytes2.readUInt32BE(20),outlined.height);
+ const checked=await page.evaluate(async base64=>{
+  const img=new Image();img.src='data:image/png;base64,'+base64;await img.decode();
+  const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+  const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+  return Array.from(ctx.getImageData(0,0,c.width,c.height).data);
+ },bytes2.toString('base64'));
+ assert.deepEqual(checked,outlined.pixels,'outlined download must exactly match preview');
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
  assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
  console.log('PASS — original simplifier + exact PNG pixels on Pixel 7 browser');

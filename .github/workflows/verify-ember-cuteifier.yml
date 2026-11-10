@@ -7,6 +7,8 @@ on:
     paths:
       - 'site/cuteifier*'
       - 'site/detailed-motif.js'
+      - 'site/simplifier-outline.js'
+      - 'tests/test_simplifier_outline.cjs'
       - 'tests/test_cuteifier_complex_png.cjs'
       - 'tools/check_cuteifier_mobile.mjs'
       - '.github/workflows/verify-ember-cuteifier.yml'
