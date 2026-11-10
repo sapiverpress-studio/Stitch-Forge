@@ -57,7 +57,9 @@ main.classList.add('sf-simple-mode');
 if(fineDetail)main.classList.add('sf-fine-mode');
 const css=document.createElement('style');css.textContent=[
  '.sf-simple-mode>.intro{display:none}',
- '.sf-fine-mode #sfAdvancedTools,.sf-fine-mode #sfCuteifierPromo{display:none}',
+ '.sf-fine-mode #sfAdvancedTools{display:none}',
+ '.sf-fine-mode #sfCuteifierPromo{display:none!important}',
+ '.sf-simple-head{display:block;background:transparent;color:var(--deep);padding:0;min-width:0}',
  '#sfToolNav [aria-current=page]{color:#102a31;text-decoration:none}',
  '#sfFineWorker{margin-top:10px;padding:9px 12px;background:#fff1df;border-radius:8px}',
  '#sfSimpleFlow{max-width:800px;margin:12px auto 24px;display:flex;flex-direction:column;gap:14px}',
