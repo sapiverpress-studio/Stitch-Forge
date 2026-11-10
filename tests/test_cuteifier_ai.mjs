@@ -34,8 +34,10 @@ class Store{
  async get(k,opts={}){
   const v=this.data.get(k);if(v===undefined)return null;
   if(opts.type==='json')return JSON.parse(v);
-  if(opts.type==='arrayBuffer')return Buffer.from(v).buffer.slice(
-    Buffer.from(v).byteOffset,Buffer.from(v).byteOffset+Buffer.from(v).byteLength);
+  if(opts.type==='arrayBuffer'){
+   const bytes=Buffer.from(v);
+   return bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
+  }
   return v;
  }
  async delete(k){this.data.delete(k);}
