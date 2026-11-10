@@ -254,7 +254,9 @@ q("#sfAutoRun").onclick=async()=>{
     try{
      packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,
       {imageWidthMm:width,originalWidth:original.naturalWidth,originalHeight:original.naturalHeight,
-       texturePolicy,maxWorkingParts:1500,sizeMode:'visible',
+       // The configured V2 worker rebuilds these provisional colour regions
+       // from the original. Its native geometry limits are checked separately.
+       texturePolicy,maxWorkingParts:originalPngBytes?4500:1500,sizeMode:'visible',
        originalPngBytes});
      analysisPixels=canvas.width+' × '+canvas.height;
      break;
@@ -289,6 +291,7 @@ q("#sfAutoRun").onclick=async()=>{
    window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
    q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoPES').disabled=false;q('#sfAutoDST').disabled=false;q('#sfAutoUndo').disabled=false;
    const r=result.report,d=r.decoded.find(x=>x.format==='pes');
+   if(r.homeHybrid?.preserveFineDetail?.selected===true)aiNote+='Fine detail was traced from the verified original image. ';
    status(aiNote+'Requested visible width '+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
    window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview:result.preview,report:result.report}}));
    // Preserve verified ZIP auto-download, and expose a re-download button.

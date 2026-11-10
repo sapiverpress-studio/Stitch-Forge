@@ -110,6 +110,16 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
     remapped = np.zeros((h, w), dtype=np.uint8)
     for index, colour in zip(used, colours):
         remapped[native_labels == index] = sorted_colours.index(colour) + 1
+    detail_evidence = None
+    if (os.environ.get('STITCH_FORGE_PRESERVE_FINE_DETAIL', '0') == '1'
+            and original_binding.get('originalSourceSha256Verified') is True):
+        from fine_detail_regions import preserve_fine_detail
+        raw = base64.b64decode(packet['originalPngBase64'], validate=True)
+        with Image.open(BytesIO(raw)) as source_png:
+            source_pixels = np.asarray(source_png.convert('RGBA').resize((w, h), Image.Resampling.LANCZOS))
+        remapped, detail_evidence = preserve_fine_detail(
+            source_pixels[:, :, :3], mask, remapped, sorted_colours,
+            original_plan['physical']['scaleMmPerPixel'])
     regions, components = regions_from_labels(remapped, sorted_colours)
     if not np.array_equal(remapped > 0, mask) or components <= 0:
         raise ValueError("Hybrid lost source pixels during colour ownership")
@@ -157,4 +167,9 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         "physicalSewoutVerified": False,
         "machineApproved": False,
     }
+    if detail_evidence is not None:
+        info['preserveFineDetail'] = detail_evidence
+        if detail_evidence['selected']:
+            info['analysisLongestSide'] = max(w, h)
+            info['sourceFullResolutionDimensionsForPlan'] = original_binding['originalPixelDimensionsVerified']
     return new_plan, binding, info

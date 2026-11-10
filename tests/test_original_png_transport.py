@@ -11,6 +11,7 @@ import json
 import sys
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -112,6 +113,48 @@ class OriginalPngTransportTests(unittest.TestCase):
         packet['requestId']=sha256(packet['header'].encode()+raw+labels).hexdigest()
         with self.assertRaisesRegex(ValueError,'dimensions'):
             decode_packet(packet)
+
+    def test_fine_detail_trace_keeps_thin_mark_without_sewing_isolated_specks(self):
+        from fine_detail_regions import preserve_fine_detail
+
+        foreground = np.zeros((96, 128), dtype=bool)
+        foreground[8:-8, 8:-8] = True
+        foreground[36:44, 30:38] = False
+        baseline = np.zeros_like(foreground, dtype=np.uint8)
+        baseline[foreground] = 2
+        baseline[22:70, 92:110] = 1
+        source = np.zeros((*foreground.shape, 3), dtype=np.uint8)
+        source[baseline == 2] = (43, 142, 172)
+        source[baseline == 1] = (20, 32, 50)
+        source[16:18, 17:34] = (20, 32, 50)
+        source[49, 49] = (20, 32, 50)
+        source[53:64, 57:72] = (20, 32, 50)
+
+        labels, report = preserve_fine_detail(
+            source, foreground, baseline, ['#142032', '#2B8EAC'], .2)
+        self.assertTrue(report['selected'])
+        np.testing.assert_array_equal(labels > 0, foreground)
+        self.assertEqual(labels[16, 22], 1)
+        self.assertEqual(labels[49, 49], 2)
+        self.assertGreater(report['candidateEdgesNearColourBoundary'],
+                           report['baselineEdgesNearColourBoundary'])
+
+    def test_worker_fine_detail_only_uses_verified_original(self):
+        from home_live_bridge import derive_hybrid_plan
+
+        image = illustration('opaque').resize((464, 400), Image.Resampling.NEAREST)
+        with patch.dict('os.environ', {'STITCH_FORGE_PRESERVE_FINE_DETAIL': '1'}):
+            for packet, has_original in ((browser_packet(illustration()), False),
+                                         (v2_packet(image), True)):
+                with self.subTest(has_original=has_original):
+                    plan, meta, identity, binding = decode_packet(packet)
+                    first, evidence, report = derive_hybrid_plan(packet, plan, meta, identity, binding)
+                    self.assertEqual(first['physical'], plan['physical'])
+                    self.assertEqual(first['source'], plan['source'])
+                    self.assertEqual(first['summary']['sourcePixels'], plan['summary']['sourcePixels'])
+                    self.assertEqual('preserveFineDetail' in report, has_original)
+                    self.assertEqual(derive_hybrid_plan(packet, plan, meta, identity, binding),
+                                     (first, evidence, report))
 
 
 if __name__=='__main__':

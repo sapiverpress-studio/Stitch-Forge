@@ -8,17 +8,17 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | MD-2.71 source integrated into main; V2 browser default OFF; automatic straight satin opt-in only; detailed-art quality HOLD |
-| Last updated | 2026-11-03 (Europe/London) |
-| Last independently checked source | MD-2.71 isolated native tests [synthetic satin](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41620357275), [licensed two-phase](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41620570692), [combined V1 browser + native regression](https://github.com/sapiverpress-studio/Stitch-Forge/actions/runs/41645882625). The last regression must be PASS before source integration; none establishes physical quality. |
+| Document version | Fine-detail trial on `fix/kingfisher-source-detail-no-deploy`; deployment HOLD |
+| Last updated | 2026-11-10 (Europe/London) |
+| Last independently checked source | Fine-detail branch with local phone-sized browser and native PES/DST checks on private bird artwork and the licensed macaw. See E-091. |
 | Default branch | `main` |
-| Development branch | MD-2.70 full-original PNG packet and MD-2.71 bounded satin sources integrated to main at owner request, both inactive by default. Isolated historical feature branches retained. Next curved/tapered work to be performed on another isolated branch. |
+| Development branch | `fix/kingfisher-source-detail-no-deploy` based on `fb2fb6b75e5997c626d7de0371a1f78a60ffcf68`. Other motif and satin trials are tracked on separate branches. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Deployment | GitHub source integration only in this session. No Netlify / Cloud Run production deploy or traffic change. User previously confirmed MD-2.67 worker serving 100% traffic, and MD-2.67 Kingfisher ZIP confirmed live hybrid use. Source MD-2.70/71 are NOT live. |
+| Deployment | Netlify production verified at `fb2fb6b75e5997c626d7de0371a1f78a60ffcf68`. The fine-detail trial was exercised locally. Hosted worker revision and rollout of the trial remain pending. |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
-| External Ink/Stitch or pyembroidery integration | Real pinned Ink/Stitch 3.3.0 and independent native PES/DST audit passed on licensed macaw, butterfly and rose in isolated GitHub CI; no physical stitch-out or source-identical Kingfisher test. No hosted worker called by this continuation. |
+| External Ink/Stitch or pyembroidery integration | Ink/Stitch 3.3.0 and pyembroidery 1.5.1 passed the local browser-to-file and colour containment checks for the kingfisher and macaw. Hosted and physical checks are pending. |
 
 **Full verified progress, known blockers and gated next-action plan:** [STITCH FORGE — Verified Progress and Roadmap](docs/STITCH_FORGE_PROGRESS_AND_ROADMAP.md). The Home hybrid remains isolated; passing PES/DST CI does not constitute sewn-product approval.
 
@@ -80,6 +80,12 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Original-source fine-detail trial (2026-11-10)
+
+At 90 mm, the standard phone-sized browser path reduced the flying-bird input from 1145 × 1374 to 221 × 265 before sending it to the worker. The verified-original trial kept a 368 × 441 working grid and delivered the full PNG through the existing private V2 transport. The browser allows up to 4,500 provisional regions only on this configured V2 path. The worker still independently validates the packet and applies the existing native SVG and needle-path limits.
+
+With `STITCH_FORGE_HOME_HYBRID_ENABLED=1`, `STITCH_FORGE_PRESERVE_FINE_DETAIL=1` and the browser's existing full-source opt-in, the worker traces colours on the native grid from the authenticated original. Physically substantial regions and long thin marks survive, while small fragments join nearby colours within the same foreground island. The trial selects the refined plan only when it improves both measured colour error and source-edge retention, keeps the original thread palette and stays within 450 working regions. Existing native fill and running stitch planning converts those regions to real PES and DST.
 
 ### Current app/native integration (MD-2.49, 2026-10-30)
 
@@ -577,6 +583,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-005 | P0 | Import exact v0.3 HTML prototype | DONE-VERIFIED | File exists on dev branch; SHA-256 equals reference |
 | SF-006 | P0 | Recover/import browser tests and fixtures | IN-PROGRESS | Playwright test passing on source-controlled artifact |
 | SF-007 | P0 | Establish CI for browser, source lint and test evidence | IN-PROGRESS | Branch checks show green on documented commits |
+| SF-091 | P1 | Preserve source feather and marking boundaries in the native digitiser | IN-PROGRESS | Local original-source browser and Ink/Stitch evidence in E-091. Hosted timing, routing and fabric test remain release gates. |
 | SF-008 | P0 | Define versioned project schema | IN-PROGRESS | Schema, migrations and round-trip tests |
 | SF-009 | P0 | Threat model uploaded SVG/raster and processing | IN-PROGRESS | Security tests + limits documented |
 | SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
@@ -686,6 +693,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-090 | P0 | Existing private worker update and owner manual website release | **AUTHORISED / ACCESS AND HOSTED ACCEPTANCE PENDING** | No gcloud/Docker/authenticated deploy access in initial runtime; preserve service IAM/secrets/resource caps. Netlify-only deploy is insufficient. |
 
 ## 10. Test evidence register
+
+- **E-091 (2026-11-10, fine-detail trial):** 204 Node regressions passed. A 390 px Chromium test exercised the normal upload, generate and download controls with the real repository job handlers, loopback worker, Ink/Stitch 3.3.0 and pyembroidery 1.5.1. The private flying-bird trial at 90 mm produced matching 40,988-needle PES and DST at 90.0 × 99.6 mm, with 646 PES trims and zero out-of-colour points or segments. The earlier browser trial produced 753 trims. The standard browser packet and local native worker produced 24,126 needles and 348 trims at the same requested width. On the final browser working grid, the coarse and refined geometry accounted for 16,773 and 26,501 of 50,361 strong internal source-edge samples near a colour boundary. The separately licensed macaw at 80 mm produced matching 15,034-needle files, 143 PES trims and zero out-of-colour points or segments. Both final browser tests verified standalone downloads byte-for-byte against the ZIP. Tests used an isolated worker with a 120 s per-export limit. Private artwork, plans and generated files are excluded from Git.
 
 - **E-090 (2026-10-30, MD-2.49):** 161 Node, 89 Python, 19 browser regressions and four real local app/native image cases pass. Actual protected repository Function, loopback WSGI, Ink/Stitch and independent decoder. Private case 51,902 needles, bounded 823-pixel repair, 0 outside points/segments. Public cases 13,328 / 14,180 / 17,891. Initial time/budget/source/density/native-option failures preserved in investigation record. No hosted/physical approval. Logs and owner-inspectable actual evidence under `docs/test-evidence/MD-2.49-app-native/`.
 
@@ -815,6 +824,8 @@ Do not create empty decorative folders or claim an implementation exists because
 
 ## 11. Risk register and mitigations
 
+The fine-detail trial adds needle paths and trims where separate colour marks survive. It remains opt-in and must be evaluated for travel, local density, fabric performance and hosted worker time before rollout.
+
 **MD-2.48:** numeric source-colour containment and real file generation are now verified for local artwork trials. They do not settle feature loss, routing/trim cost, fabric density/underlay or physical quality. Native trial flags never grant hosted/app export approval.
 
 
@@ -838,6 +849,7 @@ Do not create empty decorative folders or claim an implementation exists because
 
 | Date | ID | Decision / proposal | Reason / status |
 | --- | --- | --- | --- |
+| 2026-11-10 | D-029 | Refine original colour boundaries before choosing stitch paths | Preserve meaningful detail in physical units, keep the foreground and thread palette, and retain the signed native audit. V1 jobs use their existing plan. |
 | 2026-10-30 | D-028 | Keep source preparation, native trial and physical approval distinct | PES6 RGB and source-contained needles are genuine evidence; texture loss, unresolved details and excessive travel remain explicit blockers. Optional physical smoothing/routing is local research only. |
 | 2026-10-28 | D-001 | Use dedicated `sapiverpress-studio/Stitch-Forge` repository | User authorised; separates work from Pattern Forge and live sites |
 | 2026-10-28 | D-002 | Keep v0.3 explicitly labelled experimental | Raster silhouette and naive fill are not professional digitising |
@@ -899,6 +911,10 @@ Do not create empty decorative folders or claim an implementation exists because
 ---
 
 ## 13. Dated work log / progress journal
+
+### 2026-11-10 — Fine-detail trace on the existing embroidery route
+
+Branch `fix/kingfisher-source-detail-no-deploy` adds the colour tracing in `fine_detail_regions.py`, wires it into `home_live_bridge.py`, and allows the configured original-PNG browser path to reach the existing worker with a larger provisional region count. Regression tests cover thin marks, isolated specks, unchanged foreground, deterministic planning and the verified-original gate. E-091 records the private benchmark. Separate hosted worker and browser rollout requires approval and a fabric test.
 
 ### 2026-10-30 — MD-2.49 original recovery and app/native integration
 
