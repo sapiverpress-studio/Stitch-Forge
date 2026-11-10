@@ -142,3 +142,11 @@ test('private V2 full-source input is deleted if background dispatch fails',asyn
   'Original customer source bytes must not remain stored after dispatch refusal');
  assert.equal(jobs.map.get('state/'+ID).status,'failed');
 });
+
+test('Fine Detail recognises a tagged multi-label Cloud Run host and refuses other hosts',async()=>{
+ const readiness=request('/api/artwork-job-submit?mode=fine-detail');
+ for(const [host,available] of [['fine-detail---worker-abc-ew.a.run.app',true],['fine-detail.example.net',false]]){
+  const env=key=>key==='STITCH_FORGE_FINE_DETAIL_ENGINE_URL'?'https://'+host+'/v1/digitise':environment(key);
+  assert.deepEqual(await (await createSubmit({env})(readiness)).json(),{available});
+ }
+});

@@ -1,6 +1,7 @@
 /* Private, bounded artwork jobs. No artwork or credentials are public. */
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
+import { cloudRunAudience } from './cloud-run-auth.mjs';
 
 export const MAX_BYTES=4000000;
 export const MAX_AGE_MS=8*60*60*1000;
@@ -11,9 +12,9 @@ export const getEnv=name=>globalThis.Netlify?.env?.get(name)??process.env[name];
 export const getJobs=()=>getStore({name:STORE_NAME,consistency:'strong'});
 export const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{...HEADERS,'Content-Type':'application/json'}});
 export function fineDetailEndpoint(env=getEnv){
- const endpoint=env('STITCH_FORGE_FINE_DETAIL_ENGINE_URL')||'';
- return env('STITCH_FORGE_ARTWORK_TRIAL_ENABLED')==='1'&&
-  /^https:\/\/[a-z0-9-]+\.run\.app\/v1\/digitise$/i.test(endpoint)?endpoint:'';
+ if(env('STITCH_FORGE_ARTWORK_TRIAL_ENABLED')!=='1')return '';
+ const endpoint=env('STITCH_FORGE_FINE_DETAIL_ENGINE_URL');
+ try{cloudRunAudience(endpoint);return endpoint;}catch{return '';}
 }
 
 function equal(a,b){
