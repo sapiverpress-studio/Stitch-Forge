@@ -239,7 +239,7 @@ q("#sfAutoRun").onclick=async()=>{
     ? await window.StitchForgeFineDetailSource.prepare(source,original):null;
    const originalPngBytes=preparedFineDetail?.bytes||
     (window.STITCH_FORGE_V2_FULL_SOURCE_ENABLED===true
-     ? await originalSourcePng(source,original):null);
+     ? await originalSourcePng(source,original) : null);
    const workingSource=preparedFineDetail?.source||source;
    const sourceWidth=preparedFineDetail?.width||original.naturalWidth;
    const sourceHeight=preparedFineDetail?.height||original.naturalHeight;
@@ -250,7 +250,7 @@ q("#sfAutoRun").onclick=async()=>{
    // in each source packet; the reference image stays untouched in the editor.
    // Establish source-foreground proportions before choosing analysis detail.
    // No geometry is cropped or discarded: the signed server still receives
-   // the entire original-sized reduced source frame.
+   // the complete normalized source frame, with original artwork retained locally.
    const preliminary=await decoded(workingSource,768);
    const fitted=api.visibleArtworkFrame(preliminary.ctx.getImageData(0,0,
     preliminary.canvas.width,preliminary.canvas.height).data,
