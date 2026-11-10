@@ -10,6 +10,7 @@ on:
       - "site/ember-prep-core.js"
       - "site/detailed-motif.js"
       - "tests/test_ember_prep.cjs"
+      - "tests/test_cuteifier_complex_png.cjs"
       - ".github/workflows/verify-ember-cuteifier.yml"
   pull_request:
     branches: [main]
