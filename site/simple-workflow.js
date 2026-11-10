@@ -17,7 +17,7 @@ const generateLabel=fineDetail?'Generate Fine Detail':'Generate embroidery';
 const app=document.createElement('section');
 app.id='sfSimpleFlow';app.setAttribute('aria-label',fineDetail?'Fine Detail embroidery':'Automatic embroidery creation');
 app.innerHTML=[
- fineDetail?'<header class="sf-simple-head"><h1>Fine Detail embroidery</h1><p>For artwork with feathers, fur and other small details. Stitch Forge checks the original image for details it can preserve at your chosen size.</p><p id="sfFineWorker" role="status" class="sf-small">Checking the private Fine Detail worker…</p></header>':
+ fineDetail?'<header class="sf-simple-head"><h1>Fine Detail embroidery</h1><p>For artwork with feathers, fur and other small details. Accepts uploads up to 45 million pixels, including 5000 × 5000. Larger uploads use a private, size-bounded processing copy; your original stays unchanged in the editor.</p><p id="sfFineWorker" role="status" class="sf-small">Checking the private Fine Detail worker…</p></header>':
   '<header class="sf-simple-head"><h1>Image to embroidery</h1><p>Upload a picture, then press Generate. AI analysis, stitches and a ZIP are handled automatically.</p></header>',
  '<div class="sf-simple-step"><span class="sf-step">1</span><div class="sf-step-body"><button type="button" class="btn primary" id="sfQuickUpload">Upload image</button>',
  '<p class="sf-small" id="sfQuickFilename">Choose a PNG, JPG or WebP image.</p><img id="sfQuickOriginal" alt="Uploaded source artwork" hidden></div></div>',
