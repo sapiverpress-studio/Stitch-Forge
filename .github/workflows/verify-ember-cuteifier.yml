@@ -1,17 +1,17 @@
-name: Verify Simplifier PNG
+name: Verify Capybara-Quality Cuteifier
 on:
   push:
     branches:
       - main
-      - fix/restore-capaybara-simplifier-png-20261110
+      - feature/capabara-quality-cuteifier-20261110
     paths:
-      - 'site/cuteifier*'
-      - 'site/detailed-motif.js'
-      - 'site/simplifier-outline.js'
-      - 'tests/test_simplifier_outline.cjs'
-      - 'tests/test_cuteifier_complex_png.cjs'
-      - 'tools/check_cuteifier_mobile.mjs'
-      - '.github/workflows/verify-ember-cuteifier.yml'
+      - "site/cuteifier*"
+      - "site/simplifier-outline.js"
+      - "netlify/functions/cuteifier-*.mjs"
+      - "netlify/functions/lib/cuteifier-jobs.mjs"
+      - "tests/test_cuteifier_ai.mjs"
+      - "tools/check_cuteifier_mobile.mjs"
+      - ".github/workflows/verify-ember-cuteifier.yml"
   pull_request:
     branches: [main]
 permissions:
@@ -24,15 +24,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Install existing dependencies
+      - name: Install pinned application dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Check JS and page script paths
+      - name: Check frontend source syntax
         run: node tools/check_frontend_syntax.cjs
-      - name: Run full repository tests
+      - name: Run complete repository tests
         run: node --test tests/*.cjs tests/*.mjs
-      - name: Install Chromium test browser
+      - name: Install Playwright Chromium
         run: |
           npm install --no-save --ignore-scripts playwright
           npx playwright install --with-deps chromium
-      - name: Test mobile image simplification and downloaded PNG
+      - name: Verify mobile image upload, private response and both PNG downloads
         run: node tools/check_cuteifier_mobile.mjs

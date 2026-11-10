@@ -1,4 +1,19 @@
-# Restored original image simplifier with PNG download
-The /cuteifier.html page now uses the existing Detailed Motif illustration preparation engine from the earlier capybara workflow. It does not call AI image-generation endpoints or create a new visual style. The result canvas receives exactly the RGBA returned from StitchForgeDetailedMotif.prepare (body default, 80 mm reference width, 480 px analysis limit), and the Download simplified PNG button calls canvas.toBlob('image/png') on that same canvas.
-Black outer silhouette outline is optional and OFF by default. When enabled, a separate outline module changes only the border pixels immediately inside the subject's external transparency; it does not trace internal colour regions. No AI redraw, tokens, Embroidery API or upscaling is involved. The original native PES/DST trial is not modified. The imageOnly flag only bypasses the embroidery-object count gate for PNG export; it does not change pixels. Source and output remain in the browser.
-QA: GitHub workflow checks all source and tests; mobile Chromium smoke checks upload/preview, hiding the placeholder, downloading an actual PNG and exact pixel equality between result canvas and file in both outline-off and outline-on states.
+# Cuteifier — image-to-image character illustration
+Latest build: 10 November 2026.
+
+## What the feature does
+This is NOT embroidery digitising, colour-quantisation, posterisation, or the legacy detailed motif tracer.
+The capybara's “Prescan (tidied)” visual concept is the desired quality standard, not a previously proven working engine.
+One explicit Make cute illustration click sends the uploaded original to the official OpenAI Images Edits API (model gpt-image-2.5-sunburst, high quality, 1024×1024, transparent WebP output). It prompts a genuine storybook-style redraw that preserves identity, pose, smile, muzzle, eye closure and whiskers.
+After a result, the browser keeps the native image pixels. The optional black *outer silhouette* outline is **off** by default and toggles without another API call. Download PNG saves exactly the visible canvas in native resolution.
+
+## Security and economics
+Existing owner token STITCH_FORGE_ANALYSIS_TOKEN authenticates submitted images. The separate internal worker token signs background jobs. Existing OPENAI_API_KEY remains server side.
+Private artwork is stored temporarily in Netlify Blobs, removed from the job after processing, and generated output expires in 4 hours. Scheduled cleanup purges expired jobs. One paid edit per click; no automatic provider retries, and a Recover previous generation button prevents duplicate charges on reload.
+The OpenAI API incurs metered image-generation cost. No fixed per-image price is promised. Never expose the secret key or source imagery in errors.
+No changes to existing PES/DST/Cloud Run embroidery systems.
+
+## Verification
+Automated tests mock the official provider; no paid image call in CI.
+Mobile Chromium test must upload a source, receive a mocked illustration, show image rather than placeholder, download an alpha PNG with pixels identical to the preview, toggle the black outer outline on/off, and confirm no additional API requests.
+A real user-supplied capybara/kingfisher edit and human visual evaluation remain necessary to certify quality. Unit tests cannot establish aesthetics, facial fidelity or production-worthiness.
