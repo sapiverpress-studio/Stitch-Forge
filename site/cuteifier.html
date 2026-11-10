@@ -1,70 +1,82 @@
 <!doctype html>
-<html lang="en-GB">
-<head>
+<html lang="en-GB"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102a31"><meta name="robots" content="noindex,nofollow">
 <link rel="icon" type="image/webp" href="/assets/sapiver-press-logo.webp">
-<title>Simplify Artwork | Sapiver Stitch Forge</title>
+<title>Cuteifier — Sapiver Stitch Forge</title>
 <style>
-:root{--ink:#102a31;--accent:#146e7b;--muted:#526a70;--paper:#eef3f2;--line:#dbe5e3}
+:root{--ink:#102a31;--teal:#097582;--paper:#edf3f1;--line:#d8e6e2;--muted:#51686a}
 *{box-sizing:border-box}[hidden]{display:none!important}
 body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{background:var(--ink);color:white;padding:13px max(15px,calc((100vw - 1060px)/2));display:flex;align-items:center;gap:12px}
-header img{width:48px;height:48px;object-fit:cover;border-radius:10px}header strong{display:block}header small{font-size:12px;color:#bbcdce}
-main{max-width:1060px;margin:auto;padding:16px 14px 45px}a{color:var(--accent)}
-h1{font-size:clamp(24px,5vw,34px);line-height:1.15;letter-spacing:-.025em;margin:6px 0 8px}
-.lead{color:var(--muted);margin:0 0 15px}
-.layout{display:grid;grid-template-columns:minmax(270px,360px) minmax(0,1fr);gap:16px;align-items:start}
-.card{background:white;border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:0 12px 30px #102a310a}
-h2{font-size:17px;margin:0 0 14px}.field{margin-bottom:13px}
-.field label{font-size:13px;font-weight:700;display:block;margin-bottom:6px}
-input,button,select{font:inherit}
-input[type=file],select,input[type=number]{width:100%;border:1px solid #b8c9c5;border-radius:9px;min-height:46px;background:white;padding:10px;color:var(--ink)}
-input[type=file]{font-size:12px}
-input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
-.option{display:flex;align-items:center;gap:10px;margin:14px 0}.option label{font-size:14px;font-weight:650}
-button{display:block;width:100%;min-height:46px;background:var(--accent);color:white;border:0;border-radius:10px;padding:11px;font-weight:750;cursor:pointer}
-button.secondary{background:var(--ink)}button:disabled{background:#a9b7b6;cursor:not-allowed}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #f4ad73;outline-offset:2px}
-.help{color:var(--muted);font-size:12px;margin:5px 0 0}
-#status{margin:13px 0 0;padding:12px;border-radius:10px;background:#e8f2f0;font-size:13px}
-#status.error{background:#fff0eb;color:#8f382f}
+header{background:var(--ink);color:white;display:flex;align-items:center;gap:12px;padding:13px max(15px,calc((100vw - 1100px)/2))}
+header img{width:44px;height:44px;object-fit:cover;border-radius:10px}
+header strong{display:block;font-size:15px}header small{display:block;color:#bad0d0;font-size:12px}
+main{max-width:1060px;margin:auto;padding:18px 14px 64px}
+h1{font-size:clamp(25px,5vw,36px);letter-spacing:-.025em;line-height:1.16;margin:8px 0}
+a{color:var(--teal)}p{margin-top:0}.lead{color:var(--muted);max-width:700px}
+.layout{display:grid;grid-template-columns:minmax(270px,370px) minmax(0,1fr);gap:16px;align-items:start}
+.card{background:white;border:1px solid var(--line);border-radius:17px;padding:18px;box-shadow:0 8px 30px #1030310c}
+h2{font-size:18px;margin:0 0 14px}
+.field{margin:0 0 16px}.field>label{display:block;font-weight:750;font-size:13px;margin:0 0 7px}
+input,button{font:inherit}input[type=file],input[type=password]{display:block;width:100%;min-height:45px;border-radius:10px;border:1px solid #afc5c0;background:white;color:var(--ink);padding:10px}
+input[type=file]{font-size:12px}input[type=checkbox]{width:20px;height:20px;accent-color:var(--teal);flex:none}
+.check{display:flex;align-items:center;gap:10px;margin:12px 0 18px;font-size:14px;font-weight:650}
+button{min-height:48px;background:var(--teal);color:#fff;border:0;border-radius:10px;cursor:pointer;padding:12px 14px;width:100%;font-weight:750}
+button.secondary{background:var(--ink)}
+button:disabled{background:#a1b4b2;cursor:not-allowed}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #eb9a60;outline-offset:2px}
+.muted{font-size:12px;color:var(--muted);margin:7px 0 0}
+#authPanel{background:#f1f7f5;border-radius:11px;padding:12px;border:1px solid var(--line);margin:10px 0 16px}
+#authPanel .field{margin:0}
+#status{padding:12px;border-radius:10px;background:#e6f2f0;font-size:13px;min-height:45px;margin:14px 0 0}
+#status.error{background:#fff1ea;color:#813324}
 .preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.preview figure{margin:0;min-width:0}.preview figcaption{font-size:13px;font-weight:700;margin:0 0 6px}
-.preview img,.preview canvas{display:block;width:100%;height:auto;object-fit:contain;border:1px solid #cadbd5;border-radius:11px;background-color:white;background-image:linear-gradient(45deg,#edf0ee 25%,transparent 25%),linear-gradient(-45deg,#edf0ee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#edf0ee 75%),linear-gradient(-45deg,transparent 75%,#edf0ee 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}
-.empty{margin:13px 0;padding:20px;border:1px dashed #bfd1ca;border-radius:10px;text-align:center;color:var(--muted)}
-#details{font-size:12px;color:var(--muted);margin:10px 0}
-@media(max-width:800px){.layout{grid-template-columns:1fr}.card{padding:14px}.preview{gap:7px}.preview figcaption{font-size:12px}}
+.preview figure{margin:0;min-width:0}.preview figcaption{font-size:13px;font-weight:750;margin-bottom:6px}
+.preview img,.preview canvas{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;border:1px solid #cbd9d6;border-radius:11px;background-color:white;background-image:linear-gradient(45deg,#ecf0ee 25%,transparent 25%),linear-gradient(-45deg,#ecf0ee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ecf0ee 75%),linear-gradient(-45deg,transparent 75%,#ecf0ee 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}
+.empty{border:1px dashed #b8cec7;text-align:center;padding:24px 16px;border-radius:11px;color:var(--muted);margin:14px 0}
+#details{font-size:12px;color:var(--muted);margin:11px 0}
+.tips{font-size:12px;color:#415a60;background:#edf4f1;padding:12px;border-radius:9px;margin-top:14px}
+#resume{margin-top:10px}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.card{padding:14px}.preview{gap:7px}.preview figcaption{font-size:12px}}
 </style>
-<script src="/detailed-motif.js" defer></script>
+<script src="/private-token-storage.js" defer></script>
 <script src="/simplifier-outline.js" defer></script>
 <script src="/cuteifier.js" defer></script>
 </head>
 <body>
-<header><img src="/assets/sapiver-press-logo.webp" alt="Sapiver Press logo"><div><strong>SAPIVER STITCH FORGE</strong><small>Original artwork simplifier</small></div></header>
+<header><img src="/assets/sapiver-press-logo.webp" alt="Sapiver Press logo"><div><strong>SAPIVER STITCH FORGE</strong><small>Cuteifier · illustrative redraw</small></div></header>
 <main>
-<a href="/">← Stitch Forge homepage</a>
-<h1>Simplify artwork</h1>
-<p class="lead">The original illustration simplifier, with an optional black outer outline and a download button. Save the exact result as a PNG.</p>
+<a href="/">← Stitch Forge</a>
+<h1>Make your picture cute</h1>
+<p class="lead">Upload a detailed image. Get a genuinely redrawn, simplified illustration that keeps the original character, expression and pose. Add an outer black outline only if you want one, then download the PNG.</p>
 <div class="layout">
-<section class="card">
-<h2>1. Prepare illustration</h2>
-<div class="field"><label for="sourceFile">Upload image</label><input id="sourceFile" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"><p class="help">PNG, JPG or WEBP, up to 12 MB.</p></div>
-<div class="field"><label for="simplify">Simplification</label><select id="simplify">
-<option value="body" selected>Smoother body fills (original default)</option>
-<option value="balanced">Balanced</option><option value="detail">Preserve more detail</option><option value="clean">Fewer shapes</option></select></div>
-<div class="field"><label for="stitchWidth">Design width reference (mm)</label><input id="stitchWidth" type="number" min="30" max="200" step="1" value="80">
-<p class="help">Uses the original simplifier's detail scale.</p></div>
-<div class="option"><input id="blackOutline" type="checkbox"><label for="blackOutline">Add black outer outline (optional)</label></div>
-<button type="button" id="generate" disabled>Prepare illustration</button><p id="status" role="status" aria-live="polite">Choose an image.</p>
-</section>
-<section class="card">
-<h2>2. Preview and download</h2>
-<div class="preview">
-<figure><figcaption>Original</figcaption><img id="original" alt="Original artwork" hidden></figure>
-<figure><figcaption>Simplified</figcaption><canvas id="result" hidden aria-label="Simplified illustration"></canvas></figure>
+<section class="card" aria-label="Make cute artwork">
+<h2>1. Choose the original</h2>
+<div class="field"><label for="sourceFile">Image to simplify</label>
+<input type="file" id="sourceFile" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp">
+<p class="muted">PNG, JPG or WEBP up to 12 MB. Nothing is uploaded until you press the button.</p></div>
+<div id="authPanel" hidden>
+<div class="field"><label for="accessToken">Existing Stitch Forge owner access token</label>
+<input id="accessToken" type="password" autocomplete="off" placeholder="Enter owner token">
+<p class="muted">Uses your existing access token; not your OpenAI API key.</p></div>
+<label class="check"><input type="checkbox" id="rememberToken">Remember this token on my device</label>
 </div>
-<p class="empty" id="placeholder">Your simplified illustration will appear here.</p>
-<p id="details"></p><button id="download" class="secondary" type="button" disabled>Download simplified PNG</button>
-<p class="help">The PNG matches the preview exactly. Black outlining affects only the outer silhouette when selected; no AI redraw or extra colour tracing.</p>
-</section></div></main></body></html>
+<button id="generate" type="button" disabled>Make cute illustration</button>
+<p class="muted">Each press makes one paid OpenAI image edit. The website does not charge or regenerate automatically.</p>
+<button class="secondary" id="resume" type="button" hidden>Recover previous generation</button>
+<p id="status" role="status" aria-live="polite">Choose an image to begin.</p>
+</section>
+<section class="card" aria-label="Review cute illustration">
+<h2>2. Review and download</h2>
+<div class="preview">
+<figure><figcaption>Original</figcaption><img id="original" alt="Uploaded artwork" hidden></figure>
+<figure><figcaption>Cute illustration</figcaption><canvas id="result" hidden aria-label="Generated cute illustration preview"></canvas></figure>
+</div>
+<p class="empty" id="placeholder">Your cute illustration will appear here.</p>
+<label class="check"><input type="checkbox" id="blackOutline">Add black outer outline (optional)</label>
+<p id="details"></p>
+<button id="download" class="secondary" type="button" disabled>Download PNG</button>
+<p class="tips">The black outline switch changes only the displayed image and downloaded PNG—no new AI request. Check the eyes, smile, nose and other recognisable details before accepting a result.</p>
+</section>
+</div>
+</main></body></html>

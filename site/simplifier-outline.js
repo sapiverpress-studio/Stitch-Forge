@@ -5,7 +5,7 @@
 'use strict';
 function outline(rgba,w,h,{thickness=2}={}){
  if(!(rgba instanceof Uint8Array||rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||
-   w<16||h<16||w*h>640*640||rgba.length!==4*w*h)throw Error('Invalid artwork dimensions');
+   w<16||h<16||w*h>1600*1600||rgba.length!==4*w*h)throw Error('Invalid artwork dimensions');
  if(!Number.isInteger(thickness)||thickness<1||thickness>5)throw Error('Invalid outline width');
  const n=w*h,exterior=new Uint8Array(n),queue=new Int32Array(n);
  let count=0;
