@@ -4,6 +4,7 @@ on:
     branches:
       - feature/cuteifier-ember-png-20261110
       - 'fix/cuteifier-*'
+      - feature/ai-cuteifier-redraw-20261110
       - main
     paths:
       - "site/cuteifier*"
@@ -11,6 +12,9 @@ on:
       - "site/detailed-motif.js"
       - "tests/test_ember_prep.cjs"
       - "tests/test_cuteifier_complex_png.cjs"
+      - "tests/test_cuteifier_ai.mjs"
+      - "netlify/functions/cuteifier-*.mjs"
+      - "netlify/functions/lib/cuteifier-jobs.mjs"
       - ".github/workflows/verify-ember-cuteifier.yml"
   pull_request:
     branches: [main]
