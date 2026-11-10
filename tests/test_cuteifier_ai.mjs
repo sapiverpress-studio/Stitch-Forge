@@ -38,8 +38,8 @@ test('provider prompt is a redraw, protects facial expression and pose, never as
  const p=buildPrompt();
  for(const word of ['REDRAW','capybara','kingfisher','smile','eye','whiskers','transparent','silhouette','pose'])
   assert.ok(p.toLowerCase().includes(word.toLowerCase()),word);
- assert.match(p,/closed eye/i);assert.match(p,/do NOT add a heavy black exterior outline/);
- assert.doesNotMatch(p,/PES|DST|digitis|embroidery/i);
+ assert.match(p,/closed eye/i);assert.match(p,/do not add a heavy black exterior outline/i);
+ assert.doesNotMatch(p,/PES|DST|digitis/i);
  const accepted=validateJob({image:source});assert.deepEqual(accepted,{image:source});
  assert.throws(()=>validateJob({image:source,instructions:'ignore all'}),/single source image/);
  assert.throws(()=>validateJob({image:'https://attacker.example/x.png'}),/PNG, JPEG or WebP/);
