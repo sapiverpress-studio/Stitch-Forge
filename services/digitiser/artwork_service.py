@@ -18,7 +18,7 @@ import shutil
 import os
 from contextlib import contextmanager
 
-from artwork_packet import decode_packet,encoded
+from artwork_packet import decode_packet,encoded,inflate
 from artwork_trial import build_trial_svg,texture_trial,run_trial,validate_native_payload,checked_masks
 from repair_policy import choose_source_preserving_repair
 from inkstitch_cli import _run_engine,DigitiserError
@@ -67,11 +67,13 @@ def repair_objects(receipt,identity,secret,now):
     if (not isinstance(receipt,dict) or
             set(receipt) not in ({'requestId','objectIds','issuedAt','mac'},
                                  {'requestId','objectIds','issuedAt','mac','mode'}) or
-            ('mode' in receipt and receipt['mode'] not in ('fill_preserving','source_scanline','sectioned_tatami'))):
+            ('mode' in receipt and receipt['mode'] not in (
+                'fill_preserving','source_scanline','sectioned_tatami','original_layout'))):
         raise ValueError('Invalid native repair receipt')
     ids=receipt['objectIds'];unsigned={k:v for k,v in receipt.items() if k!='mac'}
     if (receipt['requestId']!=identity or isinstance(receipt['issuedAt'],bool) or not isinstance(receipt['issuedAt'],int)
             or not 0<=now-receipt['issuedAt']<=900 or not isinstance(ids,list) or not 1<=len(ids)<=12
+            or (receipt.get('mode') == 'original_layout' and ids != ['layout'])
             or any(not isinstance(i,str) or len(i)>30 for i in ids) or sorted(set(ids))!=ids
             or not isinstance(receipt['mac'],str) or not hmac.compare_digest(receipt['mac'],repair_signature(unsigned,secret))):
         raise ValueError('Changed or stale native repair receipt')
@@ -151,6 +153,11 @@ def export_one(svg,directory,executable,fmt):
 
 def process_phase(obj,*,executable,secret,epoch=None):
     plan,meta,identity,evidence=decode_packet(obj)
+    now=int(time.time() if epoch is None else epoch)
+    signed_objects=repair_objects(obj.get('repairReceipt'),identity,secret,now)
+    mode=obj['repairReceipt'].get('mode') if signed_objects else None
+    original_layout=mode=='original_layout'
+    overrides=() if original_layout else signed_objects
     hybrid_profile=None
     if os.environ.get("STITCH_FORGE_HOME_HYBRID_ENABLED","0")=="1":
         # The browser supplies a source-verified pixel packet. The private
@@ -159,11 +166,26 @@ def process_phase(obj,*,executable,secret,epoch=None):
         from home_live_bridge import derive_hybrid_plan
         plan,evidence,hybrid_profile=derive_hybrid_plan(
             obj,plan,meta,identity,evidence)
-    plan,svg=prepared(plan,meta['texturePolicy']);now=int(time.time() if epoch is None else epoch)
-    overrides=repair_objects(obj.get('repairReceipt'),identity,secret,now)
+    if not original_layout and os.environ.get('STITCH_FORGE_ADAPTIVE_ARTWORK', '0') == '1':
+        import numpy as np
+        from PIL import Image
+        from artwork_layout import prepare_layout
+
+        masks, scale = checked_masks(plan)
+        w, h = plan['source']['width'], plan['source']['height']
+        rgba = np.frombuffer(inflate(obj['rgbaGzip'], w*h*4), dtype=np.uint8).reshape(h, w, 4)
+        if evidence.get('originalSourceSha256Verified') is True:
+            with Image.open(BytesIO(base64.b64decode(obj['originalPngBase64'], validate=True))) as image:
+                rgba = np.asarray(image.convert('RGBA').resize((w, h), Image.Resampling.LANCZOS))
+        plan = prepare_layout(plan, masks, rgba[:, :, :3], scale,
+                              allow_consolidation=meta['texturePolicy'] == 'if_needed')
+        layout = plan['adaptiveArtworkLayout']
+        if layout['colourConsolidated'] or layout.get('sourceMarksRestored'):
+            evidence = {**evidence, 'sourceMeanRgbDistance': layout['outputMeanRgbDistance'],
+                        'sourcePixelsBeyondRgb60': layout['outputPixelsBeyondRgb60']}
+    plan,svg=prepared(plan,meta['texturePolicy'])
     # Legacy signed receipts remain readable for an in-flight request; new
     # repairs preserve the original fill rather than replacing it with linework.
-    mode=obj['repairReceipt'].get('mode') if overrides else None
     fill_repair=mode=='fill_preserving'
     scanline_repair=mode=='source_scanline'
     sectioned_repair=mode=='sectioned_tatami'
@@ -189,23 +211,32 @@ def process_phase(obj,*,executable,secret,epoch=None):
             section_overrides=overrides if sectioned_repair else (),
             running_overrides=overrides if mode is None else ())
         if any(r['needlePointsOutsideWorkingColour'] or r['needleSegmentsOutsideWorkingColour'] for r in report['decoded']):
-            if overrides:raise ValueError('Decoded source-containment audit failed')
-            ids=source_repair_candidates(plan,report)
             if os.environ.get('STITCH_FORGE_LOCAL_DIAGNOSTICS_DIR'):
                 (Path(tmp)/'failed-native-pass-report.json').write_text(json.dumps(report,separators=(',',':')))
-            repair_mode=(choose_source_preserving_repair(plan,ids)
-                if os.environ.get('STITCH_FORGE_AUTO_SOURCE_REPAIR','0')=='1'
-                else 'sectioned_tatami' if os.environ.get(
-                    'STITCH_FORGE_SECTIONED_TATAMI_REPAIR','0')=='1'
-                else 'source_scanline' if os.environ.get(
-                    'STITCH_FORGE_SOURCE_SCANLINE_REPAIR','0')=='1'
-                else 'fill_preserving')
+            if signed_objects:raise ValueError('Decoded source-containment audit failed')
+            try:
+                ids=source_repair_candidates(plan,report)
+                repair_mode=(choose_source_preserving_repair(plan,ids)
+                    if os.environ.get('STITCH_FORGE_AUTO_SOURCE_REPAIR','0')=='1'
+                    else 'sectioned_tatami' if os.environ.get(
+                        'STITCH_FORGE_SECTIONED_TATAMI_REPAIR','0')=='1'
+                    else 'source_scanline' if os.environ.get(
+                        'STITCH_FORGE_SOURCE_SCANLINE_REPAIR','0')=='1'
+                    else 'fill_preserving')
+            except ValueError:
+                if not plan.get('adaptiveArtworkLayout'):raise
+                ids=['layout']
+                repair_mode='original_layout'
             receipt={'requestId':identity,'objectIds':ids,'issuedAt':now,
                      'mode':repair_mode}
             receipt['mac']=repair_signature(receipt,secret)
             return {'status':'BOUNDED_NATIVE_REPAIR_REQUIRED','requestId':identity,'repairReceipt':receipt}
-        report.update(requestId=identity,sourceBinding=evidence,nativePasses=2 if overrides else 1,maxNativePasses=2,
+        report.update(requestId=identity,sourceBinding=evidence,nativePasses=2 if signed_objects else 1,maxNativePasses=2,
             nativeInputSha256=sha256(svg).hexdigest(),workflow='TWO_NATIVE_PHASES_NO_AI',machineEligible=False)
+        if original_layout:
+            report['stitchPlanning']['adaptiveArtworkLayout']={
+                'colourDecision':'original_layout_after_native_audit','colourConsolidated':False,
+                'sourceForegroundPreserved':True}
         if hybrid_profile is not None:
             report['homeHybrid']=hybrid_profile
             if 'home_hybrid_likeness_unverified' not in report['blockers']:
@@ -218,12 +249,25 @@ def process_phase(obj,*,executable,secret,epoch=None):
             'decoded-preview.json contains actual decoded needle segments, not a stitch simulation.\n'
             'DST needs the requested external colour order in the report; PES6 preserves working-palette RGB.\n')
         readme+='native-artwork-input.svg is the actual editable native input; inspect/edit it in Ink/Stitch before any physical trial.\n'
+        entries=[('artwork-trial.pes',pes),('artwork-trial.dst',dst),
+                 ('machine-report.json',json.dumps(report,separators=(',',':')).encode()),
+                 ('decoded-preview.json',json.dumps(preview,separators=(',',':')).encode()),
+                 ('native-artwork-input.svg',svg),('READ_ME_NOT_APPROVED.txt',readme.encode())]
+        if report['stitchPlanning'].get('adaptiveArtworkLayout'):
+            checklist=(
+                'PHYSICAL SEW-OUT RECORD\n\n'
+                'Use a spare swatch with the intended fabric, stabiliser, needle and thread.\n'
+                'Match the design dimensions in machine-report.json and keep that report with the sample.\n'
+                'For DST, set the thread order listed in requestedColourOrder.\n'
+                'Record the file format and SHA256, date, operator, machine model, hoop and settings.\n'
+                'Record actual stitched width and height, elapsed time, thread breaks and manual cuts.\n'
+                'Inspect the face and reverse for gaps, bunching, exposed travel, shifting and puckering.\n'
+                'Photograph the front and reverse, and record pass, fail or adjustments needed.\n'
+                'The result applies to this file, size and machine and material setup.\n')
+            entries.append(('SEW_OUT_CHECKLIST.txt',checklist.encode()))
         result=BytesIO()
         with zipfile.ZipFile(result,'w',zipfile.ZIP_DEFLATED) as z:
-            for name,data in [('artwork-trial.pes',pes),('artwork-trial.dst',dst),
-                ('machine-report.json',json.dumps(report,separators=(',',':')).encode()),
-                ('decoded-preview.json',json.dumps(preview,separators=(',',':')).encode()),
-                ('native-artwork-input.svg',svg),('READ_ME_NOT_APPROVED.txt',readme.encode())]:z.writestr(name,data)
+            for name,data in entries:z.writestr(name,data)
         payload=result.getvalue()
         if len(payload)>3000000:raise ValueError('Native artwork result exceeds download budget')
         return payload

@@ -8,14 +8,14 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | Fine-detail trial on `fix/kingfisher-source-detail-no-deploy`; deployment HOLD |
+| Document version | Adaptive artwork workflow. Production release held for sew-out. |
 | Last updated | 2026-11-10 (Europe/London) |
-| Last independently checked source | Fine-detail branch with local phone-sized browser and native PES/DST checks on private bird artwork and the licensed macaw. See E-091. |
+| Last independently checked source | Adaptive worker branch with paired native PES/DST checks across artwork and local Standard and Fine Detail browser tests. See E-092. |
 | Default branch | `main` |
-| Development branch | `fix/kingfisher-source-detail-no-deploy` based on `fb2fb6b75e5997c626d7de0371a1f78a60ffcf68`. Other motif and satin trials are tracked on separate branches. |
+| Development branch | `feature/adaptive-artwork-quality` based on `a5c1f50065f6f65f9ec97095b0d1dc90d0a3a794`. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Deployment | Netlify production verified at `fb2fb6b75e5997c626d7de0371a1f78a60ffcf68`. The fine-detail trial was exercised locally. Hosted worker revision and rollout of the trial remain pending. |
+| Deployment | Owner authorised pushing and deploying the adaptive workflow for a trial on 2026-11-10. Local browser and worker evidence is recorded below. Hosted validation and physical sewing are separate checks. |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
 | External Ink/Stitch or pyembroidery integration | Ink/Stitch 3.3.0 and pyembroidery 1.5.1 passed the local browser-to-file and colour containment checks for the kingfisher and macaw. Hosted and physical checks are pending. |
@@ -80,6 +80,12 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Adaptive artwork workflow (2026-11-10)
+
+Standard and Fine Detail share the adaptive planner when the private worker sets `STITCH_FORGE_ADAPTIVE_ARTWORK=1`. It measures colour groups and contrasting marks at the requested embroidery size. A simpler plan must meet the source colour and foreground checks. Small, uniform, contrasting marks can be restored using verified source pixels and an existing thread colour. Eligible fills stay whole, with a bounded grid fallback for complex shapes. The validated tonal contour option handles suitable curved forms while the other jobs use the existing geometric fill and running stitches.
+
+The paired native check compares needle positions and colour-block order in both formats. A failed containment check can request one signed retry of the prior layout if the existing local repair cannot be assigned safely. Downloaded ZIPs include a physical sew-out checklist and the app displays decoded PES trims and unresolved details. Commercial approval requires fabric-specific validation of the current trial settings.
 
 ### Original-source fine-detail trial (2026-11-10)
 
@@ -562,8 +568,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | M1 — preserve prototype | Import v0.3 source and reproducible tests | IN-PROGRESS | Uploaded file hash matches local baseline; browser tests run from repo |
 | M2 — secure original-artwork import | PNG/JPG/SVG; separate editable regions | IN-PROGRESS | User moth importer safe; no silent loss; security tests |
 | M3 — proper engine spike | working Ink/Stitch CLI for known SVG fixture | IN-PROGRESS | Pinned engine, command/output logs, reproducible CI/local recipe |
-| M4 — geometry and stitching | running, bean, satin and fill regions with routing | TODO | Unit fixtures, independent command plan; user-controlled stitch params |
-| M5 — validated machine exports | PES/DST and selected others | TODO | Independent decoder verification + capability matrix |
+| M4 — geometry and stitching | running, bean, satin and fill regions with routing | IN-PROGRESS | Shared adaptive artwork plan tested locally. Material tuning and real fabric evidence remain open. |
+| M5 — validated machine exports | PES/DST and selected others | IN-PROGRESS | Paired native files verified locally in E-092. Hosted and machine compatibility checks remain open. |
 | M6 — real stitch proof | at least one real machine/hoop/fabric setup | BLOCKED | Approved physical stitch-out + documented iterations |
 | M7 — production packaging | tested ZIP, thread chart, descriptions, test notices | BLOCKED | Design/size/format-specific QA, zero false claims |
 | M8 — possible retail software product | licensing, security, support, pricing, demand study | DEFERRED | Separate commercial decision after user tests |
@@ -584,6 +590,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-006 | P0 | Recover/import browser tests and fixtures | IN-PROGRESS | Playwright test passing on source-controlled artifact |
 | SF-007 | P0 | Establish CI for browser, source lint and test evidence | IN-PROGRESS | Branch checks show green on documented commits |
 | SF-091 | P1 | Preserve source feather and marking boundaries in the native digitiser | IN-PROGRESS | Local original-source browser and Ink/Stitch evidence in E-091. Hosted timing, routing and fabric test remain release gates. |
+| SF-092 | P1 | Adapt native artwork planning to the design and prepare paired sew-outs | IN-PROGRESS | E-092 records the shared worker, native comparisons and mobile flows. Remaining gates are actual sew-outs and hosted validation. |
 | SF-008 | P0 | Define versioned project schema | IN-PROGRESS | Schema, migrations and round-trip tests |
 | SF-009 | P0 | Threat model uploaded SVG/raster and processing | IN-PROGRESS | Security tests + limits documented |
 | SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
@@ -693,6 +700,23 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-090 | P0 | Existing private worker update and owner manual website release | **AUTHORISED / ACCESS AND HOSTED ACCEPTANCE PENDING** | No gcloud/Docker/authenticated deploy access in initial runtime; preserve service IAM/secrets/resource caps. Netlify-only deploy is insufficient. |
 
 ## 10. Test evidence register
+
+- **E-092 (2026-11-10).** Compared the same source packet and finished width with the adaptive worker enabled and disabled. Used Ink/Stitch 3.3.0, pyembroidery 1.5.1 and 390 px Chromium against the local job handlers and worker. Each reported pair passed the position, colour order and source containment checks. The table counts decoded PES trim commands. A machine may handle those commands differently.
+
+  | Case | Requested width | Earlier PES trims | Revised PES trims |
+  | --- | ---: | ---: | ---: |
+  | Knit fox | 80 mm | 766 | 93 |
+  | Butterfly | 80 mm | 210 | 109 |
+  | Heron | 80 mm | 388 | 203 |
+  | Macaw | 80 mm | 143 | 108 |
+  | Kingfisher, Fine Detail | 90 mm | 646 | 513 |
+  | Kingfisher, Standard packet | 90 mm | 348 | 209 |
+  | Rose | 80 mm | 65 | 65 |
+  | Synthetic logo | 65 mm | 13 | 21 |
+
+  The logo recovered all eight missing dots. The butterfly recovered small wing markings and still had 42 unresolved small components. The Fine Detail kingfisher still needs routing review. An early contour attempt failed containment on the heron and macaw. The verified revision uses tatami for those source plans. Standard passed a phone-sized black-satin export on the logo. Fine Detail passed a phone-sized export from a transparent 5,000 × 5,000 PNG upload using its private processing copy.
+
+  `node --test tests/*.cjs tests/*.mjs` passed all 223 tests. The focused Python run with the pinned engine passed 55 tests, including a deliberately failed audit followed by a signed, independently checked fallback. Browser download checks verified the separate PES and DST match the ZIP and the checklist is present. The older mocked AI reconstruction browser fixture fails on the base revision. Private source and generated machine files stay outside the repository. Physical sew-outs, hosted timing and production release remain open.
 
 - **E-091 (2026-11-10, fine-detail trial):** 204 Node regressions passed. A 390 px Chromium test exercised the normal upload, generate and download controls with the real repository job handlers, loopback worker, Ink/Stitch 3.3.0 and pyembroidery 1.5.1. The private flying-bird trial at 90 mm produced matching 40,988-needle PES and DST at 90.0 × 99.6 mm, with 646 PES trims and zero out-of-colour points or segments. The earlier browser trial produced 753 trims. The standard browser packet and local native worker produced 24,126 needles and 348 trims at the same requested width. On the final browser working grid, the coarse and refined geometry accounted for 16,773 and 26,501 of 50,361 strong internal source-edge samples near a colour boundary. The separately licensed macaw at 80 mm produced matching 15,034-needle files, 143 PES trims and zero out-of-colour points or segments. Both final browser tests verified standalone downloads byte-for-byte against the ZIP. Tests used an isolated worker with a 120 s per-export limit. Private artwork, plans and generated files are excluded from Git.
 
@@ -824,6 +848,8 @@ Do not create empty decorative folders or claim an implementation exists because
 
 ## 11. Risk register and mitigations
 
+The adaptive planner reduces excess routing on the tested inputs and can still leave many trims or unresolved marks. Some fine features need additional needle moves. Keep the disclosed feature and routing review, and use a matched physical test on the target material before tuning density, pull compensation or release settings.
+
 The fine-detail trial adds needle paths and trims where separate colour marks survive. It remains opt-in and must be evaluated for travel, local density, fabric performance and hosted worker time before rollout.
 
 **MD-2.48:** numeric source-colour containment and real file generation are now verified for local artwork trials. They do not settle feature loss, routing/trim cost, fabric density/underlay or physical quality. Native trial flags never grant hosted/app export approval.
@@ -849,6 +875,7 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 
 | Date | ID | Decision / proposal | Reason / status |
 | --- | --- | --- | --- |
+| 2026-11-10 | D-030 | Use the shared worker for adaptive planning and keep a signed prior-layout retry | Retain whole fills where the geometry is bounded, preserve source-supported marks and audit the final format pair. The physical checklist and approval are separate. |
 | 2026-11-10 | D-029 | Refine original colour boundaries before choosing stitch paths | Preserve meaningful detail in physical units, keep the foreground and thread palette, and retain the signed native audit. V1 jobs use their existing plan. |
 | 2026-10-30 | D-028 | Keep source preparation, native trial and physical approval distinct | PES6 RGB and source-contained needles are genuine evidence; texture loss, unresolved details and excessive travel remain explicit blockers. Optional physical smoothing/routing is local research only. |
 | 2026-10-28 | D-001 | Use dedicated `sapiverpress-studio/Stitch-Forge` repository | User authorised; separates work from Pattern Forge and live sites |
@@ -911,6 +938,14 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 ---
 
 ## 13. Dated work log / progress journal
+
+### 2026-11-10 — Owner authorised the adaptive trial deployment
+
+The owner asked to push and deploy the tested workflow. The release helper checks the exact reviewed worker source tree, builds one image and creates a private tagged revision with the adaptive planner enabled. Existing native source, colour and position checks still apply. Physical approval remains pending.
+
+### 2026-11-10 — Adaptive layout and cross-design sew-out preparation
+
+Branch `feature/adaptive-artwork-quality` adds `artwork_layout.py` and the retained tonal planner, updates the source-bound worker, native SVG and audit, and shows the final PES counts and review notes in the upload workflow. The source can be switched back with `STITCH_FORGE_ADAPTIVE_ARTWORK=0`. E-092 records local native, regression and phone-sized browser evidence. The next release step is a matched physical trial with the target machine, material and thread.
 
 ### 2026-11-10 — Fine-detail trace on the existing embroidery route
 

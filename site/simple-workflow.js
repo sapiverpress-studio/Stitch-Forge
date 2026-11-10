@@ -221,10 +221,18 @@ window.addEventListener('stitchforge:native-ready',e=>{
  ready=true;preview=p;zip.disabled=false;pesButton.disabled=false;dstButton.disabled=false;replay.disabled=false;
  auth.hidden=true;token.value='';
  const report=e.detail?.report,d=report?.decoded?.find(x=>x.format==='pes');
- const label=fineDetail?(report?.homeHybrid?.preserveFineDetail?.selected?
-  'Fine Detail used the original artwork. ':'Fine Detail checked the original and kept the standard plan. '):'';
+ const layout=report?.stitchPlanning?.adaptiveArtworkLayout;
+ const label=fineDetail?(layout?'Fine Detail checked the original artwork. ':
+  report?.homeHybrid?.preserveFineDetail?.selected?'Fine Detail used the original artwork. ':
+  'Fine Detail checked the original and kept the standard plan. '):'';
+ const routingReview=layout&&d?.trims>=100&&d.trims/d.needleStitches>=.008;
  status.textContent=label+'Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes'+(Array.isArray(d.boundsMm)&&d.boundsMm.length===2?', actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':''):'')+
-  (report?.satinFinish?'. Black satin edge included.':'.')+' ZIP ready; physical stitch quality not approved.';
+  (report?.satinFinish?'. Black satin edge included.':'.')+
+  (layout&&Number.isInteger(d?.trims)?' '+d.trims.toLocaleString('en-GB')+' PES trim commands.':'')+
+  (routingReview?' Review routing before a sew-out.':'')+
+  (layout&&report.unresolvedObjects>0?' Review '+report.unresolvedObjects+' unresolved small details.':'')+
+  (layout?.colourDecision==='original_layout_after_native_audit'?' Used the earlier layout after the stitch check.':'')+
+  (layout?' ZIP includes the sew-out checklist.':' ZIP ready.')+' Physical sew-out pending.';
  play();
 });
 window.addEventListener('stitchforge:native-error',e=>{

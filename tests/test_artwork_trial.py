@@ -276,6 +276,10 @@ class ArtworkTrialTests(unittest.TestCase):
         self.assertGreater(len(parts),1);self.assertLess(union_all(parts).symmetric_difference(poly).area,1e-7)
         self.assertTrue(all(max(p.bounds[2]-p.bounds[0],p.bounds[3]-p.bounds[1])*.2<=8.000001 for p in parts))
         self.assertFalse(union_all(parts).covers(Point(35,35)))
+        whole=bounded_fill_parts(poly,.2,whole_shape=True)
+        self.assertEqual(whole,[poly])
+        self.assertFalse(whole[0].covers(Point(35,35)))
+        self.assertGreater(len(bounded_fill_parts(poly,1.,whole_shape=True)),1)
 
     def test_incomplete_machine_framing_is_not_a_decoder_end_pass(self):
         for fmt,payload in [('dst',b'LA:'+bytes(509)+b'\x00\x00\x03'),('dst',bytes(512)),

@@ -10,12 +10,17 @@ fi
 PROJECT=gen-lang-client-0857863712
 REGION=europe-west2
 SERVICE=stitch-forge-worker-staging
-SOURCE_SHA=173184db8a4cd3d81c696dbf33b390b80a17f5e6
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOURCE_SHA="$(git -C "$ROOT" rev-parse HEAD)"
+EXPECTED_WORKER_TREE=44031c59f19948ccb818fd9bc668773e1e3e6cbc
+if [[ "$(git -C "$ROOT" rev-parse "$SOURCE_SHA:services/digitiser")" != "$EXPECTED_WORKER_TREE" ]]; then
+  echo "The worker source differs from the reviewed adaptive workflow." >&2
+  exit 2
+fi
 TAG="fine-detail-${SOURCE_SHA:0:7}"
 IMAGE="$REGION-docker.pkg.dev/$PROJECT/stitch-forge-staging/stitch-forge-worker:$SOURCE_SHA"
-FLAGS="STITCH_FORGE_ARTWORK_TRIAL_ENABLED=1,STITCH_FORGE_HOME_HYBRID_ENABLED=1,STITCH_FORGE_PRESERVE_FINE_DETAIL=1,STITCH_FORGE_ARTWORK_EXPORT_TIMEOUT_SECONDS=120,STITCH_FORGE_HIGH_RES_PLAN_TRIAL=0,STITCH_FORGE_SOURCE_PALETTE_REFIT_TRIAL=0"
+FLAGS="STITCH_FORGE_ARTWORK_TRIAL_ENABLED=1,STITCH_FORGE_HOME_HYBRID_ENABLED=1,STITCH_FORGE_PRESERVE_FINE_DETAIL=1,STITCH_FORGE_ADAPTIVE_ARTWORK=1,STITCH_FORGE_ARTWORK_EXPORT_TIMEOUT_SECONDS=120,STITCH_FORGE_HIGH_RES_PLAN_TRIAL=0,STITCH_FORGE_SOURCE_PALETTE_REFIT_TRIAL=0"
 RUN_ARGS=(--project="$PROJECT" --region="$REGION")
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 for cmd in gcloud git python3 curl; do
   command -v "$cmd" >/dev/null || { echo "Cloud Shell needs $cmd." >&2; exit 2; }
 done

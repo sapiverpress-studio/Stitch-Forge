@@ -269,14 +269,16 @@ def fill_underlay_eligible(piece,scale):
             not piece.buffer(-.7/scale).is_empty)
 
 
-def bounded_fill_parts(poly,scale):
+def bounded_fill_parts(poly,scale,*,whole_shape=False):
     """Partition only complex native input, retaining its exact polygon union.
 
-    8mm source-frame grid and >500-vertex threshold bound native routing work;
-    they are not stitch density/fabric settings. No manually emitted stitches.
+    An opt-in layout can retain a whole object within the vertex, hole and
+    physical-area limits. The 8 mm grid is a fallback for routing complexity.
     """
     vertices=len(poly.exterior.coords)+sum(len(r.coords) for r in poly.interiors)
-    if vertices<=500:return [poly]
+    if vertices <= 500 or (whole_shape and vertices <= 3200 and poly.area*scale**2 <= 3000
+                           and len(poly.interiors) <= 40):
+        return [poly]
     step=8/scale;x0,y0,x1,y1=poly.bounds;parts=[]
     for y in np.arange(np.floor(y0/step)*step,y1,step):
         for x in np.arange(np.floor(x0/step)*step,x1,step):
@@ -370,9 +372,12 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
         'x':f'{width/2:.6f}', 'y':f'{height/2:.6f}'})
     records, path_count, total_vertices = [], 0, 0
     underlay_count=0;running_branches=0;routed_walks=0;auto_satin_count=0
+    layout=plan.get('adaptiveArtworkLayout') if partition_fills else None
+    tonal_layout=layout is not None and layout['colourDecision']=='consolidated_tonal_texture'
+    kept_whole=partitioned=contour_fills=contour_underlays=0
     fill_pieces=[];repaired=[];satin_objects=[]
-    def add_path(color, points, closed=False, holes=(),angle=0,underlay=False,underpath=True):
-        nonlocal path_count, total_vertices,underlay_count
+    def add_path(color, points, closed=False, holes=(),angle=0,underlay=False,underpath=True,contour=False):
+        nonlocal path_count, total_vertices,underlay_count,contour_fills,contour_underlays
         if partition_fills and not closed:points=without_collinear_steps(points)
         total_vertices += len(points)+sum(map(len, holes))
         path_count += 1
@@ -397,6 +402,10 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                 INK+'underpath':'true' if underpath else 'false', INK+'pull_compensation_mm':'0',
                 INK+'pull_compensation_percent':'0', INK+'expand_mm':'0'})
             if underlay:underlay_count+=1
+            if contour:
+                attrs.update({INK+'fill_method':'contour_fill',INK+'avoid_self_crossing':'true'})
+                contour_fills+=1
+                contour_underlays+=int(underlay)
             attrs['d'] += ''.join(' '+commands(ring)+' Z' for ring in holes)
             if partition_fills:
                 safe_path=safe_native_svg_fill_path(points,holes,scale,precision)
@@ -465,8 +474,11 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                 for poly in polygons:
                     if poly.geom_type != 'Polygon' or poly.is_empty:
                         raise ValueError('Invalid native fill polygon')
-                    angle,directional=component_axis(component)
-                    pieces=bounded_fill_parts(poly,scale) if partition_fills else [poly]
+                    pieces=bounded_fill_parts(poly,scale,whole_shape=layout is not None) if partition_fills else [poly]
+                    if layout is not None:
+                        partitioned+=int(len(pieces)>1)
+                        kept_whole+=int(len(pieces)==1 and
+                            len(poly.exterior.coords)+sum(len(r.coords) for r in poly.interiors)>500)
                     for piece in pieces:
                         piece_id=identity+'-p'+str(piece_index);piece_index+=1
                         entry={'id':piece_id,'sourceObjectId':identity,'color':color,'pixels':ceil(piece.area),'areaMm2':piece.area*scale*scale}
@@ -521,9 +533,12 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
                             # silently downgrading it to a running skeleton.
                             fill_repair=piece_id in fill_repair_overrides
                             use_underlay=fill_underlay_eligible(piece,scale) and not fill_repair
+                            contour=(tonal_layout and len(pieces)==1 and
+                                     32<=entry['areaMm2']<=3000 and not fill_repair)
                             add_path(color,list(piece.exterior.coords)[:-1],True,
                                 [list(r.coords)[:-1] for r in piece.interiors],angle,
-                                use_underlay,underpath=not fill_repair)
+                                use_underlay,underpath=not fill_repair,contour=contour)
+                            if contour:record['usesContourFill']=True
                             fill_pieces.append({**entry,'nativePathId':'artwork-'+str(path_count),
                                                 'fillUnderlay':use_underlay})
                             if fill_repair:
@@ -597,7 +612,7 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
             'optionalCompoundRunningPaths':compound,
             'optionalSourceDetailRouting':detail_routing},
         'underlayFillPaths':underlay_count,
-        'underlayAudit':{'nativeTatamiPathsWithUnderlay':underlay_count,
+        'underlayAudit':{'nativeTatamiPathsWithUnderlay':underlay_count-contour_underlays,
             'underlayEligibility':'selective_area_at_least_8mm2_and_1.4mm_interior_width',
             'nativeTatamiUnderlayConfirmedByPhysicalSewout':False,
             'sourceColourContainmentAuditedAfterNativeExport':True},
@@ -618,6 +633,11 @@ def build_trial_svg(plan,partition_fills=False,running_overrides=(),fill_repair_
           'Skeleton branches are not proven feather/vein intent. Unresolved tiny details are explicit.',
           'Connected skeleton branches may retrace; colour fragments remain unmodified and unresolved.',
            'Layer, routing, local density, thread palette and physical fabric quality require review.']}
+    if layout is not None:
+        manifest['settings']['fillDirection']='object_axis_tatami_or_selected_contour'
+        manifest['underlayAudit']['nativeContourPathsWithUnderlay']=contour_underlays
+        manifest['adaptiveArtworkLayout']={**layout,'complexFillsKeptWhole':kept_whole,
+            'complexFillsPartitioned':partitioned,'nativeContourPaths':contour_fills}
     return svg, manifest, masks
 
 
@@ -674,7 +694,7 @@ def audit_trial(pattern, manifest, masks, fmt, translation):
     if max(density.values(),default=0)>120:raise ValueError('Decoded local-command-density bound exceeded')
     coverage={}
     direction={o['id']:{'requestedAngleDeg':o['fillAngleDeg'],'attributedLongSegmentMm':0.,'alignedWithin8DegMm':0.}
-               for o in manifest['objects'] if o['action']=='native_fill_trial'}
+               for o in manifest['objects'] if o['action']=='native_fill_trial' and not o.get('usesContourFill')}
     for c,mask in masks.items():
         labels,_=label(mask)
         im=Image.new('1',(mask.shape[1],mask.shape[0]));draw=ImageDraw.Draw(im)
@@ -748,11 +768,21 @@ def _export_dual_native(output,executable,timeout_seconds):
 
 
 def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
-    needles={fmt:[(x/10,y/10) for x,y,f in pat.stitches if f&pyembroidery.COMMAND_MASK==pyembroidery.STITCH] for fmt,pat in patterns.items()}
+    needles={}
+    for fmt, pattern in patterns.items():
+        block=0
+        sequence=[]
+        for x,y,flags in pattern.stitches:
+            command=flags&pyembroidery.COMMAND_MASK
+            if command==pyembroidery.COLOR_CHANGE:block+=1
+            elif command==pyembroidery.STITCH:sequence.append((x/10,y/10,block))
+        needles[fmt]=sequence
     if not needles['dst'] or len(needles['dst'])!=len(needles['pes']):raise ValueError('PES/DST needle counts differ')
     origin=manifest['originMm'];pes_offset=[origin[i]+needles['dst'][0][i]-needles['pes'][0][i] for i in (0,1)]
     if any(any(abs(a[i]+origin[i]-b[i]-pes_offset[i])>.11 for i in (0,1)) for a,b in zip(needles['dst'],needles['pes'])):
         raise ValueError('PES/DST needle coordinates differ after translation')
+    if any(a[2]!=b[2] for a,b in zip(needles['dst'],needles['pes'])):
+        raise ValueError('PES/DST needle colour blocks differ')
     reports=[]
     for fmt in ('dst','pes'):
         report,moves,_=audit_trial(patterns[fmt],manifest,masks,fmt,origin if fmt=='dst' else pes_offset)
@@ -804,5 +834,7 @@ def _finish_trial(plan,output,manifest,masks,patterns,raws,structural):
     if cloud_revision and re.fullmatch(r'[a-z][a-z0-9-]{1,100}',cloud_revision):
         result['workerRevision']=cloud_revision
     if plan.get('textureApproximation'):result['textureApproximation']=plan['textureApproximation']
+    if manifest.get('adaptiveArtworkLayout'):
+        result['stitchPlanning']['adaptiveArtworkLayout']=manifest['adaptiveArtworkLayout']
     (output/'machine-report.json').write_text(json.dumps(result,indent=2)+'\n')
     return result

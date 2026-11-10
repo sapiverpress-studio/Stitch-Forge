@@ -103,6 +103,36 @@ class ArtworkServiceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             repair_objects(changed,self.packet['requestId'],SECRET,1001)
 
+    @unittest.skipUnless(os.environ.get('STITCH_FORGE_INKSTITCH'),'Actual local engine not configured')
+    def test_adaptive_layout_retries_a_failed_native_audit_once(self):
+        engine=os.environ['STITCH_FORGE_INKSTITCH']
+        with mock.patch.dict(os.environ,{'STITCH_FORGE_ADAPTIVE_ARTWORK':'1'}):
+            first=process_phase(self.packet,executable=engine,secret=SECRET,epoch=1000)
+            second={**self.packet,'phase':'dst','receipt':first['receipt'],'pesBase64':first['pesBase64']}
+            failed={'decoded':[{'needlePointsOutsideWorkingColour':1,
+                                'needleSegmentsOutsideWorkingColour':1}]}
+            with mock.patch('artwork_service.run_trial',return_value=failed):
+                retry=process_phase(second,executable=engine,secret=SECRET,epoch=1001)['repairReceipt']
+            self.assertEqual(retry['mode'],'original_layout')
+            wrong={**retry,'objectIds':['unrelated-fill']}
+            wrong['mac']=repair_signature({k:v for k,v in wrong.items() if k!='mac'},SECRET)
+            with self.assertRaises(ValueError):
+                repair_objects(wrong,self.packet['requestId'],SECRET,1002)
+            request={**self.packet,'repairReceipt':retry}
+            first=process_phase(request,executable=engine,secret=SECRET,epoch=1002)
+            second={**request,'phase':'dst','receipt':first['receipt'],'pesBase64':first['pesBase64']}
+            with mock.patch('artwork_service.run_trial',return_value=failed):
+                with self.assertRaisesRegex(ValueError,'source-containment'):
+                    process_phase(second,executable=engine,secret=SECRET,epoch=1003)
+            payload=process_phase(second,executable=engine,secret=SECRET,epoch=1003)
+        with zipfile.ZipFile(BytesIO(payload)) as archive:
+            report=json.loads(archive.read('machine-report.json'))
+            self.assertEqual(report['nativePasses'],2)
+            self.assertFalse(report['physicalQualityVerified'])
+            self.assertEqual(report['stitchPlanning']['adaptiveArtworkLayout']['colourDecision'],
+                             'original_layout_after_native_audit')
+            self.assertIn(b'PHYSICAL SEW-OUT RECORD',archive.read('SEW_OUT_CHECKLIST.txt'))
+
     def test_alternative_scanline_receipt_is_signed_and_bounded(self):
         r={'requestId':self.packet['requestId'],
            'objectIds':['050505-0-p0'], 'issuedAt':1000,'mode':'source_scanline'}
