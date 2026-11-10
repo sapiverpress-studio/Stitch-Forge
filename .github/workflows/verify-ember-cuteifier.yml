@@ -22,7 +22,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - name: Install pinned Netlify packages
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Validate all client scripts
         run: node tools/check_frontend_syntax.cjs
-      - name: Test PNG outline preparation
-        run: node --test tests/test_ember_prep.cjs
+      - name: Test all Stitch Forge routes and PNG processing
+        run: node --test tests/*.cjs tests/*.mjs
