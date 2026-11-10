@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {EmbConstant,readDst,readPes,writeDst,writePes} from '@guillaumemmm/tsembroidery';
 import {zipSync} from 'fflate';
-import pipeline from '../../../site/artwork-pipeline.js';
+import {readNativeArchive} from './native-archive.mjs';
 import source from '../../../site/auto-reconstruct.js';
 import satin from '../../../site/detailed-satin.js';
 
@@ -173,7 +173,7 @@ function satinSvg(base,columns,pitch){
 }
 
 export async function addDetailedSatin(payload,packet,receipt){
- const files=await pipeline.readArchive(new Uint8Array(payload));
+ const files=readNativeArchive(new Uint8Array(payload));
  const report=readJson(files,'machine-report.json'),preview=readJson(files,'decoded-preview.json');
  const baseSvg=files['native-artwork-input.svg'];
  const header=JSON.parse(packet.header),{width,height,sha256:sourceSha}=header.source;
