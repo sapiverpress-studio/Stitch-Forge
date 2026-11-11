@@ -6,7 +6,9 @@ import os
 from pathlib import Path
 import subprocess
 
-MAX_REQUEST=4000000
+MAX_ARTWORK_BYTES=4000000
+MAX_PES_BASE64_BYTES=2000000
+MAX_REQUEST=MAX_ARTWORK_BYTES+MAX_PES_BASE64_BYTES+10000
 REASONS={
  'NATIVE_LENGTH_LIMIT':'Actual needle movement exceeded the stitch-length limit',
  'NATIVE_DENSITY_LIMIT':'Actual needle commands exceeded the local density limit',
@@ -51,6 +53,15 @@ def application(environ,start_response,lock):
         obj=strict_json(raw)
     except ImportError:return reply('503 Service Unavailable','Artwork worker dependencies are unavailable')
     except (ValueError,TypeError,KeyError,OSError):return reply('422 Unprocessable Entity','Invalid artwork request')
+    if size>MAX_ARTWORK_BYTES:
+        if (not isinstance(obj,dict) or obj.get('phase')!='dst'
+                or not isinstance(obj.get('pesBase64'),str)
+                or len(obj['pesBase64'])>MAX_PES_BASE64_BYTES):
+            return reply('413 Content Too Large','Artwork or PES exceeds the request budget')
+        source={key:value for key,value in obj.items()
+                if key not in ('phase','pesBase64','receipt','repairReceipt')}
+        if len(json.dumps(source,separators=(',',':'),ensure_ascii=False).encode())>MAX_ARTWORK_BYTES:
+            return reply('413 Content Too Large','Artwork exceeds the request budget')
     executable=os.environ.get('STITCH_FORGE_INKSTITCH_PATH','')
     if not executable or not Path(executable).is_file():return reply('503 Service Unavailable','Native engine is unavailable')
     if not lock.acquire(blocking=False):return reply('429 Too Many Requests','Native engine busy; no automatic retry was started')

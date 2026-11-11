@@ -186,6 +186,16 @@ class ArtworkServiceTests(unittest.TestCase):
         finally:worker_wsgi._lock.release()
         self.assertTrue(self.call_worker(packet={**self.packet,'svg':'private-text'})[0][0].startswith('422'))
 
+    def test_worker_allows_a_bounded_pes_alongside_the_dst_source(self):
+        source={**self.packet,'originalPngBase64':'A'*3150000,'rgbaGzip':'A'*500000}
+        dst={**source,'phase':'dst','pesBase64':'A'*500000,'receipt':{}}
+        self.assertGreater(len(json.dumps(dst)),4000000)
+        with mock.patch('artwork_service.process_phase',return_value={}) as process:
+            self.assertTrue(self.call_worker(packet=dst)[0][0].startswith('200'))
+            self.assertTrue(self.call_worker(packet={**dst,'rgbaGzip':'A'*1000000})[0][0].startswith('413'))
+            self.assertTrue(self.call_worker(packet={**source,'rgbaGzip':'A'*1000000})[0][0].startswith('413'))
+            process.assert_called_once()
+
     def test_native_export_timeout_is_opt_in_and_strictly_bounded(self):
         with mock.patch.dict(os.environ,{},clear=True):
             self.assertEqual(native_export_timeout(),40)

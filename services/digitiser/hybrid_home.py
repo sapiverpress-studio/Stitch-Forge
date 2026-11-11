@@ -73,7 +73,7 @@ def proposal_svg(labels, palette):
 
 
 def reconstruct(image, *, colours=9, max_side=320, superpixels=460,
-                design_width_mm=80, min_area_mm2=.035):
+                design_width_mm=80, min_area_mm2=.035, full_image=False):
     """Returns proposed colour labels/palette and evidence, not a machine-ready plan.
 
     Preserves exactly the foreground of the resized RGBA input; changes its
@@ -94,7 +94,7 @@ def reconstruct(image, *, colours=9, max_side=320, superpixels=460,
     rgba = np.asarray(reduced, dtype=np.uint8)
     h, w = rgba.shape[:2]
     foreground = rgba[:, :, 3] > 60
-    if not foreground.any() or foreground.mean() > .98:
+    if not foreground.any() or (not full_image and foreground.mean() > .98):
         raise ValueError('Expected isolated foreground PNG: no verified alpha/background mask')
     rgb = rgba[:, :, :3].astype(np.float32) / 255
     lab = rgb2lab(rgb)
@@ -108,7 +108,7 @@ def reconstruct(image, *, colours=9, max_side=320, superpixels=460,
         area = (segments == region) & foreground
         median = np.median(lab[area], axis=0)
         labels[area] = int(np.argmin(np.sum((centres - median)**2, axis=1)))
-    width_pixels = max(1, int(np.ptp(np.where(foreground)[1]) + 1))
+    width_pixels = w if full_image else max(1, int(np.ptp(np.where(foreground)[1]) + 1))
     mm_per_pixel = design_width_mm / width_pixels
     min_pixels = max(1, round(min_area_mm2 / (mm_per_pixel**2)))
     # One bounded merge pass, never smoothing through a strong palette edge.

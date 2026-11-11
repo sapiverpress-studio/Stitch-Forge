@@ -39,7 +39,8 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
     if w < 48 or h < 48 or w*h > 750000:
         raise ValueError("Hybrid input outside original worker geometry budget")
     original = np.frombuffer(inflate(packet["rgbaGzip"], w*h*4), np.uint8).reshape(h, w, 4)
-    mask = foreground(original)
+    full_image = metadata.get('fullImage') is True
+    mask = foreground(original, full_image=full_image)
     if not np.any(mask) or int(mask.sum()) != original_plan["summary"]["sourcePixels"]:
         raise ValueError("Hybrid foreground differs from original independently verified mask")
     # Preserve original RGB for palette scoring, but give the SLIC proposer a
@@ -50,8 +51,9 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
     analysis = Image.fromarray(prepared, "RGBA")
     # <=320 px bounds CPU and preserves the experimentally tested MD-2.66
     # resolution. Working masks are then reconciled to *all* original pixels.
+    design_width_mm = original_plan['physical']['imageWidthMm'] if full_image else 80
     reduced, palette, evidence = reconstruct(analysis, colours=9, max_side=320,
-                                            design_width_mm=80)
+                                            design_width_mm=design_width_mm, full_image=full_image)
     trial_source_dimensions=None
     if (os.environ.get('STITCH_FORGE_HIGH_RES_PLAN_TRIAL','0')=='1'
             and 'originalPngBase64' in packet
@@ -67,7 +69,7 @@ def derive_hybrid_plan(packet, original_plan, metadata, identity, original_bindi
         # It is NOT an assertion that the result looks better on fabric.
         reduced,palette,evidence=reconstruct(
             full,colours=9,max_side=640,superpixels=920,
-            design_width_mm=float(original_plan['physical']['imageWidthMm']))
+            design_width_mm=float(original_plan['physical']['imageWidthMm']),full_image=full_image)
     if not evidence["foregroundPreserved"]:
         raise ValueError("Hybrid candidate changed its analysis foreground")
     native_labels = np.asarray(Image.fromarray(reduced, "L").resize(

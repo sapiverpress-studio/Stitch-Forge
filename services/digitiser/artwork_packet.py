@@ -42,8 +42,10 @@ def inflate(raw,size):
     return value
 
 
-def foreground(rgba):
+def foreground(rgba, *, full_image=False):
     """Independent Python implementation of the app's documented border rule."""
+    if full_image:
+        return rgba[:, :, 3] > 60
     h,w,_=rgba.shape
     border=[]
     for x in range(w):border.extend((x,(h-1)*w+x))
@@ -94,8 +96,14 @@ def decode_packet(obj):
     meta=strict_json(header)
     version=meta.get('schema') if isinstance(meta,dict) else None
     required_meta={'schema','source','imageWidthMm','palette','foregroundPixels','preparationSignature','texturePolicy'}
+    full_image=False
     if version=='stitch-forge-artwork-request-v2':
         required_meta.add('originalPng')
+        if 'fullImage' in meta:
+            if meta['fullImage'] is not True:
+                raise ValueError('Invalid full image source setting')
+            required_meta.add('fullImage')
+            full_image=True
     if not isinstance(meta,dict) or set(meta)!=required_meta or version not in (
             'stitch-forge-artwork-request-v1','stitch-forge-artwork-request-v2'):
         raise ValueError('Unsupported artwork header')
@@ -116,7 +124,7 @@ def decode_packet(obj):
     identity=sha256(header.encode()+raw+label_bytes).hexdigest()
     if obj['requestId']!=identity:raise ValueError('Source/geometry byte binding mismatch')
     rgba=np.frombuffer(raw,np.uint8).reshape((h,w,4));labels=np.frombuffer(label_bytes,np.uint8).reshape((h,w))
-    expected=foreground(rgba)
+    expected=foreground(rgba,full_image=full_image)
     if labels.max()>len(palette) or not np.array_equal(labels>0,expected) or int(expected.sum())!=meta['foregroundPixels'] or not expected.any():
         raise ValueError('Source foreground/colour accounting mismatch')
     regions,parts=regions_from_labels(labels,palette)
@@ -128,6 +136,8 @@ def decode_packet(obj):
     evidence={'sourcePixelsVerified':True,'foregroundIndependentlyVerified':True,'clientObjectAlgorithmRecomputed':False,
        'clientPreparationSignature':meta['preparationSignature'],'sourceMeanRgbDistance':float(distances.mean()),'sourcePixelsBeyondRgb60':int((distances>60).sum()),
        'sourceSemanticFeaturesVerified':False}
+    if full_image:
+        evidence['fullImage']=True
     if version=='stitch-forge-artwork-request-v2':
         from original_png_contract import verify_original_png
         original_evidence=verify_original_png(obj['originalPngBase64'],

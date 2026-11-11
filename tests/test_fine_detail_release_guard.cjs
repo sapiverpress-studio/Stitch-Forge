@@ -15,5 +15,5 @@ test('Fine Detail release disables the unverified black satin finish but retains
 
 test('Native worker packet is protected even if a browser forces the checkbox',()=>{
  assert.match(native,/const blackSatin=!fineDetail&&q\('#sfQuickSatin'\)\?\.checked===true/);
- assert.match(native,/originalPngBytes,blackSatin\}\)/);
+ assert.match(native,/originalPngBytes,blackSatin,fullImage\}\)/);
 });

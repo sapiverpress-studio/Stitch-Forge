@@ -103,11 +103,8 @@ function foregroundMask(rgba,w,h){
 }
 // Deterministic, on-device artwork examination. This performs no API calls,
 // sends no pixels to a server and does not claim to be semantic segmentation.
-function analyseArtwork(rgba,w,h){
- if(!(rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||
-    w<48||h<48||w*h>750000||rgba.length!==w*h*4)
-  throw Error("Invalid source image");
- const mask=foregroundMask(rgba,w,h),bins=new Map(),tileEdges=new Uint32Array(16);
+function analyseArtwork(rgba,w,h,{fullImage=false}={}){
+ const mask=sourceForegroundMask(rgba,w,h,{fullImage}),bins=new Map(),tileEdges=new Uint32Array(16);
  let foregroundPixels=0,edgePixels=0,alphaPixels=0;
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
   const i=y*w+x,j=4*i;
@@ -451,10 +448,13 @@ function checkedRegion(r){
   throw Error("AI sent invalid region geometry");
  return r;
 }
-function sourceForegroundMask(rgba,w,h){
+function sourceForegroundMask(rgba,w,h,{fullImage=false}={}){
  if(!(rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||
     w<48||h<48||w*h>750000||rgba.length!==w*h*4)throw Error('Invalid source image');
- return foregroundMask(rgba,w,h);
+ if(!fullImage)return foregroundMask(rgba,w,h);
+ const mask=new Uint8Array(w*h);
+ for(let i=0;i<mask.length;i++)mask[i]=rgba[4*i+3]>60?1:0;
+ return mask;
 }
 function reconstruct(rgba,w,h,plan,opts={}){
  if(!(rgba instanceof Uint8ClampedArray)||!Number.isInteger(w)||!Number.isInteger(h)||

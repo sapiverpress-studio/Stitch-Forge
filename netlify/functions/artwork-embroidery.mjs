@@ -5,6 +5,8 @@
 import {timingSafeEqual,createHash} from 'node:crypto';
 import {acquireCloudRunIdToken,cloudRunAudience} from './lib/cloud-run-auth.mjs';
 const AUDIT='SOURCE_CONTAINED_TRIAL_NOT_MACHINE_APPROVED';
+const MAX_ARTWORK_BYTES=4000000,MAX_PES_BASE64_BYTES=2000000;
+const MAX_PRIVATE_DST_BYTES=MAX_ARTWORK_BYTES+MAX_PES_BASE64_BYTES+10000;
 const HEADERS={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json=(status,error)=>new Response(JSON.stringify({error}),{status,headers:{...HEADERS,'Content-Type':'application/json'}});
 const envValue=k=>globalThis.Netlify?.env?.get(k)??process.env[k];
@@ -14,7 +16,7 @@ export async function boundedBytes(stream,maximum){
  for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>maximum){await reader.cancel();throw Error('Body exceeds limit');}chunks.push(value);}
  return Buffer.concat(chunks,size);
 }
-export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(...args),upstreamTimeoutMs=55000}={}){
+export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(...args),upstreamTimeoutMs=55000,allowExpandedDst=false}={}){
  return async function artworkEmbroidery(request){
   if(request.method!=='POST')return json(405,'POST only');
   if(!authorised(request.headers.get('authorization'),getEnv('STITCH_FORGE_ANALYSIS_TOKEN')))return json(401,'Owner access token required');
@@ -22,14 +24,23 @@ export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(
   const oldEndpoint=getEnv('STITCH_FORGE_ENGINE_URL')||'',workerToken=getEnv('STITCH_FORGE_WORKER_TOKEN');
   if(!workerToken||!/^https:\/\/[a-z0-9][a-z0-9.:-]+\/v1\/digitise$/i.test(oldEndpoint))return json(503,'Private native artwork worker is not configured');
   if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))return json(415,'JSON required');
-  if(Number(request.headers.get('content-length')||0)>4000000)return json(413,'Artwork exceeds the request budget');
+  const maximum=allowExpandedDst?MAX_PRIVATE_DST_BYTES:MAX_ARTWORK_BYTES;
+  if(Number(request.headers.get('content-length')||0)>maximum)return json(413,'Artwork exceeds the request budget');
   let data,obj;
   try{
-   data=await boundedBytes(request.body,4000000);obj=JSON.parse(data.toString('utf8'));
+   data=await boundedBytes(request.body,maximum);obj=JSON.parse(data.toString('utf8'));
    const fields=['header','rgbaGzip','labelsGzip','requestId','phase',...(obj.phase==='dst'?['receipt','pesBase64']:[]),...('repairReceipt' in obj?['repairReceipt']:[]),
     ...(typeof obj.header==='string'&&obj.header.includes('stitch-forge-artwork-request-v2')?['originalPngBase64']:[])];
    if(!obj||typeof obj!=='object'||Array.isArray(obj)||!['pes','dst'].includes(obj.phase)||Object.keys(obj).sort().join()!==fields.sort().join()||typeof obj.header!=='string'||obj.header.length>2000||!/^([0-9a-f]{64})$/.test(obj.requestId||''))throw Error();
   }catch{return json(422,'Invalid bounded artwork packet');}
+  if(data.length>MAX_ARTWORK_BYTES){
+   const {phase,pesBase64,receipt,repairReceipt,...source}=obj;
+   // The background job adds the verified PES and receipts to the bounded
+   // browser packet when requesting DST. Keep the source budget independent.
+   if(phase!=='dst'||typeof pesBase64!=='string'||pesBase64.length>MAX_PES_BASE64_BYTES||
+      Buffer.byteLength(JSON.stringify(source))>MAX_ARTWORK_BYTES)
+    return json(413,'Artwork or PES exceeds the request budget');
+  }
   let idToken=null;
   const credential=getEnv('STITCH_FORGE_CLOUD_RUN_CALLER_JSON');
   if(new URL(oldEndpoint).hostname.endsWith('.run.app')){
@@ -56,7 +67,7 @@ export function createArtworkBridge({getEnv=envValue,fetchImpl=(...args)=>fetch(
    }
    if(obj.phase==='pes'){
     if(!type.startsWith('application/json'))throw Error();const phase=JSON.parse(bytes.toString('utf8'));
-    if(phase.requestId!==obj.requestId||phase.receipt?.requestId!==obj.requestId||typeof phase.pesBase64!=='string'||phase.pesBase64.length>2000000||!/^([0-9a-f]{64})$/.test(phase.receipt?.mac||''))throw Error();
+    if(phase.requestId!==obj.requestId||phase.receipt?.requestId!==obj.requestId||typeof phase.pesBase64!=='string'||phase.pesBase64.length>MAX_PES_BASE64_BYTES||!/^([0-9a-f]{64})$/.test(phase.receipt?.mac||''))throw Error();
     return new Response(bytes,{headers:{...HEADERS,'Content-Type':'application/json'}});
    }
    const hash=upstream.headers.get('x-stitch-forge-sha256');

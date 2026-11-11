@@ -135,6 +135,7 @@ function invalidateNative(){revision++;nativeAbort?.abort();clearNative();q('#sf
 q('#sfAutoWorkflow').onchange=()=>{invalidateNative();q('#sfAutoRun').textContent=q('#sfAutoWorkflow').value==='native'?'Generate embroidery':'Generate AI proposal (not machine stitches)';status(q('#sfAutoWorkflow').value==='native'?'Automatic AI feature analysis and native PES/DST trial. AI is advisory and uses a paid API call when enabled.':'AI proposal is an experimental geometry draft; it is not machine embroidery.');};
 q('#sfNativeWidth').onchange=invalidateNative;q('#sfNativeTexture').onchange=invalidateNative;q('#sfAutoUseAI').onchange=invalidateNative;
 window.addEventListener('stitchforge:satin-changed',invalidateNative);
+window.addEventListener('stitchforge:design-area-changed',invalidateNative);
 q('#sfAutoCancelNative').onclick=()=>{invalidateNative();status('Native generation cancelled. No further phase will be requested.');};
 q('#sfAutoNativeReport').onclick=()=>{if(nativeResult)saveBytes(JSON.stringify(nativeResult.report,null,2),namedReport(),'application/json');};
 q('#sfAutoPES').onclick=()=>saveNativeMachineFile('pes');
@@ -217,6 +218,7 @@ q("#sfAutoRun").onclick=async()=>{
  if(secondaryToken)secondaryToken.value=token;
  if(q('#sfAutoWorkflow').value==='native'){
   const api=window.StitchForgeArtworkPipeline,stamp=revision,width=Number(q('#sfNativeWidth').value),texturePolicy=q('#sfNativeTexture').checked?'if_needed':'off';
+  const fullImage=fineDetail&&q('#sfQuickDesignArea')?.value==='full-image';
   // Fine Detail's satin pass is disabled until its final-file audit is corrected.
   const blackSatin=!fineDetail&&q('#sfQuickSatin')?.checked===true;
   if(!api){
@@ -252,11 +254,13 @@ q("#sfAutoRun").onclick=async()=>{
    // Establish source-foreground proportions before choosing analysis detail.
    // No geometry is cropped or discarded: the signed server still receives
    // the complete normalized source frame, with original artwork retained locally.
-   const preliminary=await decoded(workingSource,768);
-   const fitted=api.visibleArtworkFrame(preliminary.ctx.getImageData(0,0,
-    preliminary.canvas.width,preliminary.canvas.height).data,
-    preliminary.canvas.width,preliminary.canvas.height,width);
-   const attempts=api.analysisSizes(fitted.imageWidthMm,sourceWidth,sourceHeight,texturePolicy);
+   let frameWidth=width;
+   if(!fullImage){
+    const {canvas,ctx}=await decoded(workingSource,768);
+    frameWidth=api.visibleArtworkFrame(ctx.getImageData(0,0,canvas.width,canvas.height).data,
+     canvas.width,canvas.height,width).imageWidthMm;
+   }
+   const attempts=api.analysisSizes(frameWidth,sourceWidth,sourceHeight,texturePolicy);
    let packed=null,analysisPixels=null;
    for(const size of [...new Set(attempts)]){
     if(!current()||nativeAbort.signal.aborted)throw Error('Cancelled: original artwork or settings changed');
@@ -267,8 +271,8 @@ q("#sfAutoRun").onclick=async()=>{
       {imageWidthMm:width,originalWidth:sourceWidth,originalHeight:sourceHeight,
        // The configured V2 worker rebuilds these provisional colour regions
        // from the original. Its native geometry limits are checked separately.
-       texturePolicy,maxWorkingParts:originalPngBytes?4500:1500,sizeMode:'visible',
-       originalPngBytes,blackSatin});
+       texturePolicy,maxWorkingParts:originalPngBytes?4500:1500,sizeMode:fullImage?'canvas':'visible',
+       originalPngBytes,blackSatin,fullImage});
      analysisPixels=canvas.width+' × '+canvas.height;
      break;
     }catch(error){
@@ -304,7 +308,7 @@ q("#sfAutoRun").onclick=async()=>{
    const r=result.report,d=r.decoded.find(x=>x.format==='pes');
    if(r.homeHybrid?.preserveFineDetail?.selected===true)aiNote+='Fine detail was traced from the verified '+(preparedFineDetail?.resized?'processing copy':'original image')+'. ';
    const processingNote=preparedFineDetail?.resized?'Original '+original.naturalWidth+' × '+original.naturalHeight+' kept locally; private verified processing copy '+sourceWidth+' × '+sourceHeight+'. ':'';
-   status(aiNote+processingNote+'Requested visible width '+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
+   status(aiNote+processingNote+(fullImage?'Requested image width ':'Requested visible width ')+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(!fullImage&&Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
    window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview:result.preview,report:result.report}}));
    // Preserve verified ZIP auto-download, and expose a re-download button.
    saveBytes(result.bytes,fileName('zip'),'application/zip');

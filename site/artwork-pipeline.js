@@ -68,16 +68,19 @@ function visibleArtworkFrame(rgba,w,h,designWidthMm){
   unmodifiedSourcePixels:true,
   physicalSewoutVerified:false};
 }
-async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null,blackSatin=false}={}){
+async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,texturePolicy='if_needed',maxWorkingParts=0,sizeMode='canvas',originalPngBytes=null,blackSatin=false,fullImage=false}={}){
  if(!['if_needed','off'].includes(texturePolicy))throw Error('Invalid texture policy');
  if(!['visible','canvas'].includes(sizeMode))throw Error('Invalid physical artwork width mode');
+ if(fullImage&&(sizeMode!=='canvas'||!originalPngBytes||blackSatin))
+  throw Error('Full image requires the original artwork and a canvas width');
  const sizing=sizeMode==='visible'?visibleArtworkFrame(rgba,w,h,imageWidthMm):
     {mode:'canvas',imageWidthMm,unmodifiedSourcePixels:true};
  const frameWidthMm=sizing.imageWidthMm;
  if(Number.isFinite(frameWidthMm)&&frameWidthMm*h/w>296)throw Error('Artwork height exceeds 296mm at this width; reduce the width before generating');
  if(!Number.isInteger(maxWorkingParts)||maxWorkingParts<0||maxWorkingParts>10000)
   throw Error('Invalid maximum working-part budget');
- let draft=await P.createInspectionDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight});
+ const draftOptions={imageWidthMm:frameWidthMm,originalWidth,originalHeight,fullImage};
+ let draft=await P.createInspectionDraft(rgba,w,h,draftOptions);
  let plan;
  try{plan=await A.build(draft);}
  catch(error){
@@ -85,7 +88,7 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
   // when its region masks are valid. Fall back to a bounded, source-fingerprinted
   // palette partition; never truncate graph nodes or silently discard pixels.
   if(!draft.graph||!/Source-region project exceeds download budget/.test(error.message||''))throw error;
-  draft=await P.createApproximationDraft(rgba,w,h,{imageWidthMm:frameWidthMm,originalWidth,originalHeight,
+  draft=await P.createApproximationDraft(rgba,w,h,{...draftOptions,
    reasonCode:'source_graph_serialisation_budget'});
   plan=await A.build(draft);
  }
@@ -114,7 +117,8 @@ async function pack(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,t
  const fullSource=originalPngBytes?{sha256:await digest(originalPngBytes),bytes:originalPngBytes.length}:null;
  const header=JSON.stringify({schema:fullSource?'stitch-forge-artwork-request-v2':SCHEMA,
    source:{sha256,width,height,originalWidth,originalHeight},imageWidthMm:frameWidthMm,palette,
-  foregroundPixels:plan.summary.sourcePixels,preparationSignature:plan.sourcePlanSignature,texturePolicy,...(fullSource?{originalPng:fullSource}:{})});
+  foregroundPixels:plan.summary.sourcePixels,preparationSignature:plan.sourcePlanSignature,texturePolicy,
+  ...(fullSource?{originalPng:fullSource}:{}),...(fullImage?{fullImage:true}:{})});
  const requestId=await digest(new TextEncoder().encode(header),new Uint8Array(rgba.buffer,rgba.byteOffset,rgba.byteLength),labels);
  const rgbaGzip=b64(await transform(rgba,'gzip',true,3100000)),labelsGzip=b64(await transform(labels,'gzip',true,800000));
  const packet={header,rgbaGzip,labelsGzip,requestId,
@@ -216,6 +220,8 @@ async function backgroundGenerate(packed,{token,signal,onProgress=()=>{},fetchIm
  if(fineDetail&&(report.sourceBinding?.originalSourceSha256Verified!==true||
     typeof report.homeHybrid?.preserveFineDetail?.selected!=='boolean'))
   throw Error('The private worker did not verify and evaluate the original artwork for Fine Detail');
+ if(packed.draft.fullImage&&report.sourceBinding?.fullImage!==true)
+  throw Error('The private worker did not verify the full image');
  const colourLimit=satinSha?13:12;
  const preview=previewPacket(JSON.parse(new TextDecoder().decode(files['decoded-preview.json'])),colourLimit);
  const validCount=(n,limit=125000)=>Number.isInteger(n)&&n>=0&&n<=limit;
@@ -274,6 +280,8 @@ async function generate(packed,{token,signal,onProgress=()=>{},fetchImpl=root.fe
  const validCount=(n,limit=125000)=>Number.isInteger(n)&&n>=0&&n<=limit;
  if(report.requestId!==packet.requestId||report.source?.sha256!==packed.draft.source.sha256||report.source?.width!==packed.draft.source.width||report.source?.height!==packed.draft.source.height||report.imageWidthMm!==packed.draft.physical.imageWidthMm||report.machineEligible!==false||report.physicalQualityVerified!==false||report.sourceBinding?.foregroundIndependentlyVerified!==true||report.workflow!=='TWO_NATIVE_PHASES_NO_AI'||preview.requestId!==packet.requestId||Math.abs(preview.widthMm-report.imageWidthMm-4)>1e-6||Math.abs(preview.heightMm-packed.draft.physical.imageHeightMm-4)>1e-6||!Array.isArray(report.blockers)||report.blockers.length>30||!report.blockers.every(s=>/^[a-z_]{1,100}$/.test(s))||!validCount(report.unresolvedObjects)||!validCount(report.unresolvedPixels,750000)||!Array.isArray(report.decoded)||report.decoded.length!==2||new Set(report.decoded.map(r=>r.format)).size!==2||!report.decoded.every(r=>['pes','dst'].includes(r.format)&&validCount(r.needleStitches)&&r.needleStitches>=3&&validCount(r.colourChanges)&&r.colourChanges<12&&validCount(r.jumps)&&validCount(r.trims))||report.decoded.some(r=>r.needlePointsOutsideWorkingColour!==0||r.needleSegmentsOutsideWorkingColour!==0)||report.decoded[0].needleStitches!==report.decoded[1].needleStitches)throw Error('Native report failed source binding, physical-size or containment checks');
  if(!isCurrent())throw Error('Source or size changed; stale native result discarded');
+ if(packed.draft.fullImage&&report.sourceBinding?.fullImage!==true)
+  throw Error('The private worker did not verify the full image');
  return {bytes,report,preview,geometry:files['native-artwork-input.svg'],sourceDraft:packed.draft};
  }
  throw Error('Native source repair did not complete');

@@ -5,6 +5,7 @@ identity, correspond to the actual reduced artwork, and never appear in the
 machine report. This DOES NOT prove better embroidery output.
 """
 import base64
+import gzip
 from hashlib import sha256
 from io import BytesIO
 import json
@@ -28,20 +29,21 @@ def png_bytes(im):
     return stream.getvalue()
 
 
-def v2_packet(original, *, working=None):
+def v2_packet(original, *, working=None, full_image=False):
     w,h=original.size
     if working is None:
         working=original.resize((max(48,w//2),max(48,h//2)),Image.Resampling.LANCZOS)
-    packet=browser_packet(working)
+    packet=browser_packet(working, full_image=full_image)
     meta=json.loads(packet['header'])
     meta['schema']='stitch-forge-artwork-request-v2'
+    if full_image:
+        meta['fullImage']=True
     meta['source']['originalWidth']=w
     meta['source']['originalHeight']=h
     original_bytes=png_bytes(original)
     meta['originalPng']={'sha256':sha256(original_bytes).hexdigest(),'bytes':len(original_bytes)}
     # Same browser requestId rule as V1: header+verified reduced RGBA+labels.
     # Header now SHA-binds the original unmodified PNG bytes.
-    import gzip
     source=gzip.decompress(base64.b64decode(packet['rgbaGzip']))
     labels=gzip.decompress(base64.b64decode(packet['labelsGzip']))
     header=json.dumps(meta,separators=(',',':'))
@@ -52,6 +54,39 @@ def v2_packet(original, *, working=None):
 
 
 class OriginalPngTransportTests(unittest.TestCase):
+    def test_full_image_rebuild_preserves_opaque_edges_and_transparent_void(self):
+        from home_live_bridge import derive_hybrid_plan
+
+        image=Image.new('RGBA',(160,120),(238,216,177,255))
+        d=ImageDraw.Draw(image)
+        d.rectangle((81,0,159,119),fill=(68,108,45,255))
+        d.ellipse((30,37,47,49),fill=(0,0,0,0))
+        packet=v2_packet(image,working=image,full_image=True)
+        plan,meta,identity,binding=decode_packet(packet)
+        expected=np.asarray(image)[:,:,3]>60
+        self.assertEqual(plan['summary']['sourcePixels'],int(expected.sum()))
+        self.assertTrue(binding['fullImage'])
+        self.assertTrue(binding['originalSourceSha256Verified'])
+        with patch.dict('os.environ', {'STITCH_FORGE_PRESERVE_FINE_DETAIL':'1'}):
+            hybrid,evidence,report=derive_hybrid_plan(packet,plan,meta,identity,binding)
+        rebuilt=np.zeros(expected.shape,dtype=bool)
+        for region in hybrid['regions']:
+            for component in region['ledger']['components']:
+                for y,x0,x1 in component['runs']:
+                    rebuilt[y,x0:x1]=True
+        np.testing.assert_array_equal(rebuilt,expected)
+        self.assertEqual(hybrid['physical'],plan['physical'])
+        self.assertTrue(evidence['fullImage'])
+        self.assertIn('preserveFineDetail',report)
+
+        meta.pop('fullImage')
+        header=json.dumps(meta,separators=(',',':'))
+        raw=gzip.decompress(base64.b64decode(packet['rgbaGzip']))
+        labels=gzip.decompress(base64.b64decode(packet['labelsGzip']))
+        with self.assertRaisesRegex(ValueError,'Complex background'):
+            decode_packet({**packet,'header':header,
+                           'requestId':sha256(header.encode()+raw+labels).hexdigest()})
+
     def test_legacy_v1_remains_identical(self):
         packet=browser_packet(illustration())
         plan,meta,identity,evidence=decode_packet(packet)

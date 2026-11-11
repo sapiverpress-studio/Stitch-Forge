@@ -32,7 +32,7 @@ export function createWorker({jobs=getJobs,env=getEnv,bridge=createArtworkBridge
    if(!owner)reject('Worker credentials unavailable');
    const endpoint=mode==='fine-detail'?fineDetailEndpoint(env):'';
    if(mode==='fine-detail'&&!endpoint)reject('Fine Detail is waiting for its private embroidery worker');
-   const invoke=bridge({upstreamTimeoutMs:180000,
+   const invoke=bridge({upstreamTimeoutMs:180000,allowExpandedDst:true,
     ...(endpoint?{getEnv:name=>name==='STITCH_FORGE_ENGINE_URL'?endpoint:env(name)}:{})});
    async function phase(name,extra={}){
     const body=JSON.stringify({...packet,phase:name,...extra});

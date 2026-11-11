@@ -189,9 +189,9 @@ function measurePixels(rgba,owners,nodes,palette,assignment){
  const count=nodes.reduce((n,r)=>n+r.pixelArea,0);
  return {pixelsBeyondRgb60,meanRgbDistance:sum/count,rmsRgbDistance:Math.sqrt(squares/count),maxRgbDistance:max};
 }
-function buildGraph(rgba,w,h,sha256,{simplifyBoundaryBlends=true}={}){
+function buildGraph(rgba,w,h,sha256,{simplifyBoundaryBlends=true,fullImage=false}={}){
  dimensions(w,h);
- const foreground=reconstruction.sourceForegroundMask(rgba,w,h),labels=new Int16Array(w*h).fill(-1);
+ const foreground=reconstruction.sourceForegroundMask(rgba,w,h,{fullImage}),labels=new Int16Array(w*h).fill(-1);
  for(let k=0;k<labels.length;k++)if(foreground[k]){const j=4*k;labels[k]=((rgba[j]>>5)<<6)|((rgba[j+1]>>5)<<3)|(rgba[j+2]>>5);}
  const raw=componentsFromLabels(labels,w,h,sha256);
  if(!raw.nodes.length)throw Error('No supported source foreground');
@@ -204,7 +204,7 @@ function buildGraph(rgba,w,h,sha256,{simplifyBoundaryBlends=true}={}){
   return {...n,color:hex(sum.map(v=>v/n.pixelArea)),minRGB:min,maxRGB:max,opaquePixels};
  });
  const edges=adjacency(raw.owners,w,h,rgba);nodes=markFeatures(nodes,edges);
- const adaptive=proposePalette(nodes),baseline=[...new Set(reconstruction.analyseArtwork(rgba,w,h).palette.map(p=>p.color))].sort();
+ const adaptive=proposePalette(nodes),baseline=[...new Set(reconstruction.analyseArtwork(rgba,w,h,{fullImage}).palette.map(p=>p.color))].sort();
  if(!baseline.length)baseline.push(adaptive[0]);
  const candidates=[adaptive,baseline].map(palette=>{
   const assessed=paletteAssessment(nodes,edges,palette);
@@ -307,8 +307,8 @@ function validateGraph(graph){
    maxRgbDistance:metrics.maxRgbDistance,collapsedProtectedEdges:working.collapsedProtectedEdges,protectedColourMismatch:working.protectedColourMismatch},
   status:'SOURCE_GRAPH_AND_WORKING_COLOURS_NOT_DIGITISED'};
 }
-function histogramPalette(rgba,w,h){
- const foreground=reconstruction.sourceForegroundMask(rgba,w,h),bins=new Map();
+function histogramPalette(rgba,w,h,{fullImage=false}={}){
+ const foreground=reconstruction.sourceForegroundMask(rgba,w,h,{fullImage}),bins=new Map();
  for(let k=0;k<foreground.length;k++)if(foreground[k]){
   const j=k*4,key=((rgba[j]>>5)<<6)|((rgba[j+1]>>5)<<3)|(rgba[j+2]>>5),bin=bins.get(key)||{pixelArea:0,sum:[0,0,0]};
   bin.pixelArea++;for(let c=0;c<3;c++)bin.sum[c]+=rgba[j+c];bins.set(key,bin);

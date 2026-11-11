@@ -25,9 +25,10 @@ app.innerHTML=[
  '<label class="sf-small" for="sfQuickProductName">Product / design name</label>',
  '<input id="sfQuickProductName" type="text" maxlength="80" autocomplete="off" placeholder="e.g. Kingfisher on Ivy">',
  '<p class="sf-small">Used for your ZIP, PES and DST download names, independently of the uploaded image filename. Does not alter stitches.</p>',
- '<label class="sf-small" for="sfQuickWidth">Visible embroidery width (mm)</label>',
+ fineDetail?'<label class="sf-small" for="sfQuickDesignArea">Design area</label><select id="sfQuickDesignArea"><option value="motif">Isolated motif</option><option value="full-image">Full image</option></select>':'',
+ '<label class="sf-small" for="sfQuickWidth" id="sfQuickWidthLabel">Visible embroidery width (mm)</label>',
  '<input id="sfQuickWidth" type="number" min="10" max="250" step="1" value="80" inputmode="decimal">',
- '<p class="sf-small">Measured across the visible artwork, excluding transparent margins. The decoded needle dimensions are shown after generation.</p>',
+ '<p class="sf-small" id="sfQuickWidthHint">Measured across the visible artwork, excluding transparent margins. The decoded needle dimensions are shown after generation.</p>',
  fineDetail?'<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox" disabled> Black satin edge (temporarily unavailable)</label>':
   '<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox"> Black satin edge</label>',
  fineDetail?'<p class="sf-small">The optional satin finishing pass is paused while its machine-file audit is corrected. Fine Detail generates without a satin edge for now.</p>':
@@ -77,7 +78,7 @@ const css=document.createElement('style');css.textContent=[
  '#sfQuickOriginal[hidden],#sfQuickCanvas[hidden],#sfQuickAuth[hidden]{display:none!important}',
  '#sfQuickAuth{margin-top:12px;padding:10px;background:#eff5f3;border-radius:9px}',
  '#sfQuickAuth input{width:100%;height:45px;margin-top:7px;padding:10px;border:1px solid #abbfba;border-radius:8px}',
- '#sfQuickWidth,#sfQuickProductName{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
+ '#sfQuickWidth,#sfQuickProductName,#sfQuickDesignArea{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
  '.sf-satin{min-height:44px;margin-top:7px}.sf-satin input{accent-color:#146e7b;width:19px;height:19px}',
  '.sf-embroidery-individual{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.sf-embroidery-individual .btn{min-width:0;white-space:normal}',
  '@media(max-width:340px){.sf-embroidery-individual{grid-template-columns:1fr}}',
@@ -95,7 +96,7 @@ const status=$('#sfQuickStatus'),auth=$('#sfQuickAuth'),token=$('#sfQuickToken')
 const canvas=$('#sfQuickCanvas'),replay=$('#sfQuickReplay');
 const pesButton=$('#sfQuickPES'),dstButton=$('#sfQuickDST'),productName=$('#sfQuickProductName'),advancedName=$('#sfAutoProductName');
 const image=$('#sfQuickOriginal'),empty=$('#sfQuickEmpty'),filename=$('#sfQuickFilename');
-const satin=$('#sfQuickSatin');
+const satin=$('#sfQuickSatin'),designArea=$('#sfQuickDesignArea');
 if(fineDetail){satin.checked=false;satin.disabled=true;}
 let preview=null,frame=0,run=0,ready=false,busy=false,hasImage=false,failed=false,workerAvailable=!fineDetail;
 function updateGenerate(){generate.disabled=busy||!hasImage||!workerAvailable;}
@@ -175,7 +176,7 @@ generate.addEventListener('click',()=>{
  if(wantedWidth&&advancedWidth){
   const requested=Number(wantedWidth.value);
   if(!wantedWidth.value.trim()||!Number.isFinite(requested)||requested<10||requested>250){
-   status.textContent='Enter a visible embroidery width between 10 and 250 mm.';
+   status.textContent='Enter an embroidery width between 10 and 250 mm.';
    wantedWidth.focus();return;
   }
   if(Number(advancedWidth.value)!==requested){
@@ -196,6 +197,7 @@ generate.addEventListener('click',()=>{
  const mode=$('#sfAutoWorkflow');if(mode&&mode.value!=='native'){mode.value='native';mode.dispatchEvent(new Event('change'));}
  reset('Preparing image…');
  failed=false;busy=true;generate.disabled=true;upload.disabled=true;satin.disabled=true;
+ if(designArea)designArea.disabled=true;
  native.click();
  // The source workflow emits completion and failure events. The ZIP is NEVER
  // enabled by a preview, AI proposal or legacy outline export.
@@ -204,6 +206,16 @@ productName.addEventListener('input',()=>{if(advancedName)advancedName.value=pro
 satin.addEventListener('change',()=>{
  window.dispatchEvent(new Event('stitchforge:satin-changed'));
  if(hasImage)reset('Edge setting updated. Tap '+generateLabel+'.');
+});
+const motifWidthHint=$('#sfQuickWidthHint').textContent;
+designArea?.addEventListener('change',()=>{
+ const fullImage=designArea.value==='full-image';
+ $('#sfQuickWidthLabel').textContent=fullImage?'Full image width (mm)':'Visible embroidery width (mm)';
+ $('#sfQuickWidthHint').textContent=fullImage
+  ? 'Measured edge to edge. Visible background colours are stitched. Transparent areas stay empty.'
+  : motifWidthHint;
+ window.dispatchEvent(new Event('stitchforge:design-area-changed'));
+ if(hasImage)reset('Design area updated. Tap '+generateLabel+'.');
 });
 token.addEventListener('input',()=>{if(token.value.trim())status.textContent='Token entered. Tap Generate embroidery.';});
 window.addEventListener('stitchforge:workflow-status',e=>{
@@ -222,7 +234,7 @@ window.addEventListener('stitchforge:native-ready',e=>{
  auth.hidden=true;token.value='';
  const report=e.detail?.report,d=report?.decoded?.find(x=>x.format==='pes');
  const layout=report?.stitchPlanning?.adaptiveArtworkLayout;
- const label=fineDetail?(layout?'Fine Detail checked the original artwork. ':
+ const label=report?.sourceBinding?.fullImage?'Full image. ':fineDetail?(layout?'Fine Detail checked the original artwork. ':
   report?.homeHybrid?.preserveFineDetail?.selected?'Fine Detail used the original artwork. ':
   'Fine Detail checked the original and kept the standard plan. '):'';
  const routingReview=layout&&d?.trims>=100&&d.trims/d.needleStitches>=.008;
@@ -237,12 +249,16 @@ window.addEventListener('stitchforge:native-ready',e=>{
 });
 window.addEventListener('stitchforge:native-error',e=>{
  failed=true;
- reset('Generation failed: '+String(e.detail?.message||'Native worker could not complete this image'));
+ const message=String(e.detail?.message||'Native worker could not complete this image');
+ reset(designArea?.value==='motif'&&/Background is complex|confidently separate artwork/.test(message)
+  ? 'Choose Full image under Design area to keep the background and edge details.'
+  : 'Generation failed: '+message);
  if(/access token|unauthori[sz]ed|401/i.test(status.textContent))auth.hidden=false;
 });
 window.addEventListener('stitchforge:native-idle',()=>{
  if(busy&&!ready&&!failed)reset('Generation stopped or image changed. Press Generate to retry.');
  busy=false;updateGenerate();upload.disabled=false;satin.disabled=fineDetail;
+ if(designArea)designArea.disabled=false;
 });
 replay.addEventListener('click',play);
 zip.addEventListener('click',()=>{

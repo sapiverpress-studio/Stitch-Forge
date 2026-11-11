@@ -12,9 +12,9 @@ REGION=europe-west2
 SERVICE=stitch-forge-worker-staging
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE_SHA="$(git -C "$ROOT" rev-parse HEAD)"
-EXPECTED_WORKER_TREE=44031c59f19948ccb818fd9bc668773e1e3e6cbc
+EXPECTED_WORKER_TREE=fb53219064c213af0b585a335c415003d61253fd
 if [[ "$(git -C "$ROOT" rev-parse "$SOURCE_SHA:services/digitiser")" != "$EXPECTED_WORKER_TREE" ]]; then
-  echo "The worker source differs from the reviewed adaptive workflow." >&2
+  echo "The worker source differs from the reviewed Fine Detail release." >&2
   exit 2
 fi
 TAG="fine-detail-${SOURCE_SHA:0:7}"

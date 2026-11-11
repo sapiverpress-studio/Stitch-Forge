@@ -44,6 +44,7 @@ function validateSource(source){
 function validateDraft(input){
  if(!input||![SCHEMA,GRAPH_SCHEMA,APPROX_SCHEMA].includes(input.schema)||!Array.isArray(input.regions)||!input.regions.length||input.regions.length>12)
   throw Error('Invalid source-region project');
+ if('fullImage' in input&&input.fullImage!==true)throw Error('Invalid full image source region setting');
  const source=validateSource(input.source),{width:w,height:h}=source;
  const physical=physicalSize(w,h,input.physical?.imageWidthMm);
  const occupied=new Uint8Array(w*h),regions=[];let totalRuns=0,foregroundPixels=0;
@@ -84,6 +85,7 @@ function validateDraft(input){
  const smallComponents=regions.reduce((n,r)=>n+r.ledger.components.filter(c=>c.reviewFlags.length).length,0);
  const holeCount=regions.reduce((n,r)=>n+(r.topology?.components.reduce((m,c)=>m+c.rings.filter(x=>x.role==='hole').length,0)||0),0);
  const output={schema:input.schema,source,physical,regions,foregroundPixels,
+  ...(input.fullImage?{fullImage:true}:{}),
   quantisation:{pixelsBeyondRgb60:quantisation.pixelsBeyondRgb60,meanRgbDistance:quantisation.meanRgbDistance},
   summary:{colorGroups:regions.length,componentCount,smallComponents,holeCount,
    contoursUnavailable:regions.filter(r=>!r.topology).length},
@@ -121,8 +123,8 @@ function validateDraft(input){
  }
  return output;
 }
-async function createDraft(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h}={}){
- const scan=reconstruction.analyseArtwork(rgba,w,h),foreground=reconstruction.sourceForegroundMask(rgba,w,h);
+async function createDraft(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,fullImage=false}={}){
+ const scan=reconstruction.analyseArtwork(rgba,w,h,{fullImage}),foreground=reconstruction.sourceForegroundMask(rgba,w,h,{fullImage});
  if(!scan.palette.length)throw Error('No stable source palette; automatic partition unavailable');
  const palette=[...new Set(scan.palette.map(p=>p.color))].sort();
  const rgb=palette.map(c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16)));
@@ -144,11 +146,12 @@ async function createDraft(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHei
   regions.push({id:sha256.slice(0,12)+'-colour-'+(regions.length+1),color:palette[i],ledger});
  }
  return validateDraft({schema:SCHEMA,source:{sha256,width:w,height:h,originalWidth,originalHeight},
+  ...(fullImage?{fullImage:true}:{}),
   physical:{imageWidthMm},regions,foregroundPixels:scan.foregroundPixels,
   quantisation:{pixelsBeyondRgb60,meanRgbDistance:distanceTotal/scan.foregroundPixels}});
 }
-async function createGraphDraft(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,simplifyBoundaryBlends=true}={}){
- const sha256=await fingerprint(rgba,w,h),graph=graphAPI.buildGraph(rgba,w,h,sha256,{simplifyBoundaryBlends});
+async function createGraphDraft(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,simplifyBoundaryBlends=true,fullImage=false}={}){
+ const sha256=await fingerprint(rgba,w,h),graph=graphAPI.buildGraph(rgba,w,h,sha256,{simplifyBoundaryBlends,fullImage});
  const masks=graph.palette.map(()=>new Uint8Array(w*h)),regions=[];
  for(const n of graph.nodes)for(const [y,x0,x1] of n.runs)masks[n.paletteIndex].fill(1,y*w+x0,y*w+x1);
  for(let i=0;i<graph.palette.length;i++){
@@ -156,11 +159,12 @@ async function createGraphDraft(rgba,w,h,{imageWidthMm=80,originalWidth=w,origin
   regions.push({id:sha256.slice(0,12)+'-colour-'+(regions.length+1),color:graph.palette[i],ledger});
  }
  return validateDraft({schema:GRAPH_SCHEMA,source:{sha256,width:w,height:h,originalWidth,originalHeight},
+  ...(fullImage?{fullImage:true}:{}),
   physical:{imageWidthMm},regions,graph,foregroundPixels:graph.nodes.reduce((n,r)=>n+r.pixelArea,0),
   quantisation:{pixelsBeyondRgb60:graph.metrics.pixelsBeyondRgb60,meanRgbDistance:graph.metrics.meanRgbDistance}});
 }
-async function createApproximationDraft(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,reasonCode='explicit_preview_only'}={}){
- const sha256=await fingerprint(rgba,w,h),{palette,foreground}=graphAPI.histogramPalette(rgba,w,h);
+async function createApproximationDraft(rgba,w,h,{imageWidthMm=80,originalWidth=w,originalHeight=h,reasonCode='explicit_preview_only',fullImage=false}={}){
+ const sha256=await fingerprint(rgba,w,h),{palette,foreground}=graphAPI.histogramPalette(rgba,w,h,{fullImage});
  const colors=palette.map(c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16))),masks=colors.map(()=>new Uint8Array(w*h));
  let count=0,strong=0,distanceTotal=0;
  for(let k=0;k<foreground.length;k++)if(foreground[k]){
@@ -174,6 +178,7 @@ async function createApproximationDraft(rgba,w,h,{imageWidthMm=80,originalWidth=
   regions.push({id:sha256.slice(0,12)+'-colour-'+(regions.length+1),color:palette[i],ledger});
  }
  return validateDraft({schema:APPROX_SCHEMA,source:{sha256,width:w,height:h,originalWidth,originalHeight},physical:{imageWidthMm},regions,
+  ...(fullImage?{fullImage:true}:{}),
   foregroundPixels:count,quantisation:{pixelsBeyondRgb60:strong,meanRgbDistance:distanceTotal/count},
   approximation:{algorithm:'palette_first_preview_MD-2.47',reasonCode}});
 }
@@ -189,7 +194,7 @@ async function assertMatchesSource(draft,rgba,w,h){
  const checked=validateDraft(draft);
  if(checked.source.width!==w||checked.source.height!==h||checked.source.sha256!==await fingerprint(rgba,w,h))
   throw Error('Saved source regions belong to different artwork pixels');
- const options={imageWidthMm:checked.physical.imageWidthMm,originalWidth:checked.source.originalWidth,originalHeight:checked.source.originalHeight};
+ const options={imageWidthMm:checked.physical.imageWidthMm,originalWidth:checked.source.originalWidth,originalHeight:checked.source.originalHeight,fullImage:checked.fullImage===true};
  if(checked.graph)options.simplifyBoundaryBlends=checked.graph.algorithm==='bounded_reference_graph_MD-2.46';
  if(checked.approximation)options.reasonCode=checked.approximation.reasonCode;
  const factory=checked.schema===GRAPH_SCHEMA?createGraphDraft:checked.schema===APPROX_SCHEMA?createApproximationDraft:createDraft;

@@ -35,11 +35,11 @@ def illustration(background="transparent"):
     return image
 
 
-def browser_packet(image):
+def browser_packet(image, *, full_image=False):
     rgba = np.asarray(image.convert("RGBA"), dtype=np.uint8)
     h, w = rgba.shape[:2]
     source = rgba.tobytes()
-    mask = foreground(rgba)
+    mask = foreground(rgba, full_image=full_image)
     # A real original-pixel proposal from the current website can be crude;
     # the worker must reconstruct its own palette rather than trusting it.
     labels = mask.astype(np.uint8).tobytes()
