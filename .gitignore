@@ -3,3 +3,5 @@ __pycache__/
 .netlify/
 .env
 .env.*
+site/lettering.bundle.js
+site/lettering-licences.txt
