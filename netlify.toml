@@ -3,7 +3,7 @@
 # Experimental machine files are not approved for retail or machine use.
 [build]
   publish = "site"
-  command = "node tools/check_frontend_syntax.cjs && node --test tests/*.cjs tests/*.mjs"
+  command = "node tools/check_frontend_syntax.cjs && node --test tests/*.cjs tests/*.mjs && npm run build:lettering"
 
 [[redirects]]
   from = "/fine-detail"

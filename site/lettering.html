@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102a31">
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'">
+  <link rel="icon" type="image/webp" href="/assets/sapiver-press-logo.webp">
+  <title>Private fonts · Sapiver Stitch Forge</title>
+  <style>
+    :root{--ink:#102a31;--teal:#146e7b;--paper:#eef3f2;--line:#d3e1dd;--muted:#4d656a;--pale:#e6f2ee}
+    *{box-sizing:border-box}[hidden]{display:none!important}
+    body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+    header{background:var(--ink);color:white;padding:14px max(16px,calc((100vw - 1040px)/2));display:flex;align-items:center;gap:12px}
+    header img{width:44px;height:44px;border-radius:9px}header strong{display:block}header small{color:#bad0d0}
+    main{max-width:1072px;margin:auto;padding:18px 16px 48px}
+    a{color:var(--teal);font-weight:700}.back{display:inline-block;padding:8px 0}
+    h1{font-size:clamp(27px,5vw,40px);line-height:1.1;letter-spacing:-.03em;margin:10px 0 5px}
+    h2{font-size:19px;margin:0 0 12px}p{margin:0 0 12px}.muted{color:var(--muted)}.small{font-size:13px}
+    .library,.card{background:white;border:1px solid var(--line);border-radius:15px;padding:16px}
+    .library{margin:16px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .library h2,.library p{margin-bottom:3px}.library-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+    .workspace{display:grid;grid-template-columns:minmax(0,385px) minmax(0,1fr);gap:15px;align-items:start}
+    .field{margin-bottom:12px;min-width:0}.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+    label,.field-label{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
+    input,select,button{font:inherit}input,select{min-height:44px;width:100%;border:1px solid #aabfb9;border-radius:9px;padding:8px 9px;background:white;color:var(--ink)}
+    input[type=color]{width:48px;padding:3px;cursor:pointer}.colour-row{display:flex;align-items:center;gap:9px}.colour-row output{font-variant-numeric:tabular-nums}
+    input[type=file]{font-size:13px}.check{display:flex;gap:9px;align-items:center;margin:-3px 0 12px}.check input{width:18px;height:18px;min-height:0;accent-color:var(--teal)}
+    button,.button{display:inline-flex;justify-content:center;align-items:center;min-height:44px;border:1px solid var(--teal);border-radius:9px;background:var(--teal);color:white;padding:8px 12px;cursor:pointer;font:inherit;font-weight:720;text-decoration:none}
+    button.secondary,.button.secondary{color:var(--teal);background:white}.button input{position:absolute;width:1px;height:1px;min-height:0;opacity:0;padding:0}
+    button:disabled,.button:has(input:disabled){opacity:.55;cursor:default}
+    :focus-visible,.button:focus-within{outline:3px solid #e89356;outline-offset:2px}
+    #packStatus[data-error=true],#previewStatus[data-error=true]{color:#842e23}
+    details{padding-top:8px;border-top:1px solid var(--line);margin-top:12px}summary{cursor:pointer;font-weight:700;min-height:40px;padding:6px 0}
+    .motif-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.motif-row p{margin:0;overflow-wrap:anywhere}
+    canvas{display:block;width:100%;height:clamp(170px,32vw,280px);border:1px solid var(--line);border-radius:10px;background:#fcf9f3}
+    .stats{min-height:22px;margin:9px 0 0;font-weight:700;font-variant-numeric:tabular-nums}
+    .downloads{display:flex;gap:8px;margin:12px 0 7px}.downloads button{flex:1}
+    .threads{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.threads li{display:flex;align-items:center;gap:5px;background:var(--pale);padding:4px 7px;border-radius:6px;font-size:12px}
+    .swatch{width:12px;height:12px;border:1px solid #1235;border-radius:50%}
+    @media(max-width:720px){.workspace{grid-template-columns:1fr}main{padding-inline:12px}.card,.library{padding:13px}}
+  </style>
+</head>
+<body>
+  <header><img src="/assets/sapiver-press-logo.webp" alt="Sapiver Press logo"><div><strong>Sapiver Stitch Forge</strong><small>Embroidery lettering</small></div></header>
+  <main>
+    <a class="back" href="/">← Stitch Forge</a>
+    <h1>Private font library</h1>
+    <p class="muted">Choose a stitch font, type a name and try thread colours.</p>
+    <section class="library" aria-label="Font pack">
+      <div><h2>Font pack</h2><p id="packStatus" role="status" class="small muted">Checking this browser for a saved pack…</p></div>
+      <div class="library-actions">
+        <label class="button" for="fontPack"><span id="packAction">Import font ZIP</span><input id="fontPack" type="file" accept=".zip,application/zip" disabled></label>
+        <button id="removePack" type="button" class="secondary" hidden>Remove pack</button>
+      </div>
+    </section>
+    <div class="workspace">
+      <section class="card" aria-labelledby="letteringTitle">
+        <h2 id="letteringTitle">Lettering</h2>
+        <fieldset id="letteringControls" style="margin:0;padding:0;border:0;min-width:0" disabled>
+          <div class="field"><label for="fontFamily">Font</label><select id="fontFamily"><option>Import a font ZIP</option></select></div>
+          <div class="field"><label for="fontSize">Supplied size</label><select id="fontSize"><option>Choose a font</option></select></div>
+          <div class="field"><label for="letteringText">Name or short phrase</label><input id="letteringText" type="text" maxlength="48" placeholder="e.g. Bea" autocomplete="off" spellcheck="false"></div>
+          <label class="check" for="useCapitals"><input id="useCapitals" type="checkbox">Use capitals</label>
+          <div class="field"><label for="threadColour">Thread colour</label><div class="colour-row"><input id="threadColour" type="color" value="#17686e"><output id="threadHex" for="threadColour">#17686E</output></div></div>
+          <details>
+            <summary>Hoop and letter spacing</summary>
+            <div class="row">
+              <div class="field"><label for="hoopWidth">Hoop width (mm)</label><input id="hoopWidth" type="number" inputmode="numeric" min="10" max="500" value="100"></div>
+              <div class="field"><label for="hoopHeight">Hoop height (mm)</label><input id="hoopHeight" type="number" inputmode="numeric" min="10" max="500" value="100"></div>
+            </div>
+            <div class="field"><label for="letterSpacing">Letter spacing (mm)</label><input id="letterSpacing" type="number" inputmode="decimal" min="0" max="10" step="0.1" value="1"></div>
+          </details>
+          <details>
+            <summary>Add a premade design</summary>
+            <div class="field"><label for="motifFile">PES or DST file</label><input id="motifFile" type="file" accept=".pes,.dst"></div>
+            <p class="small muted">The design sits below your lettering at its original size.</p>
+            <div class="motif-row"><p class="small" id="motifStatus" role="status"></p><button id="removeMotif" class="secondary" type="button" hidden>Remove design</button></div>
+          </details>
+        </fieldset>
+      </section>
+      <section class="card" aria-labelledby="previewTitle">
+        <h2 id="previewTitle">Stitch preview</h2>
+        <canvas id="letteringCanvas" role="img" aria-label="Preview of the actual lettering stitches"></canvas>
+        <p id="stitchStats" class="stats"></p>
+        <p id="previewStatus" class="small muted" role="status">Import your font ZIP to start.</p>
+        <ol id="threadOrder" class="threads" aria-label="Thread order" hidden></ol>
+        <div class="downloads"><button id="downloadPes" type="button" disabled>Download PES</button><button id="downloadDst" class="secondary" type="button" disabled>Download DST</button></div>
+        <p class="small muted">Trial files. Test on spare fabric with your chosen hoop and thread.</p>
+        <a class="small" href="/lettering-licences.txt">Software licences</a>
+      </section>
+    </div>
+  </main>
+  <script src="/download-naming.js" defer></script>
+  <script type="module" src="/lettering.bundle.js"></script>
+</body>
+</html>

@@ -8,14 +8,14 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | Adaptive artwork workflow. Production release held for sew-out. |
-| Last updated | 2026-11-10 (Europe/London) |
-| Last independently checked source | Adaptive worker branch with paired native PES/DST checks across artwork and local Standard and Fine Detail browser tests. See E-092. |
+| Document version | Private lettering library and adaptive artwork trial. |
+| Last updated | 2026-11-12 (Europe/London) |
+| Last independently checked source | Private lettering browser and paired export checks in E-093. Adaptive artwork checks in E-092. |
 | Default branch | `main` |
-| Development branch | `feature/adaptive-artwork-quality` based on `a5c1f50065f6f65f9ec97095b0d1dc90d0a3a794`. |
+| Development branch | `feature/private-font-library` based on `63f37a81d875f67c53713825a025c634cece9c14`. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Deployment | Owner authorised pushing and deploying the adaptive workflow for a trial on 2026-11-10. Local browser and worker evidence is recorded below. Hosted validation and physical sewing are separate checks. |
+| Deployment | Owner authorised adding the private font library on 2026-11-12 and the adaptive artwork trial on 2026-11-10. The lettering branch has local browser and file evidence. See E-093 and E-092. |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
 | External Ink/Stitch or pyembroidery integration | Ink/Stitch 3.3.0 and pyembroidery 1.5.1 passed the local browser-to-file and colour containment checks for the kingfisher and macaw. Hosted and physical checks are pending. |
@@ -80,6 +80,12 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Private lettering library (2026-11-12)
+
+The Stitch Forge homepage links to Private fonts. Import a ZIP of individual PES letters, choose a font and supplied size, type a name and preview the actual stitch paths in a chosen thread colour. A premade PES or DST motif can sit below the lettering at its original size. The page checks sewn bounds against the selected hoop and offers paired PES and DST downloads.
+
+The ZIP is stored in the browser's IndexedDB database and can be replaced or removed. Each browser profile holds one imported pack. The lettering page's Content Security Policy blocks network connections. Pack files, imported motifs and generated designs stay on the device. The client bundle uses the pinned embroidery codec and ZIP reader and includes their licence notices. The owner’s pack provides 50 fonts in four supplied sizes. See E-093 for software verification and the physical sew-out still to run.
 
 ### Adaptive artwork workflow (2026-11-10)
 
@@ -573,6 +579,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | M6 — real stitch proof | at least one real machine/hoop/fabric setup | BLOCKED | Approved physical stitch-out + documented iterations |
 | M7 — production packaging | tested ZIP, thread chart, descriptions, test notices | BLOCKED | Design/size/format-specific QA, zero false claims |
 | M8 — possible retail software product | licensing, security, support, pricing, demand study | DEFERRED | Separate commercial decision after user tests |
+| M9 — private lettering library | On-device font pack, colour preview and optional premade design | DONE-VERIFIED | All 200 pack choices exported in both formats. Local browser and independent decoding checks in E-093. |
 
 ---
 
@@ -591,6 +598,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-007 | P0 | Establish CI for browser, source lint and test evidence | IN-PROGRESS | Branch checks show green on documented commits |
 | SF-091 | P1 | Preserve source feather and marking boundaries in the native digitiser | IN-PROGRESS | Local original-source browser and Ink/Stitch evidence in E-091. Hosted timing, routing and fabric test remain release gates. |
 | SF-092 | P1 | Adapt native artwork planning to the design and prepare paired sew-outs | IN-PROGRESS | E-092 records the shared worker, native comparisons and mobile flows. Remaining gates are actual sew-outs and hosted validation. |
+| SF-093 | P1 | Compose private lettering from predigitised PES letters | DONE-VERIFIED | E-093 records the private pack import, supplied sizes, colour preview, motif and paired exports. Physical sewing remains a trial. |
 | SF-008 | P0 | Define versioned project schema | IN-PROGRESS | Schema, migrations and round-trip tests |
 | SF-009 | P0 | Threat model uploaded SVG/raster and processing | IN-PROGRESS | Security tests + limits documented |
 | SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
@@ -700,6 +708,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-090 | P0 | Existing private worker update and owner manual website release | **AUTHORISED / ACCESS AND HOSTED ACCEPTANCE PENDING** | No gcloud/Docker/authenticated deploy access in initial runtime; preserve service IAM/secrets/resource caps. Netlify-only deploy is insufficient. |
 
 ## 10. Test evidence register
+
+- **E-093 (2026-11-12).** `node tools/check_frontend_syntax.cjs`, `node --test tests/*.cjs tests/*.mjs` and `npm run build:lettering` passed. Node ran 232 tests with 231 passes and the configured Cloud Run smoke test skipped. A local pack audit decoded 11,520 supplied PES files and exported and read back a sample in PES and DST for each of the 200 font and size choices. Independent pyembroidery 1.5.1 reads confirmed matching needle coordinates for a name at all four sizes and preserved thread changes for a two-colour test motif and a premade 13-colour rose.
+
+  Local Chromium checks at 390 px and 1280 px exercised the homepage link, ZIP import, colour preview, missing-letter feedback, hoop fit, motif import, downloads, reload and removal. Browser monitoring saw zero network requests during import, preview and export. The 390 px check used a desktop browser viewport. The owner’s phone and physical embroidery machine have yet to be tested.
 
 - **E-092 (2026-11-10).** Compared the same source packet and finished width with the adaptive worker enabled and disabled. Used Ink/Stitch 3.3.0, pyembroidery 1.5.1 and 390 px Chromium against the local job handlers and worker. Each reported pair passed the position, colour order and source containment checks. The table counts decoded PES trim commands. A machine may handle those commands differently.
 
@@ -860,6 +872,7 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 | Attractive preview but failed stitch-out | Faulty customer product, reputational loss | CRITICAL | Physical G5 test; inspect density, fabric, thread and backing |
 | Raster tracing presented as completed embroidery | Lost detail / misleading listing | CRITICAL | Reference layer, selectable regions, clear warnings |
 | Incorrect PES/DST or wrong hoop | Machine problems, wasted material | CRITICAL | Independent readers, profiles, limits and tests |
+| Private lettering pack exposed or lost | Licence exposure or repeat import | HIGH | Browser-only storage and processing, request-blocking page policy, bounded ZIP input, and a replacement ZIP retained by the owner |
 | GPL obligations ignored | Legal/distribution exposure | HIGH | Licence inventory + review before shipping integrated code |
 | Malicious SVG/image uploads | XSS, resource exhaustion, information leaks | HIGH | Sanitisation, time/memory caps, isolated processing |
 | Overengineering too early | High cost, stalled development | HIGH | First one-colour verified design; incremental gates |
@@ -875,6 +888,7 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 
 | Date | ID | Decision / proposal | Reason / status |
 | --- | --- | --- | --- |
+| 2026-11-12 | D-031 | Store one private lettering ZIP per browser profile | Keep purchased files on the owner’s device. Use original size variants and preserve needle paths and thread stops. |
 | 2026-11-10 | D-030 | Use the shared worker for adaptive planning and keep a signed prior-layout retry | Retain whole fills where the geometry is bounded, preserve source-supported marks and audit the final format pair. The physical checklist and approval are separate. |
 | 2026-11-10 | D-029 | Refine original colour boundaries before choosing stitch paths | Preserve meaningful detail in physical units, keep the foreground and thread palette, and retain the signed native audit. V1 jobs use their existing plan. |
 | 2026-10-30 | D-028 | Keep source preparation, native trial and physical approval distinct | PES6 RGB and source-contained needles are genuine evidence; texture loss, unresolved details and excessive travel remain explicit blockers. Optional physical smoothing/routing is local research only. |
@@ -938,6 +952,10 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 ---
 
 ## 13. Dated work log / progress journal
+
+### 2026-11-12 — Private lettering library
+
+Branch `feature/private-font-library` adds `site/lettering.html` and its lettering and pattern modules, links them from the homepage, and integrates the browser bundle and licence notices into the site build. E-093 records the local browser, pack and export verification. The owner authorised the website update and keeps the ZIP on their device. The first hosted release uses the site's Git deployment. A physical test on spare fabric is still needed to judge the stitch-out.
 
 ### 2026-11-10 — Owner authorised the adaptive trial deployment
 
