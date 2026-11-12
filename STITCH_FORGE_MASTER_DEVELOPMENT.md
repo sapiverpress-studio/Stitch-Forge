@@ -8,14 +8,14 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | Private Design Editor and adaptive artwork trial. |
+| Document version | Private My Motifs library and Design Editor. |
 | Last updated | 2026-11-12 (Europe/London) |
-| Last independently checked source | Private Design Editor browser and paired export checks in E-094. Adaptive artwork checks in E-092. |
+| Last independently checked source | My Motifs connection and stitch-file checks in E-095. Design Editor export checks in E-094. |
 | Default branch | `main` |
-| Development branch | `feature/design-editor-link` based on `9eb7f7ebc1f2bdb4b2b8e8d8694857bddd91b78e`. |
+| Development branch | `feature/private-motif-library` based on `6d6616b8a4f1b3a998a15b406f69ac6b9593b616`. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
-| Deployment | The owner requested a standalone private Design Editor and a Stitch Forge entry point on 2026-11-12. The adaptive artwork trial was authorised on 2026-11-10. See E-094 and E-092. |
+| Deployment | The owner authorised My Motifs for Stitch Forge and the private Design Editor on 2026-11-12. See E-095 and E-094. |
 | Authorised Etsy listing | **None** |
 | Physical embroidery stitch-out passed | **NO — not performed** |
 | External Ink/Stitch or pyembroidery integration | Ink/Stitch 3.3.0 and pyembroidery 1.5.1 passed the local browser-to-file and colour containment checks for the kingfisher and macaw. Hosted and physical checks are pending. |
@@ -80,6 +80,10 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### My Motifs (2026-11-12)
+
+Design Editor shows recent motifs, a searchable library and batch import. A one-use owner link connects the digitiser browser. After a successful native result the connected browser saves the original preferred stitch file from the verified archive. Library access requires the Design Editor owner’s sign-in, and a saved motif can be inserted at its original size and stitch order. Downloaded ZIPs remain available if a library save needs a retry.
 
 ### Private Design Editor (2026-11-12)
 
@@ -585,6 +589,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | M8 — possible retail software product | licensing, security, support, pricing, demand study | DEFERRED | Separate commercial decision after user tests |
 | M9 — private lettering library | On-device font pack, colour preview and optional premade design | DONE-VERIFIED | All 200 pack choices exported in both formats. Local browser and independent decoding checks in E-093. |
 | M10 — private Design Editor | Installed fonts, hoop layout, motif import and paired exports | DONE-VERIFIED | E-094 records the standalone workspace and verified source stitches and placement. |
+| M11 — My Motifs | Private library, connected-browser capture, history and hoop insertion | DONE-VERIFIED | Local service and decoder checks in E-095. |
 
 ---
 
@@ -605,6 +610,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-092 | P1 | Adapt native artwork planning to the design and prepare paired sew-outs | IN-PROGRESS | E-092 records the shared worker, native comparisons and mobile flows. Remaining gates are actual sew-outs and hosted validation. |
 | SF-093 | P1 | Compose private lettering from predigitised PES letters | DONE-VERIFIED | E-093 records the private pack import, supplied sizes, colour preview, motif and paired exports. Physical sewing remains a trial. |
 | SF-094 | P1 | Link the private Design Editor from Stitch Forge | DONE-VERIFIED | E-094 records layout controls, installed fonts, native download import and export verification. |
+| SF-095 | P1 | Connect the digitiser to the owner’s My Motifs library | DONE-VERIFIED | E-095 records one-use linking, verified capture, deduplication, read permissions and recovery. |
 | SF-008 | P0 | Define versioned project schema | IN-PROGRESS | Schema, migrations and round-trip tests |
 | SF-009 | P0 | Threat model uploaded SVG/raster and processing | IN-PROGRESS | Security tests + limits documented |
 | SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
@@ -714,6 +720,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-090 | P0 | Existing private worker update and owner manual website release | **AUTHORISED / ACCESS AND HOSTED ACCEPTANCE PENDING** | No gcloud/Docker/authenticated deploy access in initial runtime; preserve service IAM/secrets/resource caps. Netlify-only deploy is insufficient. |
 
 ## 10. Test evidence register
+
+- **E-095 (2026-11-12).** Public repository syntax and Node suite passed with 234 passes, one configured smoke skip and zero failures. The editor’s seven tests passed. Tests exercise private reads, same-origin linking, replay and expiry, native ZIP capture, byte-for-byte PES retrieval, deduplication, and the archive restore marker. All 21 distinct recovered trial PES files passed the Design Editor decoder. Historical files are loaded privately from saved archives. The old artwork job store is time-limited.
 
 - **E-094 (2026-11-12).** In the standalone editor, `npm test` passed four tests for spacing, original-size ZIP imports, hoop fit, exact placement, rotation and colour blocks. All 200 installed font and size choices produced both formats. Browser tests covered installed fonts, search, drag with 5 mm snapping, colour preview and importing an actual Stitch Forge ZIP as a separate motif layer. A 390 px browser frame showed the mobile layout and rendered lettering. Independent pyembroidery read-back matched 24,427 needle coordinates and nine thread changes across the combined PES and DST. Physical sew-out is pending.
 
@@ -897,6 +905,7 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 | Date | ID | Decision / proposal | Reason / status |
 | --- | --- | --- | --- |
 | 2026-11-12 | D-032 | Host the installed fonts in an owner-only design workspace linked from the digitiser | The editor opens ready to use and keeps the purchased font files behind owner sign-in. Stitch placement and file import/export run in the browser. |
+| 2026-11-12 | D-033 | Use a private motif store with an owner-only editor API and a write-only browser link | Persist validated stitch bytes by content hash. Original design uploads and font assets stay in their existing flows. The owner can disconnect the digitiser browser. |
 | 2026-11-12 | D-031 | Store one private lettering ZIP per browser profile | Keep purchased files on the owner’s device. Use original size variants and preserve needle paths and thread stops. |
 | 2026-11-10 | D-030 | Use the shared worker for adaptive planning and keep a signed prior-layout retry | Retain whole fills where the geometry is bounded, preserve source-supported marks and audit the final format pair. The physical checklist and approval are separate. |
 | 2026-11-10 | D-029 | Refine original colour boundaries before choosing stitch paths | Preserve meaningful detail in physical units, keep the foreground and thread palette, and retain the signed native audit. V1 jobs use their existing plan. |
@@ -961,6 +970,10 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 ---
 
 ## 13. Dated work log / progress journal
+
+### 2026-11-12 — My Motifs
+
+Branch `feature/private-motif-library` adds the motif library endpoint and a capture event after verified native output. The owner’s Design Editor lists, searches and inserts saved files. The historical backfill comprises 21 distinct machine files from saved trial archives. E-095 records the privacy and format checks.
 
 ### 2026-11-12 — Private Design Editor entry point
 

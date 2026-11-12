@@ -119,6 +119,11 @@ function paint(){
 function clearNative(){if(nativeResult)context.setSourceRegionInspectionActive(false);nativeResult=null;nativeOverlay.replaceChildren();q('#sfAutoNativeReport').disabled=true;q('#sfAutoNativeGeometry').disabled=true;q('#sfAutoPES').disabled=true;q('#sfAutoDST').disabled=true;}
 function saveBytes(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 const fileName=ext=>window.StitchForgeDownloadNaming.filename(q('#sfAutoProductName').value,ext);
+function publishMotif(bytes, legacy=false){
+ window.dispatchEvent(new CustomEvent('stitchforge:motif-ready',{detail:{
+  bytes,legacy,name:q('#sfAutoProductName').value.trim()||'Embroidery design'
+ }}));
+}
 const namedReport=()=>window.StitchForgeDownloadNaming.reportName(q('#sfAutoProductName').value);
 async function saveNativeMachineFile(ext){
  if(!nativeResult)return;
@@ -312,6 +317,7 @@ q("#sfAutoRun").onclick=async()=>{
    window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview:result.preview,report:result.report}}));
    // Preserve verified ZIP auto-download, and expose a re-download button.
    saveBytes(result.bytes,fileName('zip'),'application/zip');
+   publishMotif(result.bytes);
   }catch(error){
    if(current()){
     const message=String(error?.message||error);
@@ -439,6 +445,7 @@ q("#sfAutoRun").onclick=async()=>{
    link.href=url;link.download="stitch-forge-machine-files-UNTESTED.zip";
    document.body.appendChild(link);link.click();link.remove();
    setTimeout(()=>URL.revokeObjectURL(url),10000);
+   publishMotif(blob,true);
    status(summaryText+" Native Ink/Stitch generated independently decoded PES/DST. ZIP downloaded automatically. These files are NOT physically stitch-tested; inspect and test on fabric before machine use.");
   }catch(engineError){
    status(summaryText+" Editable SVG and Undo remain available. Native PES/DST not generated: "+String(engineError?.message||engineError)+". No substitute machine files were produced.");
