@@ -139,16 +139,9 @@ async function loadOutput(blob,mode){
   const canvas=document.createElement('canvas');canvas.width=im.naturalWidth;canvas.height=im.naturalHeight;
   const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(im,0,0);
   const rgba=ctx.getImageData(0,0,canvas.width,canvas.height);
-  let opaque=0,transparent=0;
-  for(let i=3;i<rgba.data.length;i+=4){
-   if(rgba.data[i]===255)opaque++;
-   if(rgba.data[i]===0)transparent++;
-  }
-  const pixels=canvas.width*canvas.height;
-  const emptyCorners=[0,canvas.width-1,pixels-canvas.width,pixels-1]
-   .filter(index=>rgba.data[index*4+3]===0).length;
+  if(!window.StitchForgeAlpha?.inspect)throw Error('Transparency validation is unavailable');
   resultMode=mode;
-  validOutput=mode==='cutout'?transparent>pixels*.01&&opaque>pixels*.01&&emptyCorners>=3:opaque===pixels;
+  validOutput=window.StitchForgeAlpha.inspect(rgba.data,canvas.width,canvas.height,mode).valid;
   rawPixels=rgba.data;rawWidth=canvas.width;rawHeight=canvas.height;
   drawResult();
  }finally{URL.revokeObjectURL(url);}

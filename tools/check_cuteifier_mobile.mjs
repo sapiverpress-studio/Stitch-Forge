@@ -40,6 +40,11 @@ try{
   g.fillStyle='#edc08a';g.beginPath();g.ellipse(296,287,70,60,0,0,Math.PI*2);g.fill();
   g.strokeStyle='#241712';g.lineWidth=7;g.beginPath();g.arc(253,255,57,.1,2.4);g.stroke();
   g.beginPath();g.moveTo(225,211);g.quadraticCurveTo(246,196,264,211);g.stroke();
+  // Reproduce the customer's watercolour artwork: visible pixels have
+  // genuine alpha but no pixel needs to reach exactly 255.
+  const rgba=g.getImageData(0,0,c.width,c.height);
+  for(let i=3;i<rgba.data.length;i+=4)rgba.data[i]=Math.min(rgba.data[i],252);
+  g.putImageData(rgba,0,0);
   return c.toDataURL('image/webp',.96).split(',')[1];
  });
  const webp=Buffer.from(generated,'base64');
@@ -80,6 +85,10 @@ try{
   pixels:Array.from(canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data)
  }));
  const baseline=await output();
+ assert.ok(baseline.pixels.some((value,i)=>i%4===3&&value>=245&&value<255),
+  'near-opaque paint must be preserved');
+ assert.equal(baseline.pixels.filter((value,i)=>i%4===3&&value===255).length,0,
+  'fixture must reproduce a cutout without exactly opaque pixels');
  async function downloadExact(expected,name='capybara-cutout.png'){
   const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('#download').click()]);
   const bytes=await readFile(await dl.path());
