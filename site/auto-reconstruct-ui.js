@@ -72,9 +72,10 @@ overlay.setAttribute("id","sfAutoOverlay");
 overlay.setAttribute("pointer-events","none");canvasSvg.appendChild(overlay);
 const nativeOverlay=document.createElementNS('http://www.w3.org/2000/svg','g');nativeOverlay.id='sfNativeDecodedOverlay';nativeOverlay.setAttribute('pointer-events','none');canvasSvg.appendChild(nativeOverlay);
 let last=null,diagnostic=null,running=false,revision=0,nativeResult=null,nativeAbort=null,aiCached=null;
-const status=s=>{
- q("#sfAutoStatus").textContent=s;
- window.dispatchEvent(new CustomEvent('stitchforge:workflow-status',{detail:{message:s}}));
+const nativeSizes=new Map();
+const status=(message,sizeLabel='')=>{
+ q("#sfAutoStatus").textContent=sizeLabel+message;
+ window.dispatchEvent(new CustomEvent('stitchforge:workflow-status',{detail:{message,sizeLabel}}));
 };
 const tokenStore=window.StitchForgeTokenStore,restoredToken=tokenStore?.read()||'';
 if(restoredToken){q('#sfAutoToken').value=restoredToken;status('Private token restored from this browser. Upload an image and generate.');}
@@ -93,7 +94,7 @@ function paint(){
  nativeOverlay.replaceChildren();overlay.replaceChildren();
  if(nativeResult){
   if(!q('#sfAutoShow').checked)return;const b=context.getBounds();if(!b)return;
-  const mm=nativeResult.sourceDraft.physical.imageWidthMm,scale=b.w/mm;
+ const mm=nativeResult.report.imageWidthMm,scale=b.w/mm;
   nativeOverlay.setAttribute('transform','translate('+(b.x-2*scale)+' '+(b.y-2*scale)+') scale('+scale+')');
   const p=nativeResult.preview,groups=p.palette.map(()=>[]);
   for(const [ax,ay,bx,by,index] of p.segments)groups[index].push('M'+ax+' '+ay+'L'+bx+' '+by);
@@ -116,24 +117,45 @@ function paint(){
   overlay.appendChild(path);
  }
 }
-function clearNative(){if(nativeResult)context.setSourceRegionInspectionActive(false);nativeResult=null;nativeOverlay.replaceChildren();q('#sfAutoNativeReport').disabled=true;q('#sfAutoNativeGeometry').disabled=true;q('#sfAutoPES').disabled=true;q('#sfAutoDST').disabled=true;}
-function saveBytes(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
-const fileName=ext=>window.StitchForgeDownloadNaming.filename(q('#sfAutoProductName').value,ext);
-function publishMotif(bytes, legacy=false){
- window.dispatchEvent(new CustomEvent('stitchforge:motif-ready',{detail:{
-  bytes,legacy,name:q('#sfAutoProductName').value.trim()||'Embroidery design'
- }}));
+function clearNative(){
+ const hadResult=!!nativeResult;
+ if(hadResult)context.setSourceRegionInspectionActive(false);
+ nativeResult=null;nativeSizes.clear();nativeOverlay.replaceChildren();
+ q('#sfAutoNativeReport').disabled=true;q('#sfAutoNativeGeometry').disabled=true;q('#sfAutoPES').disabled=true;q('#sfAutoDST').disabled=true;
+ if(hadResult)window.dispatchEvent(new Event('stitchforge:native-cleared'));
 }
-const namedReport=()=>window.StitchForgeDownloadNaming.reportName(q('#sfAutoProductName').value);
+function showNative(result){
+ window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));
+ nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
+ q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';
+ q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;
+ q('#sfAutoPES').disabled=false;q('#sfAutoDST').disabled=false;q('#sfAutoUndo').disabled=false;
+}
+window.addEventListener('stitchforge:select-native-size',event=>{
+ const result=nativeSizes.get(event.detail?.width);
+ if(result&&result!==nativeResult)showNative(result);
+});
+function saveBytes(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+const fileName=ext=>window.StitchForgeDownloadNaming.filename(q('#sfAutoProductName').value,ext,nativeResult?.requestedWidth);
+function publishMotif(bytes,legacy=false,width){
+ let name=q('#sfAutoProductName').value.trim()||'Embroidery design';
+ if(width!==undefined){
+  const suffix=' · '+width+' mm';
+  name=[...name].slice(0,64-suffix.length).join('').trimEnd()+suffix;
+ }
+ window.dispatchEvent(new CustomEvent('stitchforge:motif-ready',{detail:{bytes,legacy,name}}));
+}
+const namedReport=()=>window.StitchForgeDownloadNaming.reportName(q('#sfAutoProductName').value,nativeResult?.requestedWidth);
 async function saveNativeMachineFile(ext){
  if(!nativeResult)return;
+ const name=fileName(ext);
  try{
   // The same strict archive CRC/entry parser validates the already-audited ZIP.
   // Re-exporting the bytes never changes the machine-file payload or source receipt.
   const files=await window.StitchForgeArtworkPipeline.readArchive(nativeResult.bytes);
   const data=files['artwork-trial.'+ext];
   if(!data)throw Error('Verified '+ext.toUpperCase()+' file missing');
-  saveBytes(data,fileName(ext),'application/octet-stream');
+  saveBytes(data,name,'application/octet-stream');
  }catch(error){status('Named '+ext.toUpperCase()+' download unavailable: '+String(error?.message||error));}
 }
 function invalidateNative(){revision++;nativeAbort?.abort();clearNative();q('#sfAutoDownload').disabled=!last;q('#sfAutoUndo').disabled=!last;q('#sfAutoDownload').textContent='Download editable colour SVG';status('Artwork settings changed. Previous native result cleared; generate again when ready.');}
@@ -209,7 +231,7 @@ async function analyseNativeFeatures(source,token,signal){
   throw Error('Invalid advisory AI region report');
  return report;
 }
-q("#sfAutoRun").onclick=async()=>{
+async function runGeneration(batchWidths){
  if(running)return;
  const source=context.getImage();if(!source){status("Upload the original detailed image first.");return;}
  if(context.getSourceStatus()!=="original"){
@@ -222,7 +244,9 @@ q("#sfAutoRun").onclick=async()=>{
  }else tokenStore?.forget();
  if(secondaryToken)secondaryToken.value=token;
  if(q('#sfAutoWorkflow').value==='native'){
-  const api=window.StitchForgeArtworkPipeline,stamp=revision,width=Number(q('#sfNativeWidth').value),texturePolicy=q('#sfNativeTexture').checked?'if_needed':'off';
+  const api=window.StitchForgeArtworkPipeline,stamp=revision,texturePolicy=q('#sfNativeTexture').checked?'if_needed':'off';
+  const widths=batchWidths??[Number(q('#sfNativeWidth').value)];
+  const multiple=widths.length>1,failures=[];
   const fullImage=fineDetail&&q('#sfQuickDesignArea')?.value==='full-image';
   // Fine Detail's satin pass is disabled until its final-file audit is corrected.
   const blackSatin=!fineDetail&&q('#sfQuickSatin')?.checked===true;
@@ -233,7 +257,9 @@ q("#sfAutoRun").onclick=async()=>{
    window.dispatchEvent(new Event('stitchforge:native-idle'));return;
   }
   running=true;q('#sfAutoRun').disabled=true;q('#sfAutoCancelNative').disabled=false;nativeAbort=new AbortController();
-  const current=()=>revision===stamp&&context.getImage()===source;
+  const signal=nativeAbort.signal;
+  const current=()=>!signal.aborted&&revision===stamp&&context.getImage()===source;
+  clearNative();q('#sfAutoDownload').disabled=true;
   status('Preparing source pixels and colour shapes locally…');
   let preparedFineDetail=null;
   try{
@@ -251,73 +277,79 @@ q("#sfAutoRun").onclick=async()=>{
    const workingSource=preparedFineDetail?.source||source;
    const sourceWidth=preparedFineDetail?.width||original.naturalWidth;
    const sourceHeight=preparedFineDetail?.height||original.naturalHeight;
-   // Native fill detail is physically bounded. Attempt the finest reasonable
-   // resolution first, then reduce *analysis* resolution if there are still too
-   // many unsewable working parts. Never resize the physical embroidery width.
-   // Raw analysis pixels and the exact foreground remain independently bound
-   // in each source packet; the reference image stays untouched in the editor.
-   // Establish source-foreground proportions before choosing analysis detail.
-   // No geometry is cropped or discarded: the signed server still receives
-   // the complete normalized source frame, with original artwork retained locally.
-   let frameWidth=width;
-   if(!fullImage){
-    const {canvas,ctx}=await decoded(workingSource,768);
-    frameWidth=api.visibleArtworkFrame(ctx.getImageData(0,0,canvas.width,canvas.height).data,
-     canvas.width,canvas.height,width).imageWidthMm;
-   }
-   const attempts=api.analysisSizes(frameWidth,sourceWidth,sourceHeight,texturePolicy);
-   let packed=null,analysisPixels=null;
-   for(const size of [...new Set(attempts)]){
-    if(!current()||nativeAbort.signal.aborted)throw Error('Cancelled: original artwork or settings changed');
-    status('Preparing source-bound colour regions at '+size+' analysis pixels (longest side); protecting the silhouette and contrasting details…');
-    const {canvas,ctx}=await decoded(workingSource,size);
+   const visible=fullImage?null:await decoded(workingSource,768);
+   const visiblePixels=visible?.ctx.getImageData(0,0,visible.canvas.width,visible.canvas.height).data;
+   let aiNote;
+   for(const [index,width] of widths.entries()){
+    if(!current())break;
+    const sizeLabel=multiple?`Size ${index+1} of ${widths.length} · ${width} mm. `:'';
+    const progress=message=>{if(current())status(message,sizeLabel);};
     try{
-     packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,
-      {imageWidthMm:width,originalWidth:sourceWidth,originalHeight:sourceHeight,
-       // The configured V2 worker rebuilds these provisional colour regions
-       // from the original. Its native geometry limits are checked separately.
-       texturePolicy,maxWorkingParts:originalPngBytes?4500:1500,sizeMode:fullImage?'canvas':'visible',
-       originalPngBytes,blackSatin,fullImage});
-     analysisPixels=canvas.width+' × '+canvas.height;
-     break;
+     progress('Preparing source pixels and colour shapes locally…');
+     const frameWidth=visible?api.visibleArtworkFrame(visiblePixels,visible.canvas.width,visible.canvas.height,width).imageWidthMm:width;
+     const attempts=api.analysisSizes(frameWidth,sourceWidth,sourceHeight,texturePolicy);
+     let packed=null,analysisPixels=null;
+     // Each size gets its own physically bounded colour and stitch plan.
+     for(const size of new Set(attempts)){
+      if(!current())throw Error('Cancelled: original artwork or settings changed');
+      progress('Preparing source-bound colour regions at '+size+' analysis pixels (longest side); protecting the silhouette and contrasting details…');
+      const {canvas,ctx}=await decoded(workingSource,size);
+      try{
+       packed=await api.pack(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,
+        {imageWidthMm:width,originalWidth:sourceWidth,originalHeight:sourceHeight,
+         // The configured V2 worker rebuilds these provisional colour regions from the original.
+         texturePolicy,maxWorkingParts:originalPngBytes?4500:1500,sizeMode:fullImage?'canvas':'visible',
+         originalPngBytes,blackSatin,fullImage});
+       analysisPixels=canvas.width+' × '+canvas.height;
+       break;
+      }catch(error){
+       if(texturePolicy==='off'||(error.code!=='SOURCE_DETAIL_BUDGET'&&
+          !/^(Object plan exceeds source-component budget|Source (graph|regions) exceed)/.test(error.message||'')))throw error;
+       if(!current())throw Error('Original artwork changed during preparation');
+      }
+     }
+     if(!packed)throw Error('Detailed regions remain beyond the native trial budget at this physical size. The original image is unchanged; no machine file was produced');
+     if(!current())break;
+     // Advisory feature analysis is shared by the whole upload, even after a failed analysis.
+     if(aiNote===undefined){
+      aiNote='AI disabled in Advanced settings. ';
+      if(!fineDetail&&q('#sfAutoUseAI').checked){
+       const reused=aiCached?.source===source;
+       if(!reused)progress('Analysing visible features with OpenAI (one paid request), then generating native embroidery…');
+       try{
+        const report=reused?aiCached.report:await analyseNativeFeatures(source,token,nativeAbort.signal);
+        aiCached={source,report};
+        if(!current())throw Error('Source changed during AI analysis');
+        window.dispatchEvent(new CustomEvent('stitchforge:automatic-ai-report',{detail:{source,report}}));
+        aiNote='AI reviewed '+report.regions.length+' visible parts (advisory only'+(reused?'; reused previous result':'')+'). ';
+        q('#sfAutoAiSummary').textContent=aiNote+'Native stitches still follow the original source pixels.';
+       }catch(err){
+        if(!current())throw err;
+        aiNote='AI analysis unavailable ('+String(err?.message||err).slice(0,180)+'); ';
+        q('#sfAutoAiSummary').textContent=aiNote+'Continuing native digitising without a second paid AI request.';
+       }
+      }else q('#sfAutoAiSummary').textContent='AI analysis skipped. Native embroidery uses the source image.';
+     }
+     const result=await api.generate(packed,{token,signal,isCurrent:current,background:true,fineDetail,onProgress:progress});
+     if(!current())break;
+     const {bytes,preview,report:r,geometry}=result,d=r.decoded.find(x=>x.format==='pes');
+     const requestedWidth=multiple?width:undefined;
+     const sizeResult={bytes,preview,report:r,geometry,requestedWidth};
+     if(multiple)nativeSizes.set(width,sizeResult);
+     if(!nativeResult)showNative(sizeResult);
+     const detailNote=r.homeHybrid?.preserveFineDetail?.selected===true?'Fine detail was traced from the verified '+(preparedFineDetail?.resized?'processing copy':'original image')+'. ':'';
+     const processingNote=preparedFineDetail?.resized?'Original '+original.naturalWidth+' × '+original.naturalHeight+' kept locally; private verified processing copy '+sourceWidth+' × '+sourceHeight+'. ':'';
+     progress(aiNote+detailNote+processingNote+(fullImage?'Requested image width ':'Requested visible width ')+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(!fullImage&&Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched.'+(multiple?'':' ZIP downloaded.'));
+     window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview,report:r,requestedWidth}}));
+     // Several automatic downloads can be blocked by phone browsers.
+     if(!multiple)saveBytes(result.bytes,fileName('zip'),'application/zip');
+     publishMotif(bytes,false,requestedWidth);
     }catch(error){
-     if(texturePolicy==='off'||(error.code!=='SOURCE_DETAIL_BUDGET'&&
-       !/^(Object plan exceeds source-component budget|Source (graph|regions) exceed)/.test(error.message||'')))throw error;
-     if(!current())throw Error('Original artwork changed during preparation');
+     if(!current())break;
+     if(!multiple)throw error;
+     failures.push({width,message:String(error?.message||error).slice(0,160)});
     }
    }
-   if(!packed)throw Error('Detailed regions remain beyond the native trial budget at this physical size. The original image is unchanged; no machine file was produced');
-   // AI supplies feature names for review only. Native source masks and existing
-   // safety budgets remain authoritative, regardless of the AI response.
-   let aiNote='AI disabled in Advanced settings. ';
-   if(!fineDetail&&q('#sfAutoUseAI').checked){
-    status('Analysing visible features with OpenAI (one paid request), then generating native embroidery…');
-    try{
-     const reused=aiCached?.source===source;
-     const report=reused?aiCached.report:await analyseNativeFeatures(source,token,nativeAbort.signal);
-     aiCached={source,report};
-     if(!current())throw Error('Source changed during AI analysis');
-     window.dispatchEvent(new CustomEvent('stitchforge:automatic-ai-report',{detail:{source,report}}));
-     aiNote='AI reviewed '+report.regions.length+' visible parts (advisory only'+(reused?'; reused previous result':'')+'). ';
-     q('#sfAutoAiSummary').textContent=aiNote+'Native stitches still follow the original source pixels.';
-    }catch(err){
-     if(!current()||nativeAbort.signal.aborted)throw err;
-     aiNote='AI analysis unavailable ('+String(err?.message||err).slice(0,180)+'); ';
-     q('#sfAutoAiSummary').textContent=aiNote+'Continuing native digitising without a second paid AI request.';
-    }
-   }else q('#sfAutoAiSummary').textContent='AI analysis skipped. Native embroidery uses the source image.';
-   const result=await api.generate(packed,{token,signal:nativeAbort.signal,isCurrent:current,background:true,fineDetail,onProgress:text=>{if(current())status(text);}});
-   if(!current())throw Error('Source or size changed; stale result discarded');
-   window.dispatchEvent(new Event('stitchforge:source-inspection-ended'));nativeResult=result;q('#sfAutoShow').checked=true;context.setSourceRegionInspectionActive(true);paint();
-   q('#sfAutoDownload').disabled=false;q('#sfAutoDownload').textContent='Download PES/DST trial ZIP';q('#sfAutoNativeReport').disabled=false;q('#sfAutoNativeGeometry').disabled=false;q('#sfAutoPES').disabled=false;q('#sfAutoDST').disabled=false;q('#sfAutoUndo').disabled=false;
-   const r=result.report,d=r.decoded.find(x=>x.format==='pes');
-   if(r.homeHybrid?.preserveFineDetail?.selected===true)aiNote+='Fine detail was traced from the verified '+(preparedFineDetail?.resized?'processing copy':'original image')+'. ';
-   const processingNote=preparedFineDetail?.resized?'Original '+original.naturalWidth+' × '+original.naturalHeight+' kept locally; private verified processing copy '+sourceWidth+' × '+sourceHeight+'. ':'';
-   status(aiNote+processingNote+(fullImage?'Requested image width ':'Requested visible width ')+width.toFixed(1)+' mm; decoded stitched width '+d.boundsMm[0].toFixed(1)+' mm. '+(!fullImage&&Math.abs(d.boundsMm[0]-width)>Math.max(2,width*.08)?'SIZE WARNING: actual stitched width differs significantly from requested visible size; inspect before use. ':'')+'Source-aware preparation '+analysisPixels+' ('+packed.plan.summary.workingParts+' working colour shapes; original upload preserved). Real Ink/Stitch PES6/DST generated: '+d.needleStitches.toLocaleString('en-GB')+' needle stitches; '+d.colourChanges+' colour changes. Actual decoded stitches are shown. '+r.unresolvedObjects.toLocaleString('en-GB')+' tiny/short details remain unresolved; '+d.trims.toLocaleString('en-GB')+' PES trims. Review the likeness, fine details, stitch directions and travel in the machine report. Not machine-approved or physically stitched. ZIP downloaded.');
-   window.dispatchEvent(new CustomEvent('stitchforge:native-ready',{detail:{preview:result.preview,report:result.report}}));
-   // Preserve verified ZIP auto-download, and expose a re-download button.
-   saveBytes(result.bytes,fileName('zip'),'application/zip');
-   publishMotif(result.bytes);
   }catch(error){
    if(current()){
     const message=String(error?.message||error);
@@ -327,7 +359,7 @@ q("#sfAutoRun").onclick=async()=>{
   }finally{
    preparedFineDetail?.release();
    running=false;nativeAbort=null;q('#sfAutoRun').disabled=false;q('#sfAutoCancelNative').disabled=true;
-   window.dispatchEvent(new Event('stitchforge:native-idle'));
+   window.dispatchEvent(new CustomEvent('stitchforge:native-idle',{detail:multiple?{failures,cancelled:!current()}:undefined}));
   }return;
  }
  if(!window.StitchForgeAutoReconstruct){status("Automatic reconstruction engine missing; no changes made.");return;}
@@ -453,7 +485,9 @@ q("#sfAutoRun").onclick=async()=>{
  }catch(error){
   status("Reconstruction not applied: "+String(error?.message||error)+". Existing design is unchanged.");
  }finally{running=false;q("#sfAutoRun").disabled=false;}
-};
+}
+q('#sfAutoRun').onclick=()=>runGeneration();
+window.addEventListener('stitchforge:generate-sizes',event=>runGeneration(event.detail.widths));
 q("#sfAutoDownload").onclick=()=>{
  if(nativeResult){saveBytes(nativeResult.bytes,fileName('zip'),'application/zip');return;}
  if(!last)return;

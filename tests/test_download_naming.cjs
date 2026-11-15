@@ -14,3 +14,11 @@ test('names never depend on uploaded filename, never traverse paths and stay bou
  assert.ok(naming.slug('X'.repeat(300)).length<=56);
  assert.throws(()=>naming.filename('Bird','exe'),/Unsupported/);
 });
+test('size suffixes stay visible and distinct even with a long product name',()=>{
+ const name='Red rose with leaves '.repeat(4);
+ const medium=naming.filename(name,'pes',67.5),small=naming.filename(name,'pes',45);
+ assert.match(medium,/-67p5mm-TRIAL-NOT-APPROVED\.pes$/);
+ assert.match(small,/-45mm-TRIAL-NOT-APPROVED\.pes$/);
+ assert.notEqual(medium,small);
+ assert.match(naming.reportName(name,45),/-45mm-machine-report-PRIVATE-NOT-APPROVED\.json$/);
+});

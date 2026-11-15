@@ -8,11 +8,11 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | Private My Motifs library and Design Editor. |
-| Last updated | 2026-11-12 (Europe/London) |
-| Last independently checked source | My Motifs connection and stitch-file checks in E-095. Design Editor export checks in E-094. |
+| Document version | Three-size motif generation. |
+| Last updated | 2026-11-15 (Europe/London) |
+| Last independently checked source | Three-size generation in E-096. My Motifs and Design Editor in E-095 and E-094. |
 | Default branch | `main` |
-| Development branch | `feature/private-motif-library` based on `6d6616b8a4f1b3a998a15b406f69ac6b9593b616`. |
+| Development branch | `feature/three-motif-sizes` based on `77c041d32b4a384fe2d77eb597e71cc5021b303a`. |
 | Product stage | **Research and prototype — NOT production ready** |
 | Intended audience | Internal designer initially; future embroidery creators only after market and safety validation |
 | Deployment | The owner authorised My Motifs for Stitch Forge and the private Design Editor on 2026-11-12. See E-095 and E-094. |
@@ -80,6 +80,10 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Three-size generation (2026-11-15)
+
+**Generate 3 sizes** uses the selected width, then defaults to 75% and 50%. Close to the 10 mm minimum it spaces the widths between the selected width and the minimum. The browser prepares a new source plan and runs the existing native job for each width in order. The size picker displays measured stitch dimensions and selects the paired PES/DST files and ZIP. A linked browser adds each verified variant to My Motifs.
 
 ### My Motifs (2026-11-12)
 
@@ -590,6 +594,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | M9 — private lettering library | On-device font pack, colour preview and optional premade design | DONE-VERIFIED | All 200 pack choices exported in both formats. Local browser and independent decoding checks in E-093. |
 | M10 — private Design Editor | Installed fonts, hoop layout, motif import and paired exports | DONE-VERIFIED | E-094 records the standalone workspace and verified source stitches and placement. |
 | M11 — My Motifs | Private library, connected-browser capture, history and hoop insertion | DONE-VERIFIED | Local service and decoder checks in E-095. |
+| M12 — three-size generation | One upload, three widths, per-size preview, export and My Motifs save | DONE-VERIFIED | Local browser, native formats and library verification in E-096. |
 
 ---
 
@@ -611,6 +616,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-093 | P1 | Compose private lettering from predigitised PES letters | DONE-VERIFIED | E-093 records the private pack import, supplied sizes, colour preview, motif and paired exports. Physical sewing remains a trial. |
 | SF-094 | P1 | Link the private Design Editor from Stitch Forge | DONE-VERIFIED | E-094 records layout controls, installed fonts, native download import and export verification. |
 | SF-095 | P1 | Connect the digitiser to the owner’s My Motifs library | DONE-VERIFIED | E-095 records one-use linking, verified capture, deduplication, read permissions and recovery. |
+| SF-096 | P1 | Generate three motif sizes from one upload | DONE-VERIFIED | E-096 records sequential jobs, measured sizes, correct download selection and partial failure recovery. |
 | SF-008 | P0 | Define versioned project schema | IN-PROGRESS | Schema, migrations and round-trip tests |
 | SF-009 | P0 | Threat model uploaded SVG/raster and processing | IN-PROGRESS | Security tests + limits documented |
 | SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
@@ -720,6 +726,10 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-090 | P0 | Existing private worker update and owner manual website release | **AUTHORISED / ACCESS AND HOSTED ACCEPTANCE PENDING** | No gcloud/Docker/authenticated deploy access in initial runtime; preserve service IAM/secrets/resource caps. Netlify-only deploy is insufficient. |
 
 ## 10. Test evidence register
+
+- **E-096 (2026-11-15).** Frontend syntax, the Node suite and the lettering build passed. Node reported 237 passes and one configured hosted smoke skip. In a 390 px Chromium frame, one Standard run produced three audited pairs with Ink/Stitch 3.3.0. Independent pyembroidery 1.5.1 read-back matched needle paths after origin normalisation and colour-change counts across formats. Actual dimensions and stitch counts were 80.0 × 78.7 mm (8,400), 60.0 × 59.5 mm (5,191) and 40.0 × 39.2 mm (1,890). The local job and motif handlers recorded one active job at a time, one stubbed advisory analysis and three distinct saved PES records. The browser offered the corresponding 40 mm PES and DST filenames when selected. Physical stitch-out and hosted generation remain pending for this feature.
+
+  In Fine Detail with the release worker settings, the repository rose produced audited pairs at 80.0 × 79.8 mm (11,641 stitches) and 39.8 × 39.7 mm (5,151 stitches). A simulated middle-job failure left both successful sizes selectable and the small rose ZIP downloaded with its width suffix. Both pairs passed independent read-back and the original PNG binding check.
 
 - **E-095 (2026-11-12).** Public repository syntax and Node suite passed with 234 passes, one configured smoke skip and zero failures. The editor’s seven tests passed. Tests exercise private reads, same-origin linking, replay and expiry, native ZIP capture, byte-for-byte PES retrieval, deduplication, and the archive restore marker. All 21 distinct recovered trial PES files passed the Design Editor decoder. Historical files are loaded privately from saved archives. The old artwork job store is time-limited.
 
@@ -889,6 +899,7 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 | Raster tracing presented as completed embroidery | Lost detail / misleading listing | CRITICAL | Reference layer, selectable regions, clear warnings |
 | Incorrect PES/DST or wrong hoop | Machine problems, wasted material | CRITICAL | Independent readers, profiles, limits and tests |
 | Private lettering pack exposed or lost | Licence exposure or repeat import | HIGH | Owner-only hosting for installed fonts, browser-side motif processing, and the source ZIP retained by the owner |
+| A smaller motif fails generation or the wrong size is downloaded | Lost progress or incorrect sizing inside a frame | HIGH | Keep audited results available after an individual failure. Bind preview, filename and machine bytes to the selected size. Display decoded bounds. |
 | GPL obligations ignored | Legal/distribution exposure | HIGH | Licence inventory + review before shipping integrated code |
 | Malicious SVG/image uploads | XSS, resource exhaustion, information leaks | HIGH | Sanitisation, time/memory caps, isolated processing |
 | Overengineering too early | High cost, stalled development | HIGH | First one-colour verified design; incremental gates |
@@ -904,6 +915,7 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 
 | Date | ID | Decision / proposal | Reason / status |
 | --- | --- | --- | --- |
+| 2026-11-15 | D-034 | Generate each width through a separate sequential native job | Preserve physical planning and audit at each width. Share source preparation and advisory analysis and keep each successful download available. |
 | 2026-11-12 | D-032 | Host the installed fonts in an owner-only design workspace linked from the digitiser | The editor opens ready to use and keeps the purchased font files behind owner sign-in. Stitch placement and file import/export run in the browser. |
 | 2026-11-12 | D-033 | Use a private motif store with an owner-only editor API and a write-only browser link | Persist validated stitch bytes by content hash. Original design uploads and font assets stay in their existing flows. The owner can disconnect the digitiser browser. |
 | 2026-11-12 | D-031 | Store one private lettering ZIP per browser profile | Keep purchased files on the owner’s device. Use original size variants and preserve needle paths and thread stops. |
@@ -970,6 +982,10 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 ---
 
 ## 13. Dated work log / progress journal
+
+### 2026-11-15 — Three motif sizes
+
+Branch `feature/three-motif-sizes` updates the generation screen, native workflow and download naming with regression coverage in `test_simple_workflow.cjs` and `test_download_naming.cjs`. E-096 records the local browser and machine-file checks. Production release is subject to the separate approval in Section 0.
 
 ### 2026-11-12 — My Motifs
 

@@ -6,7 +6,7 @@ const html=fs.readFileSync(path.join(__dirname,'../site/index.html'),'utf8');
 function page(owner='saved-owner-token'){
  const nodes=new Map(),listeners=new Map(),frames=new Map();let counter=0,strokes=0;
  class Element {
-  constructor(tag='div'){this.tag=tag;this.disabled=false;this.hidden=false;this.value='';this.files=[];this.handlers=new Map();this.classList={add(){},remove(){},toggle(){}};}
+  constructor(tag='div'){this.tag=tag;this.disabled=false;this.hidden=false;this.value='';this.files=[];this.children=[];this.handlers=new Map();this.classList={add(){},remove(){},toggle(){}};}
   set id(v){this._id=v;nodes.set(v,this);}get id(){return this._id;}
   setAttribute(){}
   set innerHTML(markup){
@@ -21,7 +21,7 @@ function page(owner='saved-owner-token'){
   addEventListener(name,fn){const list=this.handlers.get(name)||[];list.push(fn);this.handlers.set(name,list);}
   dispatchEvent(event){for(const fn of this.handlers.get(event.type)||[])fn(event);}
   click(){this.clicks=(this.clicks||0)+1;for(const fn of this.handlers.get('click')||[])fn();}
-  focus(){this.focused=true;}before(){}appendChild(){}
+  focus(){this.focused=true;}before(){}appendChild(element){this.children.push(element);}replaceChildren(){this.children=[];}
   querySelector(query){return query==='.workspace'?nodes.get('workspace'):query==='.note'?nodes.get('note'):nodes.get(query.slice(1));}
   getContext(){return {fillRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){strokes++;}};}
  }
@@ -31,10 +31,12 @@ function page(owner='saved-owner-token'){
  nodes.get('sfAutoWorkflow').value='native';
  const window={StitchForgeAIContext:{getImage:()=> 'data:image/png;base64,fixture',getSourceStatus:()=> 'original'},
   addEventListener:(name,fn)=>{const list=listeners.get(name)||[];list.push(fn);listeners.set(name,list);},
-  dispatch(name,detail){for(const fn of listeners.get(name)||[])fn({type:name,detail});}};
+  dispatchEvent(event){for(const fn of listeners.get(event.type)||[])fn(event);},
+  dispatch(type,detail){this.dispatchEvent({type,detail});}};
  const document={querySelector:name=>name==='main'?nodes.get('main'):nodes.get(name.slice(1)),createElement:name=>new Element(name),head:{appendChild(){}}};
  const requestAnimationFrame=cb=>{frames.set(++counter,cb);return counter;},cancelAnimationFrame=id=>frames.delete(id);
- vm.runInNewContext(file,{window,document,location:{pathname:'/'},Event:class{constructor(type){this.type=type;}},requestAnimationFrame,cancelAnimationFrame});
+ class TestEvent{constructor(type,options){this.type=type;this.detail=options?.detail;}}
+ vm.runInNewContext(file,{window,document,location:{pathname:'/'},Event:TestEvent,CustomEvent:TestEvent,requestAnimationFrame,cancelAnimationFrame});
  return {get:id=>nodes.get(id),window,strokes:()=>strokes,flush(){let count=0;while(frames.size&&count++<1500){const [id,fn]=frames.entries().next().value;frames.delete(id);fn();}assert.ok(count<1500);}};
 }
 test('product screen has only four stages, with old tools collapsed and Generate initially disabled',()=>{
@@ -93,6 +95,54 @@ test('simple width control is visible, synchronises into signed native workflow 
  invalid.get('sfQuickGenerate').click();
  assert.equal(invalid.get('sfAutoRun').clicks||0,0);
  assert.match(invalid.get('sfQuickStatus').textContent,/between 10 and 250 mm/);
+});
+
+test('one tap uses the selected width and two smaller widths within the supported range',()=>{
+ const p=page(),requests=[];
+ p.window.addEventListener('stitchforge:generate-sizes',event=>requests.push(Array.from(event.detail.widths)));
+ p.window.dispatch('stitchforge:image-imported');
+ assert.equal(p.get('sfQuickSizesHint').textContent,'80 / 60 / 40 mm');
+ p.get('sfQuickGenerateSizes').click();
+ p.get('sfQuickGenerateSizes').click();
+ assert.deepEqual(requests,[[80,60,40]]);
+ assert.equal(p.get('sfQuickGenerate').disabled,true);
+ p.window.dispatch('stitchforge:native-idle',{failures:[]});
+ const width=p.get('sfQuickWidth');
+ width.value='16';
+ width.dispatchEvent({type:'input'});
+ assert.equal(p.get('sfQuickSizesHint').textContent,'16 / 13 / 10 mm');
+ p.get('sfQuickGenerateSizes').click();
+ p.window.dispatch('stitchforge:native-idle',{failures:[]});
+ width.value='10';
+ p.get('sfQuickGenerateSizes').click();
+ assert.deepEqual(requests,[[80,60,40],[16,13,10]]);
+ assert.match(p.get('sfQuickStatus').textContent,/three distinct sizes/);
+});
+
+test('completed sizes remain selectable when another size fails, with actual stitch bounds',()=>{
+ const p=page(),selected=[];
+ p.window.addEventListener('stitchforge:select-native-size',event=>selected.push(event.detail.width));
+ p.window.dispatch('stitchforge:image-imported');
+ p.get('sfQuickGenerateSizes').click();
+ for(const width of [80,40]){
+  p.window.dispatch('stitchforge:native-ready',{
+   requestedWidth:width,preview:{widthMm:width,heightMm:width-2,palette:['#123456'],segments:[[1,2,3,4,0]]},
+   report:{decoded:[{format:'pes',needleStitches:width,colourChanges:0,boundsMm:[width-.2,width-2]}]}
+  });
+ }
+ p.window.dispatch('stitchforge:native-idle',{failures:[{width:60,message:'Test worker rejected the geometry'}]});
+ const choice=p.get('sfQuickResultSize');
+ assert.equal(choice.value,'80');
+ assert.equal(choice.children[1].textContent,'40 mm · 39.8 × 38.0 mm stitched');
+ assert.match(p.get('sfQuickStatus').textContent,/2 of 3 sizes ready.*60 mm could not generate/);
+ choice.value='40';
+ choice.dispatchEvent({type:'change'});
+ assert.deepEqual(selected,[40]);
+ assert.match(p.get('sfQuickSizeInfo').textContent,/39.8 × 38.0 mm/);
+ assert.equal(p.get('sfQuickPES').disabled,false);
+ p.window.dispatch('stitchforge:native-cleared');
+ assert.equal(p.get('sfQuickResults').hidden,true);
+ assert.equal(p.get('sfQuickPES').disabled,true);
 });
 
 test('product name is independent of input filename and exposes verified PES/DST',()=>{
