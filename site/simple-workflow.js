@@ -33,12 +33,16 @@ app.innerHTML=[
   '<label class="toggle sf-satin"><input id="sfQuickSatin" type="checkbox"> Black satin edge</label>',
  fineDetail?'<p class="sf-small">The optional satin finishing pass is paused while its machine-file audit is corrected. Fine Detail generates without a satin edge for now.</p>':
   '<p class="sf-small">Adds a stitched black border around the main silhouette. Sharp corners and separate shapes may need a larger design or a simpler edge.</p>',
- '<button type="button" class="btn primary" id="sfQuickGenerate" disabled>'+generateLabel+'</button>',
+ '<div class="sf-generate-actions"><button type="button" class="btn primary" id="sfQuickGenerate" disabled>'+generateLabel+'</button>',
+ '<button type="button" class="btn" id="sfQuickGenerateSizes" aria-describedby="sfQuickSizesHint" disabled>Generate 3 sizes</button></div>',
+ '<p class="sf-small" id="sfQuickSizesHint"></p>',
  '<div id="sfQuickAuth" hidden><label for="sfQuickToken">Private access token — enter once on this device</label>',
  '<input id="sfQuickToken" type="password" autocomplete="off" placeholder="Stitch Forge access token">',
  '<p class="sf-small">Saved in this browser if Remember token is enabled. This is not your OpenAI API key.</p></div>',
  '<p class="sf-small" role="status" aria-live="polite" id="sfQuickStatus">Upload an image to begin.</p></div></div>',
  '<div class="sf-simple-step"><span class="sf-step">3</span><div class="sf-step-body"><h2>Stitch video</h2>',
+ '<div id="sfQuickResults" hidden><label class="sf-small" for="sfQuickResultSize">Size to preview and download</label>',
+ '<select id="sfQuickResultSize"></select><p class="sf-small" id="sfQuickSizeInfo"></p></div>',
  '<div id="sfQuickPlayback" class="sf-playback"><p class="sf-small" id="sfQuickEmpty">Actual stitches will animate here after generation.</p>',
  '<canvas id="sfQuickCanvas" aria-label="Animation of independently decoded PES needle stitches" hidden></canvas></div>',
  '<button type="button" class="btn" id="sfQuickReplay" disabled>▶ Replay stitches</button><p class="sf-small">Playback of decoded machine stitches, not a recorded physical sew-out or MP4 file.</p></div></div>',
@@ -78,7 +82,9 @@ const css=document.createElement('style');css.textContent=[
  '#sfQuickOriginal[hidden],#sfQuickCanvas[hidden],#sfQuickAuth[hidden]{display:none!important}',
  '#sfQuickAuth{margin-top:12px;padding:10px;background:#eff5f3;border-radius:9px}',
  '#sfQuickAuth input{width:100%;height:45px;margin-top:7px;padding:10px;border:1px solid #abbfba;border-radius:8px}',
- '#sfQuickWidth,#sfQuickProductName,#sfQuickDesignArea{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
+ '#sfQuickWidth,#sfQuickProductName,#sfQuickDesignArea,#sfQuickResultSize{display:block;width:100%;min-height:44px;padding:8px;border:1px solid #abbfba;border-radius:8px;font-size:16px;margin:6px 0 10px;background:#fff;color:#173d45}',
+ '.sf-generate-actions{display:flex;flex-wrap:wrap;gap:8px}',
+ '.sf-generate-actions .btn{flex:1 1 9rem;min-height:48px}',
  '.sf-satin{min-height:44px;margin-top:7px}.sf-satin input{accent-color:#146e7b;width:19px;height:19px}',
  '.sf-embroidery-individual{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.sf-embroidery-individual .btn{min-width:0;white-space:normal}',
  '@media(max-width:340px){.sf-embroidery-individual{grid-template-columns:1fr}}',
@@ -92,6 +98,8 @@ const css=document.createElement('style');css.textContent=[
  '@media(max-width:560px){.sf-simple-step{padding:12px;gap:10px}#sfSimpleFlow{gap:11px}}'
 ].join('\n');document.head.appendChild(css);
 const upload=$('#sfQuickUpload'),generate=$('#sfQuickGenerate'),zip=$('#sfQuickZip');
+const generateSizes=$('#sfQuickGenerateSizes'),widthInput=$('#sfQuickWidth'),sizesHint=$('#sfQuickSizesHint');
+const results=$('#sfQuickResults'),resultSize=$('#sfQuickResultSize'),sizeInfo=$('#sfQuickSizeInfo');
 const status=$('#sfQuickStatus'),auth=$('#sfQuickAuth'),token=$('#sfQuickToken');
 const canvas=$('#sfQuickCanvas'),replay=$('#sfQuickReplay');
 const pesButton=$('#sfQuickPES'),dstButton=$('#sfQuickDST'),productName=$('#sfQuickProductName'),advancedName=$('#sfAutoProductName');
@@ -99,7 +107,20 @@ const image=$('#sfQuickOriginal'),empty=$('#sfQuickEmpty'),filename=$('#sfQuickF
 const satin=$('#sfQuickSatin'),designArea=$('#sfQuickDesignArea');
 if(fineDetail){satin.checked=false;satin.disabled=true;}
 let preview=null,frame=0,run=0,ready=false,busy=false,hasImage=false,failed=false,workerAvailable=!fineDetail;
-function updateGenerate(){generate.disabled=busy||!hasImage||!workerAvailable;}
+const sizeResults=new Map();
+function sizeWidths(width){
+ if(!Number.isFinite(width)||width<10||width>250)return null;
+ const small=Math.max(10,Number((width/2).toFixed(1)));
+ const medium=Number(((width+small)/2).toFixed(1));
+ return small<medium&&medium<width?[width,medium,small]:null;
+}
+function updateSizesHint(){
+ const widths=sizeWidths(Number(widthInput.value));
+ sizesHint.textContent=widths?widths.join(' / ')+' mm':'';
+}
+widthInput.addEventListener('input',updateSizesHint);
+updateSizesHint();
+function updateGenerate(){generate.disabled=generateSizes.disabled=busy||!hasImage||!workerAvailable;}
 if(fineDetail){
  const note=$('#sfFineWorker');
  fetch('/api/artwork-job-submit?mode=fine-detail',{cache:'no-store',signal:AbortSignal.timeout(8000)})
@@ -115,6 +136,7 @@ if(fineDetail){
 function stop(){run++;if(frame)cancelAnimationFrame(frame);frame=0;}
 function reset(text){
  stop();preview=null;ready=false;zip.disabled=true;pesButton.disabled=true;dstButton.disabled=true;replay.disabled=true;
+ sizeResults.clear();results.hidden=true;resultSize.replaceChildren();sizeInfo.textContent='';
  canvas.hidden=true;empty.hidden=false;empty.textContent='Actual stitches will animate here after generation.';
  if(text)status.textContent=text;
 }
@@ -170,19 +192,24 @@ window.addEventListener('stitchforge:design-changed',()=>{
  // The old editor may invalidate a previous native result.
  if(ready)reset('Design changed. Generate a new native trial for this image.');
 });
-generate.addEventListener('click',()=>{
- if(busy||!hasImage||!workerAvailable)return;
- const wantedWidth=$('#sfQuickWidth'),advancedWidth=$('#sfNativeWidth');
- if(wantedWidth&&advancedWidth){
-  const requested=Number(wantedWidth.value);
-  if(!wantedWidth.value.trim()||!Number.isFinite(requested)||requested<10||requested>250){
-   status.textContent='Enter an embroidery width between 10 and 250 mm.';
-   wantedWidth.focus();return;
-  }
-  if(Number(advancedWidth.value)!==requested){
-   advancedWidth.value=String(requested);
-   advancedWidth.dispatchEvent(new Event('change'));
-  }
+window.addEventListener('stitchforge:native-cleared',()=>{
+ if(ready)reset('Choose Generate to make another embroidery trial.');
+});
+function startGeneration(multiple){
+ if(busy||native.disabled||!hasImage||!workerAvailable)return;
+ const requested=Number(widthInput.value),advancedWidth=$('#sfNativeWidth');
+ if(!Number.isFinite(requested)||requested<10||requested>250){
+  status.textContent='Enter an embroidery width between 10 and 250 mm.';
+  widthInput.focus();return;
+ }
+ const widths=multiple?sizeWidths(requested):null;
+ if(multiple&&!widths){
+  status.textContent='Increase the width to make three distinct sizes of at least 10 mm.';
+  widthInput.focus();return;
+ }
+ if(Number(advancedWidth.value)!==requested){
+  advancedWidth.value=String(requested);
+  advancedWidth.dispatchEvent(new Event('change'));
  }
  if(advancedName)advancedName.value=productName.value;
  const underlying=$('#sfAutoToken');if(!underlying)return;
@@ -195,13 +222,16 @@ generate.addEventListener('click',()=>{
  // The primary workflow always uses the native machine engine. AI runs by
  // default as previously configured; Advanced may disable paid analysis.
  const mode=$('#sfAutoWorkflow');if(mode&&mode.value!=='native'){mode.value='native';mode.dispatchEvent(new Event('change'));}
- reset('Preparing image…');
- failed=false;busy=true;generate.disabled=true;upload.disabled=true;satin.disabled=true;
+ reset(multiple?'Preparing '+widths.join(' / ')+' mm…':'Preparing image…');
+ failed=false;busy=true;updateGenerate();upload.disabled=true;satin.disabled=true;widthInput.disabled=productName.disabled=multiple;
  if(designArea)designArea.disabled=true;
- native.click();
+ if(multiple)window.dispatchEvent(new CustomEvent('stitchforge:generate-sizes',{detail:{widths}}));
+ else native.click();
  // The source workflow emits completion and failure events. The ZIP is NEVER
  // enabled by a preview, AI proposal or legacy outline export.
-});
+}
+generate.addEventListener('click',()=>startGeneration(false));
+generateSizes.addEventListener('click',()=>startGeneration(true));
 productName.addEventListener('input',()=>{if(advancedName)advancedName.value=productName.value;});
 satin.addEventListener('change',()=>{
  window.dispatchEvent(new Event('stitchforge:satin-changed'));
@@ -221,24 +251,22 @@ token.addEventListener('input',()=>{if(token.value.trim())status.textContent='To
 window.addEventListener('stitchforge:workflow-status',e=>{
  if(!busy||typeof e.detail?.message!=='string')return;
  const message=e.detail.message;
- status.textContent=/analysing visible|with AI|OpenAI/i.test(message)?'Analysing your image with AI…':
+ status.textContent=(e.detail.sizeLabel||'')+(/analysing visible|with AI|OpenAI/i.test(message)?'Analysing your image with AI…':
   /Preparing|source-bound colour/i.test(message)?'Preparing colours and shapes…':
   /first native|PES|second native|DST|native engine|generat/i.test(message)?'Generating and validating machine stitches…':
   /ZIP|decoded stitches/i.test(message)?'Finishing stitch preview and ZIP…':
-  message.length>160?message.slice(0,157)+'…':message;
+   message.length>160?message.slice(0,157)+'…':message);
 });
-window.addEventListener('stitchforge:native-ready',e=>{
- const p=e.detail?.preview;
- if(!busy||!p||!Array.isArray(p.segments)||!Array.isArray(p.palette))return;
+function showResult({preview:p,report,requestedWidth}){
  ready=true;preview=p;zip.disabled=false;pesButton.disabled=false;dstButton.disabled=false;replay.disabled=false;
- auth.hidden=true;token.value='';
- const report=e.detail?.report,d=report?.decoded?.find(x=>x.format==='pes');
+ const d=report?.decoded?.find(x=>x.format==='pes');
  const layout=report?.stitchPlanning?.adaptiveArtworkLayout;
  const label=report?.sourceBinding?.fullImage?'Full image. ':fineDetail?(layout?'Fine Detail checked the original artwork. ':
   report?.homeHybrid?.preserveFineDetail?.selected?'Fine Detail used the original artwork. ':
   'Fine Detail checked the original and kept the standard plan. '):'';
  const routingReview=layout&&d?.trims>=100&&d.trims/d.needleStitches>=.008;
- status.textContent=label+'Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes'+(Array.isArray(d.boundsMm)&&d.boundsMm.length===2?', actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':''):'')+
+ const info=requestedWidth===undefined?status:sizeInfo;
+ info.textContent=label+'Embroidery trial ready'+(d?': '+d.needleStitches.toLocaleString('en-GB')+' stitches, '+(d.colourChanges||0)+' colour changes'+(Array.isArray(d.boundsMm)&&d.boundsMm.length===2?', actual needle size '+d.boundsMm.map(n=>Number(n).toFixed(1)).join(' × ')+' mm':''):'')+
   (report?.satinFinish?'. Black satin edge included.':'.')+
   (layout&&Number.isInteger(d?.trims)?' '+d.trims.toLocaleString('en-GB')+' PES trim commands.':'')+
   (routingReview?' Review routing before a sew-out.':'')+
@@ -246,6 +274,30 @@ window.addEventListener('stitchforge:native-ready',e=>{
   (layout?.colourDecision==='original_layout_after_native_audit'?' Used the earlier layout after the stitch check.':'')+
   (layout?' ZIP includes the sew-out checklist.':' ZIP ready.')+' Physical sew-out pending.';
  play();
+}
+window.addEventListener('stitchforge:native-ready',e=>{
+ const detail=e.detail,p=detail?.preview;
+ if(!busy||!p||!Array.isArray(p.segments)||!Array.isArray(p.palette))return;
+ auth.hidden=true;token.value='';
+ const width=detail.requestedWidth;
+ if(width!==undefined){
+  sizeResults.set(width,detail);
+  const option=document.createElement('option');
+  const bounds=detail.report?.decoded?.find(item=>item.format==='pes')?.boundsMm;
+  option.value=String(width);
+  option.textContent=width+' mm'+(bounds?.length===2?' · '+bounds.map(n=>Number(n).toFixed(1)).join(' × ')+' mm stitched':'');
+  resultSize.appendChild(option);
+  results.hidden=false;
+  if(ready)return;
+  resultSize.value=String(width);
+ }
+ showResult(detail);
+});
+resultSize.addEventListener('change',()=>{
+ const width=Number(resultSize.value),detail=sizeResults.get(width);
+ if(!detail)return;
+ window.dispatchEvent(new CustomEvent('stitchforge:select-native-size',{detail:{width}}));
+ showResult(detail);
 });
 window.addEventListener('stitchforge:native-error',e=>{
  failed=true;
@@ -255,9 +307,12 @@ window.addEventListener('stitchforge:native-error',e=>{
   : 'Generation failed: '+message);
  if(/access token|unauthori[sz]ed|401/i.test(status.textContent))auth.hidden=false;
 });
-window.addEventListener('stitchforge:native-idle',()=>{
- if(busy&&!ready&&!failed)reset('Generation stopped or image changed. Press Generate to retry.');
- busy=false;updateGenerate();upload.disabled=false;satin.disabled=fineDetail;
+window.addEventListener('stitchforge:native-idle',event=>{
+ if(busy&&!failed&&event.detail&&!event.detail.cancelled){
+  const skipped=event.detail.failures.map(({width,message})=>width+' mm could not generate. '+message);
+  status.textContent=sizeResults.size+' of 3 sizes ready.'+(skipped.length?' '+skipped.join('\n'):' Choose a size to preview or download.');
+ }else if(busy&&!ready&&!failed)reset('Generation stopped or image changed. Press Generate to retry.');
+ busy=false;updateGenerate();upload.disabled=false;satin.disabled=fineDetail;widthInput.disabled=false;productName.disabled=false;
  if(designArea)designArea.disabled=false;
 });
 replay.addEventListener('click',play);

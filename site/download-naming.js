@@ -10,11 +10,17 @@ function slug(value){
  s=s.slice(0,56).replace(/-+$/,'');
  return s||'embroidery-design';
 }
-function filename(name,extension){
- if(!['zip','pes','dst'].includes(extension))throw Error('Unsupported embroidery file extension');
- return slug(name)+'-TRIAL-NOT-APPROVED.'+extension;
+function sizedStem(name,width){
+ const base=slug(name);
+ if(!Number.isFinite(width))return base;
+ const suffix='-'+String(width).replace('.','p')+'mm';
+ return base.slice(0,56-suffix.length).replace(/-+$/,'')+suffix;
 }
-function reportName(name){return slug(name)+'-machine-report-PRIVATE-NOT-APPROVED.json';}
+function filename(name,extension,width){
+ if(!['zip','pes','dst'].includes(extension))throw Error('Unsupported embroidery file extension');
+ return sizedStem(name,width)+'-TRIAL-NOT-APPROVED.'+extension;
+}
+function reportName(name,width){return sizedStem(name,width)+'-machine-report-PRIVATE-NOT-APPROVED.json';}
 const api=Object.freeze({slug,filename,reportName});
 root.StitchForgeDownloadNaming=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
