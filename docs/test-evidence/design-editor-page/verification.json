@@ -3,19 +3,67 @@
   "base_commit": "77c041d32b4a384fe2d77eb597e71cc5021b303a",
   "branch": "feature/design-editor-page",
   "node_version": "24.22.3",
-  "syntax": {"source_files": 51, "inline_scripts": 1, "passed": true},
-  "site_tests": {"total": 241, "pass": 240, "fail": 0, "skip": 1, "skip_reason": "Existing opt-in native smoke test"},
-  "editor_tests": {"total": 12, "pass": 12, "fail": 0, "skip": 0},
+  "syntax": {
+    "source_files": 51,
+    "inline_scripts": 1,
+    "passed": true
+  },
+  "site_tests": {
+    "total": 241,
+    "pass": 240,
+    "fail": 0,
+    "skip": 1,
+    "skip_reason": "Existing opt-in native smoke test"
+  },
+  "editor_tests": {
+    "total": 12,
+    "pass": 12,
+    "fail": 0,
+    "skip": 0
+  },
   "new_integration_tests": 6,
   "lettering_build": "passed",
   "editor_build": "passed",
-  "private_assets": {"files": 304, "original_bytes_and_hashes_match": true, "encrypted_in_git": true, "font_families": 50, "font_size_packs": 200, "frame_pes_files": 30, "historical_motif_pes_files": 21},
+  "private_assets": {
+    "files": 304,
+    "original_bytes_and_hashes_match": true,
+    "encrypted_in_git": true,
+    "font_families": 50,
+    "font_size_packs": 200,
+    "frame_pes_files": 30,
+    "historical_motif_pes_files": 21
+  },
   "licence_notices_present": true,
   "internal_page_and_api_paths_checked": true,
   "netlify_config_schema": "passed",
-  "hosted_publication": "pending at preparation",
-  "browser_acceptance": "not performed at preparation",
+  "hosted_publication": {
+    "status": "ready",
+    "deployment_id": "6afdb97574208031bccea1b4",
+    "commit": "1917c7b9175e7f199cfd4340c4a196a05dbcc39e",
+    "published_at": "2026-11-18T14:43:30.969Z",
+    "url": "https://sapiver-stitchforge.netlify.app/design-editor/"
+  },
+  "browser_acceptance": {
+    "preview": "passed",
+    "production_page": "passed",
+    "font_library": "50 installed fonts",
+    "supplier_frame_families": 5,
+    "live_motif_listing": "passed",
+    "live_saved_motif_insertion": "passed",
+    "live_saved_motif_stitches": 21556,
+    "all_deploy_password_gate": "enabled"
+  },
   "physical_sew_out": "not performed",
   "cloud_run_changes": false,
-  "original_chatgpt_site_changed": false
+  "original_chatgpt_site_changed": false,
+  "independent_export_decode": {
+    "decoder": "pyembroidery 1.5.1",
+    "pes_bytes": 22507,
+    "dst_bytes": 10412,
+    "needle_stitches_per_file": 3271,
+    "matching_coordinates": true,
+    "width_mm": 63.4,
+    "height_mm": 64,
+    "colour_changes": 3
+  }
 }
