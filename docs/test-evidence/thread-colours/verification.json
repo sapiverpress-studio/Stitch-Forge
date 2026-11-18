@@ -28,5 +28,13 @@
     "pes_thread_7": "#123ABC",
     "other_six_colours_unchanged": true
   },
-  "production": "pending"
+  "production": {
+    "status": "ready",
+    "deploy_id": "6afdd840da4ddbd781b71f66",
+    "commit": "7796775b1435b74db462011adddbf6371872122a",
+    "published_at": "2026-11-18T16:54:41.164Z",
+    "url": "https://sapiver-stitchforge.netlify.app/design-editor/",
+    "live_seven_thread_fields": "passed",
+    "live_manual_hex_and_picker_sync": "passed"
+  }
 }
