@@ -100,18 +100,32 @@ h1 { font-size: clamp(1.2rem, 2.2vw, 1.52rem); line-height: 1.2; letter-spacing:
 .field-trio { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .font-button { text-align: left; }
 .colour-field { display: flex; align-items: center; gap: .38rem; min-height: 40px; }
+.colour-field input[type="color"] { flex: 0 0 33px; }
+.hex-colour { font-family: ui-monospace, monospace; width: 100%; min-width: 0; }
+.hex-colour[aria-invalid="true"] { border-color: #a23825; outline-color: #a23825; }
+.colour-error { font-size: .76rem; margin-top: .3rem; }
 .field-error { line-height: 1.4; font-size: .83rem; }
 .thread-swatches { display: flex; flex-wrap: wrap; gap: .29rem; }
-.thread-swatch { width: 19px; height: 19px; border: 1px solid #68766c; border-radius: 50%; }
+.thread-chip { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-width: 52px; min-height: 40px; padding: .3rem .45rem; font-size: .79rem; }
+.thread-swatch { flex: 0 0 19px; width: 19px; height: 19px; border: 1px solid #68766c; border-radius: 50%; }
 footer { padding: .7rem .15rem 0; }
 
 dialog { width: min(740px, calc(100% - 24px)); max-height: min(82dvh, 700px); padding: 1rem; border: 1px solid #a8b9af; border-radius: 13px; background: var(--panel); color: var(--ink); box-shadow: 0 20px 60px #16332942; }
 dialog::backdrop { background: #112c286b; }
 .dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: .7rem; margin-bottom: .65rem; }
-#threadDialog { position: fixed; inset: auto max(.6rem, env(safe-area-inset-right)) max(.6rem, env(safe-area-inset-bottom)) auto; z-index: 4; width: min(310px, calc(100% - 1.2rem)); max-height: min(46dvh, 360px); margin: 0; padding: .75rem; }
-.thread-colour-list { display: grid; }
-.thread-colour-row { display: grid; grid-template-columns: 1fr auto auto; gap: .65rem; align-items: center; padding: .36rem 0; border-top: 1px solid var(--border); font-size: .86rem; }
-.thread-colour-row input[type="color"] { width: 44px; height: 40px; }
+#threadDialog { position: fixed; inset: auto max(.6rem, env(safe-area-inset-right)) max(.6rem, env(safe-area-inset-bottom)) auto; z-index: 4; width: min(380px, calc(100% - 1.2rem)); max-height: calc(100dvh - 1.2rem); margin: 0; padding: .8rem; overflow: hidden; }
+#threadDialog[open] { display: flex; flex-direction: column; }
+#threadDialog .dialog-heading, #threadCount, .thread-dialog-help, .thread-format-note { flex-shrink: 0; }
+#threadLayerName { overflow-wrap: anywhere; }
+.thread-dialog-help { margin: .2rem 0 .5rem; }
+.thread-colour-list { display: grid; min-height: 0; max-height: min(55dvh, 420px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; scrollbar-color: #7c9588 #e6ece6; scrollbar-width: auto; padding-right: .35rem; }
+.thread-colour-list::-webkit-scrollbar { width: 10px; }
+.thread-colour-list::-webkit-scrollbar-track { background: #e6ece6; border-radius: 6px; }
+.thread-colour-list::-webkit-scrollbar-thumb { background: #7c9588; border: 2px solid #e6ece6; border-radius: 6px; }
+.thread-colour-row { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(7rem, 8rem); gap: .5rem; align-items: center; padding: .4rem 0; border-top: 1px solid var(--border); font-size: .83rem; }
+.thread-colour-row input { min-height: 44px; }
+.thread-colour-row input[type="color"] { width: 44px; height: 44px; }
+.thread-colour-row .colour-error { grid-column: 1 / -1; margin: 0; }
 .thread-format-note { margin-top: .5rem; }
 #fontSearch { width: 100%; margin-bottom: .68rem; }
 .font-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: .58rem; }

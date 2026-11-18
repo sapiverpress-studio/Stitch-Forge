@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-18",
+  "base_commit": "8beaf623ac6d765d01f5ef36a1919aac1401b8d7",
+  "site_tests": {
+    "pass": 240,
+    "fail": 0,
+    "skip": 1
+  },
+  "editor_tests": {
+    "pass": 12,
+    "fail": 0
+  },
+  "private_assets_verified": 304,
+  "browser_checks": {
+    "numbered_threads": 7,
+    "thread_7_focus": "passed",
+    "invalid_hex_retains_colour": "passed",
+    "manual_hex_normalisation": "passed",
+    "picker_and_preview_sync": "passed",
+    "lettering_hex": "passed"
+  },
+  "independent_export_check": {
+    "decoder": "pyembroidery 1.5.1",
+    "needle_stitches": 28,
+    "relative_source_geometry_preserved": true,
+    "pes_dst_positions_match": true,
+    "colour_changes": 6,
+    "pes_thread_7": "#123ABC",
+    "other_six_colours_unchanged": true
+  },
+  "production": "pending"
+}

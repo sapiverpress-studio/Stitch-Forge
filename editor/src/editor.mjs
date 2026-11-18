@@ -2,21 +2,23 @@ import { composeLettering, exportLettering, indexFontPack } from './stitch-codec
 import { composeBoard, fitsCentredHoop, fitsHoop, MAX_IMPORT_BYTES, readMotif, threadColours } from './design.mjs';
 import { HoopGrid } from './hoop-grid.mjs';
 import { mountFrameLibrary, mountMotifLibrary } from './motif-panel.mjs';
+import { bindColourInput } from './colour-input.mjs';
 
 const ids = [
   'fullscreenToggle', 'addLettering', 'addMotif', 'motifInput', 'hoop', 'customHoop', 'hoopWidth', 'hoopHeight', 'snap', 'notice',
   'boardDimensions', 'zoomOut', 'zoomFit', 'zoomIn', 'designCanvas', 'boardHint', 'designMeasurements', 'hoopStatus',
-  'rotationHandle', 'openThreadColours', 'threadDialog', 'threadLayerName', 'threadColourOptions', 'closeThreadColours',
+  'rotationHandle', 'openThreadColours', 'threadDialog', 'threadLayerName', 'threadCount', 'threadColourOptions', 'closeThreadColours',
   'exportPes', 'exportDst', 'useFittingHoop', 'layerList', 'moveEarlier', 'moveLater', 'removeLayer', 'noSelection',
   'textControls', 'fontCount', 'letteringText', 'openFonts', 'fontSize', 'letterSpacing', 'threadColour',
   'letteringPath', 'curveRadiusField', 'curveRadius',
-  'colourValue', 'useCapitals', 'layerError', 'motifControls', 'motifFormat', 'motifInfo', 'motifThreads',
+  'colourValue', 'letteringColourError', 'useCapitals', 'layerError', 'motifControls', 'motifFormat', 'motifInfo', 'motifThreads',
   'placementControls', 'centreLayer', 'positionX', 'positionY', 'positionAngle', 'fontDialog', 'galleryCount',
   'closeFonts', 'fontSearch', 'fontGallery'
 ];
 const ui = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
 const fontsById = new Map();
 const fontAssets = new Map();
+const threadControls = new Map();
 const layers = [];
 const maxLayers = 24;
 const roundMm = value => Math.round(value * 10) / 10;
@@ -31,6 +33,9 @@ let hoop = { width: 100, height: 100 };
 let importInProgress = false;
 let exporting = false;
 let fontLoadError = '';
+const letteringColourControl = bindColourInput(ui.threadColour, ui.colourValue, ui.letteringColourError, colour => {
+  if (selected?.type === 'text') changeThreadColour(selected, 0, colour);
+});
 
 const grid = new HoopGrid(ui.designCanvas, {
   handle: ui.rotationHandle,
@@ -76,6 +81,8 @@ function renderBoard() {
   }
   ui.boardHint.hidden = !!stats;
   ui.openThreadColours.disabled = !selected?.source;
+  const count = selected?.source ? threadColours(selected).length : 0;
+  ui.openThreadColours.textContent = count ? `Thread colours (${count})` : 'Thread colours';
   ui.exportPes.disabled = ui.exportDst.disabled = !stats || stats.outside || pending || exporting;
   ui.zoomOut.disabled = ui.zoomFit.disabled = grid.zoom === 1;
   ui.zoomIn.disabled = grid.zoom === 4;
@@ -141,11 +148,20 @@ function renderLayerError(layer) {
 function renderMotifThreads(layer) {
   const colours = threadColours(layer);
   ui.motifThreads.replaceChildren(...colours.map((colour, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'thread-chip';
+    button.title = `Thread ${index + 1} ${colour.toUpperCase()}`;
+    button.setAttribute('aria-label', `Edit thread ${index + 1}, ${colour.toUpperCase()}`);
     const chip = document.createElement('span');
     chip.className = 'thread-swatch';
     chip.style.backgroundColor = colour;
-    chip.title = `Thread ${index + 1} ${colour.toUpperCase()}`;
-    return chip;
+    chip.setAttribute('aria-hidden', 'true');
+    const number = document.createElement('span');
+    number.textContent = index + 1;
+    button.append(chip, number);
+    button.addEventListener('click', () => openThreadColours(index));
+    return button;
   }));
 }
 
@@ -160,8 +176,7 @@ function renderInspector() {
     ui.letteringPath.value = selected.layout;
     ui.curveRadiusField.hidden = selected.layout === 'straight';
     ui.curveRadius.value = selected.radius;
-    ui.threadColour.value = selected.colour;
-    ui.colourValue.textContent = selected.colour.toUpperCase();
+    letteringColourControl.setColour(selected.colour);
     ui.useCapitals.checked = selected.capitals;
     renderFont();
     renderLayerError(selected);
@@ -188,25 +203,32 @@ function selectLayer(layer) {
 function changeThreadColour(layer, index, colour) {
   if (layer.type === 'text') {
     layer.colour = colour;
-    ui.threadColour.value = colour;
-    ui.colourValue.textContent = colour.toUpperCase();
+    letteringColourControl.setColour(colour);
   } else {
     layer.threadOverrides ??= [];
     layer.threadOverrides[index] = colour;
     renderMotifThreads(layer);
   }
+  if (ui.threadDialog.open && selected === layer) threadControls.get(index)?.setColour(colour);
   renderBoard();
 }
 
-function openThreadColours() {
-  if (ui.threadDialog.open) {
+function openThreadColours(focusIndex = null) {
+  if (ui.threadDialog.open && focusIndex === null) {
     ui.threadDialog.close();
     return;
   }
   const layer = selected;
   if (!layer?.source) return;
+  if (ui.threadDialog.open) {
+    threadControls.get(focusIndex)?.focus();
+    return;
+  }
+  const colours = threadColours(layer);
   ui.threadLayerName.textContent = labelFor(layer);
-  ui.threadColourOptions.replaceChildren(...threadColours(layer).map((colour, index) => {
+  ui.threadCount.textContent = `${colours.length} thread${colours.length === 1 ? '' : 's'} in stitch order${colours.length > 5 ? ' · scroll to see every colour' : ''}`;
+  threadControls.clear();
+  ui.threadColourOptions.replaceChildren(...colours.map((colour, index) => {
     const row = document.createElement('div');
     row.className = 'thread-colour-row';
     const label = document.createElement('label');
@@ -218,18 +240,29 @@ function openThreadColours() {
     input.type = 'color';
     input.id = label.htmlFor;
     input.value = colour;
-    const value = document.createElement('span');
-    value.className = 'measure';
-    value.textContent = colour.toUpperCase();
-    input.addEventListener('input', () => {
-      value.textContent = input.value.toUpperCase();
-      changeThreadColour(layer, index, input.value);
-    });
-    row.append(label, input, value);
+    const value = document.createElement('input');
+    value.type = 'text';
+    value.id = `${input.id}-hex`;
+    value.className = 'hex-colour';
+    value.maxLength = 7;
+    value.autocomplete = 'off';
+    value.spellcheck = false;
+    value.setAttribute('autocapitalize', 'characters');
+    value.setAttribute('aria-label', `Thread ${index + 1} hex colour`);
+    value.value = colour.toUpperCase();
+    const error = document.createElement('p');
+    error.id = `${input.id}-error`;
+    error.className = 'field-error colour-error';
+    error.textContent = 'Use # followed by six hex digits (0–9, A–F).';
+    error.hidden = true;
+    value.setAttribute('aria-describedby', error.id);
+    threadControls.set(index, bindColourInput(input, value, error, next => changeThreadColour(layer, index, next)));
+    row.append(label, input, value, error);
     return row;
   }));
   ui.threadDialog.show();
   ui.openThreadColours.setAttribute('aria-expanded', 'true');
+  if (focusIndex !== null) threadControls.get(focusIndex)?.focus();
 }
 
 function setFont(layer, font) {
@@ -427,7 +460,7 @@ document.addEventListener('keydown', event => {
 });
 
 ui.addLettering.addEventListener('click', () => addLettering());
-ui.openThreadColours.addEventListener('click', openThreadColours);
+ui.openThreadColours.addEventListener('click', () => openThreadColours());
 ui.closeThreadColours.addEventListener('click', () => {
   ui.threadDialog.close();
   ui.openThreadColours.focus({ preventScroll: true });
@@ -530,10 +563,6 @@ numberInput(ui.curveRadius, value => {
 });
 ui.curveRadius.addEventListener('blur', () => {
   if (selected?.type === 'text') ui.curveRadius.value = selected.radius;
-});
-ui.threadColour.addEventListener('input', () => {
-  if (selected?.type !== 'text') return;
-  changeThreadColour(selected, 0, ui.threadColour.value);
 });
 ui.useCapitals.addEventListener('change', () => {
   if (selected?.type !== 'text') return;

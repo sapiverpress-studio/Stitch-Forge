@@ -72,7 +72,7 @@
         <div class="board-status">
           <span id="designMeasurements" class="measure">No stitches yet</span>
           <span id="hoopStatus" aria-live="polite"></span>
-          <button id="openThreadColours" type="button" aria-controls="threadDialog" aria-expanded="false" disabled>Thread colour</button>
+          <button id="openThreadColours" type="button" aria-controls="threadDialog" aria-expanded="false" disabled>Thread colours</button>
           <button id="useFittingHoop" type="button" hidden></button>
         </div>
         <div class="export-tools">
@@ -105,7 +105,7 @@
           </div>
           <div class="field-pair">
             <div><label for="letterSpacing">Letter spacing <span class="hint">mm</span></label><input id="letterSpacing" type="number" min="-2" max="10" step="0.1" inputmode="decimal" value="0.8"></div>
-            <div><label for="threadColour">Thread colour</label><div class="colour-field"><input id="threadColour" type="color" value="#1b6661"><span id="colourValue" class="measure">#1B6661</span></div></div>
+            <div><label for="threadColour">Thread colour</label><div class="colour-field"><input id="threadColour" type="color" value="#1b6661"><input id="colourValue" class="hex-colour" type="text" value="#1B6661" maxlength="7" aria-label="Lettering hex colour" aria-describedby="letteringColourError" autocomplete="off" autocapitalize="characters" spellcheck="false"></div><p id="letteringColourError" class="field-error colour-error" hidden>Use # followed by six hex digits (0–9, A–F).</p></div>
           </div>
           <div class="field-pair">
             <div><label for="letteringPath">Text path</label><select id="letteringPath"><option value="straight">Straight</option><option value="top">Top arc</option><option value="bottom">Bottom arc</option></select></div>
@@ -167,11 +167,13 @@
     <div id="frameCards" class="saved-motifs"></div>
   </dialog>
 
-  <dialog id="threadDialog" aria-labelledby="threadDialogTitle">
+  <dialog id="threadDialog" aria-labelledby="threadDialogTitle" aria-describedby="threadCount">
     <div class="dialog-heading">
-      <div><h2 id="threadDialogTitle">Thread colour</h2><p id="threadLayerName" class="hint"></p></div>
+      <div><h2 id="threadDialogTitle">Thread colours</h2><p id="threadLayerName" class="hint"></p></div>
       <button id="closeThreadColours" type="button">Done</button>
     </div>
+    <p id="threadCount" class="hint"></p>
+    <p class="hint thread-dialog-help">Choose a colour or enter its #RRGGBB code.</p>
     <div id="threadColourOptions" class="thread-colour-list"></div>
     <p class="hint thread-format-note">PES saves these colours. For DST, use this thread order at the machine.</p>
   </dialog>
