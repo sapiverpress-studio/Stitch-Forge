@@ -1,7 +1,16 @@
 __pycache__/
+node_modules/
 *.py[cod]
 .netlify/
 .env
 .env.*
 site/lettering.bundle.js
 site/lettering-licences.txt
+site/design-editor/
+editor/dist/client/fonts/
+editor/dist/client/frames/
+editor/dist/client/motif-history/
+editor/dist/client/assets/
+editor/dist/client/editor.js
+editor/dist/client/software-licences.txt
+editor/dist/server/

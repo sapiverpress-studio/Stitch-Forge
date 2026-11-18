@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Lay out embroidery lettering and Stitch Forge designs on a hoop grid.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>Design Editor · Sapiver Stitch Forge</title>
+  <link rel="icon" href="./assets/sapiver-press-logo.webp">
+  <link rel="stylesheet" href="./editor.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="identity">
+      <img width="41" height="41" src="./assets/sapiver-press-logo.webp" alt="">
+      <div><div class="brand">Sapiver Stitch Forge</div><h1>Design Editor</h1></div>
+    </div>
+    <div class="header-actions">
+      <a class="return-link" href="/">Open Digitiser <span aria-hidden="true">↗</span></a>
+      <button type="button" id="fullscreenToggle" class="fullscreen-toggle">Full screen</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <div class="toolbar" aria-label="Design tools">
+      <div class="tool-group">
+        <button type="button" id="addLettering" class="primary"><span aria-hidden="true">+</span> Lettering</button>
+        <button type="button" id="addMotif"><span aria-hidden="true">+</span> Stitch Forge design</button>
+        <button type="button" id="openMotifs">My Motifs</button>
+        <button type="button" id="openFrames">Frames &amp; Shapes</button>
+        <input type="file" id="motifInput" accept=".zip,.pes,.dst" hidden>
+      </div>
+      <div class="tool-group hoop-tools">
+        <label class="inline-field">Hoop
+          <select id="hoop">
+            <option value="100,100">100 × 100 mm</option>
+            <option value="130,180">130 × 180 mm</option>
+            <option value="180,130">180 × 130 mm</option>
+            <option value="160,260">160 × 260 mm</option>
+            <option value="200,300">200 × 300 mm</option>
+            <option value="custom">Custom size</option>
+          </select>
+        </label>
+        <div id="customHoop" class="tool-group" hidden>
+          <label class="sr-only" for="hoopWidth">Hoop width in millimetres</label>
+          <input id="hoopWidth" type="number" min="30" max="500" step="1" value="100" inputmode="numeric">
+          <span aria-hidden="true">×</span>
+          <label class="sr-only" for="hoopHeight">Hoop height in millimetres</label>
+          <input id="hoopHeight" type="number" min="30" max="500" step="1" value="100" inputmode="numeric">
+        </div>
+        <label class="check"><input id="snap" type="checkbox"> Snap 5 mm</label>
+      </div>
+    </div>
+    <p id="notice" class="notice" role="status" hidden></p>
+
+    <div class="workspace-grid">
+      <section class="board panel" aria-labelledby="boardTitle">
+        <div class="panel-heading">
+          <div class="heading-block"><h2 id="boardTitle">Hoop grid</h2><span id="boardDimensions" class="measure">100 × 100 mm</span></div>
+          <div class="zoom-tools" aria-label="Grid zoom">
+            <button id="zoomOut" type="button" aria-label="Zoom out">−</button>
+            <button id="zoomFit" type="button" title="Fit hoop to view">Fit</button>
+            <button id="zoomIn" type="button" aria-label="Zoom in">+</button>
+          </div>
+        </div>
+        <div class="canvas-frame">
+          <canvas id="designCanvas" tabindex="0" aria-label="Embroidery hoop grid. Drag stitches to move a layer, or use the arrow keys."></canvas>
+          <p id="boardHint" class="board-hint">Type a name or add a Stitch Forge design.</p>
+          <button id="rotationHandle" class="rotation-handle" type="button" aria-label="Rotate selected layer" title="Drag to rotate or tap to turn 15°" hidden>↻</button>
+        </div>
+        <div class="board-status">
+          <span id="designMeasurements" class="measure">No stitches yet</span>
+          <span id="hoopStatus" aria-live="polite"></span>
+          <button id="openThreadColours" type="button" aria-controls="threadDialog" aria-expanded="false" disabled>Thread colour</button>
+          <button id="useFittingHoop" type="button" hidden></button>
+        </div>
+        <div class="export-tools">
+          <div class="export-buttons">
+            <button type="button" id="exportPes" class="primary" disabled>Download PES</button>
+            <button type="button" id="exportDst" disabled>Download DST</button>
+          </div>
+          <p>Trial files. Sew a sample on your chosen fabric.</p>
+        </div>
+      </section>
+
+      <aside class="inspector panel" aria-label="Layers and placement">
+        <section class="inspector-section" aria-labelledby="layersTitle">
+          <div class="section-heading"><h2 id="layersTitle">Layers</h2><span class="hint">Stitch order</span></div>
+          <ol class="layer-list" id="layerList"></ol>
+          <div class="layer-tools">
+            <button type="button" id="moveEarlier" title="Move selected layer earlier in the stitch order">Move up</button>
+            <button type="button" id="moveLater" title="Move selected layer later in the stitch order">Move down</button>
+            <button type="button" id="removeLayer" class="quiet">Remove</button>
+          </div>
+        </section>
+        <div id="noSelection" class="inspector-section hint" hidden>Select a layer to edit it.</div>
+        <section class="inspector-section" id="textControls" aria-labelledby="textTitle" hidden>
+          <div class="section-heading"><h2 id="textTitle">Lettering</h2><span class="hint" id="fontCount">Loading fonts…</span></div>
+          <label for="letteringText">Name or phrase</label>
+          <input id="letteringText" type="text" maxlength="48" autocomplete="off" placeholder="Type a name" spellcheck="false">
+          <div class="field-pair font-fields">
+            <div><label for="openFonts">Font</label><button type="button" id="openFonts" class="font-button" disabled>Loading…</button></div>
+            <div><label for="fontSize">Size</label><select id="fontSize" disabled></select></div>
+          </div>
+          <div class="field-pair">
+            <div><label for="letterSpacing">Letter spacing <span class="hint">mm</span></label><input id="letterSpacing" type="number" min="-2" max="10" step="0.1" inputmode="decimal" value="0.8"></div>
+            <div><label for="threadColour">Thread colour</label><div class="colour-field"><input id="threadColour" type="color" value="#1b6661"><span id="colourValue" class="measure">#1B6661</span></div></div>
+          </div>
+          <div class="field-pair">
+            <div><label for="letteringPath">Text path</label><select id="letteringPath"><option value="straight">Straight</option><option value="top">Top arc</option><option value="bottom">Bottom arc</option></select></div>
+            <div id="curveRadiusField" hidden><label for="curveRadius">Curve radius <span class="hint">mm</span></label><input id="curveRadius" type="number" min="5" max="500" step="0.1" inputmode="decimal" value="35"></div>
+          </div>
+          <label class="check"><input type="checkbox" id="useCapitals"> Use capitals</label>
+          <p id="layerError" class="field-error" aria-live="polite" hidden></p>
+        </section>
+        <section id="motifControls" class="inspector-section" aria-labelledby="motifTitle" hidden>
+          <div class="section-heading"><h2 id="motifTitle">Motif</h2><span class="hint" id="motifFormat"></span></div>
+          <p id="motifInfo" class="hint"></p>
+          <div class="thread-swatches" id="motifThreads" aria-label="Motif thread sequence"></div>
+        </section>
+        <section class="inspector-section" id="placementControls" aria-labelledby="placementTitle" hidden>
+          <div class="section-heading"><h2 id="placementTitle">Placement</h2><button id="centreLayer" type="button" class="quiet">Centre on hoop</button></div>
+          <div class="field-trio">
+            <div><label for="positionX">X <span class="hint">mm</span></label><input id="positionX" type="number" min="-500" max="500" step="0.1" inputmode="decimal"></div>
+            <div><label for="positionY">Y <span class="hint">mm</span></label><input id="positionY" type="number" min="-500" max="500" step="0.1" inputmode="decimal"></div>
+            <div><label for="positionAngle">Rotate <span class="hint">°</span></label><input id="positionAngle" type="number" min="-180" max="180" step="1" inputmode="numeric"></div>
+          </div>
+          <p class="hint">Drag the stitches to move. Drag ↻ to rotate, or enter the position and angle here.</p>
+        </section>
+      </aside>
+    </div>
+    <footer><a href="./software-licences.txt">Software licences</a></footer>
+  </main>
+
+  <dialog id="fontDialog" aria-labelledby="fontDialogTitle">
+    <div class="dialog-heading"><div><h2 id="fontDialogTitle">Choose an embroidery font</h2><p id="galleryCount" class="hint"></p></div><button type="button" id="closeFonts" aria-label="Close font picker">Close</button></div>
+    <label for="fontSearch" class="sr-only">Search fonts</label>
+    <input type="search" id="fontSearch" placeholder="Search fonts" autocomplete="off">
+    <div id="fontGallery" class="font-gallery"></div>
+  </dialog>
+
+  <dialog id="motifLibrary" aria-labelledby="motifLibraryTitle">
+    <div class="dialog-heading"><div><h2 id="motifLibraryTitle">My Motifs</h2><p class="hint">Insert a saved design onto the hoop grid.</p></div><button id="closeMotifs" type="button">Close</button></div>
+    <div class="motif-library-tools">
+      <div class="motif-tabs" aria-label="Motif view">
+        <button id="motifRecent" type="button" aria-pressed="true">Recent</button>
+        <button id="motifAll" type="button" aria-pressed="false">All Motifs</button>
+      </div>
+      <button id="connectMotifs" type="button">Connect Stitch Forge</button>
+      <button id="importMotifs" type="button">Import files</button>
+      <input id="motifFiles" type="file" accept=".zip,.pes,.dst" multiple hidden>
+    </div>
+    <a id="continueMotifLink" href="/" target="_blank" rel="noopener noreferrer" hidden>Open Stitch Forge to connect</a>
+    <div id="motifSearchRow" hidden><label for="motifSearch" class="sr-only">Search all motifs</label><input id="motifSearch" type="search" placeholder="Search all motifs" autocomplete="off"></div>
+    <p id="motifLibraryStatus" class="hint" role="status"></p>
+    <div id="savedMotifs" class="saved-motifs"></div>
+    <button id="moreMotifs" type="button" hidden>Show more</button>
+  </dialog>
+
+  <dialog id="frameLibrary" aria-labelledby="frameLibraryTitle">
+    <div class="dialog-heading">
+      <div><h2 id="frameLibraryTitle">Frames &amp; Shapes</h2><p class="hint">Choose one of the supplier’s digitised sizes.</p></div>
+      <button id="closeFrames" type="button">Close</button>
+    </div>
+    <p id="frameLibraryStatus" class="hint" role="status"></p>
+    <div id="frameCards" class="saved-motifs"></div>
+  </dialog>
+
+  <dialog id="threadDialog" aria-labelledby="threadDialogTitle">
+    <div class="dialog-heading">
+      <div><h2 id="threadDialogTitle">Thread colour</h2><p id="threadLayerName" class="hint"></p></div>
+      <button id="closeThreadColours" type="button">Done</button>
+    </div>
+    <div id="threadColourOptions" class="thread-colour-list"></div>
+    <p class="hint thread-format-note">PES saves these colours. For DST, use this thread order at the machine.</p>
+  </dialog>
+
+  <script type="module" src="./editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-18",
+  "base_commit": "77c041d32b4a384fe2d77eb597e71cc5021b303a",
+  "branch": "feature/design-editor-page",
+  "node_version": "24.22.3",
+  "syntax": {"source_files": 51, "inline_scripts": 1, "passed": true},
+  "site_tests": {"total": 241, "pass": 240, "fail": 0, "skip": 1, "skip_reason": "Existing opt-in native smoke test"},
+  "editor_tests": {"total": 12, "pass": 12, "fail": 0, "skip": 0},
+  "new_integration_tests": 6,
+  "lettering_build": "passed",
+  "editor_build": "passed",
+  "private_assets": {"files": 304, "original_bytes_and_hashes_match": true, "encrypted_in_git": true, "font_families": 50, "font_size_packs": 200, "frame_pes_files": 30, "historical_motif_pes_files": 21},
+  "licence_notices_present": true,
+  "internal_page_and_api_paths_checked": true,
+  "netlify_config_schema": "passed",
+  "hosted_publication": "pending at preparation",
+  "browser_acceptance": "not performed at preparation",
+  "physical_sew_out": "not performed",
+  "cloud_run_changes": false,
+  "original_chatgpt_site_changed": false
+}

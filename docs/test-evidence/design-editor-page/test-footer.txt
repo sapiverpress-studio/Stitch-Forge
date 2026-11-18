@@ -1,0 +1,29 @@
+Source syntax command:
+node tools/check_frontend_syntax.cjs
+51 source files + 1 inline scripts pass syntax; app script references exist.
+
+Site suite command:
+node --test tests/*.cjs tests/*.mjs
+tests 241
+suites 0
+pass 240
+fail 0
+cancelled 0
+skipped 1
+todo 0
+duration_ms 14808.754364
+
+Editor build command (with the private key supplied in memory, not in source):
+npm run build:design-editor
+tests 12
+suites 0
+pass 12
+fail 0
+cancelled 0
+skipped 0
+todo 0
+duration_ms 2476.610484
+Design Editor built with 304 verified private assets.
+
+Original asset comparison: all 304 original files match SHA-256 and bytes.
+Licence notices, homepage link, bundled API path and Netlify schema: pass.

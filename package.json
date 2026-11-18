@@ -4,7 +4,8 @@
   "private": true,
   "description": "Existing Stitch Forge site and protected native artwork jobs",
   "scripts": {
-    "build:lettering": "node tools/build-lettering.cjs"
+    "build:lettering": "node tools/build-lettering.cjs",
+    "build:design-editor": "node tools/build-design-editor.mjs"
   },
   "dependencies": {
     "@guillaumemmm/tsembroidery": "3.0.2",

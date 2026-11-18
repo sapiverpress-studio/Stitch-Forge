@@ -8,8 +8,8 @@
 | Project | Sapiver Stitch Forge |
 | Repository | https://github.com/sapiverpress-studio/Stitch-Forge |
 | Maintainer | Sapiver Press |
-| Document version | Private My Motifs library and Design Editor. |
-| Last updated | 2026-11-12 (Europe/London) |
+| Document version | Design Editor attached as a separate protected Stitch Forge page. |
+| Last updated | 2026-11-18 (Europe/London) |
 | Last independently checked source | My Motifs connection and stitch-file checks in E-095. Design Editor export checks in E-094. |
 | Default branch | `main` |
 | Development branch | `feature/private-motif-library` based on `6d6616b8a4f1b3a998a15b406f69ac6b9593b616`. |
@@ -80,6 +80,12 @@ Build a professional-capable, **touch-first and desktop-friendly embroidery digi
 ---
 
 ## 2. Current verified baseline (2026-10-28)
+
+### Design Editor on the existing Stitch Forge site (2026-11-18)
+
+The owner requested the existing editor as a separate page within Stitch Forge. The prepared page is `/design-editor/`; the homepage editor/connection links now stay on the same website. Its local Netlify API composes the existing motif handler in-process, reusing the existing private store, service key and browser pairing. Original saved records are retained. The standalone ChatGPT Site is unchanged. Local acceptance: 240 site tests pass, one pre-existing smoke skip, 12 editor tests pass; 51 source files plus one inline script pass syntax. Both browser bundles build. All 304 asset files match the exported source hashes, including 50 fonts/200 size packs, 30 frames and 21 historical motifs. Hosted publication and browser acceptance are recorded separately in E-096 and the dated log.
+
+The supplied assets are AES-256-GCM encrypted in the public repository and decrypted only in the protected Netlify build using `STITCH_FORGE_EDITOR_ASSET_KEY`, a production Builds secret. Decrypted directories are ignored. The existing Netlify project was verified password-protected for all deploys. This entire-site gate protects the new page, asset URLs and same-site API; it must stay enabled. No Cloud Run worker, machine-quality approval or marketplace publication is part of this change.
 
 ### My Motifs (2026-11-12)
 
@@ -590,6 +596,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | M9 — private lettering library | On-device font pack, colour preview and optional premade design | DONE-VERIFIED | All 200 pack choices exported in both formats. Local browser and independent decoding checks in E-093. |
 | M10 — private Design Editor | Installed fonts, hoop layout, motif import and paired exports | DONE-VERIFIED | E-094 records the standalone workspace and verified source stitches and placement. |
 | M11 — My Motifs | Private library, connected-browser capture, history and hoop insertion | DONE-VERIFIED | Local service and decoder checks in E-095. |
+| M12 — Design Editor on Stitch Forge | Separate protected page with the existing motif service | IN-PROGRESS | Local integration, 304 asset hashes and software tests pass in E-096; publish and inspect hosted deployment. |
 
 ---
 
@@ -611,6 +618,7 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-093 | P1 | Compose private lettering from predigitised PES letters | DONE-VERIFIED | E-093 records the private pack import, supplied sizes, colour preview, motif and paired exports. Physical sewing remains a trial. |
 | SF-094 | P1 | Link the private Design Editor from Stitch Forge | DONE-VERIFIED | E-094 records layout controls, installed fonts, native download import and export verification. |
 | SF-095 | P1 | Connect the digitiser to the owner’s My Motifs library | DONE-VERIFIED | E-095 records one-use linking, verified capture, deduplication, read permissions and recovery. |
+| SF-096 | P1 | Attach Design Editor as a separate page on the existing Stitch Forge site | IN-PROGRESS | E-096: local API/storage compatibility, asset privacy, both builds and full Node checks pass. Hosted/browser verification remains separate. |
 | SF-008 | P0 | Define versioned project schema | IN-PROGRESS | Schema, migrations and round-trip tests |
 | SF-009 | P0 | Threat model uploaded SVG/raster and processing | IN-PROGRESS | Security tests + limits documented |
 | SF-010 | P0 | Prototype user moth case as permanent regression | IN-PROGRESS | Embedded-raster SVG accepted; reference + truth-in-UI assertions |
@@ -720,6 +728,8 @@ Do not create empty decorative folders or claim an implementation exists because
 | SF-090 | P0 | Existing private worker update and owner manual website release | **AUTHORISED / ACCESS AND HOSTED ACCEPTANCE PENDING** | No gcloud/Docker/authenticated deploy access in initial runtime; preserve service IAM/secrets/resource caps. Netlify-only deploy is insufficient. |
 
 ## 10. Test evidence register
+
+- **E-096 (2026-11-18).** `feature/design-editor-page`, based on published source `77c041d32b4a384fe2d77eb597e71cc5021b303a`. `node tools/check_frontend_syntax.cjs`: 51 source files and one inline script pass. `node --test tests/*.cjs tests/*.mjs`: 241 tests, 240 pass, zero fail, one pre-existing configured smoke skip. Six new tests cover same-site runtime restrictions, cross-origin rejection, byte-exact motif reads, existing-record preservation, pairing compatibility and authenticated private asset decoding/tamper/path rejection. `npm run build:lettering` and `npm run build:design-editor` pass; the latter runs all 12 original editor tests, including all 30 supplier frames with composed PES/DST read-back. All 304 decrypted assets match the exported bytes and SHA-256s; codec/ZIP notices are present, homepage/bundle paths match and `netlify.toml` validates against its current official schema. Evidence summary and captured test footer: `docs/test-evidence/design-editor-page/`. No paid AI, Cloud Run build, new native engine run or fabric sew-out. No claim that hosted browser or physical acceptance has passed; final deployment state is recorded separately.
 
 - **E-095 (2026-11-12).** Public repository syntax and Node suite passed with 234 passes, one configured smoke skip and zero failures. The editor’s seven tests passed. Tests exercise private reads, same-origin linking, replay and expiry, native ZIP capture, byte-for-byte PES retrieval, deduplication, and the archive restore marker. All 21 distinct recovered trial PES files passed the Design Editor decoder. Historical files are loaded privately from saved archives. The old artwork job store is time-limited.
 
@@ -889,6 +899,7 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 | Raster tracing presented as completed embroidery | Lost detail / misleading listing | CRITICAL | Reference layer, selectable regions, clear warnings |
 | Incorrect PES/DST or wrong hoop | Machine problems, wasted material | CRITICAL | Independent readers, profiles, limits and tests |
 | Private lettering pack exposed or lost | Licence exposure or repeat import | HIGH | Owner-only hosting for installed fonts, browser-side motif processing, and the source ZIP retained by the owner |
+| Attached editor assets exposed by removing Netlify site protection | Licensed source files become accessible | HIGH | Existing all-deploy password gate is required for the page, API and direct assets. Public Git stores authenticated ciphertext only; its key is a production Builds secret. Keep original backups and supplier evidence. |
 | GPL obligations ignored | Legal/distribution exposure | HIGH | Licence inventory + review before shipping integrated code |
 | Malicious SVG/image uploads | XSS, resource exhaustion, information leaks | HIGH | Sanitisation, time/memory caps, isolated processing |
 | Overengineering too early | High cost, stalled development | HIGH | First one-colour verified design; incremental gates |
@@ -904,6 +915,7 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 
 | Date | ID | Decision / proposal | Reason / status |
 | --- | --- | --- | --- |
+| 2026-11-18 | D-034 | Attach the editor as `/design-editor/` in the existing protected Stitch Forge site | Owner explicitly chose a separate page rather than separate hosting/repository. Reuse the same motif handler/store and preserve current browser pairing. Avoid publishing licensed asset bytes in the public repository by using a build-secret-protected authenticated asset archive. Keep the original ChatGPT Site unchanged. |
 | 2026-11-12 | D-032 | Host the installed fonts in an owner-only design workspace linked from the digitiser | The editor opens ready to use and keeps the purchased font files behind owner sign-in. Stitch placement and file import/export run in the browser. |
 | 2026-11-12 | D-033 | Use a private motif store with an owner-only editor API and a write-only browser link | Persist validated stitch bytes by content hash. Original design uploads and font assets stay in their existing flows. The owner can disconnect the digitiser browser. |
 | 2026-11-12 | D-031 | Store one private lettering ZIP per browser profile | Keep purchased files on the owner’s device. Use original size variants and preserve needle paths and thread stops. |
@@ -970,6 +982,15 @@ The fine-detail trial adds needle paths and trims where separate colour marks su
 ---
 
 ## 13. Dated work log / progress journal
+
+### 2026-11-18 — Attach the existing Design Editor as a separate Stitch Forge page
+
+- **Authority/scope:** owner requested attachment to the existing site after the source export. This authorises the page/API integration and its Netlify publication; it does not authorise worker changes, machine approval, listings or changes to the original ChatGPT Site.
+- **Branch/base:** `feature/design-editor-page`, base `77c041d32b4a384fe2d77eb597e71cc5021b303a`; commit/PR and hosted deploy IDs are pending at preparation time.
+- **Changes:** `editor/` source and authenticated encrypted asset inventory; `tools/design-editor-assets.mjs` and `tools/build-design-editor.mjs`; same-site `netlify/functions/design-editor.mjs`; homepage links, build configuration, ignore rules and integration tests. No new dependency version is introduced.
+- **Evidence:** E-096, durable summary/footer under `docs/test-evidence/design-editor-page/`. Local software and integrity checks pass. Physical sewing and hosted browser acceptance were not performed in preparation.
+- **Privacy/compatibility:** actual font/frame/motif bytes remain outside public source; the Netlify production build key is separate from the unchanged motif service key. Existing records deduplicate by content hash. The existing all-deploy password gate protects the added API. The standalone ChatGPT Site, external worker settings and existing store schema are preserved.
+- **Next:** publish this tested page through the current Git/Netlify flow and verify the resulting commit, ready state and unauthenticated access denial. Record any authentication/browser verification limitation without claiming a machine-quality result.
 
 ### 2026-11-12 — My Motifs
 
